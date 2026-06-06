@@ -95,6 +95,44 @@ enum ComplianceStatus {
   OVERDUE
 }
 
+enum BudgetStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum RevenueSourceType {
+  STEAM
+  PUBLISHER
+  INVESTOR
+  GRANT
+  SERVICE
+  OTHER
+}
+
+enum ExpenseCategory {
+  PAYROLL
+  CONTRACTOR
+  SOFTWARE
+  MARKETING
+  LEGAL
+  ACCOUNTING
+  ART
+  AUDIO
+  QA
+  LOCALIZATION
+  TAX
+  OTHER
+}
+
+enum FinanceEntryStatus {
+  PLANNED
+  PENDING
+  PAID
+  RECEIVED
+  CANCELED
+}
+
 enum CommunityPostType {
   GENERAL
   MARKET
@@ -235,6 +273,9 @@ model Organization {
   companyDocuments               CompanyDocument[]
   complianceItems                ComplianceItem[]
   auditEvents                    AuditEvent[]
+  budgets                        Budget[]
+  revenueEntries                 RevenueEntry[]
+  expenseEntries                 ExpenseEntry[]
 }
 
 model OrganizationSubscriptionUsage {
@@ -655,10 +696,99 @@ model Project {
   communityPosts    CommunityPost[]
   companyDocuments  CompanyDocument[]
   complianceItems   ComplianceItem[]
+  budgets           Budget[]
+  revenueEntries    RevenueEntry[]
+  expenseEntries    ExpenseEntry[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model Budget {
+  id                String       @id @default(cuid())
+  organizationId    String
+  projectId         String?
+  name              String
+  status            BudgetStatus @default(DRAFT)
+  currencyCode      String       @default("USD")
+  startsAt          DateTime?
+  endsAt            DateTime?
+  totalPlannedCents BigInt       @default(0)
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project           Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  lines             BudgetLine[]
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([organizationId, status, createdAt(sort: Desc)])
+}
+
+model BudgetLine {
+  id               String   @id @default(cuid())
+  budgetId         String
+  category         String
+  description      String
+  vendorName       String?
+  plannedCents     BigInt
+  actualCents      BigInt   @default(0)
+  dueAt            DateTime?
+  paidAt           DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  budget           Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId, createdAt(sort: Desc)])
+  @@index([budgetId, dueAt])
+}
+
+model RevenueEntry {
+  id             String            @id @default(cuid())
+  organizationId String
+  projectId      String?
+  sourceType     RevenueSourceType
+  sourceName     String
+  status         FinanceEntryStatus @default(RECEIVED)
+  grossCents     BigInt
+  netCents       BigInt
+  currencyCode   String            @default("USD")
+  receivedAt     DateTime
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, receivedAt(sort: Desc)])
+  @@index([projectId, receivedAt(sort: Desc)])
+  @@index([organizationId, sourceType, receivedAt(sort: Desc)])
+}
+
+model ExpenseEntry {
+  id             String             @id @default(cuid())
+  organizationId String
+  projectId      String?
+  category       ExpenseCategory
+  vendorName     String
+  status         FinanceEntryStatus @default(PENDING)
+  amountCents    BigInt
+  currencyCode   String             @default("USD")
+  occurredAt     DateTime
+  dueAt          DateTime?
+  paidAt         DateTime?
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, occurredAt(sort: Desc)])
+  @@index([projectId, occurredAt(sort: Desc)])
+  @@index([organizationId, category, occurredAt(sort: Desc)])
+  @@index([organizationId, status, dueAt])
 }
 
 model LegalEntity {

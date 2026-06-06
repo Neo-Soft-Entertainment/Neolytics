@@ -51,6 +51,9 @@ export function DashboardClient() {
                 <Link href="/games">Browse games</Link>
               </Button>
               <Button asChild variant="outline">
+                <Link href="/finance">Open finance</Link>
+              </Button>
+              <Button asChild variant="outline">
                 <Link href="/opportunities">Open opportunities</Link>
               </Button>
               <Button asChild variant="outline">
@@ -88,6 +91,12 @@ export function DashboardClient() {
         />
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
         <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-4">
+        <KpiCard label="Net cash" value={formatCurrency(data.financeSnapshot.netCashCents)} />
+        <KpiCard label="Pending receivables" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
+        <KpiCard label="Pending payables" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
+        <KpiCard label="Active budgets" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
       </div>
       {data.portfolioReadiness ? (
         <div className="grid gap-4 md:grid-cols-4">

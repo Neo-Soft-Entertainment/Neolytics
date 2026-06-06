@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import PDFDocument from "pdfkit";
 import * as XLSX from "xlsx";
 import { env } from "@/env";
+import { getFinanceOverview } from "@/lib/finance-service";
 import {
   compareGames,
   getDashboardData,
@@ -336,6 +337,104 @@ export async function buildDashboardWorkbook(workspaceId: string): Promise<Expor
           game: game.name,
           appId: game.appId,
           reviewCount: game.reviewCount ?? 0
+        }))
+      }
+    ]
+  };
+}
+
+export async function buildFinanceWorkbook(organizationId: string): Promise<ExportWorkbook> {
+  const data = await getFinanceOverview(organizationId);
+
+  return {
+    fileName: "finance-overview",
+    title: "Neolytics Finance Overview",
+    sheets: [
+      {
+        name: "Summary",
+        rows: [
+          { metric: "Active budgets", value: data.summary.activeBudgetsCount },
+          { metric: "Planned budget", value: formatCurrency(data.summary.totalBudgetPlannedCents) },
+          { metric: "Actual budget", value: formatCurrency(data.summary.totalBudgetActualCents) },
+          { metric: "Revenue received", value: formatCurrency(data.summary.totalRevenueNetCents) },
+          { metric: "Expenses paid", value: formatCurrency(data.summary.totalExpensesPaidCents) },
+          { metric: "Pending receivables", value: formatCurrency(data.summary.pendingRevenueCents) },
+          { metric: "Pending payables", value: formatCurrency(data.summary.pendingExpenseCents) },
+          { metric: "Net cash", value: formatCurrency(data.summary.netCashCents) }
+        ]
+      },
+      {
+        name: "Cash Flow",
+        rows: data.cashflow.map((item) => ({
+          month: item.month,
+          inflowUsd: formatCurrency(item.inflowCents),
+          outflowUsd: formatCurrency(item.outflowCents),
+          netUsd: formatCurrency(item.netCents)
+        }))
+      },
+      {
+        name: "Budgets",
+        rows: data.budgets.map((budget) => ({
+          name: budget.name,
+          project: budget.project?.name ?? "Organization-wide",
+          status: budget.status,
+          startsAt: formatDate(budget.startsAt),
+          endsAt: formatDate(budget.endsAt),
+          plannedUsd: formatCurrency(budget.totalPlannedCents),
+          actualUsd: formatCurrency(budget.lines.reduce((sum, line) => sum + Number(line.actualCents), 0)),
+          notes: budget.notes ?? ""
+        }))
+      },
+      {
+        name: "Budget Lines",
+        rows: data.budgets.flatMap((budget) => budget.lines.map((line) => ({
+          budget: budget.name,
+          category: line.category,
+          description: line.description,
+          vendor: line.vendorName ?? "",
+          plannedUsd: formatCurrency(line.plannedCents),
+          actualUsd: formatCurrency(line.actualCents),
+          dueAt: formatDate(line.dueAt),
+          paidAt: formatDate(line.paidAt)
+        })))
+      },
+      {
+        name: "Revenue",
+        rows: data.revenueEntries.map((entry) => ({
+          project: entry.project?.name ?? "Organization-wide",
+          sourceType: entry.sourceType,
+          sourceName: entry.sourceName,
+          status: entry.status,
+          grossUsd: formatCurrency(entry.grossCents),
+          netUsd: formatCurrency(entry.netCents),
+          receivedAt: formatDate(entry.receivedAt),
+          notes: entry.notes ?? ""
+        }))
+      },
+      {
+        name: "Expenses",
+        rows: data.expenseEntries.map((entry) => ({
+          project: entry.project?.name ?? "Organization-wide",
+          category: entry.category,
+          vendorName: entry.vendorName,
+          status: entry.status,
+          amountUsd: formatCurrency(entry.amountCents),
+          occurredAt: formatDate(entry.occurredAt),
+          dueAt: formatDate(entry.dueAt),
+          paidAt: formatDate(entry.paidAt),
+          notes: entry.notes ?? ""
+        }))
+      },
+      {
+        name: "Project PnL",
+        rows: data.projectSnapshots.map((item) => ({
+          project: item.projectName,
+          stage: item.stage,
+          budgetPlannedUsd: formatCurrency(item.budgetPlannedCents),
+          budgetActualUsd: formatCurrency(item.budgetActualCents),
+          revenueUsd: formatCurrency(item.revenueNetCents),
+          expensesUsd: formatCurrency(item.expensesPaidCents),
+          netUsd: formatCurrency(item.netCents)
         }))
       }
     ]

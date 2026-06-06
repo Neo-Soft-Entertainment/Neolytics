@@ -46,6 +46,12 @@ export function useDashboard() {
           confidenceScore: number | null;
         } | null;
       } | null;
+      financeSnapshot: {
+        netCashCents: number;
+        pendingRevenueCents: number;
+        pendingExpenseCents: number;
+        activeBudgetsCount: number;
+      };
       projectSignals: Array<{
         projectId: string;
         projectName: string;

@@ -232,6 +232,7 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" "http://localhost:3000/api/inte
 - `/opportunities`
 - `/projects`
 - `/projects/[projectId]`
+- `/finance`
 - `/reports`
 - `/settings`
 - `/login`
@@ -251,12 +252,21 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" "http://localhost:3000/api/inte
 - `GET /api/reports`
 - `POST /api/reports`
 - `GET /api/dashboard`
+- `POST /api/finance/budgets`
+- `PATCH /api/finance/budgets/[budgetId]`
+- `POST /api/finance/budgets/[budgetId]/lines`
+- `PATCH /api/finance/budget-lines/[lineId]`
+- `POST /api/finance/revenue`
+- `PATCH /api/finance/revenue/[entryId]`
+- `POST /api/finance/expenses`
+- `PATCH /api/finance/expenses/[entryId]`
 - `GET /api/opportunities`
 - `GET /api/internal/steam-sync`
 
 Workbook export routes:
 
 - `GET|POST /api/exports/dashboard`
+- `GET|POST /api/exports/finance`
 - `GET|POST /api/exports/games`
 - `GET|POST /api/exports/games/[appId]`
 - `GET|POST /api/exports/compare`

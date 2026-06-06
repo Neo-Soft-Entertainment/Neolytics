@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { getFinanceOverview } from "@/lib/finance-service";
 import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
 
 function revenueToNumber(value: bigint | number | null | undefined) {
@@ -299,6 +300,15 @@ export async function compareGames(appIds: number[]) {
 }
 
 export async function getDashboardData(workspaceId: string) {
+  const workspace = await db.workspace.findUniqueOrThrow({
+    where: {
+      id: workspaceId
+    },
+    select: {
+      organizationId: true
+    }
+  });
+
   const [
     trackedGames,
     recentLaunches,
@@ -309,7 +319,9 @@ export async function getDashboardData(workspaceId: string) {
     analyzedProjectsCount,
     gddsCount,
     reportsCount,
-    projectAnalyses
+    projectAnalyses,
+    budgetsCount,
+    financeOverview
   ] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
@@ -418,7 +430,13 @@ export async function getDashboardData(workspaceId: string) {
         analyzedAt: "desc"
       },
       take: 12
-    })
+    }),
+    db.budget.count({
+      where: {
+        organizationId: workspace.organizationId
+      }
+    }),
+    getFinanceOverview(workspace.organizationId)
   ]);
   const topRevenue = topRevenueGames
     .flatMap((game) => {
@@ -487,6 +505,13 @@ export async function getDashboardData(workspaceId: string) {
       completed: gddsCount > 0
     },
     {
+      id: "finance",
+      title: "Open the finance layer",
+      description: "Create the first budget or commercial entry for the studio.",
+      href: "/finance",
+      completed: budgetsCount > 0 || financeOverview.revenueEntries.length > 0 || financeOverview.expenseEntries.length > 0
+    },
+    {
       id: "report",
       title: "Export a market report",
       description: "Generate a report and share it with your team.",
@@ -544,6 +569,12 @@ export async function getDashboardData(workspaceId: string) {
     },
     projectSignals: thesisSignals,
     portfolioReadiness,
+    financeSnapshot: {
+      netCashCents: financeOverview.summary.netCashCents,
+      pendingRevenueCents: financeOverview.summary.pendingRevenueCents,
+      pendingExpenseCents: financeOverview.summary.pendingExpenseCents,
+      activeBudgetsCount: financeOverview.summary.activeBudgetsCount
+    },
     trackedGames,
     recentLaunches,
     topRevenue,
