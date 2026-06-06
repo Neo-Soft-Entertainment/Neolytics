@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,50 @@ export function DashboardClient() {
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
         <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
       </div>
+      <Card>
+        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <CardTitle>Guided journey</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {data.guidedJourney.completedSteps} of {data.guidedJourney.totalSteps} product milestones completed.
+            </p>
+          </div>
+          <div className="space-y-2 lg:text-right">
+            <p className="text-2xl font-semibold">{data.guidedJourney.progressPercent}%</p>
+            {data.guidedJourney.nextStep ? (
+              <Button asChild size="sm">
+                <Link href={data.guidedJourney.nextStep.href}>
+                  Continue: {data.guidedJourney.nextStep.title}
+                </Link>
+              </Button>
+            ) : (
+              <Badge variant="secondary">Journey complete</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-3 lg:grid-cols-2">
+          {data.guidedJourney.steps.map((step) => (
+            <div key={step.id} className="rounded-2xl border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{step.title}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
+                </div>
+                <Badge variant={step.completed ? "default" : "secondary"}>
+                  {step.completed ? "Done" : "Next"}
+                </Badge>
+              </div>
+              {!step.completed ? (
+                <div className="mt-3">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={step.href}>Open step</Link>
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>

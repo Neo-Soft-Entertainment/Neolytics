@@ -5,12 +5,16 @@ import {
   isGoogleSheetsConfigured,
   publishWorkbookToGoogleSheets
 } from "@/lib/export-service";
-import { consumeSubscriptionUsage, SubscriptionLimitError } from "@/lib/subscription-service";
+import {
+  consumeSubscriptionUsage,
+  enforceSubscriptionCapability,
+  SubscriptionLimitError
+} from "@/lib/subscription-service";
 
 export function getExportFormat(url: URL) {
   const format = url.searchParams.get("format") ?? "xlsx";
 
-  if (format !== "xlsx" && format !== "csv") {
+  if (format !== "xlsx" && format !== "csv" && format !== "pdf") {
     return null;
   }
 
@@ -29,9 +33,13 @@ export async function createWorkbookDownloadResponse(
       return badRequest("Invalid export format.");
     }
 
+    if (format === "pdf") {
+      await enforceSubscriptionCapability(organizationId, "pdfExport");
+    }
+
     const workbook = await buildWorkbook();
     await consumeSubscriptionUsage(organizationId, "exportsGenerated");
-    return createDownloadResponse(workbook, format);
+    return await createDownloadResponse(workbook, format);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);

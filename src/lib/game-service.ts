@@ -298,7 +298,17 @@ export async function compareGames(appIds: number[]) {
 }
 
 export async function getDashboardData(workspaceId: string) {
-  const [trackedGames, recentLaunches, topRevenueGames, fastestGrowing] = await Promise.all([
+  const [
+    trackedGames,
+    recentLaunches,
+    topRevenueGames,
+    fastestGrowing,
+    competitorSetsCount,
+    projectsCount,
+    analyzedProjectsCount,
+    gddsCount,
+    reportsCount
+  ] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
       include: {
@@ -357,6 +367,35 @@ export async function getDashboardData(workspaceId: string) {
       include: {
         priceCurrent: true
       }
+    }),
+    db.competitorSet.count({
+      where: {
+        workspaceId
+      }
+    }),
+    db.project.count({
+      where: {
+        workspaceId
+      }
+    }),
+    db.projectAnalysis.count({
+      where: {
+        project: {
+          workspaceId
+        }
+      }
+    }),
+    db.projectGdd.count({
+      where: {
+        project: {
+          workspaceId
+        }
+      }
+    }),
+    db.aiReport.count({
+      where: {
+        workspaceId
+      }
     })
   ]);
   const topRevenue = topRevenueGames
@@ -389,11 +428,64 @@ export async function getDashboardData(workspaceId: string) {
     }
   });
 
+  const guidedJourneySteps = [
+    {
+      id: "save-game",
+      title: "Build your first shortlist",
+      description: "Save at least one Steam game into the current workspace.",
+      href: "/games",
+      completed: trackedGames.length > 0
+    },
+    {
+      id: "competitor-set",
+      title: "Create a competitor set",
+      description: "Bundle a group of Steam comps you want to monitor together.",
+      href: "/compare",
+      completed: competitorSetsCount > 0
+    },
+    {
+      id: "project",
+      title: "Open a project thesis",
+      description: "Turn a game idea into a working concept inside Game Board.",
+      href: "/projects",
+      completed: projectsCount > 0
+    },
+    {
+      id: "analysis",
+      title: "Run market analysis",
+      description: "Generate the first viability pass for one project.",
+      href: "/projects",
+      completed: analyzedProjectsCount > 0
+    },
+    {
+      id: "gdd",
+      title: "Generate a GDD",
+      description: "Create the first automated GDD from your project data.",
+      href: "/projects",
+      completed: gddsCount > 0
+    },
+    {
+      id: "report",
+      title: "Export a market report",
+      description: "Generate a report and share it with your team.",
+      href: "/reports",
+      completed: reportsCount > 0
+    }
+  ];
+  const completedJourneySteps = guidedJourneySteps.filter((step) => step.completed).length;
+
   return {
     marketOverview: {
       totalGames: totals._count._all,
       averageReviewScore: totals._avg.reviewScore ?? 0,
       trackedGamesCount: trackedGames.length
+    },
+    guidedJourney: {
+      completedSteps: completedJourneySteps,
+      totalSteps: guidedJourneySteps.length,
+      progressPercent: Math.round((completedJourneySteps / guidedJourneySteps.length) * 100),
+      nextStep: guidedJourneySteps.find((step) => !step.completed) ?? null,
+      steps: guidedJourneySteps
     },
     trackedGames,
     recentLaunches,

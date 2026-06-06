@@ -14,16 +14,22 @@ import {
 export function ExportActions({
   csvHref,
   xlsxHref,
+  pdfHref,
   googleSheetsEndpoint,
   label = "Export"
 }: {
   csvHref: string;
   xlsxHref: string;
+  pdfHref?: string;
   googleSheetsEndpoint: string;
   label?: string;
 }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const resolvedPdfHref = pdfHref
+    ?? (xlsxHref.includes("format=xlsx")
+      ? xlsxHref.replace("format=xlsx", "format=pdf")
+      : `${xlsxHref}${xlsxHref.includes("?") ? "&" : "?"}format=pdf`);
 
   async function publishGoogleSheet() {
     setMessage(null);
@@ -66,6 +72,12 @@ export function ExportActions({
             <a href={csvHref}>
               <FileText className="mr-2 h-4 w-4" />
               Download CSV
+            </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href={resolvedPdfHref}>
+              <FileText className="mr-2 h-4 w-4" />
+              Download PDF
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={publishGoogleSheet}>

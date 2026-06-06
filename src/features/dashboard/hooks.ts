@@ -13,6 +13,25 @@ export function useDashboard() {
         averageReviewScore: number;
         trackedGamesCount: number;
       };
+      guidedJourney: {
+        completedSteps: number;
+        totalSteps: number;
+        progressPercent: number;
+        nextStep: {
+          id: string;
+          title: string;
+          description: string;
+          href: string;
+          completed: boolean;
+        } | null;
+        steps: Array<{
+          id: string;
+          title: string;
+          description: string;
+          href: string;
+          completed: boolean;
+        }>;
+      };
       trackedGames: Array<{
         id: string;
         steamGame: {

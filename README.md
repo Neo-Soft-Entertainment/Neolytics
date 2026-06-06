@@ -246,6 +246,12 @@ Workbook export routes:
 - `GET|POST /api/exports/projects/[projectId]`
 - `GET|POST /api/exports/reports/[reportId]`
 
+Export formats:
+
+- Excel (`xlsx`)
+- CSV (`csv`)
+- PDF (`pdf`) for plans with PDF export enabled
+
 ## Estimation model
 
 Sales estimate:
@@ -278,3 +284,4 @@ Each estimate stores:
 - Billing is intentionally not implemented yet.
 - AI reports are stored behind a real service and report model, but generation is deterministic for MVP.
 - The dashboard uses live database data only. If the database is empty, the UI will show empty states instead of fake metrics.
+- The dashboard includes a guided journey checklist that moves teams from shortlist to project analysis, GDD generation, and reporting.

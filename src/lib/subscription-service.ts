@@ -2,7 +2,12 @@ import { Prisma, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
-import { getSubscriptionPlanConfig, type SubscriptionMetric } from "@/lib/subscription-plans";
+import {
+  getSubscriptionPlanConfig,
+  hasSubscriptionCapability,
+  type SubscriptionCapability,
+  type SubscriptionMetric
+} from "@/lib/subscription-plans";
 
 type DbClient = Prisma.TransactionClient | typeof db;
 
@@ -190,6 +195,20 @@ export async function consumeSubscriptionUsage(
     },
     data
   });
+}
+
+export async function enforceSubscriptionCapability(
+  organizationId: string,
+  capability: SubscriptionCapability,
+  client: DbClient = db
+) {
+  const plan = await getOrganizationPlan(client, organizationId);
+
+  if (hasSubscriptionCapability(plan, capability)) {
+    return;
+  }
+
+  throw new SubscriptionLimitError(`This feature is not available on the ${plan.toLowerCase()} plan.`);
 }
 
 export async function getOrganizationSubscriptionSnapshot(organizationId: string) {
