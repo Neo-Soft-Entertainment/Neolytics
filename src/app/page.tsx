@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { NeolyticsBrand } from "@/components/brand/neolytics-brand";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,22 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.14),_transparent_30%)]">
       <div className="container space-y-12 py-12 lg:py-20">
+        <header className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-card/60 px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
+          <NeolyticsBrand />
+          <div className="flex flex-wrap gap-3">
+            <Button asChild variant="ghost">
+              <Link href="/games">Games</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/opportunities">Opportunities</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={session ? "/dashboard" : "/login"}>
+                {session ? "Open dashboard" : "Sign in"}
+              </Link>
+            </Button>
+          </div>
+        </header>
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
           <div className="max-w-4xl space-y-6">
             <span className="inline-flex rounded-full border border-border bg-card/80 px-3 py-1 text-sm text-muted-foreground backdrop-blur">
