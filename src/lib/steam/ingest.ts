@@ -4,9 +4,18 @@ import { env } from "@/env";
 import { db } from "@/lib/db";
 import { calculateRevenueEstimate, calculateSalesEstimate } from "@/lib/estimations";
 import { logger } from "@/lib/logger";
-import { fetchSteamAppDetails, fetchSteamCurrentPlayers, fetchSteamReviewSummary } from "@/lib/steam/client";
+import {
+  fetchSteamAppDetails,
+  fetchSteamAppList,
+  fetchSteamCurrentPlayers,
+  fetchSteamReviewSummary
+} from "@/lib/steam/client";
 import { extractStoreTags, normalizeSteamApp } from "@/lib/steam/normalize";
 import { sleep } from "@/lib/sleep";
+
+type SteamSyncResult = "SUCCESS" | "SKIPPED";
+
+export type SteamBatchSyncMode = "refresh" | "catalog";
 
 async function syncGenres(
   tx: Prisma.TransactionClient,
@@ -133,7 +142,7 @@ async function syncPublishers(
   }
 }
 
-export async function syncSteamApp(appId: number) {
+export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
   const run = await db.ingestionRun.create({
     data: {
       source: "steam-app",
@@ -170,7 +179,7 @@ export async function syncSteamApp(appId: number) {
         }
       });
 
-      return;
+      return "SKIPPED";
     }
 
     const salesEstimate = calculateSalesEstimate(normalized, env.STEAM_REVIEW_MULTIPLIER);
@@ -361,6 +370,7 @@ export async function syncSteamApp(appId: number) {
     });
 
     await sleep(env.STEAM_REQUEST_DELAY_MS);
+    return "SUCCESS";
   } catch (error) {
     logger.error({ appId, error }, "Steam sync failed");
     await db.ingestionRun.update({
@@ -376,4 +386,79 @@ export async function syncSteamApp(appId: number) {
     });
     throw error;
   }
+}
+
+export async function syncSteamBatch({
+  limit = env.STEAM_CRON_BATCH_SIZE,
+  mode = "refresh",
+  offset = 0
+}: {
+  limit?: number;
+  mode?: SteamBatchSyncMode;
+  offset?: number;
+}) {
+  const cappedLimit = Math.min(limit, env.STEAM_APP_SYNC_LIMIT, 100);
+  let appIds: number[] = [];
+
+  if (mode === "catalog") {
+    const list = await fetchSteamAppList();
+    appIds = list.applist.apps
+      .filter((app) => app.name.trim().length > 0)
+      .slice(offset, offset + cappedLimit)
+      .map((app) => app.appid);
+  }
+
+  if (mode === "refresh") {
+    const existingGames = await db.steamGame.findMany({
+      orderBy: [{ lastIngestedAt: "asc" }, { appId: "asc" }],
+      take: cappedLimit,
+      select: {
+        appId: true
+      }
+    });
+
+    if (existingGames.length > 0) {
+      appIds = existingGames.map((game) => game.appId);
+    }
+
+    if (existingGames.length === 0) {
+      const list = await fetchSteamAppList();
+      appIds = list.applist.apps
+        .filter((app) => app.name.trim().length > 0)
+        .slice(offset, offset + cappedLimit)
+        .map((app) => app.appid);
+      mode = "catalog";
+    }
+  }
+
+  let succeeded = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const appId of appIds) {
+    try {
+      const result = await syncSteamApp(appId);
+
+      if (result === "SKIPPED") {
+        skipped += 1;
+        continue;
+      }
+
+      succeeded += 1;
+    } catch (error) {
+      failed += 1;
+      logger.error({ appId, error }, "Steam batch sync item failed");
+    }
+  }
+
+  return {
+    mode,
+    limit: cappedLimit,
+    offset,
+    selected: appIds.length,
+    succeeded,
+    skipped,
+    failed,
+    appIds
+  };
 }

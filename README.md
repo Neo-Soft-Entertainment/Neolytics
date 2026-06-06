@@ -13,7 +13,8 @@ Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase
 - Auth.js with credentials login and optional GitHub OAuth
 - TanStack Query
 - Recharts
-- BullMQ + Redis for Steam ingestion jobs
+- BullMQ + Redis for local Steam ingestion jobs
+- Vercel Cron for Hobby-safe production refresh
 
 ## Folder structure
 
@@ -57,6 +58,7 @@ DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supab
 DIRECT_URL="postgresql://postgres:[YOUR-PROJECT-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres?sslmode=require"
 AUTH_SECRET="replace-with-a-long-random-string"
 AUTH_URL="http://localhost:3000"
+CRON_SECRET="replace-with-a-random-secret-with-at-least-16-characters"
 REDIS_URL="redis://localhost:6379"
 STEAM_STORE_BASE_URL="https://store.steampowered.com"
 STEAM_API_BASE_URL="https://api.steampowered.com"
@@ -65,6 +67,7 @@ STEAM_DEFAULT_LANGUAGE="en"
 STEAM_REVIEW_MULTIPLIER="45"
 STEAM_REQUEST_DELAY_MS="250"
 STEAM_APP_SYNC_LIMIT="500"
+STEAM_CRON_BATCH_SIZE="25"
 ADMIN_EMAIL="admin@neolytics.local"
 ADMIN_PASSWORD="ChangeMe123!"
 ```
@@ -123,6 +126,16 @@ Open [http://localhost:3000](http://localhost:3000).
 - You do not need Firebase for this stack.
 - Full setup guide: [docs/supabase-setup.md](docs/supabase-setup.md)
 
+## Vercel Hobby deployment
+
+- The web app works on Vercel Hobby.
+- Supabase is the production database.
+- `REDIS_URL` is optional in Vercel if you use the built-in cron route instead of a persistent BullMQ worker.
+- The project includes `vercel.json` with one daily cron job that calls `/api/internal/steam-sync?mode=refresh`.
+- Protect the cron route by setting `CRON_SECRET` in Vercel.
+- `STEAM_CRON_BATCH_SIZE` should stay small on Hobby. `25` is a safe default.
+- Full deployment guide: [docs/vercel-hobby-deploy.md](docs/vercel-hobby-deploy.md)
+
 ## Steam ingestion
 
 The ingestion pipeline uses only public Steam endpoints.
@@ -143,6 +156,12 @@ npm run jobs:steam:worker
 
 ```bash
 npm run jobs:steam:once
+```
+
+### Run the Vercel-safe ingestion route manually
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" "http://localhost:3000/api/internal/steam-sync?mode=catalog&limit=25&offset=0"
 ```
 
 ## What the ingestion pipeline does
@@ -185,6 +204,7 @@ npm run jobs:steam:once
 - `POST /api/reports`
 - `GET /api/dashboard`
 - `GET /api/opportunities`
+- `GET /api/internal/steam-sync`
 
 ## Estimation model
 
