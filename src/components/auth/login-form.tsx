@@ -20,7 +20,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function LoginForm() {
+export function LoginForm({ inviteToken }: { inviteToken?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
@@ -45,7 +45,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(inviteToken ? `/invite/${inviteToken}` : "/dashboard");
     router.refresh();
   }
 
@@ -82,8 +82,19 @@ export function LoginForm() {
           <Button className="w-full" disabled={form.formState.isSubmitting} type="submit">
             {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
+          {inviteToken ? (
+            <p className="text-center text-sm text-muted-foreground">
+              Sign in to accept your organization invitation.
+            </p>
+          ) : null}
           <p className="text-center text-sm text-muted-foreground">
-            New here? <Link className="underline underline-offset-4" href="/signup">Create your account</Link>
+            New here?{" "}
+            <Link
+              className="underline underline-offset-4"
+              href={inviteToken ? `/signup?inviteToken=${inviteToken}` : "/signup"}
+            >
+              Create your account
+            </Link>
           </p>
         </form>
       </CardContent>

@@ -95,6 +95,7 @@ model User {
   competitorSets   CompetitorSet[]      @relation("CompetitorSetCreatedBy")
   aiReports        AiReport[]           @relation("AiReportCreatedBy")
   projects         Project[]            @relation("ProjectCreatedBy")
+  organizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationCreatedBy")
 }
 
 model Account {
@@ -151,6 +152,7 @@ model Organization {
   ingestionRuns                  IngestionRun[]
   projects                       Project[]
   subscriptionUsage              OrganizationSubscriptionUsage[]
+  invitations                    OrganizationInvitation[]
 }
 
 model OrganizationSubscriptionUsage {
@@ -180,6 +182,25 @@ model OrganizationMember {
 
   @@id([organizationId, userId])
   @@index([userId])
+}
+
+model OrganizationInvitation {
+  id             String           @id @default(cuid())
+  organizationId String
+  email          String
+  role           OrganizationRole @default(MEMBER)
+  invitedById    String
+  token          String           @unique
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User             @relation("OrganizationInvitationCreatedBy", fields: [invitedById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([email])
 }
 
 model Workspace {

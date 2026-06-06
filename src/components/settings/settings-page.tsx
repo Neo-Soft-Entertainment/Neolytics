@@ -5,6 +5,7 @@ import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
+import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export async function SettingsPage() {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
-  const subscriptionSnapshot = await getOrganizationSubscriptionSnapshot(organization.id);
+  const [subscriptionSnapshot, currentMembers, invitations] = await Promise.all([
+    getOrganizationSubscriptionSnapshot(organization.id),
+    db.organizationMember.findMany({
+      where: {
+        organizationId: organization.id
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        joinedAt: "asc"
+      }
+    }),
+    db.organizationInvitation.findMany({
+      where: {
+        organizationId: organization.id,
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    })
+  ]);
   const memberships = session?.user?.id
     ? await db.organizationMember.findMany({
         where: {
@@ -64,6 +96,11 @@ export async function SettingsPage() {
             </CardContent>
           </Card>
           <SubscriptionPanel snapshot={subscriptionSnapshot} canManage={canManageSubscription} />
+          <OrganizationMembersPanel
+            canManage={canManageSubscription}
+            members={currentMembers}
+            invitations={invitations}
+          />
           <Card>
             <CardHeader>
               <CardTitle>Create another organization</CardTitle>

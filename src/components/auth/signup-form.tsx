@@ -13,24 +13,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const schema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  organizationName: z.string().min(2),
-  workspaceName: z.string().min(2)
-});
+type FormValues = {
+  name: string;
+  email: string;
+  password: string;
+  organizationName?: string;
+  workspaceName?: string;
+};
 
-type FormValues = z.infer<typeof schema>;
-
-export function SignupForm() {
+export function SignupForm({
+  inviteToken,
+  invitedOrganizationName,
+  invitedEmail
+}: {
+  inviteToken?: string;
+  invitedOrganizationName?: string;
+  invitedEmail?: string;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const schema = z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    password: z.string().min(8),
+    organizationName: inviteToken ? z.string().optional() : z.string().min(2),
+    workspaceName: inviteToken ? z.string().optional() : z.string().min(2)
+  });
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
-      email: "",
+      email: invitedEmail ?? "",
       password: "",
       organizationName: "",
       workspaceName: "Default Workspace"
@@ -45,7 +58,10 @@ export function SignupForm() {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify({
+        ...values,
+        inviteToken
+      })
     });
 
     if (!response.ok) {
@@ -73,9 +89,11 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-xl">
       <CardHeader>
-        <CardTitle>Create your workspace</CardTitle>
+        <CardTitle>{inviteToken ? "Join organization" : "Create your workspace"}</CardTitle>
         <CardDescription>
-          Create an account, your organization, and the first workspace in one step. New accounts start on the Free plan.
+          {inviteToken
+            ? `Create your account and join ${invitedOrganizationName ?? "this organization"} in one step.`
+            : "Create an account, your organization, and the first workspace in one step. New accounts start on the Free plan."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -89,7 +107,13 @@ export function SignupForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              readOnly={Boolean(inviteToken && invitedEmail)}
+              {...form.register("email")}
+            />
             {form.formState.errors.email ? (
               <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
             ) : null}
@@ -101,27 +125,51 @@ export function SignupForm() {
               <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
             ) : null}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="organizationName">Organization</Label>
-            <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
-            {form.formState.errors.organizationName ? (
-              <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="workspaceName">First workspace</Label>
-            <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
-            {form.formState.errors.workspaceName ? (
-              <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
-            ) : null}
-          </div>
+          {inviteToken ? (
+            <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground md:col-span-2">
+              You are joining
+              {" "}
+              <span className="font-medium text-foreground">{invitedOrganizationName ?? "this organization"}</span>
+              {invitedEmail ? (
+                <>
+                  {" "}
+                  with
+                  {" "}
+                  <span className="font-medium text-foreground">{invitedEmail}</span>.
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="organizationName">Organization</Label>
+                <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
+                {form.formState.errors.organizationName ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspaceName">First workspace</Label>
+                <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
+                {form.formState.errors.workspaceName ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
+                ) : null}
+              </div>
+            </>
+          )}
           {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
           <div className="flex items-center justify-between gap-3 md:col-span-2">
             <p className="text-sm text-muted-foreground">
-              Already have an account? <Link className="underline underline-offset-4" href="/login">Sign in</Link>
+              Already have an account?{" "}
+              <Link
+                className="underline underline-offset-4"
+                href={inviteToken ? `/login?inviteToken=${inviteToken}` : "/login"}
+              >
+                Sign in
+              </Link>
             </p>
             <Button disabled={form.formState.isSubmitting} type="submit">
-              {form.formState.isSubmitting ? "Creating..." : "Create account"}
+              {form.formState.isSubmitting ? "Creating..." : inviteToken ? "Create account and join" : "Create account"}
             </Button>
           </div>
         </form>

@@ -17,6 +17,7 @@ type SubscriptionSnapshot = {
   currentPeriodStart: Date | string | null;
   currentPeriodEnd: Date | string | null;
   usage: {
+    seats: number;
     workspaces: number;
     savedGames: number;
     competitorSets: number;
@@ -27,6 +28,7 @@ type SubscriptionSnapshot = {
     gddsGenerated: number;
   };
   limits: {
+    seats: number | null;
     workspaces: number | null;
     savedGames: number | null;
     competitorSets: number | null;
@@ -42,6 +44,7 @@ const usageRows: Array<{
   key: keyof SubscriptionSnapshot["usage"];
   label: string;
 }> = [
+  { key: "seats", label: "Seats" },
   { key: "workspaces", label: "Workspaces" },
   { key: "savedGames", label: "Saved games" },
   { key: "competitorSets", label: "Competitor sets" },

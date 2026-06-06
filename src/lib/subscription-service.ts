@@ -6,6 +6,7 @@ import { getSubscriptionPlanConfig, type SubscriptionMetric } from "@/lib/subscr
 type DbClient = Prisma.TransactionClient | typeof db;
 
 const metricLabels: Record<SubscriptionMetric, string> = {
+  seats: "seat limit",
   workspaces: "workspace limit",
   savedGames: "saved games limit",
   competitorSets: "competitor sets limit",
@@ -54,6 +55,28 @@ async function getOrganizationPlan(client: DbClient, organizationId: string) {
 }
 
 async function getCurrentMetricCount(client: DbClient, organizationId: string, metric: SubscriptionMetric) {
+  if (metric === "seats") {
+    const [members, invites] = await Promise.all([
+      client.organizationMember.count({
+        where: {
+          organizationId
+        }
+      }),
+      client.organizationInvitation.count({
+        where: {
+          organizationId,
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: {
+            gt: new Date()
+          }
+        }
+      })
+    ]);
+
+    return members + invites;
+  }
+
   if (metric === "workspaces") {
     return client.workspace.count({
       where: {
@@ -93,7 +116,7 @@ async function getCurrentMetricCount(client: DbClient, organizationId: string, m
 
 export async function enforceSubscriptionCapacity(
   organizationId: string,
-  metric: Extract<SubscriptionMetric, "workspaces" | "savedGames" | "competitorSets" | "projects">,
+  metric: Extract<SubscriptionMetric, "seats" | "workspaces" | "savedGames" | "competitorSets" | "projects">,
   client: DbClient = db
 ) {
   const plan = await getOrganizationPlan(client, organizationId);
@@ -170,7 +193,7 @@ export async function consumeSubscriptionUsage(
 
 export async function getOrganizationSubscriptionSnapshot(organizationId: string) {
   const periodKey = getCurrentSubscriptionPeriodKey();
-  const [organization, usage, workspaces, savedGames, competitorSets, projects] = await Promise.all([
+  const [organization, usage, seats, workspaces, savedGames, competitorSets, projects] = await Promise.all([
     db.organization.findUniqueOrThrow({
       where: {
         id: organizationId
@@ -191,6 +214,7 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
         }
       }
     }),
+    getCurrentMetricCount(db, organizationId, "seats"),
     db.workspace.count({
       where: {
         organizationId
@@ -228,6 +252,7 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
     currentPeriodEnd: organization.subscriptionCurrentPeriodEnd,
     canceledAt: organization.subscriptionCanceledAt,
     usage: {
+      seats,
       workspaces: workspaces,
       savedGames: savedGames,
       competitorSets: competitorSets,

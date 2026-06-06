@@ -6,6 +6,7 @@ export const subscriptionPlans = {
     priceLabel: "$0",
     description: "For solo exploration and early validation.",
     features: [
+      "1 seat",
       "1 workspace",
       "25 saved games",
       "3 competitor sets",
@@ -14,6 +15,7 @@ export const subscriptionPlans = {
       "20 exports per month"
     ],
     limits: {
+      seats: 1,
       workspaces: 1,
       savedGames: 25,
       competitorSets: 3,
@@ -29,6 +31,7 @@ export const subscriptionPlans = {
     priceLabel: "$20",
     description: "For serious studios building a steady research workflow.",
     features: [
+      "5 seats",
       "5 workspaces",
       "250 saved games",
       "25 competitor sets",
@@ -37,6 +40,7 @@ export const subscriptionPlans = {
       "150 exports per month"
     ],
     limits: {
+      seats: 5,
       workspaces: 5,
       savedGames: 250,
       competitorSets: 25,
@@ -52,6 +56,7 @@ export const subscriptionPlans = {
     priceLabel: "$200",
     description: "For power users who want essentially unrestricted research velocity.",
     features: [
+      "Unlimited seats",
       "Unlimited workspaces",
       "Unlimited saved games",
       "Unlimited competitor sets",
@@ -60,6 +65,7 @@ export const subscriptionPlans = {
       "Unlimited project analysis and GDD generation"
     ],
     limits: {
+      seats: null,
       workspaces: null,
       savedGames: null,
       competitorSets: null,
@@ -73,6 +79,7 @@ export const subscriptionPlans = {
 } as const;
 
 export type SubscriptionMetric =
+  | "seats"
   | "workspaces"
   | "savedGames"
   | "competitorSets"
