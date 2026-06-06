@@ -26,8 +26,6 @@ const schema = z.object({
   password: z.string().min(8),
   organizationName: optionalNonEmptyString,
   workspaceName: optionalNonEmptyString,
-  defaultLanguage: z.string().min(2).max(16).optional(),
-  countryCode: z.string().length(2).optional(),
   plan: z.nativeEnum(SubscriptionPlan).optional(),
   inviteToken: z.string().optional()
 });
@@ -50,8 +48,8 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!body.inviteToken && (!body.organizationName || !body.workspaceName || !body.defaultLanguage || !body.countryCode)) {
-      return badRequest("Organization name, workspace name, language, and country are required.");
+    if (!body.inviteToken && (!body.organizationName || !body.workspaceName)) {
+      return badRequest("Organization name and workspace name are required.");
     }
 
     if (body.inviteToken && body.plan && body.plan !== SubscriptionPlan.FREE) {
@@ -105,9 +103,7 @@ export async function POST(request: Request) {
     const organizationContext = await createOrganizationForUser({
       userId: user.id,
       organizationName: body.organizationName!,
-      workspaceName: body.workspaceName,
-      defaultLanguage: body.defaultLanguage!,
-      countryCode: body.countryCode!
+      workspaceName: body.workspaceName
     });
 
     const response = ok({

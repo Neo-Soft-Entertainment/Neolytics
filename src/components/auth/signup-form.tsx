@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { countryOptions, defaultCountryCode, defaultLanguage, languageOptions } from "@/lib/company-localization";
 import { subscriptionPlans } from "@/lib/subscription-plans";
 
 type FormValues = {
@@ -22,8 +21,6 @@ type FormValues = {
   password: string;
   organizationName?: string;
   workspaceName?: string;
-  defaultLanguage?: string;
-  countryCode?: string;
   plan?: SubscriptionPlan;
 };
 
@@ -44,8 +41,6 @@ export function SignupForm({
     password: z.string().min(8),
     organizationName: inviteToken ? z.string().optional() : z.string().min(2),
     workspaceName: inviteToken ? z.string().optional() : z.string().min(2),
-    defaultLanguage: inviteToken ? z.string().optional() : z.string().min(2),
-    countryCode: inviteToken ? z.string().optional() : z.string().length(2),
     plan: inviteToken ? z.nativeEnum(SubscriptionPlan).optional() : z.nativeEnum(SubscriptionPlan)
   });
   const form = useForm<FormValues>({
@@ -56,8 +51,6 @@ export function SignupForm({
       password: "",
       organizationName: "",
       workspaceName: "Default Workspace",
-      defaultLanguage,
-      countryCode: defaultCountryCode,
       plan: SubscriptionPlan.FREE
     }
   });
@@ -132,7 +125,7 @@ export function SignupForm({
         <CardDescription>
           {inviteToken
             ? `Create your account and join ${invitedOrganizationName ?? "this organization"} in one step.`
-            : "Create the account, choose the organization defaults, and activate the plan you want right after signup."}
+            : "Create the account, launch the first organization, and activate the plan you want right after signup."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -192,40 +185,6 @@ export function SignupForm({
                 <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
                 {form.formState.errors.workspaceName ? (
                   <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="defaultLanguage">Default language</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  id="defaultLanguage"
-                  {...form.register("defaultLanguage")}
-                >
-                  {languageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {form.formState.errors.defaultLanguage ? (
-                  <p className="text-sm text-destructive">{form.formState.errors.defaultLanguage.message}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="countryCode">Home country</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  id="countryCode"
-                  {...form.register("countryCode")}
-                >
-                  {countryOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {form.formState.errors.countryCode ? (
-                  <p className="text-sm text-destructive">{form.formState.errors.countryCode.message}</p>
                 ) : null}
               </div>
               <div className="space-y-3 md:col-span-2">
