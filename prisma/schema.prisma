@@ -1,0 +1,504 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkspaceRole {
+  OWNER
+  MEMBER
+}
+
+enum SubscriptionPlan {
+  FREE
+  INDIE
+  STUDIO
+  PUBLISHER
+  ENTERPRISE
+}
+
+enum ReviewSentiment {
+  OVERWHELMINGLY_POSITIVE
+  VERY_POSITIVE
+  POSITIVE
+  MOSTLY_POSITIVE
+  MIXED
+  MOSTLY_NEGATIVE
+  NEGATIVE
+  VERY_NEGATIVE
+  OVERWHELMINGLY_NEGATIVE
+  UNKNOWN
+}
+
+enum EstimateConfidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ReportStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum ReportType {
+  MARKET
+  GAME
+  COMPETITOR
+  OPPORTUNITY
+}
+
+enum IngestionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+model User {
+  id               String               @id @default(cuid())
+  name             String?
+  email            String               @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  organizationMembers OrganizationMember[]
+  workspaces       Workspace[]          @relation("WorkspaceCreatedBy")
+  savedGames       SavedGame[]
+  competitorSets   CompetitorSet[]      @relation("CompetitorSetCreatedBy")
+  aiReports        AiReport[]           @relation("AiReportCreatedBy")
+}
+
+model Account {
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Organization {
+  id                String               @id @default(cuid())
+  name              String
+  slug              String               @unique
+  subscriptionPlan  SubscriptionPlan     @default(FREE)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  members           OrganizationMember[]
+  workspaces        Workspace[]
+  competitorSets    CompetitorSet[]
+  aiReports         AiReport[]
+  ingestionRuns     IngestionRun[]
+}
+
+model OrganizationMember {
+  organizationId String
+  userId         String
+  role           OrganizationRole @default(MEMBER)
+  joinedAt       DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, userId])
+  @@index([userId])
+}
+
+model Workspace {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  createdById    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy      User         @relation("WorkspaceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  savedGames     SavedGame[]
+  competitorSets CompetitorSet[]
+  aiReports      AiReport[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model SteamGame {
+  id                  String                      @id @default(cuid())
+  appId               Int                         @unique
+  type                String?
+  name                String
+  slug                String                      @unique
+  shortDescription    String?
+  releaseDate         DateTime?
+  releaseDateText     String?
+  isFree              Boolean                     @default(false)
+  isEarlyAccess       Boolean                     @default(false)
+  capsuleImageUrl     String?
+  headerImageUrl      String?
+  websiteUrl          String?
+  supportUrl          String?
+  supportedLanguages  String?
+  metacriticScore     Int?
+  currentPlayers      Int?
+  reviewScore         Float?
+  reviewScoreLabel    ReviewSentiment             @default(UNKNOWN)
+  reviewCount         Int?
+  priceCurrent        SteamPrice?
+  snapshots           SteamGameSnapshot[]
+  priceSnapshots      SteamPriceSnapshot[]
+  reviewSnapshots     SteamReviewSnapshot[]
+  playerSnapshots     SteamPlayerCountSnapshot[]
+  salesEstimates      SalesEstimate[]
+  revenueEstimates    RevenueEstimate[]
+  tags                SteamGameTag[]
+  genres              SteamGameGenre[]
+  developers          SteamGameDeveloper[]
+  publishers          SteamGamePublisher[]
+  savedGames          SavedGame[]
+  competitorSetGames  CompetitorSetGame[]
+  aiReports           AiReport[]
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  lastIngestedAt      DateTime?
+
+  @@index([name])
+  @@index([releaseDate])
+  @@index([reviewCount])
+}
+
+model SteamGameSnapshot {
+  id                String       @id @default(cuid())
+  steamGameId       String
+  ingestionRunId    String?
+  snapshotDate      DateTime     @default(now())
+  name              String
+  type              String?
+  shortDescription  String?
+  rawGenres         Json?
+  rawCategories     Json?
+  rawDevelopers     Json?
+  rawPublishers     Json?
+  rawPayload        Json?
+  releaseDate       DateTime?
+  releaseDateText   String?
+  isFree            Boolean
+  isEarlyAccess     Boolean
+  websiteUrl        String?
+  supportUrl        String?
+  metacriticScore   Int?
+  reviewScore       Float?
+  reviewCount       Int?
+  currentPlayers    Int?
+  steamGame         SteamGame    @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun      IngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, snapshotDate(sort: Desc)])
+}
+
+model SteamPrice {
+  id                String       @id @default(cuid())
+  steamGameId       String       @unique
+  currency          String?
+  initialPriceCents Int?
+  finalPriceCents   Int?
+  discountPercent   Int?
+  isFree            Boolean      @default(false)
+  lastCheckedAt     DateTime     @default(now())
+  steamGame         SteamGame    @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+}
+
+model SteamPriceSnapshot {
+  id                String       @id @default(cuid())
+  steamGameId       String
+  ingestionRunId    String?
+  snapshotDate      DateTime     @default(now())
+  currency          String?
+  initialPriceCents Int?
+  finalPriceCents   Int?
+  discountPercent   Int?
+  isFree            Boolean      @default(false)
+  steamGame         SteamGame    @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun      IngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, snapshotDate(sort: Desc)])
+}
+
+model SteamReviewSnapshot {
+  id                   String       @id @default(cuid())
+  steamGameId          String
+  ingestionRunId       String?
+  snapshotDate         DateTime     @default(now())
+  totalReviews         Int
+  totalPositiveReviews Int
+  totalNegativeReviews Int
+  reviewScore          Float?
+  reviewScoreLabel     ReviewSentiment @default(UNKNOWN)
+  steamGame            SteamGame    @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun         IngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, snapshotDate(sort: Desc)])
+}
+
+model SteamPlayerCountSnapshot {
+  id             String       @id @default(cuid())
+  steamGameId    String
+  ingestionRunId String?
+  snapshotDate   DateTime     @default(now())
+  currentPlayers Int
+  steamGame      SteamGame    @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun   IngestionRun? @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, snapshotDate(sort: Desc)])
+}
+
+model SteamTag {
+  id        String         @id @default(cuid())
+  name      String
+  slug      String         @unique
+  steamTagId Int?
+  games     SteamGameTag[]
+
+  @@unique([name])
+}
+
+model SteamGameTag {
+  steamGameId String
+  steamTagId  String
+  weight      Int?
+
+  steamGame SteamGame @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  steamTag  SteamTag  @relation(fields: [steamTagId], references: [id], onDelete: Cascade)
+
+  @@id([steamGameId, steamTagId])
+  @@index([steamTagId])
+}
+
+model SteamGenre {
+  id          String           @id @default(cuid())
+  steamGenreId Int?
+  name        String           @unique
+  slug        String           @unique
+  games       SteamGameGenre[]
+}
+
+model SteamGameGenre {
+  steamGameId  String
+  steamGenreId String
+
+  steamGame  SteamGame  @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  steamGenre SteamGenre @relation(fields: [steamGenreId], references: [id], onDelete: Cascade)
+
+  @@id([steamGameId, steamGenreId])
+  @@index([steamGenreId])
+}
+
+model SteamDeveloper {
+  id        String               @id @default(cuid())
+  name      String               @unique
+  slug      String               @unique
+  games     SteamGameDeveloper[]
+}
+
+model SteamPublisher {
+  id        String                @id @default(cuid())
+  name      String                @unique
+  slug      String                @unique
+  games     SteamGamePublisher[]
+}
+
+model SteamGameDeveloper {
+  steamGameId      String
+  steamDeveloperId String
+
+  steamGame      SteamGame      @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  steamDeveloper SteamDeveloper @relation(fields: [steamDeveloperId], references: [id], onDelete: Cascade)
+
+  @@id([steamGameId, steamDeveloperId])
+  @@index([steamDeveloperId])
+}
+
+model SteamGamePublisher {
+  steamGameId      String
+  steamPublisherId String
+
+  steamGame      SteamGame      @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  steamPublisher SteamPublisher @relation(fields: [steamPublisherId], references: [id], onDelete: Cascade)
+
+  @@id([steamGameId, steamPublisherId])
+  @@index([steamPublisherId])
+}
+
+model SalesEstimate {
+  id                 String              @id @default(cuid())
+  steamGameId        String
+  ingestionRunId     String?
+  calculatedAt       DateTime            @default(now())
+  reviewMultiplier   Float
+  genreAdjustment    Float
+  priceTierAdjustment Float
+  ageAdjustment      Float
+  confidence         EstimateConfidence
+  confidenceScore    Int
+  lowEstimate        Int
+  medianEstimate     Int
+  highEstimate       Int
+  explanation        String
+  steamGame          SteamGame           @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun       IngestionRun?       @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, calculatedAt(sort: Desc)])
+}
+
+model RevenueEstimate {
+  id                  String              @id @default(cuid())
+  steamGameId         String
+  ingestionRunId      String?
+  calculatedAt        DateTime            @default(now())
+  averagePriceCents   Int
+  lowGrossRevenueCents Int
+  medianGrossRevenueCents Int
+  highGrossRevenueCents Int
+  lowNetRevenueCents  Int
+  medianNetRevenueCents Int
+  highNetRevenueCents Int
+  confidence          EstimateConfidence
+  confidenceScore     Int
+  explanation         String
+  steamGame           SteamGame           @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  ingestionRun        IngestionRun?       @relation(fields: [ingestionRunId], references: [id], onDelete: SetNull)
+
+  @@index([steamGameId, calculatedAt(sort: Desc)])
+}
+
+model AiReport {
+  id             String       @id @default(cuid())
+  organizationId String
+  workspaceId    String?
+  createdById    String
+  reportType     ReportType
+  status         ReportStatus @default(PENDING)
+  title          String
+  subject        String
+  prompt         String?
+  content        String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace?   @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  createdBy      User         @relation("AiReportCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  steamGame      SteamGame?   @relation(fields: [steamGameId], references: [id], onDelete: SetNull)
+  steamGameId    String?
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model SavedGame {
+  id          String    @id @default(cuid())
+  workspaceId String
+  steamGameId String
+  userId      String
+  createdAt   DateTime  @default(now())
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  steamGame   SteamGame @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, steamGameId])
+  @@index([userId])
+}
+
+model CompetitorSet {
+  id             String              @id @default(cuid())
+  organizationId String
+  workspaceId    String
+  createdById    String
+  name           String
+  description    String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy      User                @relation("CompetitorSetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  games          CompetitorSetGame[]
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model CompetitorSetGame {
+  competitorSetId String
+  steamGameId     String
+
+  competitorSet CompetitorSet @relation(fields: [competitorSetId], references: [id], onDelete: Cascade)
+  steamGame      SteamGame     @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+
+  @@id([competitorSetId, steamGameId])
+  @@index([steamGameId])
+}
+
+model IngestionRun {
+  id             String           @id @default(cuid())
+  organizationId String?
+  source         String
+  sourceKey      String?
+  status         IngestionStatus  @default(PENDING)
+  message        String?
+  attempts       Int              @default(0)
+  startedAt      DateTime         @default(now())
+  finishedAt     DateTime?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  gameSnapshots  SteamGameSnapshot[]
+  priceSnapshots SteamPriceSnapshot[]
+  reviewSnapshots SteamReviewSnapshot[]
+  playerSnapshots SteamPlayerCountSnapshot[]
+  salesEstimates SalesEstimate[]
+  revenueEstimates RevenueEstimate[]
+
+  @@index([source, startedAt(sort: Desc)])
+  @@index([status, startedAt(sort: Desc)])
+}
