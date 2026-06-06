@@ -103,7 +103,7 @@ export function CommunityPageClient({
 
   if (!canAccessFeed) {
     return (
-      <Card>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
         <CardHeader>
           <CardTitle>Community is locked on your current plan</CardTitle>
         </CardHeader>
@@ -127,16 +127,44 @@ export function CommunityPageClient({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Community</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Share market findings, project updates, art direction thinking, and learn what the strongest teams in your
-          organization are discovering.
-        </p>
-      </div>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Community</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Share market findings, project updates, art direction thinking, and the operating lessons your team should not lose.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                Internal feed
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                Market notes + project context
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Posts in feed</span>
+              <span className="font-medium">{query.data.feed.length}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Ranking access</span>
+              <span className="font-medium">{canAccessRanking ? "Enabled" : "Locked"}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Use this space</p>
+              <p className="mt-2 font-medium">Turn scattered team insight into a searchable operating memory for the studio.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Publish an update</CardTitle>
             </CardHeader>
@@ -208,7 +236,8 @@ export function CommunityPageClient({
             </CardContent>
           </Card>
           {query.data.feed.length > 0 ? query.data.feed.map((post) => (
-            <Card key={post.id}>
+            <Card key={post.id} className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -225,14 +254,14 @@ export function CommunityPageClient({
               <CardContent className="space-y-3 text-sm">
                 <p className="whitespace-pre-wrap text-muted-foreground">{post.content}</p>
                 {post.project ? (
-                  <div className="rounded-2xl border p-3 text-muted-foreground">
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 text-muted-foreground dark:bg-white/[0.03]">
                     Linked project: <span className="font-medium text-foreground">{post.project.name}</span>
                   </div>
                 ) : null}
                 {post.tags && post.tags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
-                      <span key={tag} className="rounded-full border px-2.5 py-1 text-xs text-muted-foreground">
+                      <span key={tag} className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
                         {tag}
                       </span>
                     ))}
@@ -241,7 +270,8 @@ export function CommunityPageClient({
               </CardContent>
             </Card>
           )) : (
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
                 <CardTitle>No posts yet</CardTitle>
               </CardHeader>
@@ -252,13 +282,14 @@ export function CommunityPageClient({
           )}
         </div>
         <div className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Community ranking</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+              <CardContent className="space-y-3">
               {canAccessRanking ? query.data.ranking.contributors.length > 0 ? query.data.ranking.contributors.map((entry) => (
-                <div key={entry.authorId} className="rounded-2xl border p-4">
+                <div key={entry.authorId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium">#{entry.rank} {entry.authorName}</p>
@@ -276,13 +307,14 @@ export function CommunityPageClient({
               )}
             </CardContent>
           </Card>
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Top posts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {query.data.ranking.topPosts.length > 0 ? query.data.ranking.topPosts.map((post) => (
-                <div key={post.id} className="rounded-2xl border p-4">
+                <div key={post.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                   <p className="font-medium">{post.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {post.likeCount} likes · {post.author.name || post.author.email}

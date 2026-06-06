@@ -103,13 +103,14 @@ export function OrganizationMembersPanel({
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Organization members ({members.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {members.map((member) => (
-            <div key={member.userId} className="rounded-2xl border p-4">
+            <div key={member.userId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
               <p className="font-medium">{member.user.name || member.user.email}</p>
               <p className="mt-1 text-muted-foreground">
                 {member.user.email} · {member.role}
@@ -121,13 +122,14 @@ export function OrganizationMembersPanel({
           ))}
         </CardContent>
       </Card>
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Pending invitations ({invitations.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {invitations.length > 0 ? invitations.map((invitation) => (
-            <div key={invitation.id} className="rounded-2xl border p-4">
+            <div key={invitation.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
               <p className="font-medium">{invitation.email}</p>
               <p className="mt-1 text-muted-foreground">
                 Role: {invitation.role} · Expires {new Date(invitation.expiresAt).toLocaleDateString()}
@@ -155,7 +157,8 @@ export function OrganizationMembersPanel({
           )}
         </CardContent>
       </Card>
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Invite teammate</CardTitle>
         </CardHeader>

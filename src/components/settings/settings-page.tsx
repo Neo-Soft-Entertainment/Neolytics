@@ -80,15 +80,44 @@ export async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage account access, organizations, and the workspaces that power your market research.
-        </p>
-      </div>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Manage account access, organizations, workspace structure, and the integrations behind your market and ERP workflows.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
+                {subscriptionSnapshot.planLabel}
+              </Badge>
+              <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
+                {organization.name}
+              </Badge>
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Seat usage</span>
+              <span className="font-medium">{seatLimitLabel}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Organizations</span>
+              <span className="font-medium">{memberships.length}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Ops control</p>
+              <p className="mt-2 font-medium">Use this area to control access, ownership, seats, workspace structure, and account-linked integrations.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Plan</CardTitle>
           </CardHeader>
@@ -97,7 +126,8 @@ export async function SettingsPage() {
             <p className="mt-1 text-sm text-muted-foreground">{organization.name}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Seats</CardTitle>
           </CardHeader>
@@ -106,7 +136,8 @@ export async function SettingsPage() {
             <p className="mt-1 text-sm text-muted-foreground">Pending invites: {invitations.length}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Workspaces</CardTitle>
           </CardHeader>
@@ -115,7 +146,8 @@ export async function SettingsPage() {
             <p className="mt-1 text-sm text-muted-foreground">Active operating spaces</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Organizations</CardTitle>
           </CardHeader>
@@ -127,34 +159,35 @@ export async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="organization" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 md:grid-cols-3">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur md:grid-cols-3 dark:bg-white/[0.04]">
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="user">User</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Current organization</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 text-sm md:grid-cols-2">
-              <div className="rounded-2xl border p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Name</p>
                 <p className="mt-2 font-medium">{organization.name}</p>
               </div>
-              <div className="rounded-2xl border p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Slug</p>
                 <p className="mt-2 font-medium">{organization.slug}</p>
               </div>
-              <div className="rounded-2xl border p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Subscription</p>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="font-medium">{subscriptionSnapshot.planLabel}</span>
                   <Badge variant="secondary">{subscriptionSnapshot.status}</Badge>
                 </div>
               </div>
-              <div className="rounded-2xl border p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Workspaces</p>
                 <p className="mt-2 font-medium">{organization.workspaces.length}</p>
               </div>
@@ -175,7 +208,8 @@ export async function SettingsPage() {
             invitations={invitations}
           />
 
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Create another organization</CardTitle>
             </CardHeader>
@@ -184,13 +218,14 @@ export async function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Your organizations</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm lg:grid-cols-2">
               {memberships.map((membership) => (
-                <div key={membership.organizationId} className="rounded-2xl border p-4">
+                <div key={membership.organizationId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">{membership.organization.name}</p>
@@ -216,7 +251,8 @@ export async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="workspaces" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Create workspace</CardTitle>
             </CardHeader>
@@ -232,7 +268,8 @@ export async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="user" className="space-y-4">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>User settings</CardTitle>
             </CardHeader>
@@ -245,12 +282,13 @@ export async function SettingsPage() {
           </Card>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
                 <CardTitle>Google integrations</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div className="rounded-2xl border p-4">
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">Google login</p>
                     <Badge variant={hasGoogleLogin ? "default" : "secondary"}>
@@ -263,7 +301,7 @@ export async function SettingsPage() {
                       : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment."}
                   </p>
                 </div>
-                <div className="rounded-2xl border p-4">
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">Google Sheets export</p>
                     <Badge variant={hasGoogleSheets ? "default" : "secondary"}>
@@ -279,16 +317,17 @@ export async function SettingsPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
                 <CardTitle>Access summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div className="rounded-2xl border p-4">
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <p className="font-medium">Primary organization</p>
                   <p className="mt-1 text-muted-foreground">{organization.name}</p>
                 </div>
-                <div className="rounded-2xl border p-4">
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <p className="font-medium">Seat usage</p>
                   <p className="mt-1 text-muted-foreground">{seatLimitLabel}</p>
                 </div>
