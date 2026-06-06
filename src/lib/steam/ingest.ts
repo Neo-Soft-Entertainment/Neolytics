@@ -26,7 +26,7 @@ async function getCatalogAppIds(limit: number, offset: number) {
   try {
     return await fetchSteamCatalogAppIds(offset, limit);
   } catch (error) {
-    logger.warn({ error, offset, limit }, "Steam catalog unavailable, using bootstrap list");
+    logger.warn({ error, offset, limit }, "Official Steam catalog unavailable, using bootstrap list");
     return getBootstrapAppIds(limit, offset);
   }
 }

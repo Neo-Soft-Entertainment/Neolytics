@@ -30,31 +30,46 @@ async function fetchWithRetry<T>(url: string, init?: RequestInit, attempt = 1): 
 }
 
 export async function fetchSteamAppList() {
-  if (env.STEAM_WEB_API_KEY) {
-    const params = new URLSearchParams({
-      key: env.STEAM_WEB_API_KEY,
-      include_games: "true",
-      include_dlc: "false",
-      include_software: "false",
-      include_videos: "false",
-      include_hardware: "false",
-      max_results: "50000"
-    });
-    const url = `https://partner.steam-api.com/IStoreService/GetAppList/v1/?${params.toString()}`;
-    return fetchWithRetry<SteamAppListResponse>(url);
+  const publicUrl = `${env.STEAM_API_BASE_URL}/ISteamApps/GetAppList/v2/`;
+
+  try {
+    return await fetchWithRetry<SteamAppListResponse>(publicUrl);
+  } catch (error) {
+    if (!env.STEAM_WEB_API_KEY) {
+      throw error;
+    }
+
+    logger.warn({ error }, "Public Steam app list unavailable, falling back to Steam Web API key");
   }
 
-  const url = `${env.STEAM_API_BASE_URL}/ISteamApps/GetAppList/v2/`;
-  return fetchWithRetry<SteamAppListResponse>(url);
+  const params = new URLSearchParams({
+    key: env.STEAM_WEB_API_KEY,
+    include_games: "true",
+    include_dlc: "false",
+    include_software: "false",
+    include_videos: "false",
+    include_hardware: "false",
+    max_results: "50000"
+  });
+  const partnerUrl = `https://partner.steam-api.com/IStoreService/GetAppList/v1/?${params.toString()}`;
+  return fetchWithRetry<SteamAppListResponse>(partnerUrl);
 }
 
 export async function fetchSteamCatalogAppIds(offset: number, count: number) {
-  if (env.STEAM_WEB_API_KEY) {
+  try {
     const list = await fetchSteamAppList();
-    return list.applist.apps
+    const appIds = list.applist.apps
       .filter((app) => app.name.trim().length > 0)
       .slice(offset, offset + count)
       .map((app) => app.appid);
+
+    if (appIds.length > 0) {
+      return appIds;
+    }
+
+    throw new Error(`Steam app list returned no app ids for offset=${offset} count=${count}`);
+  } catch (error) {
+    logger.warn({ error, offset, count }, "Official Steam app list unavailable, falling back to store search");
   }
 
   const params = new URLSearchParams({

@@ -62,6 +62,7 @@ CRON_SECRET="replace-with-a-random-secret-with-at-least-16-characters"
 REDIS_URL="redis://localhost:6379"
 STEAM_STORE_BASE_URL="https://store.steampowered.com"
 STEAM_API_BASE_URL="https://api.steampowered.com"
+STEAM_WEB_API_KEY=""
 STEAM_DEFAULT_COUNTRY="us"
 STEAM_DEFAULT_LANGUAGE="en"
 STEAM_REVIEW_MULTIPLIER="45"
@@ -184,7 +185,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Steam ingestion
 
-The ingestion pipeline uses only public Steam endpoints.
+The ingestion pipeline uses official Steam sources first.
+
+- Primary catalog source: `ISteamApps/GetAppList/v2`
+- Primary app metadata: Steam Store `appdetails`
+- Primary reviews: Steam Store `appreviews`
+- Primary player count: `ISteamUserStats/GetNumberOfCurrentPlayers`
+- Optional fallback for the catalog: Steam Web API key via `STEAM_WEB_API_KEY`
+- Last-resort fallback only: public Steam store search and a small bootstrap catalog
+
+Neolytics does not use SteamDB as a backend source. SteamDB is useful for manual research, but it does not provide a public API for this product workflow.
 
 ### Enqueue jobs into Redis
 
