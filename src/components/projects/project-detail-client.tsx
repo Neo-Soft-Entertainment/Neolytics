@@ -52,6 +52,24 @@ export function ProjectDetailClient({
     pricePointCents: "",
     stage: "DISCOVERY"
   });
+  const [newMilestone, setNewMilestone] = useState({
+    title: "",
+    description: "",
+    ownerLabel: "",
+    status: "PLANNED",
+    dueAt: "",
+    budgetedCostCents: "",
+    expectedRevenueCents: ""
+  });
+  const [milestoneEdits, setMilestoneEdits] = useState<Record<string, {
+    title: string;
+    description: string;
+    ownerLabel: string;
+    status: string;
+    dueAt: string;
+    budgetedCostCents: string;
+    expectedRevenueCents: string;
+  }>>({});
   const [newColumn, setNewColumn] = useState({ name: "", color: "" });
   const [newCards, setNewCards] = useState<Record<string, {
     title: string;
@@ -126,6 +144,30 @@ export function ProjectDetailClient({
     }
 
     setCardEdits(nextCardEdits);
+
+    const nextMilestoneEdits: Record<string, {
+      title: string;
+      description: string;
+      ownerLabel: string;
+      status: string;
+      dueAt: string;
+      budgetedCostCents: string;
+      expectedRevenueCents: string;
+    }> = {};
+
+    for (const milestone of query.data.milestones) {
+      nextMilestoneEdits[milestone.id] = {
+        title: milestone.title,
+        description: milestone.description ?? "",
+        ownerLabel: milestone.ownerLabel ?? "",
+        status: milestone.status,
+        dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : "",
+        budgetedCostCents: String(milestone.budgetedCostCents ?? 0),
+        expectedRevenueCents: String(milestone.expectedRevenueCents ?? 0)
+      };
+    }
+
+    setMilestoneEdits(nextMilestoneEdits);
   }, [query.data]);
 
   const board = query.data?.kanbanBoards[0] ?? null;
@@ -220,6 +262,78 @@ export function ProjectDetailClient({
     }
 
     setFeedback("Art analysis updated.");
+    await query.refetch();
+  }
+
+  async function createMilestone() {
+    setFeedback(null);
+
+    const response = await fetch(`/api/projects/${projectId}/milestones`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: newMilestone.title,
+        description: newMilestone.description,
+        ownerLabel: newMilestone.ownerLabel,
+        status: newMilestone.status,
+        dueAt: newMilestone.dueAt ? new Date(newMilestone.dueAt).toISOString() : undefined,
+        budgetedCostCents: Number(newMilestone.budgetedCostCents || 0),
+        expectedRevenueCents: Number(newMilestone.expectedRevenueCents || 0)
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to create milestone.");
+      return;
+    }
+
+    setNewMilestone({
+      title: "",
+      description: "",
+      ownerLabel: "",
+      status: "PLANNED",
+      dueAt: "",
+      budgetedCostCents: "",
+      expectedRevenueCents: ""
+    });
+    setFeedback("Milestone created.");
+    await query.refetch();
+  }
+
+  async function saveMilestone(milestoneId: string) {
+    const milestone = milestoneEdits[milestoneId];
+
+    if (!milestone?.title.trim()) {
+      setFeedback("Milestone title is required.");
+      return;
+    }
+
+    const response = await fetch(`/api/projects/${projectId}/milestones/${milestoneId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: milestone.title,
+        description: milestone.description,
+        ownerLabel: milestone.ownerLabel,
+        status: milestone.status,
+        dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString() : undefined,
+        budgetedCostCents: Number(milestone.budgetedCostCents || 0),
+        expectedRevenueCents: Number(milestone.expectedRevenueCents || 0)
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to save milestone.");
+      return;
+    }
+
+    setFeedback("Milestone updated.");
     await query.refetch();
   }
 
@@ -527,6 +641,7 @@ export function ProjectDetailClient({
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="market">Market analysis</TabsTrigger>
           <TabsTrigger value="art">Art analysis</TabsTrigger>
+          <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="gdd">GDD</TabsTrigger>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
         </TabsList>
@@ -996,6 +1111,222 @@ export function ProjectDetailClient({
               </Card>
             </>
           )}
+        </TabsContent>
+        <TabsContent value="milestones" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Milestones</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatNumber(project.milestones.length)}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Budgeted cost</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatCurrency(project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0))}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Expected revenue</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatCurrency(project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0))}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending approvals</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatNumber(project.approvalRequests.filter((item) => item.status === "PENDING").length)}
+              </CardContent>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Create milestone</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
+              <Input value={newMilestone.ownerLabel} onChange={(event) => setNewMilestone((current) => ({ ...current, ownerLabel: event.target.value }))} placeholder="Owner" />
+              <Select value={newMilestone.status} onValueChange={(value) => setNewMilestone((current) => ({ ...current, status: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input type="date" value={newMilestone.dueAt} onChange={(event) => setNewMilestone((current) => ({ ...current, dueAt: event.target.value }))} />
+              <Input type="number" value={newMilestone.budgetedCostCents} onChange={(event) => setNewMilestone((current) => ({ ...current, budgetedCostCents: event.target.value }))} placeholder="Budgeted cost cents" />
+              <Input type="number" value={newMilestone.expectedRevenueCents} onChange={(event) => setNewMilestone((current) => ({ ...current, expectedRevenueCents: event.target.value }))} placeholder="Expected revenue cents" />
+              <Textarea className="md:col-span-2" value={newMilestone.description} onChange={(event) => setNewMilestone((current) => ({ ...current, description: event.target.value }))} placeholder="Milestone scope, acceptance criteria, delivery notes..." />
+              <Button className="md:col-span-2" onClick={createMilestone}>Create milestone</Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Project milestones and finance bridge</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {project.milestones.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No milestones yet. Create the first delivery checkpoint and attach cost/revenue expectations to it.</p>
+              ) : (
+                project.milestones.map((milestone) => (
+                  <div key={milestone.id} className="rounded-2xl border p-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Input
+                        value={milestoneEdits[milestone.id]?.title ?? milestone.title}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: event.target.value,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      />
+                      <Input
+                        value={milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? ""}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: event.target.value,
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      />
+                      <Select
+                        value={milestoneEdits[milestone.id]?.status ?? milestone.status}
+                        onValueChange={(value) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: value,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="date"
+                        value={milestoneEdits[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : "")}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: event.target.value,
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      />
+                      <Input
+                        type="number"
+                        value={milestoneEdits[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0)}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: event.target.value,
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      />
+                      <Input
+                        type="number"
+                        value={milestoneEdits[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: current[milestone.id]?.description ?? milestone.description ?? "",
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: event.target.value
+                          }
+                        }))}
+                      />
+                      <Textarea
+                        className="md:col-span-2"
+                        value={milestoneEdits[milestone.id]?.description ?? milestone.description ?? ""}
+                        onChange={(event) => setMilestoneEdits((current) => ({
+                          ...current,
+                          [milestone.id]: {
+                            title: current[milestone.id]?.title ?? milestone.title,
+                            description: event.target.value,
+                            ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                            status: current[milestone.id]?.status ?? milestone.status,
+                            dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
+                            budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                            expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                          }
+                        }))}
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-sm text-muted-foreground">
+                        Budget {formatCurrency(milestone.budgetedCostCents)} · Revenue {formatCurrency(milestone.expectedRevenueCents)}
+                      </div>
+                      <Button type="button" onClick={() => saveMilestone(milestone.id)}>Save milestone</Button>
+                    </div>
+                  </div>
+                ))
+              )}
+              {project.budgets.length > 0 ? (
+                <div className="rounded-2xl border bg-muted/20 p-4">
+                  <p className="font-medium">Project budget snapshot</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    {project.budgets.map((budget) => (
+                      <div key={budget.id} className="rounded-xl border bg-background p-3 text-sm">
+                        <p className="font-medium">{budget.name}</p>
+                        <p className="text-muted-foreground">{budget.status}</p>
+                        <p className="mt-2">Planned {formatCurrency(budget.totalPlannedCents)}</p>
+                        <p>Actual {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="gdd" className="space-y-6">
           <Card>

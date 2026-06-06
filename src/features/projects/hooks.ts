@@ -154,6 +154,55 @@ export interface ProjectDetailResponse extends ProjectListItem {
     content: string;
     updatedAt: string;
   }>;
+  milestones: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    ownerLabel: string | null;
+    status: "PLANNED" | "IN_PROGRESS" | "BLOCKED" | "COMPLETED";
+    dueAt: string | null;
+    completedAt: string | null;
+    budgetedCostCents: number;
+    expectedRevenueCents: number;
+    sortOrder: number;
+  }>;
+  budgets: Array<{
+    id: string;
+    name: string;
+    status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+    totalPlannedCents: number;
+    lines: Array<{
+      id: string;
+      category: string;
+      plannedCents: number;
+      actualCents: number;
+    }>;
+  }>;
+  revenueEntries: Array<{
+    id: string;
+    sourceName: string;
+    status: "PLANNED" | "PENDING" | "PAID" | "RECEIVED" | "CANCELED";
+    netCents: number;
+    receivedAt: string;
+  }>;
+  expenseEntries: Array<{
+    id: string;
+    vendorName: string;
+    status: "PLANNED" | "PENDING" | "PAID" | "RECEIVED" | "CANCELED";
+    amountCents: number;
+    occurredAt: string;
+  }>;
+  approvalRequests: Array<{
+    id: string;
+    entityType: string;
+    entityId: string;
+    actionLabel: string;
+    status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELED";
+    amountCents: number | null;
+    reason: string | null;
+    createdAt: string;
+    decidedAt: string | null;
+  }>;
   kanbanBoards: Array<{
     id: string;
     name: string;

@@ -380,6 +380,41 @@ const projectInclude = {
     }
   },
   artAnalysis: true,
+  milestones: {
+    orderBy: [
+      { sortOrder: "asc" },
+      { createdAt: "asc" }
+    ]
+  },
+  budgets: {
+    orderBy: {
+      createdAt: "desc"
+    },
+    include: {
+      lines: {
+        orderBy: [
+          { dueAt: "asc" },
+          { createdAt: "desc" }
+        ]
+      }
+    }
+  },
+  revenueEntries: {
+    orderBy: {
+      receivedAt: "desc"
+    }
+  },
+  expenseEntries: {
+    orderBy: {
+      occurredAt: "desc"
+    }
+  },
+  approvalRequests: {
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: 20
+  },
   kanbanBoards: {
     orderBy: {
       createdAt: "asc"
