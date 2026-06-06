@@ -15,7 +15,14 @@ export async function requireUser() {
 
 export async function getCurrentOrganization() {
   const session = await requireUser();
-  const membership = session.user.organizations[0];
+  const membership = await db.organizationMember.findFirst({
+    where: {
+      userId: session.user.id
+    },
+    orderBy: {
+      joinedAt: "asc"
+    }
+  });
 
   if (!membership) {
     redirect("/setup");
@@ -23,7 +30,7 @@ export async function getCurrentOrganization() {
 
   return db.organization.findUniqueOrThrow({
     where: {
-      id: membership.id
+      id: membership.organizationId
     },
     include: {
       workspaces: {
@@ -52,7 +59,14 @@ export async function getApiContext() {
     return null;
   }
 
-  const membership = session.user.organizations[0];
+  const membership = await db.organizationMember.findFirst({
+    where: {
+      userId: session.user.id
+    },
+    orderBy: {
+      joinedAt: "asc"
+    }
+  });
 
   if (!membership) {
     return null;
@@ -60,7 +74,7 @@ export async function getApiContext() {
 
   const workspace = await db.workspace.findFirst({
     where: {
-      organizationId: membership.id
+      organizationId: membership.organizationId
     },
     orderBy: {
       createdAt: "asc"
@@ -74,7 +88,7 @@ export async function getApiContext() {
   return {
     session,
     userId: session.user.id,
-    organizationId: membership.id,
+    organizationId: membership.organizationId,
     workspace
   };
 }

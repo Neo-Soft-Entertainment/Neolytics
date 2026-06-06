@@ -34,9 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const email = parsed.data.email.trim().toLowerCase();
+
         const user = await db.user.findUnique({
           where: {
-            email: parsed.data.email
+            email
           }
         });
 

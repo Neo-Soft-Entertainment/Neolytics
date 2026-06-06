@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -53,7 +54,7 @@ export function LoginForm() {
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>
-          Access your workspace and Steam market intelligence dashboard. This environment uses invited accounts only.
+          Access your workspace, Steam market intelligence, automated GDDs, and project execution boards.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,6 +82,9 @@ export function LoginForm() {
           <Button className="w-full" disabled={form.formState.isSubmitting} type="submit">
             {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            New here? <Link className="underline underline-offset-4" href="/signup">Create your account</Link>
+          </p>
         </form>
       </CardContent>
     </Card>

@@ -30,9 +30,14 @@ export default async function HomePage() {
                   {session ? "Open dashboard" : "Sign in"}
                 </Link>
               </Button>
+              {!session ? (
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/signup">Create account</Link>
+                </Button>
+              ) : null}
               <Button asChild size="lg" variant="outline">
-                <Link href={session ? "/games" : "/login"}>
-                  Explore games
+                <Link href={session ? "/projects" : "/games"}>
+                  {session ? "Open projects" : "Explore games"}
                 </Link>
               </Button>
             </div>
@@ -53,6 +58,10 @@ export default async function HomePage() {
               <div>
                 <p className="font-medium text-foreground">3. Build the watchlist</p>
                 <p>Track launches, revenue leaders, and fast movers from one workspace.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground">4. Validate the project</p>
+                <p>Turn a concept into market analysis, an automated GDD, and a customizable delivery board.</p>
               </div>
             </CardContent>
           </Card>
@@ -76,10 +85,10 @@ export default async function HomePage() {
           </Card>
           <Card className="bg-card/70">
             <CardHeader>
-              <CardTitle className="text-base">Daily operating rhythm</CardTitle>
+              <CardTitle className="text-base">Project operating system</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Use one workspace to track launches, save games, compare competitors, and publish reports.
+              Run concept analysis, auto-fill market assumptions, generate GDDs, and manage execution in one workspace.
             </CardContent>
           </Card>
         </section>
@@ -94,7 +103,7 @@ export default async function HomePage() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Output</p>
-            <p className="mt-2 text-xl font-semibold">Search, compare, opportunity, report</p>
+            <p className="mt-2 text-xl font-semibold">Search, compare, projects, reports</p>
           </div>
         </section>
       </div>

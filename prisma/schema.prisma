@@ -28,6 +28,14 @@ enum SubscriptionPlan {
   ENTERPRISE
 }
 
+enum ProjectStage {
+  DISCOVERY
+  PRE_PRODUCTION
+  PRODUCTION
+  LIVE
+  ARCHIVED
+}
+
 enum ReviewSentiment {
   OVERWHELMINGLY_POSITIVE
   VERY_POSITIVE
@@ -83,6 +91,7 @@ model User {
   savedGames       SavedGame[]
   competitorSets   CompetitorSet[]      @relation("CompetitorSetCreatedBy")
   aiReports        AiReport[]           @relation("AiReportCreatedBy")
+  projects         Project[]            @relation("ProjectCreatedBy")
 }
 
 model Account {
@@ -133,6 +142,7 @@ model Organization {
   competitorSets    CompetitorSet[]
   aiReports         AiReport[]
   ingestionRuns     IngestionRun[]
+  projects          Project[]
 }
 
 model OrganizationMember {
@@ -162,6 +172,7 @@ model Workspace {
   savedGames     SavedGame[]
   competitorSets CompetitorSet[]
   aiReports      AiReport[]
+  projects       Project[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -202,6 +213,7 @@ model SteamGame {
   savedGames          SavedGame[]
   competitorSetGames  CompetitorSetGame[]
   aiReports           AiReport[]
+  projectCompetitors  ProjectCompetitorGame[]
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   lastIngestedAt      DateTime?
@@ -480,6 +492,128 @@ model CompetitorSetGame {
 
   @@id([competitorSetId, steamGameId])
   @@index([steamGameId])
+}
+
+model Project {
+  id                 String                @id @default(cuid())
+  organizationId     String
+  workspaceId        String
+  createdById        String
+  name               String
+  slug               String
+  elevatorPitch      String?
+  description        String?
+  genreInput         String?
+  tagInput           String?
+  targetAudience     String?
+  coreLoop           String?
+  differentiator     String?
+  monetizationModel  String?
+  artDirection       String?
+  playerFantasy      String?
+  pricePointCents    Int?
+  stage              ProjectStage          @default(DISCOVERY)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  organization       Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace          Workspace             @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy          User                  @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  analysis           ProjectAnalysis?
+  competitorGames    ProjectCompetitorGame[]
+  gdds               ProjectGdd[]
+  kanbanBoards       KanbanBoard[]
+
+  @@unique([workspaceId, slug])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model ProjectAnalysis {
+  id                  String   @id @default(cuid())
+  projectId           String   @unique
+  analyzedAt          DateTime @default(now())
+  matchingGamesCount  Int
+  competitionCount    Int
+  releaseMomentum     Int
+  averageReviewScore  Float?
+  averagePriceCents   Int?
+  medianRevenueCents  BigInt?
+  marketSummary       String
+  opportunitySummary  String
+  riskSummary         String
+  audienceAutofill    String?
+  coreLoopAutofill    String?
+  suggestedGenres     Json?
+  suggestedTags       Json?
+  differentiators     Json?
+  metadata            Json?
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectCompetitorGame {
+  projectId   String
+  steamGameId String
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  steamGame SteamGame @relation(fields: [steamGameId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, steamGameId])
+  @@index([steamGameId])
+}
+
+model ProjectGdd {
+  id        String   @id @default(cuid())
+  projectId String
+  version   Int      @default(1)
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+model KanbanBoard {
+  id        String         @id @default(cuid())
+  projectId String
+  name      String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns   KanbanColumn[]
+
+  @@index([projectId, createdAt(sort: Desc)])
+}
+
+model KanbanColumn {
+  id        String       @id @default(cuid())
+  boardId   String
+  name      String
+  color     String?
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  board     KanbanBoard  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     KanbanCard[]
+
+  @@index([boardId, sortOrder])
+}
+
+model KanbanCard {
+  id            String       @id @default(cuid())
+  columnId      String
+  title         String
+  description   String?
+  assigneeLabel String?
+  dueDate       DateTime?
+  labels        Json?
+  sortOrder     Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  column        KanbanColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId, sortOrder])
 }
 
 model IngestionRun {
