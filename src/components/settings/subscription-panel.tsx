@@ -6,7 +6,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatSubscriptionLimit, subscriptionPlans } from "@/lib/subscription-plans";
+import {
+  formatSubscriptionLimit,
+  subscriptionFeatureRows,
+  subscriptionPlans
+} from "@/lib/subscription-plans";
 
 type SubscriptionSnapshot = {
   plan: SubscriptionPlan;
@@ -128,7 +132,7 @@ export function SubscriptionPanel({
               </CardHeader>
               <CardContent className="space-y-4">
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  {plan.features.map((feature) => (
+                  {plan.highlights.map((feature) => (
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
@@ -149,6 +153,58 @@ export function SubscriptionPanel({
           );
         })}
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Plan feature matrix</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="py-3 pr-4 font-medium">Feature</th>
+                  {Object.entries(subscriptionPlans).map(([planKey, plan]) => (
+                    <th key={planKey} className="py-3 pr-4 font-medium">
+                      {plan.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {subscriptionFeatureRows.map((feature) => (
+                  <tr key={feature.key} className="border-b last:border-b-0">
+                    <td className="py-3 pr-4 font-medium">{feature.label}</td>
+                    {Object.entries(subscriptionPlans).map(([planKey, plan]) => (
+                      <td key={`${feature.key}-${planKey}`} className="py-3 pr-4 text-muted-foreground">
+                        {plan.featureAccess[feature.key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="grid gap-4 lg:hidden">
+            {Object.entries(subscriptionPlans).map(([planKey, plan]) => (
+              <div key={planKey} className="rounded-2xl border p-4">
+                <p className="font-semibold">{plan.label}</p>
+                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {subscriptionFeatureRows.map((feature) => (
+                    <div key={`${planKey}-${feature.key}`} className="flex items-start justify-between gap-4">
+                      <span>{feature.label}</span>
+                      <span className="text-right">{plan.featureAccess[feature.key]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Roadmap-tagged benefits are already modeled in the subscription system and can be enforced as soon as the
+            product surfaces ship.
+          </p>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Usage and limits</CardTitle>

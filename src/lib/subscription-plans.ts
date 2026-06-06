@@ -1,19 +1,78 @@
 import { SubscriptionPlan } from "@prisma/client";
 
+export type SubscriptionMetric =
+  | "seats"
+  | "workspaces"
+  | "savedGames"
+  | "competitorSets"
+  | "projects"
+  | "reportsGenerated"
+  | "exportsGenerated"
+  | "projectAnalysesRun"
+  | "gddsGenerated";
+
+export type SubscriptionCapability =
+  | "steamRadar"
+  | "marketResearch"
+  | "revenueCalculator"
+  | "communityFeed"
+  | "steamXray"
+  | "viabilityAnalyses"
+  | "artAnalyses"
+  | "gameBoardProjects"
+  | "gdds"
+  | "communityRanking"
+  | "guidedJourney"
+  | "pdfExport"
+  | "earlyAccess";
+
+export const subscriptionFeatureRows: Array<{
+  key: SubscriptionCapability;
+  label: string;
+}> = [
+  { key: "steamRadar", label: "Radar Steam" },
+  { key: "marketResearch", label: "Pesquisa de Mercado" },
+  { key: "revenueCalculator", label: "Calculadora de Receita" },
+  { key: "communityFeed", label: "Comunidade (Feed)" },
+  { key: "steamXray", label: "Raio-X Steam" },
+  { key: "viabilityAnalyses", label: "Análises de Viabilidade" },
+  { key: "artAnalyses", label: "Análises de Artes" },
+  { key: "gameBoardProjects", label: "Projetos no Game Board" },
+  { key: "gdds", label: "GDDs" },
+  { key: "communityRanking", label: "Ranking da Comunidade" },
+  { key: "guidedJourney", label: "Jornada guiada" },
+  { key: "pdfExport", label: "Exportação PDF" },
+  { key: "earlyAccess", label: "Acesso Antecipado a novas funcionalidades" }
+];
+
 export const subscriptionPlans = {
   [SubscriptionPlan.FREE]: {
     label: "Free",
     priceLabel: "$0",
     description: "For solo exploration and early validation.",
-    features: [
-      "1 seat",
-      "1 workspace",
-      "25 saved games",
-      "3 competitor sets",
-      "3 active projects",
-      "5 reports per month",
-      "20 exports per month"
+    highlights: [
+      "Radar Steam, pesquisa de mercado e calculadora de receita",
+      "1 seat e 1 workspace",
+      "3 projetos ativos no Game Board",
+      "10 análises de viabilidade por mês",
+      "10 GDDs por mês",
+      "Jornada guiada para onboarding"
     ],
+    featureAccess: {
+      steamRadar: "Included",
+      marketResearch: "Included",
+      revenueCalculator: "Included",
+      communityFeed: "Not included",
+      steamXray: "Basic access",
+      viabilityAnalyses: "10 / month",
+      artAnalyses: "Roadmap",
+      gameBoardProjects: "3 active",
+      gdds: "10 / month",
+      communityRanking: "Not included",
+      guidedJourney: "Included",
+      pdfExport: "Not included",
+      earlyAccess: "Not included"
+    },
     limits: {
       seats: 1,
       workspaces: 1,
@@ -30,15 +89,29 @@ export const subscriptionPlans = {
     label: "Plus",
     priceLabel: "$20",
     description: "For serious studios building a steady research workflow.",
-    features: [
-      "5 seats",
-      "5 workspaces",
-      "250 saved games",
-      "25 competitor sets",
-      "20 active projects",
-      "40 reports per month",
-      "150 exports per month"
+    highlights: [
+      "Comunidade, ranking e PDF export",
+      "5 seats e 5 workspaces",
+      "Raio-X Steam mais profundo",
+      "20 projetos ativos no Game Board",
+      "100 análises de viabilidade por mês",
+      "100 GDDs por mês"
     ],
+    featureAccess: {
+      steamRadar: "Included",
+      marketResearch: "Included",
+      revenueCalculator: "Included",
+      communityFeed: "Included",
+      steamXray: "Advanced access",
+      viabilityAnalyses: "100 / month",
+      artAnalyses: "Priority when launched",
+      gameBoardProjects: "20 active",
+      gdds: "100 / month",
+      communityRanking: "Included",
+      guidedJourney: "Included",
+      pdfExport: "Included",
+      earlyAccess: "Not included"
+    },
     limits: {
       seats: 5,
       workspaces: 5,
@@ -55,15 +128,29 @@ export const subscriptionPlans = {
     label: "Pro",
     priceLabel: "$200",
     description: "For power users who want essentially unrestricted research velocity.",
-    features: [
-      "Unlimited seats",
-      "Unlimited workspaces",
-      "Unlimited saved games",
-      "Unlimited competitor sets",
-      "Unlimited active projects",
-      "Unlimited reports and exports",
-      "Unlimited project analysis and GDD generation"
+    highlights: [
+      "Raio-X Steam ilimitado",
+      "Análises de viabilidade ilimitadas",
+      "Projetos no Game Board ilimitados",
+      "GDDs ilimitados",
+      "PDF export e early access",
+      "Seats e workspaces ilimitados"
     ],
+    featureAccess: {
+      steamRadar: "Included",
+      marketResearch: "Included",
+      revenueCalculator: "Included",
+      communityFeed: "Included",
+      steamXray: "Unlimited",
+      viabilityAnalyses: "Unlimited",
+      artAnalyses: "Unlimited when launched",
+      gameBoardProjects: "Unlimited",
+      gdds: "Unlimited",
+      communityRanking: "Included",
+      guidedJourney: "Included",
+      pdfExport: "Included",
+      earlyAccess: "Included"
+    },
     limits: {
       seats: null,
       workspaces: null,
@@ -77,17 +164,6 @@ export const subscriptionPlans = {
     }
   }
 } as const;
-
-export type SubscriptionMetric =
-  | "seats"
-  | "workspaces"
-  | "savedGames"
-  | "competitorSets"
-  | "projects"
-  | "reportsGenerated"
-  | "exportsGenerated"
-  | "projectAnalysesRun"
-  | "gddsGenerated";
 
 export function getSubscriptionPlanConfig(plan: SubscriptionPlan) {
   return subscriptionPlans[plan];
@@ -103,4 +179,9 @@ export function formatSubscriptionLimit(limit: number | null) {
   }
 
   return limit.toLocaleString("en-US");
+}
+
+export function hasSubscriptionCapability(plan: SubscriptionPlan, capability: SubscriptionCapability) {
+  const value = subscriptionPlans[plan].featureAccess[capability];
+  return value !== "Not included";
 }
