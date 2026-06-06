@@ -54,13 +54,42 @@ export function GamesPageClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Games</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Search Steam titles, narrow by genre or tag, and move quickly from broad discovery to a viable comp set.
-        </p>
-      </div>
-      <Card>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Games</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Search Steam titles, narrow by genre or tag, and move quickly from broad discovery to a viable comparison set.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                Catalog exploration
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                Search to comp set
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Matches</span>
+              <span className="font-medium">{query.data?.total ? formatNumber(query.data.total) : "0"}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Review filter</span>
+              <span className="font-medium">{filters.minReviewScore === "any" ? "Any score" : `${filters.minReviewScore}%+`}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Best use</p>
+              <p className="mt-2 font-medium">Start wide, isolate the niche, then save the strongest candidates for compare, reports, and project validation.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Search filters</CardTitle>
         </CardHeader>
@@ -114,7 +143,8 @@ export function GamesPageClient() {
       {query.isError ? (
         <ErrorState title="Search failed" description="We could not load the games list." />
       ) : null}
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="space-y-1">
             <CardTitle>Results</CardTitle>

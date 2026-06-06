@@ -2,7 +2,7 @@
 
 import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -24,6 +24,10 @@ export function OrganizationSwitcher({
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(currentOrganizationId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedOrganizationId(currentOrganizationId);
+  }, [currentOrganizationId]);
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
 
@@ -58,10 +62,10 @@ export function OrganizationSwitcher({
   return (
     <div className="min-w-[220px]">
       <Select disabled={isSubmitting} onValueChange={onValueChange} value={selectedOrganizationId}>
-        <SelectTrigger className="h-9 border-0 bg-transparent px-0 text-left shadow-none focus:ring-0">
+        <SelectTrigger className="h-9 rounded-full border-white/10 bg-transparent px-3 text-left shadow-none focus:ring-0">
           <SelectValue placeholder="Select organization" />
         </SelectTrigger>
-        <SelectContent align="start">
+        <SelectContent align="start" className="border-white/10 bg-background/90 backdrop-blur-xl">
           {organizations.map((organization) => (
             <SelectItem key={organization.id} value={organization.id}>
               {organization.name}
