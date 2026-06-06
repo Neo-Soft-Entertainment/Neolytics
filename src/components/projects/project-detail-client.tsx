@@ -44,8 +44,21 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     stage: "DISCOVERY"
   });
   const [newColumn, setNewColumn] = useState({ name: "", color: "" });
-  const [newCards, setNewCards] = useState<Record<string, { title: string; assigneeLabel: string }>>({});
+  const [newCards, setNewCards] = useState<Record<string, {
+    title: string;
+    description: string;
+    assigneeLabel: string;
+    dueDate: string;
+    labels: string;
+  }>>({});
   const [columnEdits, setColumnEdits] = useState<Record<string, { name: string; color: string }>>({});
+  const [cardEdits, setCardEdits] = useState<Record<string, {
+    title: string;
+    description: string;
+    assigneeLabel: string;
+    dueDate: string;
+    labels: string;
+  }>>({});
 
   useEffect(() => {
     if (!query.data) {
@@ -80,6 +93,30 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     }
 
     setColumnEdits(nextColumnEdits);
+
+    const nextCardEdits: Record<string, {
+      title: string;
+      description: string;
+      assigneeLabel: string;
+      dueDate: string;
+      labels: string;
+    }> = {};
+
+    for (const boardItem of query.data.kanbanBoards) {
+      for (const column of boardItem.columns) {
+        for (const card of column.cards) {
+          nextCardEdits[card.id] = {
+            title: card.title,
+            description: card.description ?? "",
+            assigneeLabel: card.assigneeLabel ?? "",
+            dueDate: card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "",
+            labels: Array.isArray(card.labels) ? card.labels.join(", ") : ""
+          };
+        }
+      }
+    }
+
+    setCardEdits(nextCardEdits);
   }, [query.data]);
 
   const board = query.data?.kanbanBoards[0] ?? null;
@@ -224,7 +261,13 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         type: "createCard",
         columnId,
         title: cardState.title,
-        assigneeLabel: cardState.assigneeLabel
+        description: cardState.description,
+        assigneeLabel: cardState.assigneeLabel,
+        dueDate: cardState.dueDate ? new Date(cardState.dueDate).toISOString() : undefined,
+        labels: cardState.labels
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
       })
     });
 
@@ -238,10 +281,50 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
       ...current,
       [columnId]: {
         title: "",
-        assigneeLabel: ""
+        description: "",
+        assigneeLabel: "",
+        dueDate: "",
+        labels: ""
       }
     }));
     setFeedback("Card created.");
+    await query.refetch();
+  }
+
+  async function saveCard(cardId: string) {
+    const cardState = cardEdits[cardId];
+
+    if (!cardState?.title.trim()) {
+      setFeedback("Card title is required.");
+      return;
+    }
+
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "updateCard",
+        cardId,
+        title: cardState.title,
+        description: cardState.description,
+        assigneeLabel: cardState.assigneeLabel,
+        dueDate: cardState.dueDate ? new Date(cardState.dueDate).toISOString() : null,
+        labels: cardState.labels
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to save card.");
+      return;
+    }
+
+    setFeedback("Card updated.");
     await query.refetch();
   }
 
@@ -264,6 +347,106 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
       return;
     }
 
+    await query.refetch();
+  }
+
+  async function moveCardInColumn(cardId: string, direction: "up" | "down") {
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "moveCard",
+        cardId,
+        direction
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to move card.");
+      return;
+    }
+
+    await query.refetch();
+  }
+
+  async function deleteCard(cardId: string) {
+    const confirmed = window.confirm("Delete this card permanently?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "deleteCard",
+        cardId
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to delete card.");
+      return;
+    }
+
+    setFeedback("Card deleted.");
+    await query.refetch();
+  }
+
+  async function moveColumn(columnId: string, direction: "left" | "right") {
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "moveColumn",
+        columnId,
+        direction
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to move column.");
+      return;
+    }
+
+    await query.refetch();
+  }
+
+  async function deleteColumn(columnId: string) {
+    const confirmed = window.confirm("Delete this column and all cards inside it?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "deleteColumn",
+        columnId
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to delete column.");
+      return;
+    }
+
+    setFeedback("Column deleted.");
     await query.refetch();
   }
 
@@ -571,14 +754,90 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                     >
                       Save
                     </Button>
+                    <Button size="sm" type="button" variant="outline" onClick={() => moveColumn(column.id, "left")}>
+                      ←
+                    </Button>
+                    <Button size="sm" type="button" variant="outline" onClick={() => moveColumn(column.id, "right")}>
+                      →
+                    </Button>
+                    <Button size="sm" type="button" variant="destructive" onClick={() => deleteColumn(column.id)}>
+                      Delete
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {column.cards.map((card) => (
                     <div key={card.id} className="rounded-2xl border bg-muted/20 p-3">
-                      <p className="font-medium">{card.title}</p>
-                      {card.description ? <p className="mt-1 text-sm text-muted-foreground">{card.description}</p> : null}
-                      <div className="mt-3 grid gap-3">
+                      <div className="grid gap-3">
+                        <Input
+                          value={cardEdits[card.id]?.title ?? card.title}
+                          onChange={(event) => setCardEdits((current) => ({
+                            ...current,
+                            [card.id]: {
+                              title: event.target.value,
+                              description: current[card.id]?.description ?? card.description ?? "",
+                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
+                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
+                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
+                            }
+                          }))}
+                        />
+                        <Textarea
+                          value={cardEdits[card.id]?.description ?? card.description ?? ""}
+                          onChange={(event) => setCardEdits((current) => ({
+                            ...current,
+                            [card.id]: {
+                              title: current[card.id]?.title ?? card.title,
+                              description: event.target.value,
+                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
+                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
+                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
+                            }
+                          }))}
+                          placeholder="Description"
+                        />
+                        <Input
+                          value={cardEdits[card.id]?.assigneeLabel ?? card.assigneeLabel ?? ""}
+                          onChange={(event) => setCardEdits((current) => ({
+                            ...current,
+                            [card.id]: {
+                              title: current[card.id]?.title ?? card.title,
+                              description: current[card.id]?.description ?? card.description ?? "",
+                              assigneeLabel: event.target.value,
+                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
+                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
+                            }
+                          }))}
+                          placeholder="Owner"
+                        />
+                        <Input
+                          type="date"
+                          value={cardEdits[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "")}
+                          onChange={(event) => setCardEdits((current) => ({
+                            ...current,
+                            [card.id]: {
+                              title: current[card.id]?.title ?? card.title,
+                              description: current[card.id]?.description ?? card.description ?? "",
+                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
+                              dueDate: event.target.value,
+                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
+                            }
+                          }))}
+                        />
+                        <Input
+                          value={cardEdits[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")}
+                          onChange={(event) => setCardEdits((current) => ({
+                            ...current,
+                            [card.id]: {
+                              title: current[card.id]?.title ?? card.title,
+                              description: current[card.id]?.description ?? card.description ?? "",
+                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
+                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
+                              labels: event.target.value
+                            }
+                          }))}
+                          placeholder="labels, comma, separated"
+                        />
                         <Select value={column.id} onValueChange={(value) => moveCard(card.id, value)}>
                           <SelectTrigger>
                             <SelectValue />
@@ -591,10 +850,20 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                             ))}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
-                          {card.assigneeLabel || "Unassigned"}
-                          {card.dueDate ? ` · due ${new Date(card.dueDate).toLocaleDateString()}` : ""}
-                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" type="button" variant="outline" onClick={() => moveCardInColumn(card.id, "up")}>
+                            ↑
+                          </Button>
+                          <Button size="sm" type="button" variant="outline" onClick={() => moveCardInColumn(card.id, "down")}>
+                            ↓
+                          </Button>
+                          <Button size="sm" type="button" variant="outline" onClick={() => saveCard(card.id)}>
+                            Save card
+                          </Button>
+                          <Button size="sm" type="button" variant="destructive" onClick={() => deleteCard(card.id)}>
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -606,10 +875,27 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                           ...current,
                           [column.id]: {
                             title: event.target.value,
-                            assigneeLabel: current[column.id]?.assigneeLabel ?? ""
+                            description: current[column.id]?.description ?? "",
+                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
+                            dueDate: current[column.id]?.dueDate ?? "",
+                            labels: current[column.id]?.labels ?? ""
                           }
                         }))}
                         placeholder="New card title"
+                      />
+                      <Textarea
+                        value={newCards[column.id]?.description ?? ""}
+                        onChange={(event) => setNewCards((current) => ({
+                          ...current,
+                          [column.id]: {
+                            title: current[column.id]?.title ?? "",
+                            description: event.target.value,
+                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
+                            dueDate: current[column.id]?.dueDate ?? "",
+                            labels: current[column.id]?.labels ?? ""
+                          }
+                        }))}
+                        placeholder="Card description"
                       />
                       <Input
                         value={newCards[column.id]?.assigneeLabel ?? ""}
@@ -617,10 +903,41 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
                           ...current,
                           [column.id]: {
                             title: current[column.id]?.title ?? "",
-                            assigneeLabel: event.target.value
+                            description: current[column.id]?.description ?? "",
+                            assigneeLabel: event.target.value,
+                            dueDate: current[column.id]?.dueDate ?? "",
+                            labels: current[column.id]?.labels ?? ""
                           }
                         }))}
                         placeholder="Owner"
+                      />
+                      <Input
+                        type="date"
+                        value={newCards[column.id]?.dueDate ?? ""}
+                        onChange={(event) => setNewCards((current) => ({
+                          ...current,
+                          [column.id]: {
+                            title: current[column.id]?.title ?? "",
+                            description: current[column.id]?.description ?? "",
+                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
+                            dueDate: event.target.value,
+                            labels: current[column.id]?.labels ?? ""
+                          }
+                        }))}
+                      />
+                      <Input
+                        value={newCards[column.id]?.labels ?? ""}
+                        onChange={(event) => setNewCards((current) => ({
+                          ...current,
+                          [column.id]: {
+                            title: current[column.id]?.title ?? "",
+                            description: current[column.id]?.description ?? "",
+                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
+                            dueDate: current[column.id]?.dueDate ?? "",
+                            labels: event.target.value
+                          }
+                        }))}
+                        placeholder="labels, comma, separated"
                       />
                       <Button variant="outline" onClick={() => createCard(column.id)}>
                         Add card

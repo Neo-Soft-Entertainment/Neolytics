@@ -8,12 +8,21 @@ import { acceptOrganizationInvitation, getOrganizationInvitationByToken, Organiz
 import { createOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
 
+const optionalNonEmptyString = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().min(2).optional());
+
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  organizationName: z.string().min(2).optional(),
-  workspaceName: z.string().min(2).optional(),
+  organizationName: optionalNonEmptyString,
+  workspaceName: optionalNonEmptyString,
   inviteToken: z.string().optional()
 });
 

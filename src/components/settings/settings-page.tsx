@@ -8,7 +8,9 @@ import { CreateOrganizationForm } from "@/components/organization/create-organiz
 import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
 import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
+import { OrganizationDangerZone } from "@/components/settings/organization-danger-zone";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
+import { WorkspaceManagementPanel } from "@/components/settings/workspace-management-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -69,6 +71,7 @@ export async function SettingsPage() {
     : [];
   const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
+  const canDeleteOrganization = currentMembership?.role === "OWNER";
 
   return (
     <div className="space-y-6">
@@ -133,6 +136,7 @@ export async function SettingsPage() {
               ))}
             </CardContent>
           </Card>
+          <OrganizationDangerZone canDelete={Boolean(canDeleteOrganization)} />
         </TabsContent>
         <TabsContent value="workspaces" className="space-y-4">
           <Card>
@@ -143,22 +147,10 @@ export async function SettingsPage() {
               <CreateWorkspaceForm />
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Workspace list</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              {organization.workspaces.map((workspace) => (
-                <div key={workspace.id} className="rounded-2xl border p-4">
-                  <p className="font-medium">{workspace.name}</p>
-                  <p className="mt-1 text-muted-foreground">Slug: {workspace.slug}</p>
-                  <p className="mt-1 text-muted-foreground">
-                    {workspace.description || "No description yet."}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <WorkspaceManagementPanel
+            canManage={Boolean(canManageSubscription)}
+            workspaces={organization.workspaces}
+          />
         </TabsContent>
         <TabsContent value="user">
           <Card>

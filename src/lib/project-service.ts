@@ -745,6 +745,48 @@ export async function updateKanbanColumn(params: {
   return getProjectById(params.projectId, params.workspaceId);
 }
 
+async function reorderColumns(boardId: string) {
+  const columns = await db.kanbanColumn.findMany({
+    where: {
+      boardId
+    },
+    orderBy: [
+      { sortOrder: "asc" },
+      { createdAt: "asc" }
+    ]
+  });
+
+  await Promise.all(columns.map((column, index) => db.kanbanColumn.update({
+    where: {
+      id: column.id
+    },
+    data: {
+      sortOrder: index
+    }
+  })));
+}
+
+async function reorderCards(columnId: string) {
+  const cards = await db.kanbanCard.findMany({
+    where: {
+      columnId
+    },
+    orderBy: [
+      { sortOrder: "asc" },
+      { createdAt: "asc" }
+    ]
+  });
+
+  await Promise.all(cards.map((card, index) => db.kanbanCard.update({
+    where: {
+      id: card.id
+    },
+    data: {
+      sortOrder: index
+    }
+  })));
+}
+
 export async function createKanbanCard(params: {
   projectId: string;
   workspaceId: string;
@@ -844,6 +886,159 @@ export async function updateKanbanCard(params: {
       ...(params.labels !== undefined ? { labels: params.labels } : {})
     }
   });
+
+  if (params.columnId && params.columnId !== card.columnId) {
+    await reorderCards(card.columnId);
+    await reorderCards(params.columnId);
+  }
+
+  if (params.sortOrder !== undefined) {
+    await reorderCards(params.columnId ?? card.columnId);
+  }
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function moveKanbanColumn(params: {
+  projectId: string;
+  workspaceId: string;
+  columnId: string;
+  direction: "left" | "right";
+}) {
+  const column = await db.kanbanColumn.findFirstOrThrow({
+    where: {
+      id: params.columnId,
+      board: {
+        projectId: params.projectId,
+        project: {
+          workspaceId: params.workspaceId
+        }
+      }
+    }
+  });
+  const target = await db.kanbanColumn.findFirst({
+    where: {
+      boardId: column.boardId,
+      sortOrder: params.direction === "left" ? column.sortOrder - 1 : column.sortOrder + 1
+    }
+  });
+
+  if (!target) {
+    return getProjectById(params.projectId, params.workspaceId);
+  }
+
+  await db.$transaction([
+    db.kanbanColumn.update({
+      where: { id: column.id },
+      data: { sortOrder: target.sortOrder }
+    }),
+    db.kanbanColumn.update({
+      where: { id: target.id },
+      data: { sortOrder: column.sortOrder }
+    })
+  ]);
+  await reorderColumns(column.boardId);
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function deleteKanbanColumn(params: {
+  projectId: string;
+  workspaceId: string;
+  columnId: string;
+}) {
+  const column = await db.kanbanColumn.findFirstOrThrow({
+    where: {
+      id: params.columnId,
+      board: {
+        projectId: params.projectId,
+        project: {
+          workspaceId: params.workspaceId
+        }
+      }
+    }
+  });
+
+  await db.kanbanColumn.delete({
+    where: {
+      id: column.id
+    }
+  });
+  await reorderColumns(column.boardId);
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function moveKanbanCard(params: {
+  projectId: string;
+  workspaceId: string;
+  cardId: string;
+  direction: "up" | "down";
+}) {
+  const card = await db.kanbanCard.findFirstOrThrow({
+    where: {
+      id: params.cardId,
+      column: {
+        board: {
+          projectId: params.projectId,
+          project: {
+            workspaceId: params.workspaceId
+          }
+        }
+      }
+    }
+  });
+  const target = await db.kanbanCard.findFirst({
+    where: {
+      columnId: card.columnId,
+      sortOrder: params.direction === "up" ? card.sortOrder - 1 : card.sortOrder + 1
+    }
+  });
+
+  if (!target) {
+    return getProjectById(params.projectId, params.workspaceId);
+  }
+
+  await db.$transaction([
+    db.kanbanCard.update({
+      where: { id: card.id },
+      data: { sortOrder: target.sortOrder }
+    }),
+    db.kanbanCard.update({
+      where: { id: target.id },
+      data: { sortOrder: card.sortOrder }
+    })
+  ]);
+  await reorderCards(card.columnId);
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function deleteKanbanCard(params: {
+  projectId: string;
+  workspaceId: string;
+  cardId: string;
+}) {
+  const card = await db.kanbanCard.findFirstOrThrow({
+    where: {
+      id: params.cardId,
+      column: {
+        board: {
+          projectId: params.projectId,
+          project: {
+            workspaceId: params.workspaceId
+          }
+        }
+      }
+    }
+  });
+
+  await db.kanbanCard.delete({
+    where: {
+      id: card.id
+    }
+  });
+  await reorderCards(card.columnId);
 
   return getProjectById(params.projectId, params.workspaceId);
 }

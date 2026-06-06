@@ -5,6 +5,10 @@ import { getApiContext } from "@/lib/auth-helpers";
 import {
   createKanbanCard,
   createKanbanColumn,
+  deleteKanbanCard,
+  deleteKanbanColumn,
+  moveKanbanCard,
+  moveKanbanColumn,
   updateKanbanCard,
   updateKanbanColumn
 } from "@/lib/project-service";
@@ -22,6 +26,15 @@ const schema = z.discriminatedUnion("type", [
     name: z.string().optional(),
     color: z.string().nullable().optional(),
     sortOrder: z.coerce.number().int().nonnegative().optional()
+  }),
+  z.object({
+    type: z.literal("moveColumn"),
+    columnId: z.string().min(1),
+    direction: z.enum(["left", "right"])
+  }),
+  z.object({
+    type: z.literal("deleteColumn"),
+    columnId: z.string().min(1)
   }),
   z.object({
     type: z.literal("createCard"),
@@ -42,6 +55,15 @@ const schema = z.discriminatedUnion("type", [
     dueDate: z.string().datetime().nullable().optional(),
     sortOrder: z.coerce.number().int().nonnegative().optional(),
     labels: z.array(z.string()).optional()
+  }),
+  z.object({
+    type: z.literal("moveCard"),
+    cardId: z.string().min(1),
+    direction: z.enum(["up", "down"])
+  }),
+  z.object({
+    type: z.literal("deleteCard"),
+    cardId: z.string().min(1)
   })
 ]);
 
@@ -89,6 +111,40 @@ export async function PATCH(
         assigneeLabel: body.assigneeLabel,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
         labels: body.labels
+      }));
+    }
+
+    if (body.type === "moveColumn") {
+      return ok(await moveKanbanColumn({
+        projectId,
+        workspaceId: context.workspace.id,
+        columnId: body.columnId,
+        direction: body.direction
+      }));
+    }
+
+    if (body.type === "deleteColumn") {
+      return ok(await deleteKanbanColumn({
+        projectId,
+        workspaceId: context.workspace.id,
+        columnId: body.columnId
+      }));
+    }
+
+    if (body.type === "moveCard") {
+      return ok(await moveKanbanCard({
+        projectId,
+        workspaceId: context.workspace.id,
+        cardId: body.cardId,
+        direction: body.direction
+      }));
+    }
+
+    if (body.type === "deleteCard") {
+      return ok(await deleteKanbanCard({
+        projectId,
+        workspaceId: context.workspace.id,
+        cardId: body.cardId
       }));
     }
 

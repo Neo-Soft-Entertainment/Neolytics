@@ -58,7 +58,12 @@ export function SignupForm({
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
+      body: JSON.stringify(inviteToken ? {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        inviteToken
+      } : {
         ...values,
         inviteToken
       })

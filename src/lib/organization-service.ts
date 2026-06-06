@@ -90,3 +90,73 @@ export async function createWorkspaceForOrganization(params: {
     }
   });
 }
+
+export async function deleteOrganizationForUser(params: {
+  organizationId: string;
+  userId: string;
+}) {
+  const membership = await db.organizationMember.findUnique({
+    where: {
+      organizationId_userId: {
+        organizationId: params.organizationId,
+        userId: params.userId
+      }
+    }
+  });
+
+  if (!membership || membership.role !== "OWNER") {
+    throw new Error("Only organization owners can delete the organization.");
+  }
+
+  await db.organization.delete({
+    where: {
+      id: params.organizationId
+    }
+  });
+}
+
+export async function deleteWorkspaceFromOrganization(params: {
+  organizationId: string;
+  workspaceId: string;
+  userId: string;
+}) {
+  const membership = await db.organizationMember.findUnique({
+    where: {
+      organizationId_userId: {
+        organizationId: params.organizationId,
+        userId: params.userId
+      }
+    }
+  });
+
+  if (!membership || (membership.role !== "OWNER" && membership.role !== "ADMIN")) {
+    throw new Error("Only organization admins can delete workspaces.");
+  }
+
+  const workspaceCount = await db.workspace.count({
+    where: {
+      organizationId: params.organizationId
+    }
+  });
+
+  if (workspaceCount <= 1) {
+    throw new Error("At least one workspace must remain in the organization.");
+  }
+
+  const workspace = await db.workspace.findFirst({
+    where: {
+      id: params.workspaceId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (!workspace) {
+    throw new Error("Workspace not found.");
+  }
+
+  await db.workspace.delete({
+    where: {
+      id: workspace.id
+    }
+  });
+}

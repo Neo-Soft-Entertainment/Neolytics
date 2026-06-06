@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
-import { requireApiUser } from "@/lib/auth-helpers";
-import { createOrganizationForUser } from "@/lib/organization-service";
+import { getApiContext, requireApiUser } from "@/lib/auth-helpers";
+import { createOrganizationForUser, deleteOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
 
 const schema = z.object({
@@ -32,5 +32,24 @@ export async function POST(request: Request) {
     }
 
     return serverError("Unable to create organization.");
+  }
+}
+
+export async function DELETE() {
+  const context = await getApiContext();
+
+  if (!context) {
+    return unauthorized();
+  }
+
+  try {
+    await deleteOrganizationForUser({
+      organizationId: context.organizationId,
+      userId: context.userId
+    });
+
+    return ok({ success: true });
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "Unable to delete organization.");
   }
 }
