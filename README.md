@@ -10,7 +10,7 @@ Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase
 - shadcn/ui-style component primitives
 - Supabase Postgres
 - Prisma
-- Auth.js with credentials login and optional GitHub or Discord OAuth
+- Auth.js with credentials login and optional GitHub, Google, or Discord OAuth
 - TanStack Query
 - Recharts
 - BullMQ + Redis for local Steam ingestion jobs
@@ -83,9 +83,19 @@ Optional OAuth:
 ```env
 GITHUB_ID=""
 GITHUB_SECRET=""
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
 DISCORD_CLIENT_ID=""
 DISCORD_CLIENT_SECRET=""
 ```
+
+Google OAuth setup:
+
+- Create an OAuth client in Google Cloud Console
+- Add an authorized redirect URI pointing to `https://your-domain/api/auth/callback/google`
+- Copy the client id into `GOOGLE_CLIENT_ID`
+- Copy the client secret into `GOOGLE_CLIENT_SECRET`
+- Once those values are present, the login screen will automatically show `Continue with Google`
 
 Discord OAuth setup:
 
@@ -107,11 +117,13 @@ Optional Google Sheets publishing:
 - `SUPABASE_URL`: Supabase project URL used by the company document upload flow
 - `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
 - `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
+- `GOOGLE_CLIENT_ID`: optional Google OAuth client id for social login
+- `GOOGLE_CLIENT_SECRET`: optional Google OAuth client secret for social login
 - `GOOGLE_SHEETS_CLIENT_EMAIL`: service account email
 - `GOOGLE_SHEETS_PRIVATE_KEY`: service account private key
 - `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed
 
-When these variables are present, report exports can be pushed directly into Google Sheets and shared with the current signed-in user.
+When the Google Sheets variables are present, export menus can push workbooks directly into Google Sheets and share them with the current signed-in user. The current integration status is also visible in `Settings > User > Google integrations`.
 
 ## Installation
 

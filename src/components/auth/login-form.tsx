@@ -22,9 +22,11 @@ type FormValues = z.infer<typeof schema>;
 
 export function LoginForm({
   inviteToken,
+  hasGoogleLogin,
   hasDiscordLogin
 }: {
   inviteToken?: string;
+  hasGoogleLogin: boolean;
   hasDiscordLogin: boolean;
 }) {
   const router = useRouter();
@@ -36,6 +38,8 @@ export function LoginForm({
       password: ""
     }
   });
+
+  const hasSocialLogin = hasGoogleLogin || hasDiscordLogin;
 
   async function onSubmit(values: FormValues) {
     setError(null);
@@ -55,6 +59,13 @@ export function LoginForm({
     router.refresh();
   }
 
+  async function onGoogleSignIn() {
+    setError(null);
+    await signIn("google", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+    });
+  }
+
   async function onDiscordSignIn() {
     setError(null);
     await signIn("discord", {
@@ -71,11 +82,18 @@ export function LoginForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {hasDiscordLogin ? (
+        {hasSocialLogin ? (
           <div className="mb-4 space-y-3">
-            <Button className="w-full" type="button" variant="outline" onClick={onDiscordSignIn}>
-              Continue with Discord
-            </Button>
+            {hasGoogleLogin ? (
+              <Button className="w-full" type="button" variant="outline" onClick={onGoogleSignIn}>
+                Continue with Google
+              </Button>
+            ) : null}
+            {hasDiscordLogin ? (
+              <Button className="w-full" type="button" variant="outline" onClick={onDiscordSignIn}>
+                Continue with Discord
+              </Button>
+            ) : null}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />

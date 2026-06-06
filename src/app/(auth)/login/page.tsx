@@ -23,6 +23,7 @@ export default async function LoginPage({
         <NeolyticsBrand />
         <LoginForm
           inviteToken={inviteToken}
+          hasGoogleLogin={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
           hasDiscordLogin={Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET)}
         />
       </div>

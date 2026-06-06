@@ -72,6 +72,8 @@ export async function SettingsPage() {
   const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
   const canDeleteOrganization = currentMembership?.role === "OWNER";
+  const hasGoogleLogin = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasGoogleSheets = Boolean(process.env.GOOGLE_SHEETS_CLIENT_EMAIL && process.env.GOOGLE_SHEETS_PRIVATE_KEY);
 
   return (
     <div className="space-y-6">
@@ -153,16 +155,41 @@ export async function SettingsPage() {
           />
         </TabsContent>
         <TabsContent value="user">
-          <Card>
-            <CardHeader>
-              <CardTitle>User settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>Name: {session?.user?.name ?? "N/A"}</p>
-              <p>Email: {session?.user?.email ?? "N/A"}</p>
-              <p>Organizations: {memberships.length}</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Name: {session?.user?.name ?? "N/A"}</p>
+                <p>Email: {session?.user?.email ?? "N/A"}</p>
+                <p>Organizations: {memberships.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Google integrations</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="rounded-2xl border p-4">
+                  <p className="font-medium">Google login</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {hasGoogleLogin
+                      ? "Enabled. The login page now shows Continue with Google."
+                      : "Disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border p-4">
+                  <p className="font-medium">Google Sheets export</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {hasGoogleSheets
+                      ? "Enabled. Export menus can publish workbooks directly to Google Sheets."
+                      : "Disabled. Set GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY to enable it."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
