@@ -226,6 +226,7 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
       select: {
         subscriptionPlan: true,
         subscriptionStatus: true,
+        stripeSubscriptionId: true,
         subscriptionCurrentPeriodStart: true,
         subscriptionCurrentPeriodEnd: true,
         subscriptionCanceledAt: true
@@ -273,6 +274,7 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
     planLabel: plan.label,
     planDescription: plan.description,
     status: organization.subscriptionStatus,
+    hasStripeSubscription: Boolean(organization.stripeSubscriptionId),
     currentPeriodStart: organization.subscriptionCurrentPeriodStart,
     currentPeriodEnd: organization.subscriptionCurrentPeriodEnd,
     canceledAt: organization.subscriptionCanceledAt,
@@ -315,6 +317,48 @@ export async function updateOrganizationSubscriptionPlan(organizationId: string,
         title: "Subscription updated",
         description: `${organization.name} is now on the ${plan} plan.`,
         color: 15844367,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return organization;
+}
+
+export async function syncOrganizationSubscriptionFromStripe(params: {
+  organizationId: string;
+  plan: SubscriptionPlan;
+  customerId: string | null;
+  subscriptionId: string | null;
+  priceId: string | null;
+  isCanceled: boolean;
+  currentPeriodStart: Date | null;
+  currentPeriodEnd: Date | null;
+  canceledAt: Date | null;
+}) {
+  const organization = await db.organization.update({
+    where: {
+      id: params.organizationId
+    },
+    data: {
+      subscriptionPlan: params.plan,
+      subscriptionStatus: params.isCanceled ? SubscriptionStatus.CANCELED : SubscriptionStatus.ACTIVE,
+      stripeCustomerId: params.customerId,
+      stripeSubscriptionId: params.subscriptionId,
+      stripePriceId: params.priceId,
+      subscriptionCurrentPeriodStart: params.currentPeriodStart,
+      subscriptionCurrentPeriodEnd: params.currentPeriodEnd,
+      subscriptionCanceledAt: params.canceledAt
+    }
+  });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `Organization subscription synced from Stripe as **${params.plan}**.`,
+    embeds: [
+      {
+        title: "Stripe subscription synced",
+        description: `${organization.name} is now on the ${params.plan} plan.`,
+        color: 5763719,
         timestamp: new Date().toISOString()
       }
     ]

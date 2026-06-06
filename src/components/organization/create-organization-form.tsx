@@ -9,10 +9,13 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { countryOptions, defaultCountryCode, defaultLanguage, languageOptions } from "@/lib/company-localization";
 
 const schema = z.object({
   organizationName: z.string().min(2),
-  workspaceName: z.string().min(2)
+  workspaceName: z.string().min(2),
+  defaultLanguage: z.string().min(2),
+  countryCode: z.string().length(2)
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -28,7 +31,9 @@ export function CreateOrganizationForm({
     resolver: zodResolver(schema),
     defaultValues: {
       organizationName: "",
-      workspaceName: "Default Workspace"
+      workspaceName: "Default Workspace",
+      defaultLanguage,
+      countryCode: defaultCountryCode
     }
   });
 
@@ -67,6 +72,40 @@ export function CreateOrganizationForm({
         <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
         {form.formState.errors.workspaceName ? (
           <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
+        ) : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="defaultLanguage">Default language</Label>
+        <select
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          id="defaultLanguage"
+          {...form.register("defaultLanguage")}
+        >
+          {languageOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {form.formState.errors.defaultLanguage ? (
+          <p className="text-sm text-destructive">{form.formState.errors.defaultLanguage.message}</p>
+        ) : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="countryCode">Home country</Label>
+        <select
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          id="countryCode"
+          {...form.register("countryCode")}
+        >
+          {countryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        {form.formState.errors.countryCode ? (
+          <p className="text-sm text-destructive">{form.formState.errors.countryCode.message}</p>
         ) : null}
       </div>
       {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}

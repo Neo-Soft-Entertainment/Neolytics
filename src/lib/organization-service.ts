@@ -10,6 +10,8 @@ export async function createOrganizationForUser(params: {
   userId: string;
   organizationName: string;
   workspaceName?: string;
+  defaultLanguage: string;
+  countryCode: string;
 }) {
   const organizationSlug = await buildUniqueSlug(slugify(params.organizationName), async (slug) => {
     const count = await db.organization.count({
@@ -30,6 +32,8 @@ export async function createOrganizationForUser(params: {
       data: {
         name: params.organizationName.trim(),
         slug: organizationSlug,
+        defaultLanguage: params.defaultLanguage.trim(),
+        countryCode: params.countryCode.trim().toUpperCase(),
         subscriptionPlan: SubscriptionPlan.FREE,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
         subscriptionCurrentPeriodStart: period.start,

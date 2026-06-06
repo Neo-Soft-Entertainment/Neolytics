@@ -17,6 +17,7 @@ type SubscriptionSnapshot = {
   planLabel: string;
   planDescription: string;
   status: SubscriptionStatus;
+  hasStripeSubscription: boolean;
   periodKey: string;
   currentPeriodStart: Date | string | null;
   currentPeriodEnd: Date | string | null;
@@ -77,8 +78,9 @@ export function SubscriptionPanel({
     setMessage(null);
     setIsSubmitting(plan);
 
-    const response = await fetch("/api/organizations/subscription", {
-      method: "PATCH",
+    const isPaidPlan = plan !== SubscriptionPlan.FREE;
+    const response = await fetch(isPaidPlan ? "/api/organizations/subscription/checkout" : "/api/organizations/subscription", {
+      method: isPaidPlan ? "POST" : "PATCH",
       headers: {
         "Content-Type": "application/json"
       },
@@ -86,6 +88,18 @@ export function SubscriptionPanel({
     });
 
     setIsSubmitting(null);
+
+    if (isPaidPlan) {
+      const payload = (await response.json().catch(() => null)) as { url?: string; message?: string } | null;
+
+      if (!response.ok || !payload?.url) {
+        setMessage(payload?.message ?? "Unable to start Stripe checkout.");
+        return;
+      }
+
+      window.location.assign(payload.url);
+      return;
+    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
@@ -118,6 +132,9 @@ export function SubscriptionPanel({
         {Object.entries(subscriptionPlans).map(([planKey, plan]) => {
           const planId = planKey as SubscriptionPlan;
           const isCurrent = snapshot.plan === planId;
+          const canCheckout = snapshot.plan === SubscriptionPlan.FREE && planId !== SubscriptionPlan.FREE;
+          const canDowngrade = planId === SubscriptionPlan.FREE && snapshot.plan !== SubscriptionPlan.FREE && !snapshot.hasStripeSubscription;
+          const canSwitch = isCurrent || canCheckout || canDowngrade;
 
           return (
             <Card key={planId} className={isCurrent ? "border-primary shadow-sm shadow-primary/10" : undefined}>
@@ -142,11 +159,19 @@ export function SubscriptionPanel({
                 {canManage ? (
                   <Button
                     className="w-full"
-                    disabled={isCurrent || isSubmitting !== null}
+                    disabled={!canSwitch || isCurrent || isSubmitting !== null}
                     onClick={() => changePlan(planId)}
                     variant={isCurrent ? "secondary" : "default"}
                   >
-                    {isCurrent ? "Current plan" : isSubmitting === planId ? "Updating..." : `Switch to ${plan.label}`}
+                    {isCurrent
+                      ? "Current plan"
+                      : isSubmitting === planId
+                        ? "Loading..."
+                        : canCheckout
+                          ? `Checkout ${plan.label}`
+                          : canDowngrade
+                            ? "Move to Free"
+                            : "Coming soon"}
                   </Button>
                 ) : (
                   <p className="text-xs text-muted-foreground">Only organization admins can change plans.</p>
@@ -156,6 +181,9 @@ export function SubscriptionPanel({
           );
         })}
       </div>
+      <p className="text-sm text-muted-foreground">
+        Paid plans now continue through Stripe Checkout. Direct downgrade from Stripe-managed subscriptions is the next billing step.
+      </p>
       <Card>
         <CardHeader>
           <CardTitle>Plan feature matrix</CardTitle>

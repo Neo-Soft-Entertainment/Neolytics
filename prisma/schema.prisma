@@ -208,8 +208,13 @@ model Organization {
   id                             String                          @id @default(cuid())
   name                           String
   slug                           String                          @unique
+  defaultLanguage                String                          @default("en")
+  countryCode                    String                          @default("US")
   subscriptionPlan               SubscriptionPlan                @default(FREE)
   subscriptionStatus             SubscriptionStatus              @default(ACTIVE)
+  stripeCustomerId               String?                         @unique
+  stripeSubscriptionId           String?                         @unique
+  stripePriceId                  String?
   subscriptionCurrentPeriodStart DateTime?
   subscriptionCurrentPeriodEnd   DateTime?
   subscriptionCanceledAt         DateTime?
@@ -678,7 +683,7 @@ model LegalEntity {
   city           String?
   state          String?
   postalCode     String?
-  countryCode    String            @default("BR")
+  countryCode    String            @default("US")
   notes          String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -709,7 +714,7 @@ model LegalEntityBranch {
   city                 String?
   state                String?
   postalCode           String?
-  countryCode          String      @default("BR")
+  countryCode          String      @default("US")
   active               Boolean     @default(true)
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt

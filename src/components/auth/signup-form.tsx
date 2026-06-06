@@ -1,5 +1,6 @@
 "use client";
 
+import { SubscriptionPlan } from "@prisma/client";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { countryOptions, defaultCountryCode, defaultLanguage, languageOptions } from "@/lib/company-localization";
+import { subscriptionPlans } from "@/lib/subscription-plans";
 
 type FormValues = {
   name: string;
@@ -19,6 +22,9 @@ type FormValues = {
   password: string;
   organizationName?: string;
   workspaceName?: string;
+  defaultLanguage?: string;
+  countryCode?: string;
+  plan?: SubscriptionPlan;
 };
 
 export function SignupForm({
@@ -37,7 +43,10 @@ export function SignupForm({
     email: z.string().email(),
     password: z.string().min(8),
     organizationName: inviteToken ? z.string().optional() : z.string().min(2),
-    workspaceName: inviteToken ? z.string().optional() : z.string().min(2)
+    workspaceName: inviteToken ? z.string().optional() : z.string().min(2),
+    defaultLanguage: inviteToken ? z.string().optional() : z.string().min(2),
+    countryCode: inviteToken ? z.string().optional() : z.string().length(2),
+    plan: inviteToken ? z.nativeEnum(SubscriptionPlan).optional() : z.nativeEnum(SubscriptionPlan)
   });
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -46,9 +55,13 @@ export function SignupForm({
       email: invitedEmail ?? "",
       password: "",
       organizationName: "",
-      workspaceName: "Default Workspace"
+      workspaceName: "Default Workspace",
+      defaultLanguage,
+      countryCode: defaultCountryCode,
+      plan: SubscriptionPlan.FREE
     }
   });
+  const selectedPlan = form.watch("plan") ?? SubscriptionPlan.FREE;
 
   async function onSubmit(values: FormValues) {
     setError(null);
@@ -75,6 +88,7 @@ export function SignupForm({
       return;
     }
 
+    const signupPayload = (await response.json().catch(() => null)) as { requiresCheckout?: boolean } | null;
     const result = await signIn("credentials", {
       email: values.email,
       password: values.password,
@@ -83,6 +97,26 @@ export function SignupForm({
 
     if (result?.error) {
       router.push("/login");
+      router.refresh();
+      return;
+    }
+
+    if (!inviteToken && signupPayload?.requiresCheckout && values.plan && values.plan !== SubscriptionPlan.FREE) {
+      const checkoutResponse = await fetch("/api/organizations/subscription/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ plan: values.plan })
+      });
+      const checkoutPayload = (await checkoutResponse.json().catch(() => null)) as { url?: string; message?: string } | null;
+
+      if (checkoutResponse.ok && checkoutPayload?.url) {
+        window.location.assign(checkoutPayload.url);
+        return;
+      }
+
+      router.push("/settings");
       router.refresh();
       return;
     }
@@ -98,7 +132,7 @@ export function SignupForm({
         <CardDescription>
           {inviteToken
             ? `Create your account and join ${invitedOrganizationName ?? "this organization"} in one step.`
-            : "Create an account, your organization, and the first workspace in one step. New accounts start on the Free plan."}
+            : "Create the account, choose the organization defaults, and activate the plan you want right after signup."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -158,6 +192,74 @@ export function SignupForm({
                 <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
                 {form.formState.errors.workspaceName ? (
                   <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="defaultLanguage">Default language</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  id="defaultLanguage"
+                  {...form.register("defaultLanguage")}
+                >
+                  {languageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {form.formState.errors.defaultLanguage ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.defaultLanguage.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="countryCode">Home country</Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  id="countryCode"
+                  {...form.register("countryCode")}
+                >
+                  {countryOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {form.formState.errors.countryCode ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.countryCode.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-3 md:col-span-2">
+                <Label>Plan</Label>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {Object.entries(subscriptionPlans).map(([planKey, plan]) => {
+                    const planId = planKey as SubscriptionPlan;
+                    const isSelected = selectedPlan === planId;
+
+                    return (
+                      <button
+                        key={planId}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          isSelected ? "border-primary bg-primary/5" : "hover:border-foreground/30"
+                        }`}
+                        onClick={() => form.setValue("plan", planId, { shouldValidate: true })}
+                        type="button"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{plan.label}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+                          </div>
+                          <p className="text-sm font-semibold">{plan.priceLabel}</p>
+                        </div>
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          {planId === SubscriptionPlan.FREE ? "Starts immediately." : "Activated after Stripe checkout."}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.formState.errors.plan ? (
+                  <p className="text-sm text-destructive">{form.formState.errors.plan.message}</p>
                 ) : null}
               </div>
             </>

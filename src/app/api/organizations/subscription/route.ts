@@ -23,6 +23,17 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await parseJsonBody(request, schema);
+
+    if (body.plan !== SubscriptionPlan.FREE) {
+      return badRequest("Paid plans now require Stripe Checkout.");
+    }
+
+    const snapshot = await getOrganizationSubscriptionSnapshot(context.organizationId);
+
+    if (snapshot.hasStripeSubscription) {
+      return badRequest("Direct downgrade from Stripe-managed subscriptions is not available yet.");
+    }
+
     await updateOrganizationSubscriptionPlan(context.organizationId, body.plan);
 
     return ok(await getOrganizationSubscriptionSnapshot(context.organizationId));

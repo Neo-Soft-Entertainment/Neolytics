@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { getActiveOrganizationId } from "@/lib/active-organization";
 import { db } from "@/lib/db";
 
 export async function requireUser() {
@@ -15,14 +16,7 @@ export async function requireUser() {
 
 export async function getCurrentOrganization() {
   const session = await requireUser();
-  const membership = await db.organizationMember.findFirst({
-    where: {
-      userId: session.user.id
-    },
-    orderBy: {
-      joinedAt: "asc"
-    }
-  });
+  const membership = await getCurrentOrganizationMembership(session.user.id);
 
   if (!membership) {
     redirect("/setup");
@@ -59,14 +53,7 @@ export async function getApiContext() {
     return null;
   }
 
-  const membership = await db.organizationMember.findFirst({
-    where: {
-      userId: session.user.id
-    },
-    orderBy: {
-      joinedAt: "asc"
-    }
-  });
+  const membership = await getCurrentOrganizationMembership(session.user.id);
 
   if (!membership) {
     return null;
@@ -92,4 +79,32 @@ export async function getApiContext() {
     organizationRole: membership.role,
     workspace
   };
+}
+
+async function getCurrentOrganizationMembership(userId: string) {
+  const activeOrganizationId = await getActiveOrganizationId();
+
+  if (activeOrganizationId) {
+    const activeMembership = await db.organizationMember.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: activeOrganizationId,
+          userId
+        }
+      }
+    });
+
+    if (activeMembership) {
+      return activeMembership;
+    }
+  }
+
+  return db.organizationMember.findFirst({
+    where: {
+      userId
+    },
+    orderBy: {
+      joinedAt: "asc"
+    }
+  });
 }
