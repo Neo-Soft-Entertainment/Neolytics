@@ -1,6 +1,6 @@
 # Neolytics MVP
 
-Neolytics is a Steam-first market intelligence SaaS built with Next.js, PostgreSQL, Prisma, Auth.js, Redis-backed background jobs, TanStack Query, and Recharts.
+Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase Postgres, Prisma, Auth.js, Redis-backed background jobs, TanStack Query, and Recharts.
 
 ## Stack
 
@@ -8,7 +8,7 @@ Neolytics is a Steam-first market intelligence SaaS built with Next.js, PostgreS
 - TypeScript
 - Tailwind CSS
 - shadcn/ui-style component primitives
-- PostgreSQL
+- Supabase Postgres
 - Prisma
 - Auth.js with credentials login and optional GitHub OAuth
 - TanStack Query
@@ -53,7 +53,8 @@ src/
 Copy `.env.example` to `.env` and fill in the values.
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/neolytics?schema=public"
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
+DIRECT_URL="postgresql://postgres:[YOUR-PROJECT-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres?sslmode=require"
 AUTH_SECRET="replace-with-a-long-random-string"
 AUTH_URL="http://localhost:3000"
 REDIS_URL="redis://localhost:6379"
@@ -83,21 +84,24 @@ npm install
 
 ## Database setup
 
-1. Create a PostgreSQL database.
-2. Set `DATABASE_URL`.
+1. Create a Supabase project.
+2. In Supabase, open `Project Settings > Database`.
+3. Copy the pooled connection string into `DATABASE_URL`.
+4. Copy the direct connection string into `DIRECT_URL`.
+5. Keep `sslmode=require` in both URLs.
 3. Generate Prisma client:
 
 ```bash
 npm run db:generate
 ```
 
-4. Create the first migration locally:
+6. Create the first migration locally:
 
 ```bash
 npm run db:migrate -- --name init
 ```
 
-5. Seed the admin account, default organization, and default workspace:
+7. Seed the admin account, default organization, and default workspace:
 
 ```bash
 npm run db:seed
@@ -110,6 +114,14 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Supabase notes
+
+- Use `DATABASE_URL` with the Supabase pooler for the running app.
+- Use `DIRECT_URL` for Prisma migrations and any command that needs a direct connection.
+- This project uses Supabase as managed Postgres only. Auth stays in `Auth.js`, which keeps the current app structure intact.
+- You do not need Firebase for this stack.
+- Full setup guide: [docs/supabase-setup.md](docs/supabase-setup.md)
 
 ## Steam ingestion
 
