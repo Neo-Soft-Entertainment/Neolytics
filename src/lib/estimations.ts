@@ -129,18 +129,22 @@ export function calculateSalesEstimate(game: NormalizedSteamApp, baseReviewMulti
 
 export function calculateRevenueEstimate(game: NormalizedSteamApp, salesEstimate: ReturnType<typeof calculateSalesEstimate>) {
   const averagePriceCents = game.currentPrice.finalPriceCents ?? 0;
-  const lowGrossRevenueCents = salesEstimate.lowEstimate * averagePriceCents;
-  const medianGrossRevenueCents = salesEstimate.medianEstimate * averagePriceCents;
-  const highGrossRevenueCents = salesEstimate.highEstimate * averagePriceCents;
+  const lowGrossRevenueCents = BigInt(salesEstimate.lowEstimate) * BigInt(averagePriceCents);
+  const medianGrossRevenueCents = BigInt(salesEstimate.medianEstimate) * BigInt(averagePriceCents);
+  const highGrossRevenueCents = BigInt(salesEstimate.highEstimate) * BigInt(averagePriceCents);
+
+  function toNetRevenue(grossRevenueCents: bigint) {
+    return (grossRevenueCents * 70n + 50n) / 100n;
+  }
 
   return {
     averagePriceCents,
     lowGrossRevenueCents,
     medianGrossRevenueCents,
     highGrossRevenueCents,
-    lowNetRevenueCents: Math.round(lowGrossRevenueCents * 0.7),
-    medianNetRevenueCents: Math.round(medianGrossRevenueCents * 0.7),
-    highNetRevenueCents: Math.round(highGrossRevenueCents * 0.7),
+    lowNetRevenueCents: toNetRevenue(lowGrossRevenueCents),
+    medianNetRevenueCents: toNetRevenue(medianGrossRevenueCents),
+    highNetRevenueCents: toNetRevenue(highGrossRevenueCents),
     confidenceScore: salesEstimate.confidenceScore,
     confidence: salesEstimate.confidence,
     explanation: `Revenue estimate uses the estimated sales range and the current average selling price of ${(averagePriceCents / 100).toFixed(2)} USD, then applies a 70% net revenue factor.`

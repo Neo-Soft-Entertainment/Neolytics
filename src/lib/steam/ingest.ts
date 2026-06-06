@@ -4,6 +4,7 @@ import { env } from "@/env";
 import { db } from "@/lib/db";
 import { calculateRevenueEstimate, calculateSalesEstimate } from "@/lib/estimations";
 import { logger } from "@/lib/logger";
+import { bootstrapSteamApps } from "@/lib/steam/bootstrap-apps";
 import {
   fetchSteamAppDetails,
   fetchSteamAppList,
@@ -16,6 +17,10 @@ import { sleep } from "@/lib/sleep";
 type SteamSyncResult = "SUCCESS" | "SKIPPED";
 
 export type SteamBatchSyncMode = "refresh" | "catalog";
+
+function getBootstrapAppIds(limit: number, offset: number) {
+  return bootstrapSteamApps.slice(offset, offset + limit).map((app) => app.appid);
+}
 
 async function syncGenres(
   tx: Prisma.TransactionClient,
@@ -401,11 +406,16 @@ export async function syncSteamBatch({
   let appIds: number[] = [];
 
   if (mode === "catalog") {
-    const list = await fetchSteamAppList();
-    appIds = list.applist.apps
-      .filter((app) => app.name.trim().length > 0)
-      .slice(offset, offset + cappedLimit)
-      .map((app) => app.appid);
+    try {
+      const list = await fetchSteamAppList();
+      appIds = list.applist.apps
+        .filter((app) => app.name.trim().length > 0)
+        .slice(offset, offset + cappedLimit)
+        .map((app) => app.appid);
+    } catch (error) {
+      logger.warn({ error, offset, limit: cappedLimit }, "Steam app list unavailable, using bootstrap list");
+      appIds = getBootstrapAppIds(cappedLimit, offset);
+    }
   }
 
   if (mode === "refresh") {
@@ -422,11 +432,17 @@ export async function syncSteamBatch({
     }
 
     if (existingGames.length === 0) {
-      const list = await fetchSteamAppList();
-      appIds = list.applist.apps
-        .filter((app) => app.name.trim().length > 0)
-        .slice(offset, offset + cappedLimit)
-        .map((app) => app.appid);
+      try {
+        const list = await fetchSteamAppList();
+        appIds = list.applist.apps
+          .filter((app) => app.name.trim().length > 0)
+          .slice(offset, offset + cappedLimit)
+          .map((app) => app.appid);
+      } catch (error) {
+        logger.warn({ error, offset, limit: cappedLimit }, "Steam app list unavailable during refresh, using bootstrap list");
+        appIds = getBootstrapAppIds(cappedLimit, offset);
+      }
+
       mode = "catalog";
     }
   }

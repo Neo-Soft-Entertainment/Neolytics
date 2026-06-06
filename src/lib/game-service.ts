@@ -2,6 +2,14 @@ import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 
+function revenueToNumber(value: bigint | number | null | undefined) {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+
+  return Number(value);
+}
+
 const gameInclude = {
   priceCurrent: true,
   tags: {
@@ -396,6 +404,7 @@ export async function getOpportunityFinderData() {
 
   const items = games.map((game) => {
     const revenue = game.revenueEstimates[0];
+    const medianNetRevenueCents = revenueToNumber(revenue?.medianNetRevenueCents);
     const competitionCount = games.filter((candidate) =>
       candidate.genres.some((genre) =>
         game.genres.some((current) => current.steamGenreId === genre.steamGenreId)
@@ -408,7 +417,7 @@ export async function getOpportunityFinderData() {
       Math.min(
         100,
         Math.round(
-          (Math.min((revenue?.medianNetRevenueCents ?? 0) / 100000, 40) +
+          (Math.min(medianNetRevenueCents / 100000, 40) +
             (game.reviewScore ?? 0) * 0.3 +
             Math.max(0, 20 - competitionCount * 0.15) +
             Math.min(releaseMomentum / 50, 20) +
@@ -423,7 +432,7 @@ export async function getOpportunityFinderData() {
       score,
       reviewScore: game.reviewScore,
       competitionCount,
-      medianNetRevenueCents: revenue?.medianNetRevenueCents ?? 0,
+      medianNetRevenueCents,
       priceCents: priceBand
     };
   });

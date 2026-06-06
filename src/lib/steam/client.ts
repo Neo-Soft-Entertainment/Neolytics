@@ -29,6 +29,20 @@ async function fetchWithRetry<T>(url: string, init?: RequestInit, attempt = 1): 
 }
 
 export async function fetchSteamAppList() {
+  if (env.STEAM_WEB_API_KEY) {
+    const params = new URLSearchParams({
+      key: env.STEAM_WEB_API_KEY,
+      include_games: "true",
+      include_dlc: "false",
+      include_software: "false",
+      include_videos: "false",
+      include_hardware: "false",
+      max_results: "50000"
+    });
+    const url = `https://partner.steam-api.com/IStoreService/GetAppList/v1/?${params.toString()}`;
+    return fetchWithRetry<SteamAppListResponse>(url);
+  }
+
   const url = `${env.STEAM_API_BASE_URL}/ISteamApps/GetAppList/v2/`;
   return fetchWithRetry<SteamAppListResponse>(url);
 }

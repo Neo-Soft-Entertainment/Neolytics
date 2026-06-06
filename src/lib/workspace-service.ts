@@ -130,7 +130,7 @@ export async function generateBasicMarketReport(params: {
     "",
     "## Top estimated net revenue titles",
     ...topGames.map((game, index) => {
-      const revenue = game.revenueEstimates[0]?.medianNetRevenueCents ?? 0;
+      const revenue = Number(game.revenueEstimates[0]?.medianNetRevenueCents ?? 0n);
       return `${index + 1}. ${game.name} - estimated net revenue ${(revenue / 100).toLocaleString("en-US", {
         style: "currency",
         currency: "USD",

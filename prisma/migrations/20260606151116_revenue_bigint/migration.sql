@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "RevenueEstimate" ALTER COLUMN "lowGrossRevenueCents" SET DATA TYPE BIGINT,
+ALTER COLUMN "medianGrossRevenueCents" SET DATA TYPE BIGINT,
+ALTER COLUMN "highGrossRevenueCents" SET DATA TYPE BIGINT,
+ALTER COLUMN "lowNetRevenueCents" SET DATA TYPE BIGINT,
+ALTER COLUMN "medianNetRevenueCents" SET DATA TYPE BIGINT,
+ALTER COLUMN "highNetRevenueCents" SET DATA TYPE BIGINT;

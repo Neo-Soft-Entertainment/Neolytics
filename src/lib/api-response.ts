@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 
+function serializeResponseData<T>(data: T) {
+  return JSON.parse(
+    JSON.stringify(data, (_, value) => (typeof value === "bigint" ? Number(value) : value))
+  ) as T;
+}
+
 export function ok<T>(data: T, init?: ResponseInit) {
-  return NextResponse.json(data, init);
+  return NextResponse.json(serializeResponseData(data), init);
 }
 
 export function badRequest(message: string) {

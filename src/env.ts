@@ -8,6 +8,7 @@ const envSchema = z.object({
   CRON_SECRET: z.string().min(16).optional(),
   STEAM_STORE_BASE_URL: z.string().url(),
   STEAM_API_BASE_URL: z.string().url(),
+  STEAM_WEB_API_KEY: z.string().min(1).optional(),
   STEAM_DEFAULT_COUNTRY: z.string().min(2).default("us"),
   STEAM_DEFAULT_LANGUAGE: z.string().min(2).default("en"),
   STEAM_REVIEW_MULTIPLIER: z.coerce.number().positive().default(45),

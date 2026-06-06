@@ -8,6 +8,41 @@ import type {
   SteamReviewSummaryResponse
 } from "@/lib/steam/types";
 
+function sanitizeSteamText(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const decoded = value
+    .replaceAll("&quot;", "\"")
+    .replaceAll("&#39;", "'")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("â„¢", "™")
+    .replaceAll("â€™", "’")
+    .replaceAll("â€œ", "“")
+    .replaceAll("â€", "”")
+    .replaceAll("â€“", "–")
+    .replaceAll("â€”", "—")
+    .replaceAll("â€¦", "…")
+    .replaceAll("Â®", "®")
+    .replaceAll("Â", "")
+    .trim();
+
+  if (!/[ÃÂâ]/.test(decoded)) {
+    return decoded;
+  }
+
+  const repaired = Buffer.from(decoded, "latin1").toString("utf8").trim();
+
+  if (/[ÃÂâ]/.test(repaired)) {
+    return decoded;
+  }
+
+  return repaired;
+}
+
 function parseReleaseDate(dateText?: string) {
   if (!dateText) {
     return null;
@@ -51,7 +86,7 @@ export async function extractStoreTags(appId: number, storeBaseUrl: string) {
   const names = Array.from(
     new Set(
       matches
-        .map((match) => match[1]?.trim())
+        .map((match) => sanitizeSteamText(match[1]))
         .filter((value): value is string => Boolean(value && value.length > 1))
     )
   );
@@ -87,26 +122,37 @@ export function normalizeSteamApp(params: {
 
   const genres = (detail.genres ?? []).map((genre) => ({
     steamGenreId: genre.id ? Number(genre.id) : null,
-    name: genre.description,
-    slug: slugify(genre.description)
+    name: sanitizeSteamText(genre.description) ?? genre.description,
+    slug: slugify(sanitizeSteamText(genre.description) ?? genre.description)
   }));
 
-  const developers = (detail.developers ?? []).map((name) => ({
-    name,
-    slug: slugify(name)
-  }));
+  const developers = (detail.developers ?? []).map((value) => {
+    const name = sanitizeSteamText(value) ?? value;
 
-  const publishers = (detail.publishers ?? []).map((name) => ({
-    name,
-    slug: slugify(name)
-  }));
+    return {
+      name,
+      slug: slugify(name)
+    };
+  });
+
+  const publishers = (detail.publishers ?? []).map((value) => {
+    const name = sanitizeSteamText(value) ?? value;
+
+    return {
+      name,
+      slug: slugify(name)
+    };
+  });
+
+  const name = sanitizeSteamText(detail.name) ?? detail.name;
+  const shortDescription = sanitizeSteamText(detail.short_description);
 
   return {
     appId: detail.steam_appid,
     type: detail.type ?? null,
-    name: detail.name,
-    slug: slugify(detail.name),
-    shortDescription: detail.short_description ?? null,
+    name,
+    slug: slugify(name),
+    shortDescription,
     isFree: Boolean(detail.is_free),
     isEarlyAccess: Boolean(detail.release_date?.coming_soon),
     headerImageUrl: detail.header_image ?? null,

@@ -400,12 +400,12 @@ model RevenueEstimate {
   ingestionRunId      String?
   calculatedAt        DateTime            @default(now())
   averagePriceCents   Int
-  lowGrossRevenueCents Int
-  medianGrossRevenueCents Int
-  highGrossRevenueCents Int
-  lowNetRevenueCents  Int
-  medianNetRevenueCents Int
-  highNetRevenueCents Int
+  lowGrossRevenueCents BigInt
+  medianGrossRevenueCents BigInt
+  highGrossRevenueCents BigInt
+  lowNetRevenueCents  BigInt
+  medianNetRevenueCents BigInt
+  highNetRevenueCents BigInt
   confidence          EstimateConfidence
   confidenceScore     Int
   explanation         String
