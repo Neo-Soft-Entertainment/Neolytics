@@ -70,6 +70,9 @@ STEAM_APP_SYNC_LIMIT="500"
 STEAM_CRON_BATCH_SIZE="25"
 ADMIN_EMAIL="admin@neolytics.local"
 ADMIN_PASSWORD="ChangeMe123!"
+SUPABASE_URL=""
+SUPABASE_SERVICE_ROLE_KEY=""
+COMPANY_DOCUMENTS_BUCKET="company-documents"
 GOOGLE_SHEETS_CLIENT_EMAIL=""
 GOOGLE_SHEETS_PRIVATE_KEY=""
 GOOGLE_SHEETS_FOLDER_ID=""
@@ -101,6 +104,9 @@ Optional Discord webhook notifications:
 
 Optional Google Sheets publishing:
 
+- `SUPABASE_URL`: Supabase project URL used by the company document upload flow
+- `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
+- `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
 - `GOOGLE_SHEETS_CLIENT_EMAIL`: service account email
 - `GOOGLE_SHEETS_PRIVATE_KEY`: service account private key
 - `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed

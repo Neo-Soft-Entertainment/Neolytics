@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import type {
   CompanyComplianceRecord,
@@ -54,6 +54,42 @@ export function CompanyCompliancePanel({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+
+  const filteredItems = useMemo(() => {
+    return complianceItems.filter((item) => {
+      if (statusFilter !== "ALL" && item.status !== statusFilter) {
+        return false;
+      }
+
+      if (typeFilter !== "ALL" && item.type !== typeFilter) {
+        return false;
+      }
+
+      if (!query.trim()) {
+        return true;
+      }
+
+      const haystack = [
+        item.title,
+        item.type,
+        item.status,
+        item.legalEntity?.name,
+        item.project?.name,
+        item.ownerUser?.name,
+        item.ownerUser?.email,
+        item.sourceDocument?.title,
+        item.notes
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query.trim().toLowerCase());
+    });
+  }, [complianceItems, query, statusFilter, typeFilter]);
 
   async function createItem(formData: FormData) {
     if (!canManage) {
@@ -252,6 +288,49 @@ export function CompanyCompliancePanel({
           <CardTitle>Compliance backlog</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="compliance-query">Search</Label>
+              <Input
+                id="compliance-query"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by title, owner, entity, project, or notes"
+                value={query}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="compliance-status-filter">Status</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                id="compliance-status-filter"
+                onChange={(event) => setStatusFilter(event.target.value)}
+                value={statusFilter}
+              >
+                <option value="ALL">All</option>
+                {complianceStatuses.map((statusOption) => (
+                  <option key={statusOption} value={statusOption}>
+                    {statusOption}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="compliance-type-filter">Type</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                id="compliance-type-filter"
+                onChange={(event) => setTypeFilter(event.target.value)}
+                value={typeFilter}
+              >
+                <option value="ALL">All</option>
+                {complianceTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
@@ -264,13 +343,13 @@ export function CompanyCompliancePanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {complianceItems.map((item) => (
+              {filteredItems.map((item) => (
                 <ComplianceRow key={item.id} canManage={canManage} item={item} />
               ))}
-              {complianceItems.length === 0 ? (
+              {filteredItems.length === 0 ? (
                 <TableRow>
                   <TableCell className="text-muted-foreground" colSpan={6}>
-                    No compliance items registered yet.
+                    No compliance items matched the current filters.
                   </TableCell>
                 </TableRow>
               ) : null}

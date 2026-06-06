@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { CompanyDocumentRecord, CompanyLegalEntityRecord, CompanyProjectOption } from "@/components/company/company-types";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,35 @@ export function CompanyDocumentsPanel({
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((document) => {
+      if (typeFilter !== "ALL" && document.type !== typeFilter) {
+        return false;
+      }
+
+      if (!query.trim()) {
+        return true;
+      }
+
+      const haystack = [
+        document.title,
+        document.type,
+        document.issuer,
+        document.documentNumber,
+        document.legalEntity?.name,
+        document.project?.name,
+        document.versions[0]?.originalName
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query.trim().toLowerCase());
+    });
+  }, [documents, query, typeFilter]);
 
   async function createDocument(formData: FormData) {
     if (!canManage) {
@@ -52,21 +81,7 @@ export function CompanyDocumentsPanel({
 
     const response = await fetch("/api/company/documents", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: formData.get("title"),
-        type: formData.get("type"),
-        legalEntityId: formData.get("legalEntityId") || undefined,
-        projectId: formData.get("projectId") || undefined,
-        issuer: formData.get("issuer"),
-        documentNumber: formData.get("documentNumber"),
-        expiresAt: formData.get("expiresAt") || undefined,
-        storagePath: formData.get("storagePath"),
-        originalName: formData.get("originalName"),
-        mimeType: formData.get("mimeType")
-      })
+      body: formData
     });
 
     setIsCreating(false);
@@ -198,16 +213,8 @@ export function CompanyDocumentsPanel({
               <Input disabled={!canManage || isCreating} id="document-expiration" name="expiresAt" type="date" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-path">Storage path or URL</Label>
-              <Input disabled={!canManage || isCreating} id="document-path" name="storagePath" placeholder="https://... or bucket/path.pdf" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="document-original-name">Original filename</Label>
-              <Input disabled={!canManage || isCreating} id="document-original-name" name="originalName" placeholder="cnpj-card.pdf" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="document-mime-type">MIME type</Label>
-              <Input disabled={!canManage || isCreating} id="document-mime-type" name="mimeType" placeholder="application/pdf" />
+              <Label htmlFor="document-file">File</Label>
+              <Input disabled={!canManage || isCreating} id="document-file" name="file" type="file" />
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
@@ -220,13 +227,46 @@ export function CompanyDocumentsPanel({
       </Card>
 
       <div className="space-y-4">
-        {documents.map((document) => (
+        <Card>
+          <CardHeader>
+            <CardTitle>Search and filter</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="document-query">Search</Label>
+              <Input
+                id="document-query"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search by title, issuer, project, company, or filename"
+                value={query}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="document-type-filter">Type</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                id="document-type-filter"
+                onChange={(event) => setTypeFilter(event.target.value)}
+                value={typeFilter}
+              >
+                <option value="ALL">All</option>
+                {documentTypes.map((documentType) => (
+                  <option key={documentType} value={documentType}>
+                    {documentType}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {filteredDocuments.map((document) => (
           <DocumentCard key={document.id} canManage={canManage} document={document} />
         ))}
-        {documents.length === 0 ? (
+        {filteredDocuments.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-sm text-muted-foreground">
-              No company documents registered yet.
+              No company documents matched the current filters.
             </CardContent>
           </Card>
         ) : null}
@@ -245,6 +285,7 @@ function DocumentCard({
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isSavingVersion, setIsSavingVersion] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
 
   async function addVersion(formData: FormData) {
     if (!canManage) {
@@ -256,14 +297,7 @@ function DocumentCard({
 
     const response = await fetch(`/api/company/documents/${document.id}/versions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        storagePath: formData.get("storagePath"),
-        originalName: formData.get("originalName"),
-        mimeType: formData.get("mimeType")
-      })
+      body: formData
     });
 
     setIsSavingVersion(false);
@@ -277,6 +311,26 @@ function DocumentCard({
 
     setMessage("Document version added.");
     router.refresh();
+  }
+
+  async function openLatestVersion(versionId?: string) {
+    setMessage(null);
+    setIsOpening(true);
+
+    const response = await fetch(
+      `/api/company/documents/${document.id}/download${versionId ? `?versionId=${versionId}` : ""}`
+    );
+
+    setIsOpening(false);
+
+    const payload = (await response.json().catch(() => null)) as { message?: string; url?: string } | null;
+
+    if (!response.ok || !payload?.url) {
+      setMessage(payload?.message ?? "Unable to open document.");
+      return;
+    }
+
+    window.open(payload.url, "_blank", "noopener,noreferrer");
   }
 
   const latestVersion = document.versions[0];
@@ -320,8 +374,10 @@ function DocumentCard({
             <TableRow>
               <TableHead>Version</TableHead>
               <TableHead>File</TableHead>
+              <TableHead>Size</TableHead>
               <TableHead>Path</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Open</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -329,8 +385,14 @@ function DocumentCard({
               <TableRow key={version.id}>
                 <TableCell>v{version.version}</TableCell>
                 <TableCell>{version.originalName}</TableCell>
+                <TableCell>{version.sizeBytes ? `${Math.round(version.sizeBytes / 1024)} KB` : "—"}</TableCell>
                 <TableCell className="max-w-[280px] truncate">{version.storagePath}</TableCell>
                 <TableCell>{new Date(version.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Button onClick={() => void openLatestVersion(version.id)} size="sm" type="button" variant="outline">
+                    Open
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -344,20 +406,15 @@ function DocumentCard({
           }}
         >
           <div className="space-y-2">
-            <Label>New storage path</Label>
-            <Input disabled={!canManage || isSavingVersion} name="storagePath" placeholder="bucket/path-v2.pdf" />
+            <Label>New file version</Label>
+            <Input disabled={!canManage || isSavingVersion} name="file" type="file" />
           </div>
-          <div className="space-y-2">
-            <Label>Original filename</Label>
-            <Input disabled={!canManage || isSavingVersion} name="originalName" placeholder="cnpj-card-v2.pdf" />
-          </div>
-          <div className="space-y-2">
-            <Label>MIME type</Label>
-            <Input disabled={!canManage || isSavingVersion} name="mimeType" placeholder="application/pdf" />
-          </div>
-          <div className="md:col-span-3">
+          <div className="flex items-end gap-2 md:col-span-2">
             <Button disabled={!canManage || isSavingVersion} size="sm" type="submit">
               {isSavingVersion ? "Saving..." : "Add new version"}
+            </Button>
+            <Button disabled={isOpening} onClick={() => void openLatestVersion()} size="sm" type="button" variant="outline">
+              {isOpening ? "Opening..." : "Open latest"}
             </Button>
           </div>
         </form>

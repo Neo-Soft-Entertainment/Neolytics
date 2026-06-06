@@ -4,7 +4,7 @@ import { z } from "zod";
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { createCompanyDocument, getCompanyModuleData } from "@/lib/company-service";
-import { parseJsonBody } from "@/lib/request";
+import { uploadCompanyDocumentFile } from "@/lib/company-storage";
 
 const schema = z.object({
   title: z.string().min(2),
@@ -13,10 +13,7 @@ const schema = z.object({
   projectId: z.string().optional(),
   issuer: z.string().optional(),
   documentNumber: z.string().optional(),
-  expiresAt: z.string().optional(),
-  storagePath: z.string().min(3),
-  originalName: z.string().min(1),
-  mimeType: z.string().min(3)
+  expiresAt: z.string().optional()
 });
 
 export async function GET() {
@@ -46,7 +43,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await parseJsonBody(request, schema);
+    const formData = await request.formData();
+    const file = formData.get("file");
+
+    if (!(file instanceof File)) {
+      return badRequest("A document file is required.");
+    }
+
+    const body = schema.parse({
+      title: formData.get("title"),
+      type: formData.get("type"),
+      legalEntityId: formData.get("legalEntityId") || undefined,
+      projectId: formData.get("projectId") || undefined,
+      issuer: formData.get("issuer") || undefined,
+      documentNumber: formData.get("documentNumber") || undefined,
+      expiresAt: formData.get("expiresAt") || undefined
+    });
+    const upload = await uploadCompanyDocumentFile({
+      organizationId: context.organizationId,
+      file,
+      folder: "documents"
+    });
     const document = await createCompanyDocument({
       organizationId: context.organizationId,
       userId: context.userId,
@@ -57,9 +74,10 @@ export async function POST(request: Request) {
       issuer: body.issuer,
       documentNumber: body.documentNumber,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-      storagePath: body.storagePath,
-      originalName: body.originalName,
-      mimeType: body.mimeType
+      storagePath: upload.storagePath,
+      originalName: upload.originalName,
+      mimeType: upload.mimeType,
+      sizeBytes: upload.sizeBytes
     });
 
     return ok(document, { status: 201 });

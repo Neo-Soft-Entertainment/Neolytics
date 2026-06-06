@@ -19,6 +19,9 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().min(8).optional(),
   DISCORD_CLIENT_ID: z.string().min(1).optional(),
   DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  COMPANY_DOCUMENTS_BUCKET: z.string().min(1).optional(),
   GOOGLE_SHEETS_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_SHEETS_PRIVATE_KEY: z.string().min(1).optional(),
   GOOGLE_SHEETS_FOLDER_ID: z.string().min(1).optional()

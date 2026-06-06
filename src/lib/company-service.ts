@@ -6,7 +6,7 @@ import { slugify } from "@/lib/slugify";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
 export async function getCompanyModuleData(organizationId: string) {
-  const [legalEntities, documents, complianceItems, projects, members] = await Promise.all([
+  const [legalEntities, documents, complianceItems, projects, members, auditEvents] = await Promise.all([
     db.legalEntity.findMany({
       where: {
         organizationId
@@ -127,6 +127,24 @@ export async function getCompanyModuleData(organizationId: string) {
       orderBy: {
         joinedAt: "asc"
       }
+    }),
+    db.auditEvent.findMany({
+      where: {
+        organizationId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 100
     })
   ]);
 
@@ -135,7 +153,8 @@ export async function getCompanyModuleData(organizationId: string) {
     documents,
     complianceItems,
     projects,
-    members
+    members,
+    auditEvents
   };
 }
 
@@ -415,6 +434,7 @@ export async function createCompanyDocument(params: {
   storagePath: string;
   originalName: string;
   mimeType: string;
+  sizeBytes?: number;
 }) {
   const document = await db.companyDocument.create({
     data: {
@@ -433,6 +453,7 @@ export async function createCompanyDocument(params: {
           storagePath: params.storagePath.trim(),
           originalName: params.originalName.trim(),
           mimeType: params.mimeType.trim(),
+          sizeBytes: params.sizeBytes,
           uploadedById: params.userId
         }
       }
@@ -464,6 +485,7 @@ export async function addCompanyDocumentVersion(params: {
   storagePath: string;
   originalName: string;
   mimeType: string;
+  sizeBytes?: number;
 }) {
   const document = await db.companyDocument.findFirst({
     where: {
@@ -492,6 +514,7 @@ export async function addCompanyDocumentVersion(params: {
       storagePath: params.storagePath.trim(),
       originalName: params.originalName.trim(),
       mimeType: params.mimeType.trim(),
+      sizeBytes: params.sizeBytes,
       uploadedById: params.userId
     }
   });

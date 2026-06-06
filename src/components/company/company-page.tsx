@@ -1,10 +1,12 @@
 import type {
+  CompanyAuditRecord,
   CompanyComplianceRecord,
   CompanyDocumentRecord,
   CompanyLegalEntityRecord,
   CompanyMemberOption,
   CompanyProjectOption
 } from "@/components/company/company-types";
+import { CompanyAuditPanel } from "@/components/company/company-audit-panel";
 import { CompanyCompliancePanel } from "@/components/company/company-compliance-panel";
 import { CompanyDocumentsPanel } from "@/components/company/company-documents-panel";
 import { CompanyProfilePanel } from "@/components/company/company-profile-panel";
@@ -12,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CompanyPage({
   canManage,
+  auditEvents,
   complianceItems,
   documents,
   legalEntities,
@@ -20,6 +23,7 @@ export function CompanyPage({
   projects
 }: {
   canManage: boolean;
+  auditEvents: CompanyAuditRecord[];
   complianceItems: CompanyComplianceRecord[];
   documents: CompanyDocumentRecord[];
   legalEntities: CompanyLegalEntityRecord[];
@@ -41,6 +45,7 @@ export function CompanyPage({
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          <TabsTrigger value="audit">Audit</TabsTrigger>
         </TabsList>
         <TabsContent className="space-y-4" value="profile">
           <CompanyProfilePanel canManage={canManage} legalEntities={legalEntities} />
@@ -62,6 +67,9 @@ export function CompanyPage({
             members={members}
             projects={projects}
           />
+        </TabsContent>
+        <TabsContent className="space-y-4" value="audit">
+          <CompanyAuditPanel auditEvents={auditEvents} />
         </TabsContent>
       </Tabs>
     </div>

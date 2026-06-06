@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { CompanyPage } from "@/components/company/company-page";
-import type { CompanyComplianceRecord, CompanyDocumentRecord, CompanyLegalEntityRecord } from "@/components/company/company-types";
+import type { CompanyAuditRecord, CompanyComplianceRecord, CompanyDocumentRecord, CompanyLegalEntityRecord } from "@/components/company/company-types";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { getCompanyModuleData } from "@/lib/company-service";
 import { db } from "@/lib/db";
@@ -34,9 +34,14 @@ export default async function CompanyRoute() {
     ...JSON.parse(JSON.stringify(item)),
     dueAt: item.dueAt?.toISOString() ?? null
   })) as CompanyComplianceRecord[];
+  const auditEvents = data.auditEvents.map((event) => ({
+    ...JSON.parse(JSON.stringify(event)),
+    createdAt: event.createdAt.toISOString()
+  })) as CompanyAuditRecord[];
 
   return (
     <CompanyPage
+      auditEvents={auditEvents}
       canManage={membership?.role === "OWNER" || membership?.role === "ADMIN"}
       complianceItems={complianceItems}
       documents={documents}

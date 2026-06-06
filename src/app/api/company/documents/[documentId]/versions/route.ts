@@ -3,13 +3,7 @@ import { z } from "zod";
 import { badRequest, forbidden, ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { addCompanyDocumentVersion } from "@/lib/company-service";
-import { parseJsonBody } from "@/lib/request";
-
-const schema = z.object({
-  storagePath: z.string().min(3),
-  originalName: z.string().min(1),
-  mimeType: z.string().min(3)
-});
+import { uploadCompanyDocumentFile } from "@/lib/company-storage";
 
 export async function POST(
   request: Request,
@@ -26,21 +20,31 @@ export async function POST(
   }
 
   try {
-    const body = await parseJsonBody(request, schema);
+    const formData = await request.formData();
+    const file = formData.get("file");
+
+    if (!(file instanceof File)) {
+      return badRequest("A document file is required.");
+    }
+
     const resolvedParams = await params;
+    const upload = await uploadCompanyDocumentFile({
+      organizationId: context.organizationId,
+      file,
+      folder: `documents/${resolvedParams.documentId}`
+    });
     const version = await addCompanyDocumentVersion({
       organizationId: context.organizationId,
       documentId: resolvedParams.documentId,
       userId: context.userId,
-      ...body
+      storagePath: upload.storagePath,
+      originalName: upload.originalName,
+      mimeType: upload.mimeType,
+      sizeBytes: upload.sizeBytes
     });
 
     return ok(version, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid document version payload.");
-    }
-
     return badRequest(error instanceof Error ? error.message : "Unable to create document version.");
   }
 }

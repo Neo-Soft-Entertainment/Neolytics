@@ -63,6 +63,7 @@ export interface CompanyDocumentVersionRecord {
   storagePath: string;
   originalName: string;
   mimeType: string;
+  sizeBytes: number | null;
   createdAt: string;
 }
 
@@ -90,4 +91,14 @@ export interface CompanyComplianceRecord {
   project: { id: string; name: string } | null;
   sourceDocument: { id: string; title: string } | null;
   ownerUser: { id: string; name: string | null; email: string } | null;
+}
+
+export interface CompanyAuditRecord {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  user: { id: string; name: string | null; email: string } | null;
 }
