@@ -489,6 +489,10 @@ export function ProjectDetailClient({
   }
 
   const project = query.data;
+  const marketDepth = project.analysis?.metadata?.marketDepth ?? null;
+  const competitionLayer = project.analysis?.metadata?.competitionLayer ?? null;
+  const opportunityLayer = project.analysis?.metadata?.opportunityLayer ?? null;
+  const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
 
   return (
     <div className="space-y-6">
@@ -604,21 +608,29 @@ export function ProjectDetailClient({
           </Card>
         </TabsContent>
         <TabsContent value="market" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Competition</CardTitle>
+                <CardTitle className="text-base">Opportunity</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatNumber(project.analysis?.competitionCount ?? null)}
+                {formatNumber(opportunityLayer?.opportunityScore ?? null)}
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Avg review</CardTitle>
+                <CardTitle className="text-base">Risk</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatPercent(project.analysis?.averageReviewScore ?? null, 1)}
+                {formatNumber(opportunityLayer?.riskScore ?? null)}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Direct comps</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatNumber(competitionLayer?.directComparableCount ?? project.analysis?.competitionCount ?? null)}
               </CardContent>
             </Card>
             <Card>
@@ -631,10 +643,18 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Launch momentum</CardTitle>
+                <CardTitle className="text-base">Market confidence</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatNumber(project.analysis?.releaseMomentum ?? null)}
+                {formatNumber(marketDepth?.confidenceScore ?? null)}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Project fit</CardTitle>
+              </CardHeader>
+              <CardContent className="text-2xl font-semibold">
+                {formatNumber(projectFitLayer?.overallFitScore ?? null)}
               </CardContent>
             </Card>
           </div>
@@ -644,11 +664,11 @@ export function ProjectDetailClient({
             </CardHeader>
             <CardContent className="grid gap-4 text-sm">
               <p>{project.analysis?.marketSummary ?? "Run market analysis to populate this section."}</p>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Opportunity</p>
-                  <p className="mt-2 text-muted-foreground">{project.analysis?.opportunitySummary ?? "Pending analysis."}</p>
-                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Opportunity</p>
+                    <p className="mt-2 text-muted-foreground">{project.analysis?.opportunitySummary ?? "Pending analysis."}</p>
+                  </div>
                 <div className="rounded-2xl border p-4">
                   <p className="font-medium">Risk</p>
                   <p className="mt-2 text-muted-foreground">{project.analysis?.riskSummary ?? "Pending analysis."}</p>
@@ -676,13 +696,157 @@ export function ProjectDetailClient({
                   <p className="mt-2 text-muted-foreground">
                     {project.analysis?.suggestedTags?.join(", ") || "Pending analysis."}
                   </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Comparable Steam games</CardTitle>
+              </CardContent>
+            </Card>
+            <div className="grid gap-4 xl:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Market depth</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Market size</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth ? `${marketDepth.marketSizeLabel} · ${formatCurrency(marketDepth.marketSizeCents)}` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Review velocity</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth ? `${formatNumber(marketDepth.reviewVelocity90)} vs ${formatNumber(marketDepth.previousReviewVelocity90)} previous 90d` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Player momentum</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth ? `${formatNumber(marketDepth.playerMomentum30)} avg vs ${formatNumber(marketDepth.previousPlayerMomentum30)}` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Launch cohorts</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth ? `${marketDepth.launchCohorts.last90Days} / 90d · ${marketDepth.launchCohorts.last180Days} / 180d · ${marketDepth.launchCohorts.last365Days} / 365d` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4 md:col-span-2">
+                    <p className="font-medium">Price distribution</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth
+                        ? `<$10: ${marketDepth.priceBandDistribution.under10} · $10-20: ${marketDepth.priceBandDistribution.between10And20} · $20-30: ${marketDepth.priceBandDistribution.between20And30} · $30+: ${marketDepth.priceBandDistribution.over30}`
+                        : "Pending analysis."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Competition layer</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Direct vs adjacent</p>
+                    <p className="mt-2 text-foreground">
+                      {competitionLayer ? `${competitionLayer.directComparableCount} direct · ${competitionLayer.adjacentComparableCount} adjacent` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Crowdedness</p>
+                    <p className="mt-2 text-foreground">
+                      {formatNumber(competitionLayer?.crowdednessScore ?? null)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Revenue concentration</p>
+                    <p className="mt-2 text-foreground">
+                      {competitionLayer ? `${competitionLayer.winnerConcentrationScore}% in top winners` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Quality bar</p>
+                    <p className="mt-2 text-foreground">
+                      {formatNumber(competitionLayer?.qualityBarScore ?? null)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4 md:col-span-2">
+                    <p className="font-medium">Monetization mix</p>
+                    <p className="mt-2 text-foreground">
+                      {competitionLayer ? `${competitionLayer.dominantMonetization} dominant · ${competitionLayer.premiumSharePercent}% premium share` : "Pending analysis."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid gap-4 xl:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Opportunity layer</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Underserved score</p>
+                    <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.underservedScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Revenue potential</p>
+                    <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.revenuePotentialScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Execution bar</p>
+                    <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.executionBarScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Confidence</p>
+                    <p className="mt-2 text-foreground">
+                      {marketDepth ? `${marketDepth.confidenceLabel} (${marketDepth.confidenceScore})` : "Pending analysis."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border p-4 md:col-span-2">
+                    <p className="font-medium">Practical recommendations</p>
+                    <ul className="mt-2 space-y-2 text-muted-foreground">
+                      {opportunityLayer?.practicalRecommendations?.length ? opportunityLayer.practicalRecommendations.map((item) => (
+                        <li key={item}>- {item}</li>
+                      )) : <li>Pending analysis.</li>}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project fit layer</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Genre/tag fit</p>
+                    <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.genreTagCoverageScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Price fit</p>
+                    <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.priceFitScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Monetization fit</p>
+                    <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.monetizationFitScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Positioning clarity</p>
+                    <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.positioningClarityScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4 md:col-span-2">
+                    <p className="font-medium">Key mismatches</p>
+                    <ul className="mt-2 space-y-2 text-muted-foreground">
+                      {opportunityLayer?.keyMismatches?.length ? opportunityLayer.keyMismatches.map((item) => (
+                        <li key={item}>- {item}</li>
+                      )) : <li>No critical mismatches surfaced in the current read.</li>}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Comparable Steam games</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               {project.competitorGames.length > 0 ? project.competitorGames.map((item) => (

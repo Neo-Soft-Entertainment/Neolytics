@@ -49,6 +49,59 @@ export interface ProjectDetailResponse extends ProjectListItem {
     suggestedGenres: string[] | null;
     suggestedTags: string[] | null;
     differentiators: string[] | null;
+    metadata: {
+      topCompetitorIds?: string[];
+      topCompetitorNames?: string[];
+      marketDepth?: {
+        marketSizeCents: number;
+        marketSizeLabel: string;
+        reviewVelocity90: number;
+        previousReviewVelocity90: number;
+        playerMomentum30: number;
+        previousPlayerMomentum30: number;
+        priceBandDistribution: {
+          under10: number;
+          between10And20: number;
+          between20And30: number;
+          over30: number;
+        };
+        launchCohorts: {
+          last90Days: number;
+          last180Days: number;
+          last365Days: number;
+        };
+        revenueConcentrationPercent: number;
+        confidenceScore: number;
+        confidenceLabel: string;
+      };
+      competitionLayer?: {
+        directComparableCount: number;
+        adjacentComparableCount: number;
+        crowdednessScore: number;
+        winnerConcentrationScore: number;
+        qualityBarScore: number;
+        dominantMonetization: string;
+        premiumSharePercent: number;
+        directComparableNames: string[];
+        adjacentComparableNames: string[];
+      };
+      opportunityLayer?: {
+        underservedScore: number;
+        revenuePotentialScore: number;
+        opportunityScore: number;
+        riskScore: number;
+        executionBarScore: number;
+        practicalRecommendations: string[];
+        keyMismatches: string[];
+      };
+      projectFitLayer?: {
+        genreTagCoverageScore: number;
+        priceFitScore: number;
+        monetizationFitScore: number;
+        positioningClarityScore: number;
+        overallFitScore: number;
+      };
+    } | null;
   } | null;
   artAnalysis: {
     analyzedAt: string;

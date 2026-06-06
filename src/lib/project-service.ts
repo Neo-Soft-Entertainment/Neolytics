@@ -57,6 +57,210 @@ function clampScore(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
+function average(values: number[]) {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function percentile(values: number[], percentileValue: number) {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * percentileValue) - 1));
+
+  return sorted[index];
+}
+
+function sum(values: number[]) {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function formatMoney(valueCents: number) {
+  return (valueCents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  });
+}
+
+function getConfidenceLabel(score: number) {
+  if (score >= 80) {
+    return "High";
+  }
+
+  if (score >= 60) {
+    return "Medium";
+  }
+
+  return "Low";
+}
+
+function getMarketSizeLabel(totalRevenueCents: number) {
+  if (totalRevenueCents >= 100_000_000) {
+    return "Large";
+  }
+
+  if (totalRevenueCents >= 25_000_000) {
+    return "Mid-sized";
+  }
+
+  if (totalRevenueCents > 0) {
+    return "Emerging";
+  }
+
+  return "Unknown";
+}
+
+function getPriceBandDistribution(values: number[]) {
+  const bands = {
+    under10: 0,
+    between10And20: 0,
+    between20And30: 0,
+    over30: 0
+  };
+
+  for (const value of values) {
+    if (value < 1000) {
+      bands.under10 += 1;
+      continue;
+    }
+
+    if (value < 2000) {
+      bands.between10And20 += 1;
+      continue;
+    }
+
+    if (value < 3000) {
+      bands.between20And30 += 1;
+      continue;
+    }
+
+    bands.over30 += 1;
+  }
+
+  return bands;
+}
+
+function getReviewVelocity(reviewSnapshots: Array<{
+  steamGameId: string;
+  snapshotDate: Date;
+  totalReviews: number;
+}>) {
+  const grouped = new Map<string, Array<{ snapshotDate: Date; totalReviews: number }>>();
+
+  for (const snapshot of reviewSnapshots) {
+    const list = grouped.get(snapshot.steamGameId) ?? [];
+    list.push({
+      snapshotDate: snapshot.snapshotDate,
+      totalReviews: snapshot.totalReviews
+    });
+    grouped.set(snapshot.steamGameId, list);
+  }
+
+  let total90 = 0;
+  let totalPrevious90 = 0;
+  let coveredGames = 0;
+  const now = Date.now();
+  const days90 = 90 * 24 * 60 * 60 * 1000;
+  const days180 = 180 * 24 * 60 * 60 * 1000;
+
+  for (const entries of grouped.values()) {
+    const ordered = [...entries].sort((left, right) => left.snapshotDate.getTime() - right.snapshotDate.getTime());
+    const latest = ordered[ordered.length - 1];
+    const baseline90 = ordered.find((entry) => latest.snapshotDate.getTime() - entry.snapshotDate.getTime() <= days90);
+    const baseline180 = ordered.find((entry) => now - entry.snapshotDate.getTime() <= days180);
+
+    if (!baseline90 || !baseline180) {
+      continue;
+    }
+
+    const reviews90 = Math.max(0, latest.totalReviews - baseline90.totalReviews);
+    const reviews180 = Math.max(0, latest.totalReviews - baseline180.totalReviews);
+    total90 += reviews90;
+    totalPrevious90 += Math.max(0, reviews180 - reviews90);
+    coveredGames += 1;
+  }
+
+  return {
+    reviewVelocity90: total90,
+    previousReviewVelocity90: totalPrevious90,
+    coveredGames
+  };
+}
+
+function getPlayerMomentum(playerSnapshots: Array<{
+  steamGameId: string;
+  snapshotDate: Date;
+  currentPlayers: number;
+}>) {
+  const grouped = new Map<string, Array<{ snapshotDate: Date; currentPlayers: number }>>();
+
+  for (const snapshot of playerSnapshots) {
+    const list = grouped.get(snapshot.steamGameId) ?? [];
+    list.push({
+      snapshotDate: snapshot.snapshotDate,
+      currentPlayers: snapshot.currentPlayers
+    });
+    grouped.set(snapshot.steamGameId, list);
+  }
+
+  let currentWindow = 0;
+  let previousWindow = 0;
+  let currentSamples = 0;
+  let previousSamples = 0;
+  const now = Date.now();
+  const days30 = 30 * 24 * 60 * 60 * 1000;
+  const days60 = 60 * 24 * 60 * 60 * 1000;
+
+  for (const entries of grouped.values()) {
+    for (const entry of entries) {
+      const age = now - entry.snapshotDate.getTime();
+
+      if (age <= days30) {
+        currentWindow += entry.currentPlayers;
+        currentSamples += 1;
+        continue;
+      }
+
+      if (age <= days60) {
+        previousWindow += entry.currentPlayers;
+        previousSamples += 1;
+      }
+    }
+  }
+
+  const currentAverage = currentSamples > 0 ? currentWindow / currentSamples : 0;
+  const previousAverage = previousSamples > 0 ? previousWindow / previousSamples : 0;
+
+  return {
+    playerMomentum30: currentAverage,
+    previousPlayerMomentum30: previousAverage,
+    coveredSamples: currentSamples + previousSamples
+  };
+}
+
+function getDominantMonetization(project: {
+  monetizationModel: string | null;
+}, games: Array<{ isFree: boolean }>) {
+  const freeCount = games.filter((game) => game.isFree).length;
+  const dominant = freeCount >= Math.ceil(games.length / 2) ? "free-to-play" : "premium";
+  const input = project.monetizationModel?.trim().toLowerCase() ?? "";
+
+  return {
+    dominant,
+    fitScore: input
+      ? dominant === "free-to-play"
+        ? (input.includes("free") ? 90 : 40)
+        : (input.includes("premium") || input.includes("paid") ? 90 : 45)
+      : 60
+  };
+}
+
 function buildProjectMatchingRules(project: {
   name: string;
   genreInput: string | null;
@@ -437,44 +641,271 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
 
   await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
   const matchingGames = await getComparableGames(project);
+  const projectGenres = parseCsv(project.genreInput).map(slugify);
+  const projectTags = parseCsv(project.tagInput).map(slugify);
+  const now = Date.now();
+  const enrichedGames = matchingGames.map((game) => {
+    const gameGenres = game.genres.map((genre) => genre.steamGenre.slug);
+    const gameTags = game.tags.map((tag) => tag.steamTag.slug);
+    const genreMatches = gameGenres.filter((genre) => projectGenres.includes(genre)).length;
+    const tagMatches = gameTags.filter((tag) => projectTags.includes(tag)).length;
+    const genreCoverage = projectGenres.length > 0 ? genreMatches / projectGenres.length : 0;
+    const tagCoverage = projectTags.length > 0 ? tagMatches / projectTags.length : 0;
+    const similarityScore = clampScore(
+      genreCoverage * 60
+      + tagCoverage * 40
+      + (project.name.trim() && game.name.toLowerCase().includes(project.name.trim().toLowerCase()) ? 10 : 0)
+    );
 
-  const competitionCount = matchingGames.length;
-  const revenueValues = matchingGames
+    return {
+      ...game,
+      similarityScore,
+      genreMatches,
+      tagMatches,
+      isDirectComparable: similarityScore >= 45 || (genreMatches > 0 && tagMatches > 0)
+    };
+  });
+  const directComparables = enrichedGames
+    .filter((game) => game.isDirectComparable)
+    .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
+  const adjacentComparables = enrichedGames
+    .filter((game) => !game.isDirectComparable)
+    .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
+  const rankedComparables = [...directComparables, ...adjacentComparables];
+  const competitionCount = rankedComparables.length;
+  const topCompetitors = rankedComparables.slice(0, 6);
+  const revenueValues = rankedComparables
     .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
     .filter((value) => value > 0);
-  const priceValues = matchingGames
+  const directRevenueValues = directComparables
+    .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
+    .filter((value) => value > 0);
+  const priceValues = rankedComparables
     .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
     .filter((value) => value > 0);
-  const reviewValues = matchingGames
+  const reviewValues = rankedComparables
     .map((game) => game.reviewScore ?? 0)
     .filter((value) => value > 0);
-  const releaseMomentum = matchingGames.filter((game) => {
+  const releaseMomentum = rankedComparables.filter((game) => {
     if (!game.releaseDate) {
       return false;
     }
 
-    const ageInDays = (Date.now() - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
+    const ageInDays = (now - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
     return ageInDays <= 365;
   }).length;
-  const topCompetitors = matchingGames.slice(0, 6);
+  const launches90 = rankedComparables.filter((game) => {
+    if (!game.releaseDate) {
+      return false;
+    }
+
+    return now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000;
+  }).length;
+  const launches180 = rankedComparables.filter((game) => {
+    if (!game.releaseDate) {
+      return false;
+    }
+
+    return now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000;
+  }).length;
+  const launches365 = releaseMomentum;
+  const matchingIds = rankedComparables.map((game) => game.id);
+  const [reviewSnapshots, playerSnapshots] = matchingIds.length > 0
+    ? await Promise.all([
+        db.steamReviewSnapshot.findMany({
+          where: {
+            steamGameId: {
+              in: matchingIds
+            },
+            snapshotDate: {
+              gte: new Date(now - 180 * 24 * 60 * 60 * 1000)
+            }
+          },
+          orderBy: {
+            snapshotDate: "asc"
+          },
+          select: {
+            steamGameId: true,
+            snapshotDate: true,
+            totalReviews: true
+          }
+        }),
+        db.steamPlayerCountSnapshot.findMany({
+          where: {
+            steamGameId: {
+              in: matchingIds
+            },
+            snapshotDate: {
+              gte: new Date(now - 60 * 24 * 60 * 60 * 1000)
+            }
+          },
+          orderBy: {
+            snapshotDate: "asc"
+          },
+          select: {
+            steamGameId: true,
+            snapshotDate: true,
+            currentPlayers: true
+          }
+        })
+      ])
+    : [[], []];
+  const reviewVelocity = getReviewVelocity(reviewSnapshots);
+  const playerMomentum = getPlayerMomentum(playerSnapshots);
   const medianRevenueCents = median(revenueValues);
-  const averagePriceCents = priceValues.length > 0
-    ? Math.round(priceValues.reduce((sum, value) => sum + value, 0) / priceValues.length)
-    : null;
-  const averageReviewScore = reviewValues.length > 0
-    ? Number((reviewValues.reduce((sum, value) => sum + value, 0) / reviewValues.length).toFixed(1))
-    : null;
-  const opportunitySummary = competitionCount <= 8
-    ? "The niche is still relatively open. A differentiated execution has room to break through."
-    : "The niche already has visible supply. You need sharper positioning and production quality to stand out.";
-  const riskSummary = averageReviewScore && averageReviewScore < 75
-    ? "Comparable games in this space underperform on player satisfaction, which raises product and retention risk."
-    : "The main risk is execution against established category expectations, not lack of demand.";
+  const p75RevenueCents = percentile(directRevenueValues.length > 0 ? directRevenueValues : revenueValues, 0.75);
+  const totalRevenueCents = sum(revenueValues);
+  const averagePriceCents = priceValues.length > 0 ? Math.round(average(priceValues)) : null;
+  const medianPriceCents = priceValues.length > 0 ? median(priceValues) : 0;
+  const averageReviewScore = reviewValues.length > 0 ? Number(average(reviewValues).toFixed(1)) : null;
+  const top3Revenue = sum([...revenueValues].sort((left, right) => right - left).slice(0, 3));
+  const revenueConcentrationPercent = totalRevenueCents > 0 ? Math.round((top3Revenue / totalRevenueCents) * 100) : 0;
+  const qualityBarScore = reviewValues.length > 0 ? clampScore(percentile(reviewValues, 0.75)) : 0;
+  const priceBandDistribution = getPriceBandDistribution(priceValues);
+  const dominantMonetization = getDominantMonetization(project, rankedComparables);
+  const coverageChecks = [
+    revenueValues.length >= Math.max(3, Math.floor(competitionCount * 0.35)),
+    priceValues.length >= Math.max(3, Math.floor(competitionCount * 0.5)),
+    reviewValues.length >= Math.max(3, Math.floor(competitionCount * 0.6)),
+    reviewVelocity.coveredGames >= Math.max(2, Math.floor(competitionCount * 0.25)),
+    playerMomentum.coveredSamples > 0
+  ];
+  const confidenceScore = clampScore((coverageChecks.filter(Boolean).length / coverageChecks.length) * 100);
+  const launchDensityScore = competitionCount > 0 ? clampScore((launches180 / competitionCount) * 100) : 0;
+  const crowdednessScore = clampScore(
+    directComparables.length * 8
+    + (competitionCount - directComparables.length) * 2
+    + launchDensityScore * 0.2
+  );
+  const revenuePotentialScore = clampScore(
+    (medianRevenueCents > 0 ? Math.min(45, medianRevenueCents / 4_000_000) : 0)
+    + (p75RevenueCents > 0 ? Math.min(35, p75RevenueCents / 10_000_000) : 0)
+    + (reviewVelocity.reviewVelocity90 > 0 ? Math.min(20, reviewVelocity.reviewVelocity90 / 25) : 0)
+  );
+  const underservedScore = clampScore(
+    revenuePotentialScore * 0.35
+    + Math.max(0, 100 - crowdednessScore) * 0.35
+    + Math.max(0, 100 - revenueConcentrationPercent) * 0.15
+    + Math.min(20, reviewVelocity.reviewVelocity90 / 20) * 0.15
+  );
+  const executionBarScore = clampScore(
+    qualityBarScore * 0.6
+    + revenueConcentrationPercent * 0.15
+    + crowdednessScore * 0.25
+  );
+  const riskScore = clampScore(
+    Math.max(0, 100 - (averageReviewScore ?? 0)) * 0.3
+    + revenueConcentrationPercent * 0.25
+    + crowdednessScore * 0.25
+    + (reviewVelocity.reviewVelocity90 < reviewVelocity.previousReviewVelocity90 ? 12 : 0)
+    + (playerMomentum.playerMomentum30 < playerMomentum.previousPlayerMomentum30 ? 8 : 0)
+  );
+  const opportunityScore = clampScore(
+    revenuePotentialScore * 0.35
+    + underservedScore * 0.3
+    + Math.max(0, 100 - riskScore) * 0.2
+    + Math.max(0, 100 - crowdednessScore) * 0.15
+  );
+  const priceFitScore = project.pricePointCents && medianPriceCents > 0
+    ? clampScore(100 - (Math.abs(project.pricePointCents - medianPriceCents) / medianPriceCents) * 100)
+    : 60;
+  const genreTagCoverageScore = clampScore(average(directComparables.slice(0, 5).map((game) => game.similarityScore)));
+  const positioningClarityScore = clampScore(
+    [
+      project.elevatorPitch,
+      project.description,
+      project.targetAudience,
+      project.coreLoop,
+      project.differentiator,
+      project.playerFantasy
+    ].filter((value) => value?.trim()).length * 16
+  );
+  const overallFitScore = clampScore(
+    genreTagCoverageScore * 0.35
+    + priceFitScore * 0.2
+    + dominantMonetization.fitScore * 0.2
+    + positioningClarityScore * 0.25
+  );
+  const marketDepth = {
+    marketSizeCents: totalRevenueCents,
+    marketSizeLabel: getMarketSizeLabel(totalRevenueCents),
+    reviewVelocity90: reviewVelocity.reviewVelocity90,
+    previousReviewVelocity90: reviewVelocity.previousReviewVelocity90,
+    playerMomentum30: Math.round(playerMomentum.playerMomentum30),
+    previousPlayerMomentum30: Math.round(playerMomentum.previousPlayerMomentum30),
+    priceBandDistribution,
+    launchCohorts: {
+      last90Days: launches90,
+      last180Days: launches180,
+      last365Days: launches365
+    },
+    revenueConcentrationPercent,
+    confidenceScore,
+    confidenceLabel: getConfidenceLabel(confidenceScore)
+  };
+  const competitionLayer = {
+    directComparableCount: directComparables.length,
+    adjacentComparableCount: adjacentComparables.length,
+    crowdednessScore,
+    winnerConcentrationScore: revenueConcentrationPercent,
+    qualityBarScore,
+    dominantMonetization: dominantMonetization.dominant,
+    premiumSharePercent: competitionCount > 0 ? Math.round((rankedComparables.filter((game) => !game.isFree).length / competitionCount) * 100) : 0,
+    directComparableNames: directComparables.slice(0, 6).map((game) => game.name),
+    adjacentComparableNames: adjacentComparables.slice(0, 6).map((game) => game.name)
+  };
+  const projectFitLayer = {
+    genreTagCoverageScore,
+    priceFitScore,
+    monetizationFitScore: dominantMonetization.fitScore,
+    positioningClarityScore,
+    overallFitScore
+  };
+  const keyMismatches = [
+    priceFitScore < 55 && medianPriceCents > 0
+      ? `Your target price is misaligned with the segment median of ${formatMoney(medianPriceCents)}.`
+      : null,
+    dominantMonetization.fitScore < 55
+      ? `Your monetization approach does not match the dominant ${dominantMonetization.dominant} pattern in this segment.`
+      : null,
+    positioningClarityScore < 60
+      ? "The project pitch still lacks enough specificity around fantasy, audience, or differentiator."
+      : null,
+    genreTagCoverageScore < 50
+      ? "The current genre/tag framing is still weak relative to the strongest direct comparables."
+      : null
+  ].filter((item): item is string => Boolean(item));
+  const practicalRecommendations = [
+    revenueConcentrationPercent >= 65
+      ? "Design the store hook to beat a concentrated winner-led market rather than assuming broad mid-tail demand."
+      : "There is enough spread below the category leaders to target a clearer mid-market position.",
+    launchDensityScore >= 45
+      ? "Recent launch density is high, so timing and positioning should be treated as first-order strategic decisions."
+      : "Launch density is manageable, which gives you more room to choose a timing window deliberately.",
+    qualityBarScore >= 85
+      ? "This segment expects a very high review bar, so polish and onboarding quality will matter almost as much as concept."
+      : "The quality bar is solid but not impossible, so a sharper value proposition can still do real work."
+  ];
+  const opportunityLayer = {
+    underservedScore,
+    revenuePotentialScore,
+    opportunityScore,
+    riskScore,
+    executionBarScore,
+    practicalRecommendations,
+    keyMismatches
+  };
+  const opportunitySummary = opportunityScore >= 70
+    ? `This looks like a commercially active segment with enough room for a sharply positioned entrant. The biggest upside comes from ${revenuePotentialScore >= 70 ? "meaningful revenue headroom" : "healthy niche demand"} without fully runaway saturation.`
+    : `The niche can still work, but the opportunity is conditional on stronger positioning. Right now the upside is being compressed by ${crowdednessScore >= 65 ? "competition density" : "uneven demand coverage"}.`;
+  const riskSummary = riskScore >= 65
+    ? `Risk is elevated because ${revenueConcentrationPercent >= 65 ? "a few winners dominate revenue capture" : "the niche still shows weak or unstable momentum"}, and the execution bar is ${executionBarScore >= 70 ? "high" : "non-trivial"}.`
+    : `Risk is manageable for a disciplined team. The main challenge is outperforming the current quality bar rather than entering a structurally broken segment.`;
   const marketSummary = [
-    `${competitionCount} comparable Steam games were matched from the current dataset.`,
-    medianRevenueCents > 0 ? `Median estimated net revenue across the set is ${(medianRevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}.` : "Revenue coverage is still building for this segment.",
-    averageReviewScore ? `Average review score in the set is ${averageReviewScore.toFixed(1)}%.` : "Review score coverage is limited in this segment.",
-    releaseMomentum > 0 ? `${releaseMomentum} comparable launches landed in the last 12 months.` : "This segment has been quiet over the last 12 months."
+    `${directComparables.length} direct comparables and ${adjacentComparables.length} adjacent comps were identified from the current Steam dataset.`,
+    totalRevenueCents > 0 ? `The tracked market depth looks ${marketDepth.marketSizeLabel.toLowerCase()}, with roughly ${formatMoney(totalRevenueCents)} in cumulative estimated net revenue across the matched set and a median of ${formatMoney(medianRevenueCents)}.` : "Revenue coverage is still thin, so the market sizing layer should be treated cautiously.",
+    reviewVelocity.reviewVelocity90 > 0 ? `Review velocity added ${reviewVelocity.reviewVelocity90.toLocaleString("en-US")} reviews in the last 90 days versus ${reviewVelocity.previousReviewVelocity90.toLocaleString("en-US")} in the prior window.` : "Temporal review coverage is still limited, so momentum should be treated as directional rather than conclusive.",
+    launches365 > 0 ? `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.` : "Recent launch activity is quiet in this segment."
   ].join(" ");
   const suggestedGenres = Array.from(
     new Set(topCompetitors.flatMap((game) => game.genres.map((genre) => genre.steamGenre.name)))
@@ -483,13 +914,14 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     new Set(topCompetitors.flatMap((game) => game.tags.map((tag) => tag.steamTag.name)))
   ).slice(0, 8);
   const audienceAutofill = project.targetAudience?.trim()
-    || `Players who actively buy ${suggestedGenres.slice(0, 2).join(" / ") || "genre"} games on Steam and respond to clear market hooks.`;
+    || `Players who buy ${suggestedGenres.slice(0, 2).join(" / ") || "genre"} games on Steam and respond to a clearly signaled fantasy plus an immediately legible progression loop.`;
   const coreLoopAutofill = project.coreLoop?.trim()
-    || `Deliver a repeatable gameplay loop around ${suggestedTags.slice(0, 3).join(", ") || "clear player mastery"} with visible long-term progression.`;
+    || `Center the loop around ${suggestedTags.slice(0, 3).join(", ") || "clear mastery signals"} with visible retention hooks and a short path to the game's core fantasy.`;
   const differentiators = [
     project.differentiator?.trim(),
-    competitionCount > 10 ? "Sharpen the fantasy and production hook early because the niche is already busy." : "Use a distinctive art and UX hook to claim a clearer identity early.",
-    averagePriceCents ? `Anchor pricing near ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })} unless your scope materially exceeds the segment.` : null
+    crowdednessScore >= 65 ? "The positioning hook must be visible in the first few seconds of store exposure because the direct shelf is crowded." : "There is room to win with a more focused concept if the store fantasy lands cleanly.",
+    priceFitScore < 60 && medianPriceCents > 0 ? `Revisit pricing toward the segment center around ${formatMoney(medianPriceCents)} unless scope clearly justifies the gap.` : null,
+    dominantMonetization.fitScore < 55 ? `Clarify why your monetization model should outperform the segment's ${dominantMonetization.dominant} baseline.` : null
   ].filter((item): item is string => Boolean(item));
 
   await db.project.update({
@@ -527,7 +959,11 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       differentiators,
       metadata: {
         topCompetitorIds: topCompetitors.map((game) => game.id),
-        topCompetitorNames: topCompetitors.map((game) => game.name)
+        topCompetitorNames: topCompetitors.map((game) => game.name),
+        marketDepth,
+        competitionLayer,
+        opportunityLayer,
+        projectFitLayer
       }
     },
     create: {
@@ -548,7 +984,11 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       differentiators,
       metadata: {
         topCompetitorIds: topCompetitors.map((game) => game.id),
-        topCompetitorNames: topCompetitors.map((game) => game.name)
+        topCompetitorNames: topCompetitors.map((game) => game.name),
+        marketDepth,
+        competitionLayer,
+        opportunityLayer,
+        projectFitLayer
       }
     }
   });
@@ -583,6 +1023,16 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
         color: 10181046,
         fields: [
           {
+            name: "Opportunity score",
+            value: String(opportunityScore),
+            inline: true
+          },
+          {
+            name: "Risk score",
+            value: String(riskScore),
+            inline: true
+          },
+          {
             name: "Median revenue",
             value: medianRevenueCents > 0
               ? (medianRevenueCents / 100).toLocaleString("en-US", {
@@ -596,6 +1046,11 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
           {
             name: "Review score",
             value: averageReviewScore ? `${averageReviewScore.toFixed(1)}%` : "No coverage yet",
+            inline: true
+          },
+          {
+            name: "Confidence",
+            value: `${marketDepth.confidenceLabel} (${confidenceScore})`,
             inline: true
           }
         ],
