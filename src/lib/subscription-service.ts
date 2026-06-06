@@ -20,7 +20,8 @@ const metricLabels: Record<SubscriptionMetric, string> = {
   reportsGenerated: "monthly report limit",
   exportsGenerated: "monthly export limit",
   projectAnalysesRun: "monthly market analysis limit",
-  gddsGenerated: "monthly GDD limit"
+  gddsGenerated: "monthly GDD limit",
+  artAnalysesRun: "monthly art analysis limit"
 };
 
 export class SubscriptionLimitError extends Error {
@@ -143,7 +144,7 @@ export async function enforceSubscriptionCapacity(
 
 export async function consumeSubscriptionUsage(
   organizationId: string,
-  metric: Extract<SubscriptionMetric, "reportsGenerated" | "exportsGenerated" | "projectAnalysesRun" | "gddsGenerated">,
+  metric: Extract<SubscriptionMetric, "reportsGenerated" | "exportsGenerated" | "projectAnalysesRun" | "gddsGenerated" | "artAnalysesRun">,
   client: DbClient = db
 ) {
   const plan = await getOrganizationPlan(client, organizationId);
@@ -174,7 +175,9 @@ export async function consumeSubscriptionUsage(
         ? usage.exportsGenerated
         : metric === "projectAnalysesRun"
           ? usage.projectAnalysesRun
-          : usage.gddsGenerated;
+          : metric === "gddsGenerated"
+            ? usage.gddsGenerated
+            : usage.artAnalysesRun;
 
   if (current >= limit) {
     throw new SubscriptionLimitError(`Your ${metricLabels[metric]} was reached on the ${plan.toLowerCase()} plan.`);
@@ -187,7 +190,9 @@ export async function consumeSubscriptionUsage(
         ? { exportsGenerated: { increment: 1 } }
         : metric === "projectAnalysesRun"
           ? { projectAnalysesRun: { increment: 1 } }
-          : { gddsGenerated: { increment: 1 } };
+          : metric === "gddsGenerated"
+            ? { gddsGenerated: { increment: 1 } }
+            : { artAnalysesRun: { increment: 1 } };
 
   await client.organizationSubscriptionUsage.update({
     where: {
@@ -280,7 +285,8 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
       reportsGenerated: usage?.reportsGenerated ?? 0,
       exportsGenerated: usage?.exportsGenerated ?? 0,
       projectAnalysesRun: usage?.projectAnalysesRun ?? 0,
-      gddsGenerated: usage?.gddsGenerated ?? 0
+      gddsGenerated: usage?.gddsGenerated ?? 0,
+      artAnalysesRun: usage?.artAnalysesRun ?? 0
     },
     limits: plan.limits
   };

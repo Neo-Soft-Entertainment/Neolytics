@@ -4,7 +4,11 @@ import { db } from "@/lib/db";
 import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { slugify } from "@/lib/slugify";
-import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
+import {
+  consumeSubscriptionUsage,
+  enforceSubscriptionCapacity,
+  enforceSubscriptionCapability
+} from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
 const defaultKanbanColumns = [
@@ -49,6 +53,96 @@ function median(values: number[]) {
   return sorted[midpoint];
 }
 
+function clampScore(value: number, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
+
+function buildProjectMatchingRules(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+}) {
+  const genreTokens = parseCsv(project.genreInput).map(slugify);
+  const tagTokens = parseCsv(project.tagInput).map(slugify);
+  const matchingRules: Prisma.SteamGameWhereInput[] = [];
+
+  if (genreTokens.length > 0) {
+    matchingRules.push({
+      genres: {
+        some: {
+          steamGenre: {
+            slug: {
+              in: genreTokens
+            }
+          }
+        }
+      }
+    });
+  }
+
+  if (tagTokens.length > 0) {
+    matchingRules.push({
+      tags: {
+        some: {
+          steamTag: {
+            slug: {
+              in: tagTokens
+            }
+          }
+        }
+      }
+    });
+  }
+
+  if (project.name.trim()) {
+    matchingRules.push({
+      name: {
+        contains: project.name.trim(),
+        mode: "insensitive"
+      }
+    });
+  }
+
+  return matchingRules;
+}
+
+async function getComparableGames(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+}) {
+  const matchingRules = buildProjectMatchingRules(project);
+
+  return db.steamGame.findMany({
+    where: matchingRules.length > 0 ? { OR: matchingRules } : undefined,
+    include: {
+      priceCurrent: true,
+      revenueEstimates: {
+        orderBy: {
+          calculatedAt: "desc"
+        },
+        take: 1
+      },
+      genres: {
+        include: {
+          steamGenre: true
+        }
+      },
+      tags: {
+        include: {
+          steamTag: true
+        }
+      }
+    },
+    orderBy: [
+      {
+        reviewCount: "desc"
+      }
+    ],
+    take: 40
+  });
+}
+
 const projectInclude = {
   analysis: true,
   competitorGames: {
@@ -56,6 +150,16 @@ const projectInclude = {
       steamGame: {
         include: {
           priceCurrent: true,
+          genres: {
+            include: {
+              steamGenre: true
+            }
+          },
+          tags: {
+            include: {
+              steamTag: true
+            }
+          },
           revenueEstimates: {
             orderBy: {
               calculatedAt: "desc"
@@ -71,6 +175,7 @@ const projectInclude = {
       version: "desc"
     }
   },
+  artAnalysis: true,
   kanbanBoards: {
     orderBy: {
       createdAt: "asc"
@@ -331,78 +436,7 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
   });
 
   await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
-
-  const genreTokens = parseCsv(project.genreInput).map(slugify);
-  const tagTokens = parseCsv(project.tagInput).map(slugify);
-  const matchingRules: Prisma.SteamGameWhereInput[] = [];
-
-  if (genreTokens.length > 0) {
-    matchingRules.push({
-      genres: {
-        some: {
-          steamGenre: {
-            slug: {
-              in: genreTokens
-            }
-          }
-        }
-      }
-    });
-  }
-
-  if (tagTokens.length > 0) {
-    matchingRules.push({
-      tags: {
-        some: {
-          steamTag: {
-            slug: {
-              in: tagTokens
-            }
-          }
-        }
-      }
-    });
-  }
-
-  if (project.name) {
-    matchingRules.push({
-      name: {
-        contains: project.name,
-        mode: "insensitive"
-      }
-    });
-  }
-
-  const matchingGames = await db.steamGame.findMany({
-    where: {
-      OR: matchingRules
-    },
-    include: {
-      priceCurrent: true,
-      revenueEstimates: {
-        orderBy: {
-          calculatedAt: "desc"
-        },
-        take: 1
-      },
-      genres: {
-        include: {
-          steamGenre: true
-        }
-      },
-      tags: {
-        include: {
-          steamTag: true
-        }
-      }
-    },
-    orderBy: [
-      {
-        reviewCount: "desc"
-      }
-    ],
-    take: 40
-  });
+  const matchingGames = await getComparableGames(project);
 
   const competitionCount = matchingGames.length;
   const revenueValues = matchingGames
@@ -573,6 +607,217 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
   return result;
 }
 
+export async function analyzeProjectArt(projectId: string, workspaceId: string) {
+  const project = await db.project.findFirstOrThrow({
+    where: {
+      id: projectId,
+      workspaceId
+    }
+  });
+
+  await enforceSubscriptionCapability(project.organizationId, "artAnalyses");
+  await consumeSubscriptionUsage(project.organizationId, "artAnalysesRun");
+
+  const matchingGames = await getComparableGames(project);
+  const topCompetitors = matchingGames.slice(0, 6);
+  const competitionCount = matchingGames.length;
+  const averageReviewScore = matchingGames.length > 0
+    ? matchingGames
+        .map((game) => game.reviewScore ?? 0)
+        .filter((value) => value > 0)
+        .reduce((sum, value, _, values) => sum + value / values.length, 0)
+    : 0;
+  const averagePriceCents = matchingGames.length > 0
+    ? median(
+        matchingGames
+          .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
+          .filter((value) => value > 0)
+      )
+    : 0;
+  const releaseMomentum = matchingGames.filter((game) => {
+    if (!game.releaseDate) {
+      return false;
+    }
+
+    const ageInDays = (Date.now() - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
+    return ageInDays <= 365;
+  }).length;
+  const artText = [
+    project.artDirection,
+    project.description,
+    project.elevatorPitch,
+    project.playerFantasy,
+    project.tagInput
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const paletteKeywords = Array.from(
+    new Set(
+      [
+        artText.includes("neon") || artText.includes("cyber") ? "neon blue" : null,
+        artText.includes("dark") || artText.includes("horror") ? "deep shadows" : null,
+        artText.includes("fantasy") ? "enchanted glow" : null,
+        artText.includes("cozy") ? "warm pastel" : null,
+        artText.includes("pixel") ? "high-contrast sprite palette" : null,
+        competitionCount > 12 ? "store capsule contrast" : null,
+        averageReviewScore >= 85 ? "premium finish" : "readability-first palette"
+      ].filter((item): item is string => Boolean(item))
+    )
+  ).slice(0, 4);
+  const moodKeywords = Array.from(
+    new Set(
+      [
+        artText.includes("sci") || artText.includes("cyber") ? "futuristic" : null,
+        artText.includes("dark") || artText.includes("horror") ? "tense" : null,
+        artText.includes("cozy") ? "welcoming" : null,
+        artText.includes("fantasy") ? "mythic" : null,
+        artText.includes("pixel") ? "retro" : null,
+        releaseMomentum > 8 ? "commercially active" : "niche-focused",
+        competitionCount > 10 ? "crowded shelf" : "open shelf"
+      ].filter((item): item is string => Boolean(item))
+    )
+  ).slice(0, 5);
+  const realismComplexity =
+    (artText.includes("realistic") ? 22 : 0)
+    + (artText.includes("cinematic") ? 14 : 0)
+    + (artText.includes("detailed") ? 12 : 0)
+    + (artText.includes("3d") ? 10 : 0)
+    + (artText.includes("pixel") ? -10 : 0)
+    + (artText.includes("minimal") ? -12 : 0)
+    + (artText.includes("low poly") ? -8 : 0);
+  const distinctivenessScore = clampScore(
+    78
+    + (project.artDirection?.trim() ? 10 : -6)
+    + (project.differentiator?.trim() ? 8 : 0)
+    + (project.playerFantasy?.trim() ? 6 : 0)
+    - Math.min(competitionCount, 18) * 1.5,
+    18,
+    96
+  );
+  const productionComplexityScore = clampScore(
+    45
+    + realismComplexity
+    + (project.pricePointCents && project.pricePointCents >= 2999 ? 8 : 0)
+    + (competitionCount > 15 ? 8 : 0)
+  );
+  const priceFitScore = project.pricePointCents && averagePriceCents > 0
+    ? clampScore(100 - (Math.abs(project.pricePointCents - averagePriceCents) / averagePriceCents) * 100)
+    : 60;
+  const marketFitScore = clampScore(
+    averageReviewScore * 0.55
+    + priceFitScore * 0.25
+    + (competitionCount > 0 ? (releaseMomentum / competitionCount) * 20 : 0)
+  );
+  const visualTrendScore = clampScore(competitionCount > 0 ? (releaseMomentum / competitionCount) * 100 : 25);
+  const styleSummary =
+    topCompetitors.length > 0
+      ? `Comparable Steam games currently cluster around ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"}, with ${paletteKeywords.slice(0, 2).join(" plus ") || "readable capsule contrast"} showing up as the strongest shelf signal.`
+      : "The current dataset does not have enough comparable art references yet, so the visual brief should be treated as exploratory.";
+  const fitSummary =
+    marketFitScore >= 70
+      ? "The proposed art direction is close to the current quality bar for this niche and should support commercial positioning if execution stays consistent."
+      : "The current art direction thesis is still under-specified relative to the niche, so the market fit will depend heavily on sharpening readability, fantasy, and store presence.";
+  const productionSummary =
+    productionComplexityScore >= 70
+      ? "This visual direction has a high production cost profile. Scope, outsourcing, and animation complexity need to be kept under tight control."
+      : "This direction is commercially workable without blockbuster art scope, as long as the team keeps consistency high across key surfaces.";
+  const recommendationSummary = [
+    distinctivenessScore < 55 ? "Push a more ownable silhouette or color story before production lock." : "Keep the current visual hook and reinforce it in the capsule and hero scenes.",
+    priceFitScore < 55 ? `Your target price is drifting away from the niche median of ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}; align the finish bar or pricing.` : null,
+    competitionCount > 12 ? "The shelf is crowded, so capsule readability and instant fantasy communication matter more than detail density." : "There is room to claim a stronger identity if the art direction lands cleanly."
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(" ");
+
+  await db.project.update({
+    where: {
+      id: project.id
+    },
+    data: {
+      artDirection: project.artDirection?.trim() || `Target a ${moodKeywords.slice(0, 2).join(" / ") || "market-readable"} visual profile with ${paletteKeywords.slice(0, 2).join(" and ") || "clear contrast"} as the strongest shelf signal.`
+    }
+  });
+
+  const artAnalysis = await db.projectArtAnalysis.upsert({
+    where: {
+      projectId: project.id
+    },
+    update: {
+      analyzedAt: new Date(),
+      distinctivenessScore,
+      productionComplexityScore,
+      marketFitScore,
+      visualTrendScore,
+      styleSummary,
+      fitSummary,
+      productionSummary,
+      recommendationSummary,
+      paletteKeywords,
+      moodKeywords,
+      metadata: {
+        referenceGameIds: topCompetitors.map((game) => game.id),
+        referenceGameNames: topCompetitors.map((game) => game.name)
+      }
+    },
+    create: {
+      projectId: project.id,
+      distinctivenessScore,
+      productionComplexityScore,
+      marketFitScore,
+      visualTrendScore,
+      styleSummary,
+      fitSummary,
+      productionSummary,
+      recommendationSummary,
+      paletteKeywords,
+      moodKeywords,
+      metadata: {
+        referenceGameIds: topCompetitors.map((game) => game.id),
+        referenceGameNames: topCompetitors.map((game) => game.name)
+      }
+    }
+  });
+
+  const result = await db.project.findUniqueOrThrow({
+    where: {
+      id: project.id
+    },
+    include: projectInclude
+  });
+
+  await notifyOrganizationDiscordWebhook(project.organizationId, {
+    content: `Art analysis was refreshed for **${project.name}**.`,
+    embeds: [
+      {
+        title: "Project art analysis completed",
+        description: styleSummary,
+        color: 5793266,
+        fields: [
+          {
+            name: "Distinctiveness",
+            value: String(artAnalysis.distinctivenessScore),
+            inline: true
+          },
+          {
+            name: "Market fit",
+            value: String(artAnalysis.marketFitScore),
+            inline: true
+          },
+          {
+            name: "Complexity",
+            value: String(artAnalysis.productionComplexityScore),
+            inline: true
+          }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return result;
+}
+
 export async function generateProjectGdd(projectId: string, workspaceId: string) {
   const project = await db.project.findFirstOrThrow({
     where: {
@@ -581,6 +826,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     },
     include: {
       analysis: true,
+      artAnalysis: true,
       competitorGames: {
         include: {
           steamGame: true
@@ -628,6 +874,12 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     "",
     "## Risks",
     analysis?.riskSummary || "Risk analysis pending.",
+    "",
+    "## Art direction analysis",
+    project.artAnalysis?.styleSummary || "Run art analysis to populate this section.",
+    "",
+    "## Visual production notes",
+    project.artAnalysis?.productionSummary || "Production notes pending.",
     "",
     "## Competitive Set",
     ...(competitorNames.length > 0 ? competitorNames.map((item, index) => `${index + 1}. ${item}`) : ["No competitor set has been attached yet."]),

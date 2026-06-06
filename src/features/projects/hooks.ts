@@ -50,11 +50,30 @@ export interface ProjectDetailResponse extends ProjectListItem {
     suggestedTags: string[] | null;
     differentiators: string[] | null;
   } | null;
+  artAnalysis: {
+    analyzedAt: string;
+    distinctivenessScore: number;
+    productionComplexityScore: number;
+    marketFitScore: number;
+    visualTrendScore: number;
+    styleSummary: string;
+    fitSummary: string;
+    productionSummary: string;
+    recommendationSummary: string;
+    paletteKeywords: string[] | null;
+    moodKeywords: string[] | null;
+    metadata: {
+      referenceGameIds?: string[];
+      referenceGameNames?: string[];
+    } | null;
+  } | null;
   competitorGames: Array<{
     steamGame: {
       id: string;
       appId: number;
       name: string;
+      headerImageUrl: string | null;
+      capsuleImageUrl: string | null;
       reviewScore: number | null;
       reviewCount: number | null;
       priceCurrent: {
@@ -62,6 +81,16 @@ export interface ProjectDetailResponse extends ProjectListItem {
       } | null;
       revenueEstimates: Array<{
         medianNetRevenueCents: number;
+      }>;
+      genres: Array<{
+        steamGenre: {
+          name: string;
+        };
+      }>;
+      tags: Array<{
+        steamTag: {
+          name: string;
+        };
       }>;
     };
   }>;

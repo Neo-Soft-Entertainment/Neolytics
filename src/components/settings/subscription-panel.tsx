@@ -30,6 +30,7 @@ type SubscriptionSnapshot = {
     exportsGenerated: number;
     projectAnalysesRun: number;
     gddsGenerated: number;
+    artAnalysesRun: number;
   };
   limits: {
     seats: number | null;
@@ -41,6 +42,7 @@ type SubscriptionSnapshot = {
     exportsGenerated: number | null;
     projectAnalysesRun: number | null;
     gddsGenerated: number | null;
+    artAnalysesRun: number | null;
   };
 };
 
@@ -56,7 +58,8 @@ const usageRows: Array<{
   { key: "reportsGenerated", label: "Reports this month" },
   { key: "exportsGenerated", label: "Exports this month" },
   { key: "projectAnalysesRun", label: "Analyses this month" },
-  { key: "gddsGenerated", label: "GDDs this month" }
+  { key: "gddsGenerated", label: "GDDs this month" },
+  { key: "artAnalysesRun", label: "Art analyses this month" }
 ];
 
 export function SubscriptionPanel({
@@ -199,10 +202,6 @@ export function SubscriptionPanel({
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Roadmap-tagged benefits are already modeled in the subscription system and can be enforced as soon as the
-            product surfaces ship.
-          </p>
         </CardContent>
       </Card>
       <Card>

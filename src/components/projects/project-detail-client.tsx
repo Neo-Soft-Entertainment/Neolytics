@@ -1,5 +1,6 @@
 "use client";
 
+import { SubscriptionPlan } from "@prisma/client";
 import { useEffect, useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useProject } from "@/features/projects/hooks";
+import { hasSubscriptionCapability } from "@/lib/subscription-plans";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 const stageOptions = [
@@ -22,11 +24,18 @@ const stageOptions = [
   "ARCHIVED"
 ] as const;
 
-export function ProjectDetailClient({ projectId }: { projectId: string }) {
+export function ProjectDetailClient({
+  projectId,
+  subscriptionPlan
+}: {
+  projectId: string;
+  subscriptionPlan: SubscriptionPlan;
+}) {
   const query = useProject(projectId);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalyzingArt, setIsAnalyzingArt] = useState(false);
   const [isGeneratingGdd, setIsGeneratingGdd] = useState(false);
   const [projectForm, setProjectForm] = useState({
     name: "",
@@ -125,6 +134,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     [board]
   );
   const latestGdd = query.data?.gdds[0] ?? null;
+  const canRunArtAnalysis = hasSubscriptionCapability(subscriptionPlan, "artAnalyses");
 
   async function saveProject() {
     setFeedback(null);
@@ -190,6 +200,26 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     }
 
     setFeedback("GDD generated.");
+    await query.refetch();
+  }
+
+  async function runArtAnalysis() {
+    setFeedback(null);
+    setIsAnalyzingArt(true);
+
+    const response = await fetch(`/api/projects/${projectId}/art-analysis`, {
+      method: "POST"
+    });
+
+    setIsAnalyzingArt(false);
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to analyze art direction.");
+      return;
+    }
+
+    setFeedback("Art analysis updated.");
     await query.refetch();
   }
 
@@ -473,6 +503,9 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           <Button disabled={isAnalyzing} onClick={runAnalysis}>
             {isAnalyzing ? "Analyzing..." : "Run market analysis"}
           </Button>
+          <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
+            {isAnalyzingArt ? "Analyzing art..." : "Run art analysis"}
+          </Button>
           <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
             {isGeneratingGdd ? "Generating..." : "Generate GDD"}
           </Button>
@@ -489,6 +522,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="market">Market analysis</TabsTrigger>
+          <TabsTrigger value="art">Art analysis</TabsTrigger>
           <TabsTrigger value="gdd">GDD</TabsTrigger>
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
         </TabsList>
@@ -670,6 +704,134 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="art" className="space-y-6">
+          {!canRunArtAnalysis ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Art analysis is not included on your plan</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  Upgrade to Plus or Pro to benchmark visual positioning, production complexity, and art-market fit
+                  directly inside each project.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Distinctiveness</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.distinctivenessScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Production complexity</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.productionComplexityScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Market fit</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.marketFitScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Visual trend</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.visualTrendScore ?? null)}
+                  </CardContent>
+                </Card>
+              </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Integrated art direction analysis</CardTitle>
+                  <Button disabled={isAnalyzingArt} onClick={runArtAnalysis}>
+                    {isAnalyzingArt ? "Analyzing art..." : project.artAnalysis ? "Refresh art analysis" : "Run art analysis"}
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Style position</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.styleSummary ?? "Run art analysis to map the current visual shelf."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Market fit</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.fitSummary ?? "Run art analysis to benchmark fit against the current niche."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Production risk</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.productionSummary ?? "Run art analysis to estimate production complexity."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Recommendation</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.recommendationSummary ?? "Run art analysis to generate a sharper visual recommendation."}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Palette keywords</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.paletteKeywords?.join(", ") || "Pending analysis."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Mood keywords</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.moodKeywords?.join(", ") || "Pending analysis."}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Art reference set</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3">
+                  {project.competitorGames.length > 0 ? project.competitorGames.slice(0, 6).map((item) => (
+                    <div key={item.steamGame.id} className="rounded-2xl border p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <p className="font-medium">{item.steamGame.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {(item.steamGame.genres.map((genre) => genre.steamGenre.name).slice(0, 2).join(", ")) || "No genre coverage"}
+                            {" · "}
+                            {(item.steamGame.tags.map((tag) => tag.steamTag.name).slice(0, 3).join(", ")) || "No tag coverage"}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium">
+                          Review bar: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
+                        </p>
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="text-sm text-muted-foreground">Run market analysis first to build the initial reference set.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
         <TabsContent value="gdd" className="space-y-6">
           <Card>

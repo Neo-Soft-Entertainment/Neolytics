@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, Search, Settings } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, FileText, FolderKanban, LayoutDashboard, Search, Settings, Users2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/community", label: "Community", icon: Users2 },
   { href: "/games", label: "Games", icon: Search },
   { href: "/compare", label: "Compare", icon: BarChart3 },
   { href: "/opportunities", label: "Opportunities", icon: BriefcaseBusiness },

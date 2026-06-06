@@ -9,7 +9,8 @@ export type SubscriptionMetric =
   | "reportsGenerated"
   | "exportsGenerated"
   | "projectAnalysesRun"
-  | "gddsGenerated";
+  | "gddsGenerated"
+  | "artAnalysesRun";
 
 export type SubscriptionCapability =
   | "steamRadar"
@@ -65,7 +66,7 @@ export const subscriptionPlans = {
       communityFeed: "Not included",
       steamXray: "Basic access",
       viabilityAnalyses: "10 / month",
-      artAnalyses: "Roadmap",
+      artAnalyses: "Not included",
       gameBoardProjects: "3 active",
       gdds: "10 / month",
       communityRanking: "Not included",
@@ -82,7 +83,8 @@ export const subscriptionPlans = {
       reportsGenerated: 5,
       exportsGenerated: 20,
       projectAnalysesRun: 10,
-      gddsGenerated: 10
+      gddsGenerated: 10,
+      artAnalysesRun: 0
     }
   },
   [SubscriptionPlan.PLUS]: {
@@ -104,7 +106,7 @@ export const subscriptionPlans = {
       communityFeed: "Included",
       steamXray: "Advanced access",
       viabilityAnalyses: "100 / month",
-      artAnalyses: "Priority when launched",
+      artAnalyses: "25 / month",
       gameBoardProjects: "20 active",
       gdds: "100 / month",
       communityRanking: "Included",
@@ -121,7 +123,8 @@ export const subscriptionPlans = {
       reportsGenerated: 40,
       exportsGenerated: 150,
       projectAnalysesRun: 100,
-      gddsGenerated: 100
+      gddsGenerated: 100,
+      artAnalysesRun: 25
     }
   },
   [SubscriptionPlan.PRO]: {
@@ -143,7 +146,7 @@ export const subscriptionPlans = {
       communityFeed: "Included",
       steamXray: "Unlimited",
       viabilityAnalyses: "Unlimited",
-      artAnalyses: "Unlimited when launched",
+      artAnalyses: "Unlimited",
       gameBoardProjects: "Unlimited",
       gdds: "Unlimited",
       communityRanking: "Included",
@@ -160,7 +163,8 @@ export const subscriptionPlans = {
       reportsGenerated: null,
       exportsGenerated: null,
       projectAnalysesRun: null,
-      gddsGenerated: null
+      gddsGenerated: null,
+      artAnalysesRun: null
     }
   }
 } as const;
