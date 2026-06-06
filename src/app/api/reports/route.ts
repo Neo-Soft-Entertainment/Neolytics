@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-import { ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/request";
+import { SubscriptionLimitError } from "@/lib/subscription-service";
 import { generateBasicMarketReport } from "@/lib/workspace-service";
 
 const schema = z.object({
@@ -51,7 +52,11 @@ export async function POST(request: Request) {
     });
 
     return ok(report, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
+    }
+
     return serverError();
   }
 }

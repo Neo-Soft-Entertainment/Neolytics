@@ -5,6 +5,7 @@ import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { createProject, listProjects } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
+import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -53,6 +54,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid project payload.");
+    }
+
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
     }
 
     return serverError("Unable to create project.");

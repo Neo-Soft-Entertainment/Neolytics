@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     return unauthorized();
   }
 
-  return createWorkbookDownloadResponse(request, buildOpportunitiesWorkbook);
+  return createWorkbookDownloadResponse(request, context.organizationId, buildOpportunitiesWorkbook);
 }
 
 export async function POST() {
@@ -20,5 +20,5 @@ export async function POST() {
     return unauthorized();
   }
 
-  return createGoogleSheetsPublishResponse(buildOpportunitiesWorkbook, context.session.user.email);
+  return createGoogleSheetsPublishResponse(context.organizationId, buildOpportunitiesWorkbook, context.session.user.email);
 }

@@ -75,7 +75,7 @@ export function SignupForm() {
       <CardHeader>
         <CardTitle>Create your workspace</CardTitle>
         <CardDescription>
-          Create an account, your organization, and the first workspace in one step.
+          Create an account, your organization, and the first workspace in one step. New accounts start on the Free plan.
         </CardDescription>
       </CardHeader>
       <CardContent>

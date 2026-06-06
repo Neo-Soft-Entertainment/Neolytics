@@ -2,6 +2,7 @@ import { Prisma, ProjectStage } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/slugify";
+import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
 const defaultKanbanColumns = [
@@ -107,6 +108,8 @@ export async function createProject(params: {
   playerFantasy?: string;
   pricePointCents?: number | null;
 }) {
+  await enforceSubscriptionCapacity(params.organizationId, "projects");
+
   const projectSlug = await buildUniqueSlug(slugify(params.name), async (slug) => {
     const count = await db.project.count({
       where: {
@@ -298,6 +301,8 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       workspaceId
     }
   });
+
+  await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
 
   const genreTokens = parseCsv(project.genreInput).map(slugify);
   const tagTokens = parseCsv(project.tagInput).map(slugify);
@@ -529,6 +534,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
       }
     }
   });
+  await consumeSubscriptionUsage(project.organizationId, "gddsGenerated");
 
   const nextVersion = (project.gdds[0]?.version ?? 0) + 1;
   const analysis = project.analysis;

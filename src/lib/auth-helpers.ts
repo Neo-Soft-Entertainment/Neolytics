@@ -89,6 +89,7 @@ export async function getApiContext() {
     session,
     userId: session.user.id,
     organizationId: membership.organizationId,
+    organizationRole: membership.role,
     workspace
   };
 }

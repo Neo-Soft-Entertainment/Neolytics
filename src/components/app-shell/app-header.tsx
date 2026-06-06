@@ -1,13 +1,15 @@
+import { SubscriptionPlan } from "@prisma/client";
 import { Building2 } from "lucide-react";
 
 import { MobileNav } from "@/components/app-shell/mobile-nav";
 import { SignOutButton } from "@/components/auth/signout-button";
 import { ThemeToggle } from "@/components/app-shell/theme-toggle";
 import { Badge } from "@/components/ui/badge";
+import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 
 interface AppHeaderProps {
   organizationName: string;
-  subscriptionPlan: string;
+  subscriptionPlan: SubscriptionPlan;
 }
 
 export function AppHeader({ organizationName, subscriptionPlan }: AppHeaderProps) {
@@ -20,7 +22,7 @@ export function AppHeader({ organizationName, subscriptionPlan }: AppHeaderProps
         <div>
           <p className="text-sm font-medium">{organizationName}</p>
           <Badge variant="secondary" className="mt-1">
-            {subscriptionPlan}
+            {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>
       </div>

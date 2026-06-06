@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     return unauthorized();
   }
 
-  return createWorkbookDownloadResponse(request, () => buildGameSearchWorkbook(getInput(request)));
+  return createWorkbookDownloadResponse(request, context.organizationId, () => buildGameSearchWorkbook(getInput(request)));
 }
 
 export async function POST(request: Request) {
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
   }
 
   return createGoogleSheetsPublishResponse(
+    context.organizationId,
     () => buildGameSearchWorkbook(getInput(request)),
     context.session.user.email
   );

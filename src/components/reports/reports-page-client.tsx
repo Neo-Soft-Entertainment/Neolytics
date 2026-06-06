@@ -13,6 +13,7 @@ import { useCreateReport, useReports } from "@/features/reports/hooks";
 export function ReportsPageClient() {
   const reportsQuery = useReports();
   const createReport = useCreateReport();
+  const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [tag, setTag] = useState("");
@@ -22,14 +23,20 @@ export function ReportsPageClient() {
       return;
     }
 
-    await createReport.mutateAsync({
-      title,
-      genre: genre || undefined,
-      tag: tag || undefined
-    });
-    setTitle("");
-    setGenre("");
-    setTag("");
+    setError(null);
+
+    try {
+      await createReport.mutateAsync({
+        title,
+        genre: genre || undefined,
+        tag: tag || undefined
+      });
+      setTitle("");
+      setGenre("");
+      setTag("");
+    } catch (submissionError) {
+      setError(submissionError instanceof Error ? submissionError.message : "Unable to generate report.");
+    }
   }
 
   return (
@@ -62,6 +69,7 @@ export function ReportsPageClient() {
               {createReport.isPending ? "Generating..." : "Generate report"}
             </Button>
           </div>
+          {error ? <p className="text-sm text-destructive md:col-span-3">{error}</p> : null}
         </CardContent>
       </Card>
       <Card>

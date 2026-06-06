@@ -1,8 +1,15 @@
 import { hash } from "bcryptjs";
 
-import { PrismaClient, SubscriptionPlan } from "@prisma/client";
+import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { env } from "@/env";
+
+function getCurrentSubscriptionPeriodRange(date = new Date()) {
+  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
+
+  return { start, end };
+}
 
 const prisma = new PrismaClient();
 
@@ -12,6 +19,7 @@ async function main() {
   }
 
   const passwordHash = await hash(env.ADMIN_PASSWORD, 12);
+  const period = getCurrentSubscriptionPeriodRange();
 
   const user = await prisma.user.upsert({
     where: {
@@ -31,11 +39,20 @@ async function main() {
     where: {
       slug: "demo-org"
     },
-    update: {},
+    update: {
+      subscriptionPlan: SubscriptionPlan.PRO,
+      subscriptionStatus: SubscriptionStatus.ACTIVE,
+      subscriptionCurrentPeriodStart: period.start,
+      subscriptionCurrentPeriodEnd: period.end,
+      subscriptionCanceledAt: null
+    },
     create: {
       name: "Demo Organization",
       slug: "demo-org",
-      subscriptionPlan: SubscriptionPlan.STUDIO
+      subscriptionPlan: SubscriptionPlan.PRO,
+      subscriptionStatus: SubscriptionStatus.ACTIVE,
+      subscriptionCurrentPeriodStart: period.start,
+      subscriptionCurrentPeriodEnd: period.end
     }
   });
 

@@ -1,6 +1,7 @@
-import { notFound, ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, notFound, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { generateProjectGdd } from "@/lib/project-service";
+import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 export async function POST(
   request: Request,
@@ -23,6 +24,10 @@ export async function POST(
 
     return ok(project);
   } catch (error) {
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
+    }
+
     return serverError("Unable to generate GDD.");
   }
 }

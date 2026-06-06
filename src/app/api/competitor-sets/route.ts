@@ -4,6 +4,7 @@ import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-
 import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/request";
+import { SubscriptionLimitError } from "@/lib/subscription-service";
 import { createCompetitorSet } from "@/lib/workspace-service";
 
 const schema = z.object({
@@ -48,6 +49,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid request.");
+    }
+
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
     }
 
     return serverError();

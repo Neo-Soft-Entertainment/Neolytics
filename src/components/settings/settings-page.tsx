@@ -1,14 +1,18 @@
 import { auth } from "@/auth";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
+import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
+import { SubscriptionPanel } from "@/components/settings/subscription-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export async function SettingsPage() {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
+  const subscriptionSnapshot = await getOrganizationSubscriptionSnapshot(organization.id);
   const memberships = session?.user?.id
     ? await db.organizationMember.findMany({
         where: {
@@ -30,6 +34,8 @@ export async function SettingsPage() {
         }
       })
     : [];
+  const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
+  const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
 
   return (
     <div className="space-y-6">
@@ -53,10 +59,11 @@ export async function SettingsPage() {
             <CardContent className="space-y-2 text-sm">
               <p>Name: {organization.name}</p>
               <p>Slug: {organization.slug}</p>
-              <p>Subscription plan: {organization.subscriptionPlan}</p>
+              <p>Subscription plan: {subscriptionSnapshot.planLabel}</p>
               <p>Workspaces: {organization.workspaces.length}</p>
             </CardContent>
           </Card>
+          <SubscriptionPanel snapshot={subscriptionSnapshot} canManage={canManageSubscription} />
           <Card>
             <CardHeader>
               <CardTitle>Create another organization</CardTitle>
@@ -74,7 +81,7 @@ export async function SettingsPage() {
                 <div key={membership.organizationId} className="rounded-2xl border p-4">
                   <p className="font-medium">{membership.organization.name}</p>
                   <p className="mt-1 text-muted-foreground">
-                    Role: {membership.role} · Plan: {membership.organization.subscriptionPlan}
+                    Role: {membership.role} · Plan: {getSubscriptionPlanLabel(membership.organization.subscriptionPlan)}
                   </p>
                   <p className="mt-1 text-muted-foreground">
                     {membership.organization.workspaces.length} workspace(s)

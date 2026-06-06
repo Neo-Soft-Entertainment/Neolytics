@@ -70,6 +70,9 @@ export function CreateOrganizationForm({
         ) : null}
       </div>
       {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
+      <p className="text-xs text-muted-foreground md:col-span-2">
+        New organizations start on the Free plan and can be upgraded internally in Settings.
+      </p>
       <div className="md:col-span-2">
         <Button disabled={form.formState.isSubmitting} type="submit">
           {form.formState.isSubmitting ? "Creating..." : "Create organization"}

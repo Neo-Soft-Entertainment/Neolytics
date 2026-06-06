@@ -14,7 +14,7 @@ export async function GET(
   }
 
   const { reportId } = await params;
-  return createWorkbookDownloadResponse(request, () => buildReportWorkbook(reportId, context.organizationId));
+  return createWorkbookDownloadResponse(request, context.organizationId, () => buildReportWorkbook(reportId, context.organizationId));
 }
 
 export async function POST(
@@ -30,6 +30,7 @@ export async function POST(
 
   const { reportId } = await params;
   return createGoogleSheetsPublishResponse(
+    context.organizationId,
     () => buildReportWorkbook(reportId, context.organizationId),
     context.session.user.email
   );

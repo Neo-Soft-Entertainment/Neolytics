@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     return badRequest("Provide at least two app ids.");
   }
 
-  return createWorkbookDownloadResponse(request, () => buildCompareWorkbook(appIds));
+  return createWorkbookDownloadResponse(request, context.organizationId, () => buildCompareWorkbook(appIds));
 }
 
 export async function POST(request: Request) {
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
   }
 
   return createGoogleSheetsPublishResponse(
+    context.organizationId,
     () => buildCompareWorkbook(appIds),
     context.session.user.email
   );

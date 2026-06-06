@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
 export async function getDefaultWorkspaceForUser(userId: string) {
   return db.workspace.findFirstOrThrow({
@@ -18,10 +19,24 @@ export async function getDefaultWorkspaceForUser(userId: string) {
 }
 
 export async function saveGameToWorkspace(params: {
+  organizationId: string;
   workspaceId: string;
   steamGameId: string;
   userId: string;
 }) {
+  const existing = await db.savedGame.findUnique({
+    where: {
+      workspaceId_steamGameId: {
+        workspaceId: params.workspaceId,
+        steamGameId: params.steamGameId
+      }
+    }
+  });
+
+  if (!existing) {
+    await enforceSubscriptionCapacity(params.organizationId, "savedGames");
+  }
+
   return db.savedGame.upsert({
     where: {
       workspaceId_steamGameId: {
@@ -32,7 +47,11 @@ export async function saveGameToWorkspace(params: {
     update: {
       userId: params.userId
     },
-    create: params
+    create: {
+      workspaceId: params.workspaceId,
+      steamGameId: params.steamGameId,
+      userId: params.userId
+    }
   });
 }
 
@@ -54,6 +73,8 @@ export async function createCompetitorSet(params: {
       id: true
     }
   });
+
+  await enforceSubscriptionCapacity(params.organizationId, "competitorSets");
 
   return db.competitorSet.create({
     data: {
@@ -139,21 +160,25 @@ export async function generateBasicMarketReport(params: {
     })
   ].join("\n");
 
-  return db.aiReport.create({
-    data: {
-      organizationId: params.organizationId,
-      workspaceId: params.workspaceId,
-      createdById: params.createdById,
-      reportType: "MARKET",
-      status: "READY",
-      title: params.title,
-      subject: params.genre ?? params.tag ?? "steam-market",
-      content,
-      metadata: {
-        genre: params.genre,
-        tag: params.tag,
-        generatedAt: new Date().toISOString()
+  return db.$transaction(async (tx) => {
+    await consumeSubscriptionUsage(params.organizationId, "reportsGenerated", tx);
+
+    return tx.aiReport.create({
+      data: {
+        organizationId: params.organizationId,
+        workspaceId: params.workspaceId,
+        createdById: params.createdById,
+        reportType: "MARKET",
+        status: "READY",
+        title: params.title,
+        subject: params.genre ?? params.tag ?? "steam-market",
+        content,
+        metadata: {
+          genre: params.genre,
+          tag: params.tag,
+          generatedAt: new Date().toISOString()
+        }
       }
-    }
+    });
   });
 }

@@ -5,6 +5,7 @@ import {
   isGoogleSheetsConfigured,
   publishWorkbookToGoogleSheets
 } from "@/lib/export-service";
+import { consumeSubscriptionUsage, SubscriptionLimitError } from "@/lib/subscription-service";
 
 export function getExportFormat(url: URL) {
   const format = url.searchParams.get("format") ?? "xlsx";
@@ -18,6 +19,7 @@ export function getExportFormat(url: URL) {
 
 export async function createWorkbookDownloadResponse(
   request: Request,
+  organizationId: string,
   buildWorkbook: () => Promise<ExportWorkbook>
 ) {
   try {
@@ -28,13 +30,19 @@ export async function createWorkbookDownloadResponse(
     }
 
     const workbook = await buildWorkbook();
+    await consumeSubscriptionUsage(organizationId, "exportsGenerated");
     return createDownloadResponse(workbook, format);
   } catch (error) {
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
+    }
+
     return serverError(error instanceof Error ? error.message : "Unable to export workbook.");
   }
 }
 
 export async function createGoogleSheetsPublishResponse(
+  organizationId: string,
   buildWorkbook: () => Promise<ExportWorkbook>,
   userEmail?: string | null
 ) {
@@ -48,8 +56,14 @@ export async function createGoogleSheetsPublishResponse(
 
   try {
     const workbook = await buildWorkbook();
-    return ok(await publishWorkbookToGoogleSheets(workbook, userEmail));
+    const published = await publishWorkbookToGoogleSheets(workbook, userEmail);
+    await consumeSubscriptionUsage(organizationId, "exportsGenerated");
+    return ok(published);
   } catch (error) {
+    if (error instanceof SubscriptionLimitError) {
+      return badRequest(error.message);
+    }
+
     return serverError(error instanceof Error ? error.message : "Unable to publish Google Sheets export.");
   }
 }

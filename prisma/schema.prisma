@@ -22,10 +22,13 @@ enum WorkspaceRole {
 
 enum SubscriptionPlan {
   FREE
-  INDIE
-  STUDIO
-  PUBLISHER
-  ENTERPRISE
+  PLUS
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
 }
 
 enum ProjectStage {
@@ -131,18 +134,39 @@ model VerificationToken {
 }
 
 model Organization {
-  id                String               @id @default(cuid())
-  name              String
-  slug              String               @unique
-  subscriptionPlan  SubscriptionPlan     @default(FREE)
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  members           OrganizationMember[]
-  workspaces        Workspace[]
-  competitorSets    CompetitorSet[]
-  aiReports         AiReport[]
-  ingestionRuns     IngestionRun[]
-  projects          Project[]
+  id                             String                        @id @default(cuid())
+  name                           String
+  slug                           String                        @unique
+  subscriptionPlan               SubscriptionPlan              @default(FREE)
+  subscriptionStatus             SubscriptionStatus            @default(ACTIVE)
+  subscriptionCurrentPeriodStart DateTime?
+  subscriptionCurrentPeriodEnd   DateTime?
+  subscriptionCanceledAt         DateTime?
+  createdAt                      DateTime                      @default(now())
+  updatedAt                      DateTime                      @updatedAt
+  members                        OrganizationMember[]
+  workspaces                     Workspace[]
+  competitorSets                 CompetitorSet[]
+  aiReports                      AiReport[]
+  ingestionRuns                  IngestionRun[]
+  projects                       Project[]
+  subscriptionUsage              OrganizationSubscriptionUsage[]
+}
+
+model OrganizationSubscriptionUsage {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  periodKey           String
+  reportsGenerated    Int          @default(0)
+  exportsGenerated    Int          @default(0)
+  projectAnalysesRun  Int          @default(0)
+  gddsGenerated       Int          @default(0)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodKey])
+  @@index([organizationId, createdAt(sort: Desc)])
 }
 
 model OrganizationMember {

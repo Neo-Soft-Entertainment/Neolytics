@@ -1,7 +1,8 @@
-import { SubscriptionPlan } from "@prisma/client";
+import { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/slugify";
+import { enforceSubscriptionCapacity, getCurrentSubscriptionPeriodRange } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
 export async function createOrganizationForUser(params: {
@@ -21,13 +22,17 @@ export async function createOrganizationForUser(params: {
 
   const workspaceLabel = params.workspaceName?.trim() || "Default Workspace";
   const workspaceSlug = slugify(workspaceLabel) || "default";
+  const period = getCurrentSubscriptionPeriodRange();
 
   return db.$transaction(async (tx) => {
     const organization = await tx.organization.create({
       data: {
         name: params.organizationName.trim(),
         slug: organizationSlug,
-        subscriptionPlan: SubscriptionPlan.FREE
+        subscriptionPlan: SubscriptionPlan.FREE,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+        subscriptionCurrentPeriodStart: period.start,
+        subscriptionCurrentPeriodEnd: period.end
       }
     });
 
@@ -62,6 +67,8 @@ export async function createWorkspaceForOrganization(params: {
   name: string;
   description?: string;
 }) {
+  await enforceSubscriptionCapacity(params.organizationId, "workspaces");
+
   const workspaceSlug = await buildUniqueSlug(slugify(params.name), async (slug) => {
     const count = await db.workspace.count({
       where: {
