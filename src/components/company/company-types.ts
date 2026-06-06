@@ -40,6 +40,7 @@ export interface CompanyLegalEntityRecord {
   name: string;
   tradeName: string | null;
   cnpj: string | null;
+  countryCode: string;
   legalNature: string | null;
   taxRegime: "MEI" | "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL" | "OTHER";
   cnaePrimary: string | null;

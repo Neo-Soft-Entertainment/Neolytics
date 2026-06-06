@@ -11,6 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  countryOptions,
+  getBusinessActivityLabel,
+  getBusinessActivityPlaceholder,
+  getRegistrationLabel,
+  getRegistrationPendingLabel,
+  getRegistrationPlaceholder,
+  languageOptions
+} from "@/lib/company-localization";
 
 const taxRegimes = [
   "MEI",
@@ -22,14 +31,53 @@ const taxRegimes = [
 
 export function CompanyProfilePanel({
   legalEntities,
-  canManage
+  canManage,
+  organizationCountryCode,
+  organizationDefaultLanguage
 }: {
   legalEntities: CompanyLegalEntityRecord[];
   canManage: boolean;
+  organizationCountryCode: string;
+  organizationDefaultLanguage: string;
 }) {
   const router = useRouter();
   const [createError, setCreateError] = useState<string | null>(null);
+  const [defaultsMessage, setDefaultsMessage] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSavingDefaults, setIsSavingDefaults] = useState(false);
+  const [createCountryCode, setCreateCountryCode] = useState(organizationCountryCode);
+
+  async function saveDefaults(formData: FormData) {
+    if (!canManage) {
+      return;
+    }
+
+    setDefaultsMessage(null);
+    setIsSavingDefaults(true);
+
+    const response = await fetch("/api/company/defaults", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        defaultLanguage: formData.get("defaultLanguage"),
+        countryCode: formData.get("countryCode")
+      })
+    });
+
+    setIsSavingDefaults(false);
+
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+    if (!response.ok) {
+      setDefaultsMessage(payload?.message ?? "Unable to save company defaults.");
+      return;
+    }
+
+    setDefaultsMessage("Company defaults updated.");
+    router.refresh();
+  }
 
   async function createEntity(formData: FormData) {
     if (!canManage) {
@@ -48,6 +96,7 @@ export function CompanyProfilePanel({
         name: formData.get("name"),
         tradeName: formData.get("tradeName"),
         cnpj: formData.get("cnpj"),
+        countryCode: formData.get("countryCode"),
         legalNature: formData.get("legalNature"),
         taxRegime: formData.get("taxRegime"),
         cnaePrimary: formData.get("cnaePrimary"),
@@ -69,11 +118,70 @@ export function CompanyProfilePanel({
 
     const form = document.getElementById("create-legal-entity-form") as HTMLFormElement | null;
     form?.reset();
+    setCreateCountryCode(organizationCountryCode);
     router.refresh();
   }
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization defaults</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveDefaults(new FormData(event.currentTarget));
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="organization-default-language">Default language</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                defaultValue={organizationDefaultLanguage}
+                disabled={!canManage || isSavingDefaults}
+                id="organization-default-language"
+                name="defaultLanguage"
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="organization-country-code">Home country</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                defaultValue={organizationCountryCode}
+                disabled={!canManage || isSavingDefaults}
+                id="organization-country-code"
+                name="countryCode"
+              >
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="text-sm text-muted-foreground xl:col-span-2">
+              These defaults define the initial language and country context for company compliance.
+              Each legal entity can still override its country based on its own registration and address.
+            </div>
+            <div className="md:col-span-2 xl:col-span-4">
+              <Button disabled={!canManage || isSavingDefaults} type="submit">
+                {isSavingDefaults ? "Saving..." : "Save organization defaults"}
+              </Button>
+            </div>
+          </form>
+          {defaultsMessage ? <p className="mt-3 text-sm text-muted-foreground">{defaultsMessage}</p> : null}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Company dossier</CardTitle>
@@ -119,15 +227,37 @@ export function CompanyProfilePanel({
           >
             <div className="space-y-2">
               <Label htmlFor="entity-name">Legal name</Label>
-              <Input disabled={!canManage || isCreating} id="entity-name" name="name" placeholder="Neo Soft Entertainment Ltda." />
+              <Input disabled={!canManage || isCreating} id="entity-name" name="name" placeholder="Northstar Studios LLC" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-trade-name">Trade name</Label>
-              <Input disabled={!canManage || isCreating} id="entity-trade-name" name="tradeName" placeholder="Neolytics" />
+              <Input disabled={!canManage || isCreating} id="entity-trade-name" name="tradeName" placeholder="Northstar" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-cnpj">CNPJ</Label>
-              <Input disabled={!canManage || isCreating} id="entity-cnpj" name="cnpj" placeholder="00.000.000/0001-00" />
+              <Label htmlFor="entity-cnpj">{getRegistrationLabel(createCountryCode)}</Label>
+              <Input
+                disabled={!canManage || isCreating}
+                id="entity-cnpj"
+                name="cnpj"
+                placeholder={getRegistrationPlaceholder(createCountryCode)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="entity-country">Country</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                disabled={!canManage || isCreating}
+                id="entity-country"
+                name="countryCode"
+                onChange={(event) => setCreateCountryCode(event.target.value)}
+                value={createCountryCode}
+              >
+                {countryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-tax-regime">Tax regime</Label>
@@ -147,11 +277,16 @@ export function CompanyProfilePanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-legal-nature">Legal nature</Label>
-              <Input disabled={!canManage || isCreating} id="entity-legal-nature" name="legalNature" placeholder="Sociedade Empresária Limitada" />
+              <Input disabled={!canManage || isCreating} id="entity-legal-nature" name="legalNature" placeholder="Limited liability company" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-cnae">Primary CNAE</Label>
-              <Input disabled={!canManage || isCreating} id="entity-cnae" name="cnaePrimary" placeholder="6201-5/01" />
+              <Label htmlFor="entity-cnae">{getBusinessActivityLabel(createCountryCode)}</Label>
+              <Input
+                disabled={!canManage || isCreating}
+                id="entity-cnae"
+                name="cnaePrimary"
+                placeholder={getBusinessActivityPlaceholder(createCountryCode)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-email">Email</Label>
@@ -159,7 +294,7 @@ export function CompanyProfilePanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-phone">Phone</Label>
-              <Input disabled={!canManage || isCreating} id="entity-phone" name="phone" placeholder="+55 11 99999-9999" />
+              <Input disabled={!canManage || isCreating} id="entity-phone" name="phone" placeholder="+1 415 555 0101" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-website">Website</Label>
@@ -167,11 +302,11 @@ export function CompanyProfilePanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-city">City</Label>
-              <Input disabled={!canManage || isCreating} id="entity-city" name="city" placeholder="São Paulo" />
+              <Input disabled={!canManage || isCreating} id="entity-city" name="city" placeholder="San Francisco" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-state">State</Label>
-              <Input disabled={!canManage || isCreating} id="entity-state" name="state" placeholder="SP" />
+              <Label htmlFor="entity-state">State / province</Label>
+              <Input disabled={!canManage || isCreating} id="entity-state" name="state" placeholder="CA" />
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
@@ -189,13 +324,18 @@ export function CompanyProfilePanel({
       {legalEntities.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-sm text-muted-foreground">
-            No legal entities yet. Create the main company record to start the CNPJ dossier and document workflow.
+            No legal entities yet. Create the main company record to start the registration and document workflow.
           </CardContent>
         </Card>
       ) : null}
 
       {legalEntities.map((entity) => (
-        <LegalEntityCard key={entity.id} canManage={canManage} entity={entity} />
+        <LegalEntityCard
+          key={entity.id}
+          canManage={canManage}
+          entity={entity}
+          organizationCountryCode={organizationCountryCode}
+        />
       ))}
     </div>
   );
@@ -203,14 +343,17 @@ export function CompanyProfilePanel({
 
 function LegalEntityCard({
   entity,
-  canManage
+  canManage,
+  organizationCountryCode
 }: {
   entity: CompanyLegalEntityRecord;
   canManage: boolean;
+  organizationCountryCode: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [countryCode, setCountryCode] = useState(entity.countryCode || organizationCountryCode);
 
   async function saveProfile(formData: FormData) {
     if (!canManage) {
@@ -229,6 +372,7 @@ function LegalEntityCard({
         name: formData.get("name"),
         tradeName: formData.get("tradeName"),
         cnpj: formData.get("cnpj"),
+        countryCode: formData.get("countryCode"),
         legalNature: formData.get("legalNature"),
         taxRegime: formData.get("taxRegime"),
         cnaePrimary: formData.get("cnaePrimary"),
@@ -289,7 +433,7 @@ function LegalEntityCard({
         <div>
           <CardTitle>{entity.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            {entity.tradeName || "No trade name"} · {entity.cnpj || "CNPJ pending"}
+            {entity.tradeName || "No trade name"} · {entity.cnpj || getRegistrationPendingLabel(countryCode)}
           </p>
         </div>
         <Badge variant="secondary">{entity.taxRegime}</Badge>
@@ -311,8 +455,29 @@ function LegalEntityCard({
             <Input defaultValue={entity.tradeName ?? ""} disabled={!canManage || isSaving} name="tradeName" />
           </div>
           <div className="space-y-2">
-            <Label>CNPJ</Label>
-            <Input defaultValue={entity.cnpj ?? ""} disabled={!canManage || isSaving} name="cnpj" />
+            <Label>{getRegistrationLabel(countryCode)}</Label>
+            <Input
+              defaultValue={entity.cnpj ?? ""}
+              disabled={!canManage || isSaving}
+              name="cnpj"
+              placeholder={getRegistrationPlaceholder(countryCode)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Country</Label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              disabled={!canManage || isSaving}
+              name="countryCode"
+              onChange={(event) => setCountryCode(event.target.value)}
+              value={countryCode}
+            >
+              {countryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label>Tax regime</Label>
@@ -334,8 +499,13 @@ function LegalEntityCard({
             <Input defaultValue={entity.legalNature ?? ""} disabled={!canManage || isSaving} name="legalNature" />
           </div>
           <div className="space-y-2">
-            <Label>Primary CNAE</Label>
-            <Input defaultValue={entity.cnaePrimary ?? ""} disabled={!canManage || isSaving} name="cnaePrimary" />
+            <Label>{getBusinessActivityLabel(countryCode)}</Label>
+            <Input
+              defaultValue={entity.cnaePrimary ?? ""}
+              disabled={!canManage || isSaving}
+              name="cnaePrimary"
+              placeholder={getBusinessActivityPlaceholder(countryCode)}
+            />
           </div>
           <div className="space-y-2">
             <Label>Email</Label>
@@ -354,7 +524,7 @@ function LegalEntityCard({
             <Input defaultValue={entity.addressLine1 ?? ""} disabled={!canManage || isSaving} name="addressLine1" />
           </div>
           <div className="space-y-2">
-            <Label>District</Label>
+            <Label>Region / district</Label>
             <Input defaultValue={entity.district ?? ""} disabled={!canManage || isSaving} name="district" />
           </div>
           <div className="space-y-2">
@@ -366,7 +536,7 @@ function LegalEntityCard({
             <Input defaultValue={entity.city ?? ""} disabled={!canManage || isSaving} name="city" />
           </div>
           <div className="space-y-2">
-            <Label>State</Label>
+            <Label>State / province</Label>
             <Input defaultValue={entity.state ?? ""} disabled={!canManage || isSaving} name="state" />
           </div>
           <div className="space-y-2 md:col-span-2 xl:col-span-3">
@@ -428,7 +598,7 @@ function LegalEntityCard({
                 <Input disabled={!canManage} name="code" placeholder="Code" />
                 <div className="grid grid-cols-2 gap-2">
                   <Input disabled={!canManage} name="city" placeholder="City" />
-                  <Input disabled={!canManage} name="state" placeholder="State" />
+                  <Input disabled={!canManage} name="state" placeholder="State / province" />
                 </div>
                 <Button disabled={!canManage} size="sm" type="submit">
                   Add branch
@@ -479,7 +649,7 @@ function LegalEntityCard({
                 }}
               >
                 <Input disabled={!canManage} name="name" placeholder="Shareholder name" />
-                <Input disabled={!canManage} name="documentNumber" placeholder="CPF/CNPJ" />
+                <Input disabled={!canManage} name="documentNumber" placeholder="National ID or tax ID" />
                 <div className="grid grid-cols-2 gap-2">
                   <Input disabled={!canManage} name="role" placeholder="Role" />
                   <Input disabled={!canManage} name="ownershipPercent" placeholder="Ownership %" type="number" />

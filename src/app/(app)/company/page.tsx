@@ -47,6 +47,8 @@ export default async function CompanyRoute() {
       documents={documents}
       legalEntities={legalEntities}
       members={JSON.parse(JSON.stringify(data.members))}
+      organizationCountryCode={organization.countryCode}
+      organizationDefaultLanguage={organization.defaultLanguage}
       organizationName={organization.name}
       projects={JSON.parse(JSON.stringify(data.projects))}
     />

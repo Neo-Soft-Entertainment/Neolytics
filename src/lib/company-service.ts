@@ -164,6 +164,7 @@ export async function createLegalEntity(params: {
   name: string;
   tradeName?: string;
   cnpj?: string;
+  countryCode?: string;
   legalNature?: string;
   taxRegime?: TaxRegime;
   cnaePrimary?: string;
@@ -191,6 +192,7 @@ export async function createLegalEntity(params: {
       slug,
       tradeName: params.tradeName?.trim() || null,
       cnpj: params.cnpj?.trim() || null,
+      countryCode: params.countryCode?.trim().toUpperCase() || "US",
       legalNature: params.legalNature?.trim() || null,
       taxRegime: params.taxRegime ?? TaxRegime.OTHER,
       cnaePrimary: params.cnaePrimary?.trim() || null,
@@ -211,7 +213,7 @@ export async function createLegalEntity(params: {
     action: "legal_entity.created",
     metadata: {
       name: entity.name,
-      cnpj: entity.cnpj
+      registrationNumber: entity.cnpj
     }
   });
 
@@ -225,6 +227,7 @@ export async function updateLegalEntity(params: {
   name: string;
   tradeName?: string;
   cnpj?: string;
+  countryCode?: string;
   legalNature?: string;
   taxRegime?: TaxRegime;
   cnaePrimary?: string;
@@ -257,6 +260,7 @@ export async function updateLegalEntity(params: {
       name: params.name.trim(),
       tradeName: params.tradeName?.trim() || null,
       cnpj: params.cnpj?.trim() || null,
+      countryCode: params.countryCode?.trim().toUpperCase() || entity.countryCode,
       legalNature: params.legalNature?.trim() || null,
       taxRegime: params.taxRegime ?? entity.taxRegime,
       cnaePrimary: params.cnaePrimary?.trim() || null,

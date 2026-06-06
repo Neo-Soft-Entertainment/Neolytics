@@ -10,6 +10,7 @@ const schema = z.object({
   name: z.string().min(2),
   tradeName: z.string().optional(),
   cnpj: z.string().optional(),
+  countryCode: z.string().length(2).optional(),
   legalNature: z.string().optional(),
   taxRegime: z.nativeEnum(TaxRegime).optional(),
   cnaePrimary: z.string().optional(),

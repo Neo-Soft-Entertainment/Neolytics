@@ -11,6 +11,7 @@ import { CompanyCompliancePanel } from "@/components/company/company-compliance-
 import { CompanyDocumentsPanel } from "@/components/company/company-documents-panel";
 import { CompanyProfilePanel } from "@/components/company/company-profile-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getCountryLabel, getLanguageLabel } from "@/lib/company-localization";
 
 export function CompanyPage({
   canManage,
@@ -19,6 +20,8 @@ export function CompanyPage({
   documents,
   legalEntities,
   members,
+  organizationCountryCode,
+  organizationDefaultLanguage,
   organizationName,
   projects
 }: {
@@ -28,6 +31,8 @@ export function CompanyPage({
   documents: CompanyDocumentRecord[];
   legalEntities: CompanyLegalEntityRecord[];
   members: CompanyMemberOption[];
+  organizationCountryCode: string;
+  organizationDefaultLanguage: string;
   organizationName: string;
   projects: CompanyProjectOption[];
 }) {
@@ -36,7 +41,9 @@ export function CompanyPage({
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Company</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage legal entities, CNPJ dossier, document versions, and the compliance backlog for {organizationName}.
+          Manage legal entities, registration records, document versions, and the compliance backlog for {organizationName}.
+          {" "}
+          Default language: {getLanguageLabel(organizationDefaultLanguage)}. Home country: {getCountryLabel(organizationCountryCode)}.
         </p>
       </div>
 
@@ -48,7 +55,12 @@ export function CompanyPage({
           <TabsTrigger value="audit">Audit</TabsTrigger>
         </TabsList>
         <TabsContent className="space-y-4" value="profile">
-          <CompanyProfilePanel canManage={canManage} legalEntities={legalEntities} />
+          <CompanyProfilePanel
+            canManage={canManage}
+            legalEntities={legalEntities}
+            organizationCountryCode={organizationCountryCode}
+            organizationDefaultLanguage={organizationDefaultLanguage}
+          />
         </TabsContent>
         <TabsContent className="space-y-4" value="documents">
           <CompanyDocumentsPanel

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getDocumentTypeLabel } from "@/lib/company-localization";
 
 const documentTypes = [
   "CNPJ_CARD",
@@ -151,7 +152,7 @@ export function CompanyDocumentsPanel({
           >
             <div className="space-y-2">
               <Label htmlFor="document-title">Title</Label>
-              <Input disabled={!canManage || isCreating} id="document-title" name="title" placeholder="Comprovante de CNPJ" />
+              <Input disabled={!canManage || isCreating} id="document-title" name="title" placeholder="Business registration certificate" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="document-type">Type</Label>
@@ -163,7 +164,7 @@ export function CompanyDocumentsPanel({
               >
                 {documentTypes.map((documentType) => (
                   <option key={documentType} value={documentType}>
-                    {documentType}
+                    {getDocumentTypeLabel(documentType)}
                   </option>
                 ))}
               </select>
@@ -202,7 +203,7 @@ export function CompanyDocumentsPanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="document-issuer">Issuer</Label>
-              <Input disabled={!canManage || isCreating} id="document-issuer" name="issuer" placeholder="Receita Federal" />
+              <Input disabled={!canManage || isCreating} id="document-issuer" name="issuer" placeholder="Government registry or issuing authority" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="document-number">Document number</Label>
@@ -252,7 +253,7 @@ export function CompanyDocumentsPanel({
                 <option value="ALL">All</option>
                 {documentTypes.map((documentType) => (
                   <option key={documentType} value={documentType}>
-                    {documentType}
+                    {getDocumentTypeLabel(documentType)}
                   </option>
                 ))}
               </select>
@@ -345,7 +346,7 @@ function DocumentCard({
           </p>
         </div>
         <div className="flex gap-2">
-          <Badge variant="secondary">{document.type}</Badge>
+          <Badge variant="secondary">{getDocumentTypeLabel(document.type)}</Badge>
           <Badge variant={document.status === "ACTIVE" ? "default" : "secondary"}>{document.status}</Badge>
         </div>
       </CardHeader>
