@@ -607,37 +607,62 @@ export function ProjectDetailClient({
   const competitionLayer = project.analysis?.metadata?.competitionLayer ?? null;
   const opportunityLayer = project.analysis?.metadata?.opportunityLayer ?? null;
   const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
+  const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
+  const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
+  const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{project.name}</h1>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            {project.elevatorPitch || "Build the thesis, connect it to the market, and turn it into execution."}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button disabled={isAnalyzing} onClick={runAnalysis}>
-            {isAnalyzing ? "Analyzing..." : "Run market analysis"}
-          </Button>
-          <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
-            {isAnalyzingArt ? "Analyzing art..." : "Run art analysis"}
-          </Button>
-          <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
-            {isGeneratingGdd ? "Generating..." : "Generate GDD"}
-          </Button>
-          <ExportActions
-            label="Export project"
-            xlsxHref={`/api/exports/projects/${projectId}?format=xlsx`}
-            csvHref={`/api/exports/projects/${projectId}?format=csv`}
-            googleSheetsEndpoint={`/api/exports/projects/${projectId}`}
-          />
-        </div>
-      </div>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{project.name}</h1>
+              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                {project.elevatorPitch || "Build the thesis, connect it to the market, and turn it into execution."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button disabled={isAnalyzing} onClick={runAnalysis}>
+                {isAnalyzing ? "Analyzing..." : "Run market analysis"}
+              </Button>
+              <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
+                {isAnalyzingArt ? "Analyzing art..." : "Run art analysis"}
+              </Button>
+              <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
+                {isGeneratingGdd ? "Generating..." : "Generate GDD"}
+              </Button>
+              <ExportActions
+                label="Export project"
+                xlsxHref={`/api/exports/projects/${projectId}?format=xlsx`}
+                csvHref={`/api/exports/projects/${projectId}?format=csv`}
+                googleSheetsEndpoint={`/api/exports/projects/${projectId}`}
+              />
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Stage</span>
+              <span className="font-medium">{project.stage.replaceAll("_", " ")}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Milestones</span>
+              <span className="font-medium">{formatNumber(project.milestones.length)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Pending approvals</span>
+              <span className="font-medium">{formatNumber(pendingApprovalsCount)}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Project operating mode</p>
+              <p className="mt-2 font-medium">Use analysis, milestones, GDD, and board management as one connected execution loop.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur dark:bg-white/[0.04]">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="market">Market analysis</TabsTrigger>
           <TabsTrigger value="art">Art analysis</TabsTrigger>
@@ -646,7 +671,8 @@ export function ProjectDetailClient({
           <TabsTrigger value="kanban">Kanban</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Project definition</CardTitle>
             </CardHeader>
@@ -1127,7 +1153,7 @@ export function ProjectDetailClient({
                 <CardTitle>Budgeted cost</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatCurrency(project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0))}
+                {formatCurrency(milestoneBudgetTotal)}
               </CardContent>
             </Card>
             <Card>
@@ -1135,7 +1161,7 @@ export function ProjectDetailClient({
                 <CardTitle>Expected revenue</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatCurrency(project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0))}
+                {formatCurrency(milestoneRevenueTotal)}
               </CardContent>
             </Card>
             <Card>
@@ -1143,11 +1169,12 @@ export function ProjectDetailClient({
                 <CardTitle>Pending approvals</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
-                {formatNumber(project.approvalRequests.filter((item) => item.status === "PENDING").length)}
+                {formatNumber(pendingApprovalsCount)}
               </CardContent>
             </Card>
           </div>
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Create milestone</CardTitle>
             </CardHeader>
@@ -1171,7 +1198,8 @@ export function ProjectDetailClient({
               <Button className="md:col-span-2" onClick={createMilestone}>Create milestone</Button>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Project milestones and finance bridge</CardTitle>
             </CardHeader>
@@ -1180,7 +1208,7 @@ export function ProjectDetailClient({
                 <p className="text-sm text-muted-foreground">No milestones yet. Create the first delivery checkpoint and attach cost/revenue expectations to it.</p>
               ) : (
                 project.milestones.map((milestone) => (
-                  <div key={milestone.id} className="rounded-2xl border p-4">
+                  <div key={milestone.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                     <div className="grid gap-3 md:grid-cols-2">
                       <Input
                         value={milestoneEdits[milestone.id]?.title ?? milestone.title}
@@ -1311,11 +1339,11 @@ export function ProjectDetailClient({
                 ))
               )}
               {project.budgets.length > 0 ? (
-                <div className="rounded-2xl border bg-muted/20 p-4">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                   <p className="font-medium">Project budget snapshot</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     {project.budgets.map((budget) => (
-                      <div key={budget.id} className="rounded-xl border bg-background p-3 text-sm">
+                      <div key={budget.id} className="rounded-xl border border-white/10 bg-background/75 p-3 text-sm">
                         <p className="font-medium">{budget.name}</p>
                         <p className="text-muted-foreground">{budget.status}</p>
                         <p className="mt-2">Planned {formatCurrency(budget.totalPlannedCents)}</p>
@@ -1329,7 +1357,8 @@ export function ProjectDetailClient({
           </Card>
         </TabsContent>
         <TabsContent value="gdd" className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Automated GDD</CardTitle>
               <Button disabled={isGeneratingGdd} onClick={generateGdd}>
@@ -1353,7 +1382,8 @@ export function ProjectDetailClient({
           </Card>
         </TabsContent>
         <TabsContent value="kanban" className="space-y-6">
-          <Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Customize board</CardTitle>
             </CardHeader>
@@ -1373,7 +1403,8 @@ export function ProjectDetailClient({
           </Card>
           <div className="grid gap-4 xl:grid-cols-4">
             {board?.columns.map((column, index) => (
-              <Card key={column.id} className="h-fit">
+              <Card key={column.id} className="h-fit overflow-hidden">
+                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader className="space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: column.color || "#64748b" }} />
@@ -1424,7 +1455,7 @@ export function ProjectDetailClient({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {column.cards.map((card) => (
-                    <div key={card.id} className="rounded-2xl border bg-muted/20 p-3">
+                    <div key={card.id} className="rounded-[1.25rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                       <div className="grid gap-3">
                         <Input
                           value={cardEdits[card.id]?.title ?? card.title}
@@ -1524,7 +1555,7 @@ export function ProjectDetailClient({
                       </div>
                     </div>
                   ))}
-                  <div className="rounded-2xl border border-dashed p-3">
+                  <div className="rounded-[1.25rem] border border-dashed border-white/15 bg-white/30 p-3 dark:bg-white/[0.02]">
                     <div className="grid gap-2">
                       <Input
                         value={newCards[column.id]?.title ?? ""}

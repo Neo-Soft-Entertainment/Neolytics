@@ -58,12 +58,40 @@ export function ProjectsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Projects</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Create a game thesis, run market analysis, generate a GDD, and manage execution from one place.
-        </p>
-      </div>
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Projects</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                Turn a game concept into a working thesis, pressure-test the niche, generate a GDD, and move straight into execution.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                Market + project OS
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                GDD + board + analysis
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Portfolio size</span>
+              <span className="font-medium">{query.data?.length ?? 0} projects</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Current mode</span>
+              <span className="font-medium">From thesis to production</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Best use</p>
+              <p className="mt-2 font-medium">Keep each concept grounded in real comps, pricing, and execution constraints.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-4">
           {query.isLoading ? (
@@ -72,7 +100,8 @@ export function ProjectsPageClient() {
             <ErrorState title="Projects unavailable" description="We could not load your project portfolio." />
           ) : query.data && query.data.length > 0 ? (
             query.data.map((project) => (
-              <Card key={project.id}>
+              <Card key={project.id} className="overflow-hidden">
+                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                   <div className="space-y-1">
                     <CardTitle className="text-xl">
@@ -82,22 +111,22 @@ export function ProjectsPageClient() {
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">{project.elevatorPitch || "No pitch yet."}</p>
                   </div>
-                  <span className="rounded-full border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs font-medium text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
                     {project.stage.replaceAll("_", " ")}
                   </span>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-3">
-                  <div>
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Competition</p>
                     <p className="mt-1 text-lg font-semibold">{project.analysis?.competitionCount ?? "N/A"}</p>
                   </div>
-                  <div>
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg review</p>
                     <p className="mt-1 text-lg font-semibold">
                       {project.analysis?.averageReviewScore ? formatPercent(project.analysis.averageReviewScore, 1) : "N/A"}
                     </p>
                   </div>
-                  <div>
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Median revenue</p>
                     <p className="mt-1 text-lg font-semibold">
                       {project.analysis?.medianRevenueCents ? formatCurrency(project.analysis.medianRevenueCents) : "N/A"}
@@ -117,7 +146,8 @@ export function ProjectsPageClient() {
             </Card>
           )}
         </div>
-        <Card className="h-fit">
+        <Card className="h-fit overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
           <CardHeader>
             <CardTitle>Create project</CardTitle>
           </CardHeader>

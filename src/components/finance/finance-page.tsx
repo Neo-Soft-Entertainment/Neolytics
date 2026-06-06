@@ -299,11 +299,11 @@ export function FinancePage({
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),_transparent_28%),radial-gradient(circle_at_left,_rgba(59,130,246,0.12),_transparent_32%)]">
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
           <div className="space-y-4">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">Finance</h1>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Finance</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 Run the commercial layer of {organizationName}: budgets, project spending, receipts, and a working cash view tied back to the game portfolio.
               </p>
@@ -315,11 +315,14 @@ export function FinancePage({
                 csvHref="/api/exports/finance?format=csv"
                 googleSheetsEndpoint="/api/exports/finance"
               />
+              <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
+                ERP finance layer
+              </Badge>
             </div>
             {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
-          <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm">
+          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Net cash position</span>
               <span className="font-medium">{formatCurrency(data.summary.netCashCents)}</span>
@@ -331,6 +334,10 @@ export function FinancePage({
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Pending payables</span>
               <span className="font-medium">{formatCurrency(data.summary.pendingExpenseCents)}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Live operating view</p>
+              <p className="mt-2 font-medium">Keep project economics, contracts, royalties, invoices, and approvals in one operating ledger.</p>
             </div>
           </div>
         </CardContent>
@@ -346,7 +353,8 @@ export function FinancePage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Cash flow</CardTitle>
           </CardHeader>
@@ -366,7 +374,8 @@ export function FinancePage({
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Project P&amp;L snapshots</CardTitle>
           </CardHeader>
@@ -407,7 +416,8 @@ export function FinancePage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-1">
+        <Card className="xl:col-span-1 overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Create budget</CardTitle>
           </CardHeader>
@@ -476,7 +486,8 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-1">
+        <Card className="xl:col-span-1 overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Record revenue</CardTitle>
           </CardHeader>
@@ -555,7 +566,8 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-1">
+        <Card className="xl:col-span-1 overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Record expense</CardTitle>
           </CardHeader>
@@ -640,7 +652,8 @@ export function FinancePage({
         </Card>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Budgets</CardTitle>
         </CardHeader>
@@ -800,7 +813,8 @@ export function FinancePage({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Revenue ledger</CardTitle>
           </CardHeader>
@@ -860,7 +874,8 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Expense ledger</CardTitle>
           </CardHeader>
@@ -924,7 +939,8 @@ export function FinancePage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Contracts</CardTitle>
           </CardHeader>
@@ -1044,7 +1060,8 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Royalties</CardTitle>
           </CardHeader>
@@ -1156,7 +1173,8 @@ export function FinancePage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Issued invoices</CardTitle>
           </CardHeader>
@@ -1228,7 +1246,8 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Received invoices</CardTitle>
           </CardHeader>
@@ -1301,7 +1320,8 @@ export function FinancePage({
         </Card>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>Approvals</CardTitle>
         </CardHeader>
