@@ -56,12 +56,12 @@ export function GamesPageClient() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Games</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Search Steam titles, narrow by genre or tag, and inspect the strongest candidates.
+          Search Steam titles, narrow by genre or tag, and move quickly from broad discovery to a viable comp set.
         </p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
+          <CardTitle>Search filters</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4">
           <div className="space-y-2">
@@ -74,21 +74,21 @@ export function GamesPageClient() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="genre">Genre slug</Label>
+            <Label htmlFor="genre">Genre</Label>
             <Input
               id="genre"
               value={filters.genre}
               onChange={(event) => setFilters((current) => ({ ...current, genre: event.target.value }))}
-              placeholder="strategy"
+              placeholder="strategy, adventure..."
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tag">Tag slug</Label>
+            <Label htmlFor="tag">Tag</Label>
             <Input
               id="tag"
               value={filters.tag}
               onChange={(event) => setFilters((current) => ({ ...current, tag: event.target.value }))}
-              placeholder="deckbuilder"
+              placeholder="deckbuilder, co-op..."
             />
           </div>
           <div className="space-y-2">
@@ -115,7 +115,12 @@ export function GamesPageClient() {
       ) : null}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Results</CardTitle>
+          <div className="space-y-1">
+            <CardTitle>Results</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {query.data?.total ? `${formatNumber(query.data.total)} games matched the current filters.` : "Adjust the inputs to explore the catalog."}
+            </p>
+          </div>
           <Button variant="outline" onClick={() => setFilters({ query: "", genre: "", tag: "", minReviewScore: "any" })}>
             Reset
           </Button>

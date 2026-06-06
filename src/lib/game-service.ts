@@ -298,7 +298,7 @@ export async function compareGames(appIds: number[]) {
 }
 
 export async function getDashboardData(workspaceId: string) {
-  const [trackedGames, recentLaunches, topRevenue, fastestGrowing] = await Promise.all([
+  const [trackedGames, recentLaunches, topRevenueGames, fastestGrowing] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
       include: {
@@ -327,18 +327,22 @@ export async function getDashboardData(workspaceId: string) {
         priceCurrent: true
       }
     }),
-    db.revenueEstimate.findMany({
-      orderBy: {
-        medianNetRevenueCents: "desc"
-      },
-      take: 10,
-      include: {
-        steamGame: {
-          include: {
-            priceCurrent: true
-          }
+    db.steamGame.findMany({
+      where: {
+        revenueEstimates: {
+          some: {}
         }
-      }
+      },
+      include: {
+        priceCurrent: true,
+        revenueEstimates: {
+          orderBy: {
+            calculatedAt: "desc"
+          },
+          take: 1
+        }
+      },
+      take: 100
     }),
     db.steamGame.findMany({
       where: {
@@ -355,6 +359,26 @@ export async function getDashboardData(workspaceId: string) {
       }
     })
   ]);
+  const topRevenue = topRevenueGames
+    .flatMap((game) => {
+      const estimate = game.revenueEstimates[0];
+
+      if (!estimate) {
+        return [];
+      }
+
+      return [{
+        id: estimate.id,
+        medianNetRevenueCents: revenueToNumber(estimate.medianNetRevenueCents),
+        steamGame: {
+          id: game.id,
+          appId: game.appId,
+          name: game.name
+        }
+      }];
+    })
+    .sort((a, b) => b.medianNetRevenueCents - a.medianNetRevenueCents)
+    .slice(0, 10);
 
   const totals = await db.steamGame.aggregate({
     _count: {

@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/error-state";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/features/dashboard/hooks";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
@@ -24,24 +25,61 @@ export function DashboardClient() {
   const data = query.data;
 
   if (!data) {
-    return <EmptyState title="No dashboard data" description="Run the Steam ingestion job to populate the platform." />;
+    return (
+      <EmptyState
+        title="Catalog is still warming up"
+        description="Neolytics is ready, but the Steam dataset has not been populated in this environment yet."
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A daily view of Steam market coverage, tracked games, recent launches, and estimated leaders.
-        </p>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Games tracked" value={formatNumber(data.marketOverview.totalGames)} />
+      <Card className="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_transparent_30%),radial-gradient(circle_at_left,_rgba(59,130,246,0.12),_transparent_35%)]">
+        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          <div className="space-y-4">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                A working view of market coverage, tracked games, recent launches, and estimated leaders across Steam.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/games">Browse games</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/opportunities">Open opportunities</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/compare">Compare games</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Catalog coverage</span>
+              <span className="font-medium">{formatNumber(data.marketOverview.totalGames)} games</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Tracked in workspace</span>
+              <span className="font-medium">{formatNumber(data.marketOverview.trackedGamesCount)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Recent launches surfaced</span>
+              <span className="font-medium">{formatNumber(data.recentLaunches.length)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-4 md:grid-cols-4">
+        <KpiCard label="Catalog games" value={formatNumber(data.marketOverview.totalGames)} />
         <KpiCard
           label="Average review score"
           value={`${data.marketOverview.averageReviewScore.toFixed(1)}%`}
         />
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
+        <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
@@ -50,7 +88,14 @@ export function DashboardClient() {
           </CardHeader>
           <CardContent>
             {data.trackedGames.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No games saved to the current workspace yet.</p>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  No games saved to the current workspace yet. Start with a shortlist, then use compare and reports from there.
+                </p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/games">Build a shortlist</Link>
+                </Button>
+              </div>
             ) : (
               <Table>
                 <TableHeader>

@@ -5,6 +5,7 @@ import type {
   SteamAppDetailsResponse,
   SteamAppListResponse,
   SteamPlayerCountResponse,
+  SteamPublicSearchResponse,
   SteamReviewSummaryResponse
 } from "@/lib/steam/types";
 
@@ -45,6 +46,51 @@ export async function fetchSteamAppList() {
 
   const url = `${env.STEAM_API_BASE_URL}/ISteamApps/GetAppList/v2/`;
   return fetchWithRetry<SteamAppListResponse>(url);
+}
+
+export async function fetchSteamCatalogAppIds(offset: number, count: number) {
+  if (env.STEAM_WEB_API_KEY) {
+    const list = await fetchSteamAppList();
+    return list.applist.apps
+      .filter((app) => app.name.trim().length > 0)
+      .slice(offset, offset + count)
+      .map((app) => app.appid);
+  }
+
+  const params = new URLSearchParams({
+    query: "",
+    start: String(offset),
+    count: String(count),
+    dynamic_data: "",
+    sort_by: "_ASC",
+    supportedlang: env.STEAM_DEFAULT_LANGUAGE === "en" ? "english" : env.STEAM_DEFAULT_LANGUAGE,
+    snr: "1_7_7_230_7",
+    infinite: "1"
+  });
+  const url = `${env.STEAM_STORE_BASE_URL}/search/results/?${params.toString()}`;
+  const response = await fetchWithRetry<SteamPublicSearchResponse>(url, {
+    headers: {
+      "User-Agent": "NeolyticsBot/1.0"
+    }
+  });
+  const matches = [...(response.results_html ?? "").matchAll(/data-ds-appid="([^"]+)"/g)];
+  const appIds = new Set<number>();
+
+  for (const match of matches) {
+    for (const value of match[1].split(",")) {
+      const appId = Number.parseInt(value.trim(), 10);
+
+      if (Number.isFinite(appId) && appId > 0) {
+        appIds.add(appId);
+      }
+    }
+  }
+
+  if (appIds.size === 0) {
+    throw new Error(`Steam public search returned no app ids for offset=${offset} count=${count}`);
+  }
+
+  return [...appIds];
 }
 
 export async function fetchSteamAppDetails(appId: number) {

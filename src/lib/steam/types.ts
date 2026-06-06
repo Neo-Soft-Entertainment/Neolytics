@@ -65,6 +65,13 @@ export interface SteamPlayerCountResponse {
   };
 }
 
+export interface SteamPublicSearchResponse {
+  success: number;
+  results_html?: string;
+  total_count?: number;
+  start?: number;
+}
+
 export interface NormalizedSteamApp {
   appId: number;
   type: string | null;

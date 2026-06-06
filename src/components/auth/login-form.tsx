@@ -52,7 +52,9 @@ export function LoginForm() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>Access your workspace and Steam market intelligence dashboard.</CardDescription>
+        <CardDescription>
+          Access your workspace and Steam market intelligence dashboard. This environment uses invited accounts only.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>

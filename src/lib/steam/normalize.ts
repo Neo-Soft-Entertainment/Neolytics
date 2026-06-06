@@ -14,9 +14,12 @@ function sanitizeSteamText(value?: string | null) {
   }
 
   const decoded = value
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 10)))
     .replaceAll("&quot;", "\"")
     .replaceAll("&#39;", "'")
     .replaceAll("&amp;", "&")
+    .replaceAll("&nbsp;", " ")
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
     .replaceAll("â„¢", "™")
@@ -28,6 +31,7 @@ function sanitizeSteamText(value?: string | null) {
     .replaceAll("â€¦", "…")
     .replaceAll("Â®", "®")
     .replaceAll("Â", "")
+    .replace(/\s+/g, " ")
     .trim();
 
   if (!/[ÃÂâ]/.test(decoded)) {
@@ -146,6 +150,12 @@ export function normalizeSteamApp(params: {
 
   const name = sanitizeSteamText(detail.name) ?? detail.name;
   const shortDescription = sanitizeSteamText(detail.short_description);
+  const totalReviews = params.reviewSummary.query_summary?.total_reviews ?? 0;
+  const totalPositiveReviews = params.reviewSummary.query_summary?.total_positive ?? 0;
+  const totalNegativeReviews = params.reviewSummary.query_summary?.total_negative ?? 0;
+  const reviewScore = totalReviews > 0
+    ? Number(((totalPositiveReviews / totalReviews) * 100).toFixed(1))
+    : null;
 
   return {
     appId: detail.steam_appid,
@@ -170,10 +180,10 @@ export function normalizeSteamApp(params: {
       isFree: Boolean(detail.is_free)
     },
     reviews: {
-      totalReviews: params.reviewSummary.query_summary?.total_reviews ?? 0,
-      totalPositiveReviews: params.reviewSummary.query_summary?.total_positive ?? 0,
-      totalNegativeReviews: params.reviewSummary.query_summary?.total_negative ?? 0,
-      reviewScore: params.reviewSummary.query_summary?.review_score ?? null,
+      totalReviews,
+      totalPositiveReviews,
+      totalNegativeReviews,
+      reviewScore,
       reviewScoreLabel: normalizeReviewSentiment(params.reviewSummary.query_summary?.review_score_desc)
     },
     currentPlayers: params.playerCount.response?.player_count ?? 0,
