@@ -37,11 +37,11 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_transparent_30%),radial-gradient(circle_at_left,_rgba(59,130,246,0.12),_transparent_35%)]">
+      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.12)]">
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
+          <div className="animate-rise-in space-y-4">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-[-0.05em] sm:text-4xl">Dashboard</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                 A working view of market coverage, tracked games, recent launches, and estimated leaders across Steam.
               </p>
@@ -67,7 +67,7 @@ export function DashboardClient() {
               />
             </div>
           </div>
-          <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm">
+          <div className="animate-rise-in-delay grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Catalog coverage</span>
               <span className="font-medium">{formatNumber(data.marketOverview.totalGames)} games</span>
@@ -79,6 +79,10 @@ export function DashboardClient() {
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Recent launches surfaced</span>
               <span className="font-medium">{formatNumber(data.recentLaunches.length)}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Live operating mode</p>
+              <p className="mt-2 font-medium">Move from market thesis to studio execution without leaving the workspace.</p>
             </div>
           </div>
         </CardContent>
@@ -106,7 +110,8 @@ export function DashboardClient() {
           <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignals.length)} />
         </div>
       ) : null}
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
         <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <CardTitle>Guided journey</CardTitle>
@@ -129,7 +134,7 @@ export function DashboardClient() {
         </CardHeader>
         <CardContent className="grid gap-3 lg:grid-cols-2">
           {data.guidedJourney.steps.map((step) => (
-            <div key={step.id} className="rounded-2xl border p-4">
+            <div key={step.id} className="rounded-2xl border border-white/10 bg-white/55 p-4 backdrop-blur dark:bg-white/[0.03]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">{step.title}</p>
@@ -151,7 +156,8 @@ export function DashboardClient() {
         </CardContent>
       </Card>
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Project intelligence board</CardTitle>
           </CardHeader>
@@ -195,7 +201,8 @@ export function DashboardClient() {
             )}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Tracked games</CardTitle>
           </CardHeader>
@@ -233,7 +240,8 @@ export function DashboardClient() {
             )}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Recent launches</CardTitle>
           </CardHeader>
@@ -262,7 +270,8 @@ export function DashboardClient() {
         </Card>
       </div>
       {data.portfolioReadiness?.topThesis ? (
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Top current thesis</CardTitle>
           </CardHeader>
@@ -280,7 +289,8 @@ export function DashboardClient() {
         </Card>
       ) : null}
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Top estimated revenue</CardTitle>
           </CardHeader>
@@ -307,7 +317,8 @@ export function DashboardClient() {
             </Table>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Fastest growing by reviews</CardTitle>
           </CardHeader>

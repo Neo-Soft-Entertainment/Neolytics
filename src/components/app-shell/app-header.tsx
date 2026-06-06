@@ -27,18 +27,20 @@ export function AppHeader({
   subscriptionPlan
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/85 px-4 backdrop-blur lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-background/65 px-4 backdrop-blur-2xl lg:px-8 relative">
+      <div className="pointer-events-none absolute inset-x-8 top-0 h-px shimmer-divider opacity-70" />
+      <div className="flex h-16 items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/55 px-2.5 py-1.5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:bg-white/[0.04]">
           <NeolyticsBrand href="/dashboard" showWordmark={false} />
-          <span className="hidden text-sm font-semibold tracking-tight text-foreground lg:inline">
+          <span className="hidden bg-gradient-to-r from-foreground via-cyan-600 to-sky-500 bg-clip-text text-sm font-bold tracking-[-0.03em] text-transparent lg:inline">
             Neolytics
           </span>
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 rounded-full border border-white/10 bg-white/40 px-3 py-2 backdrop-blur-xl dark:bg-white/[0.03]">
           <OrganizationSwitcher currentOrganizationId={currentOrganizationId} organizations={organizations} />
           <p className="sr-only">{organizationName}</p>
-          <Badge variant="secondary" className="mt-1">
+          <Badge variant="secondary" className="mt-1 border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>
@@ -49,6 +51,7 @@ export function AppHeader({
           <SignOutButton />
         </div>
         <MobileNav />
+      </div>
       </div>
     </header>
   );

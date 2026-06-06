@@ -34,14 +34,14 @@ export function MobileNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="lg:hidden">
+        <Button variant="outline" size="icon" className="border-white/15 bg-white/60 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden dark:bg-white/5">
           <Menu className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-60 border-white/10 bg-background/90 p-1 backdrop-blur-xl">
         {items.map((item) => (
           <DropdownMenuItem key={item.href} asChild>
-            <Link className={cn(pathname === item.href && "font-semibold")} href={item.href}>
+            <Link className={cn("rounded-xl", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
               {item.label}
             </Link>
           </DropdownMenuItem>
