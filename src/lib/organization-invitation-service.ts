@@ -2,6 +2,7 @@ import { OrganizationRole } from "@prisma/client";
 import { randomBytes } from "crypto";
 
 import { db } from "@/lib/db";
+import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { SubscriptionLimitError, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
 export class OrganizationInvitationError extends Error {
@@ -58,7 +59,7 @@ export async function createOrganizationInvitation(params: {
 
   await enforceSubscriptionCapacity(params.organizationId, "seats");
 
-  return db.organizationInvitation.create({
+  const invitation = await db.organizationInvitation.create({
     data: {
       organizationId: params.organizationId,
       invitedById: params.invitedById,
@@ -68,6 +69,20 @@ export async function createOrganizationInvitation(params: {
       expiresAt: getInvitationExpiryDate()
     }
   });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `New Neolytics organization invite created for **${normalizedEmail}**.`,
+    embeds: [
+      {
+        title: "Organization invitation created",
+        description: `${normalizedEmail} was invited as ${params.role}.`,
+        color: 5814783,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return invitation;
 }
 
 export async function revokeOrganizationInvitation(params: {
@@ -93,7 +108,7 @@ export async function revokeOrganizationInvitation(params: {
     return invitation;
   }
 
-  return db.organizationInvitation.update({
+  const revokedInvitation = await db.organizationInvitation.update({
     where: {
       id: invitation.id
     },
@@ -101,6 +116,20 @@ export async function revokeOrganizationInvitation(params: {
       revokedAt: new Date()
     }
   });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `An organization invite for **${invitation.email}** was revoked.`,
+    embeds: [
+      {
+        title: "Organization invitation revoked",
+        description: `${invitation.email} is no longer able to join with the previous invite link.`,
+        color: 15158332,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return revokedInvitation;
 }
 
 export async function getOrganizationInvitationByToken(token: string) {
@@ -151,7 +180,7 @@ export async function acceptOrganizationInvitation(params: {
     throw new OrganizationInvitationError("Sign in with the invited email address to accept this invitation.");
   }
 
-  return db.$transaction(async (tx) => {
+  const acceptedInvitation = await db.$transaction(async (tx) => {
     const membership = await tx.organizationMember.findUnique({
       where: {
         organizationId_userId: {
@@ -180,6 +209,20 @@ export async function acceptOrganizationInvitation(params: {
       }
     });
   });
+
+  await notifyOrganizationDiscordWebhook(invitation.organizationId, {
+    content: `**${params.userEmail.trim().toLowerCase()}** joined the organization from an invite.`,
+    embeds: [
+      {
+        title: "Invitation accepted",
+        description: `${params.userEmail.trim().toLowerCase()} accepted a ${invitation.role} invite.`,
+        color: 5763719,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return acceptedInvitation;
 }
 
 export { SubscriptionLimitError };

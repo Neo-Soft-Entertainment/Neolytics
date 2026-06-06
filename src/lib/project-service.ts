@@ -1,6 +1,8 @@
 import { Prisma, ProjectStage } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { env } from "@/env";
+import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { slugify } from "@/lib/slugify";
 import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
@@ -121,7 +123,7 @@ export async function createProject(params: {
     return count > 0;
   });
 
-  return db.project.create({
+  const project = await db.project.create({
     data: {
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
@@ -155,6 +157,32 @@ export async function createProject(params: {
     },
     include: projectInclude
   });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `Project **${project.name}** was created in Neolytics.`,
+    embeds: [
+      {
+        title: "Project created",
+        description: `A new project has been opened in the product planning system.`,
+        color: 3447003,
+        fields: [
+          {
+            name: "Stage",
+            value: project.stage,
+            inline: true
+          },
+          {
+            name: "Workspace",
+            value: params.workspaceId,
+            inline: true
+          }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return project;
 }
 
 export async function listProjects(workspaceId: string) {
@@ -505,12 +533,44 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     }))
   ]);
 
-  return db.project.findUniqueOrThrow({
+  const result = await db.project.findUniqueOrThrow({
     where: {
       id: project.id
     },
     include: projectInclude
   });
+
+  await notifyOrganizationDiscordWebhook(project.organizationId, {
+    content: `Market analysis was refreshed for **${project.name}**.`,
+    embeds: [
+      {
+        title: "Project analysis completed",
+        description: `Competition count: ${competitionCount}. Release momentum: ${releaseMomentum}.`,
+        color: 10181046,
+        fields: [
+          {
+            name: "Median revenue",
+            value: medianRevenueCents > 0
+              ? (medianRevenueCents / 100).toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 0
+                })
+              : "No coverage yet",
+            inline: true
+          },
+          {
+            name: "Review score",
+            value: averageReviewScore ? `${averageReviewScore.toFixed(1)}%` : "No coverage yet",
+            inline: true
+          }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return result;
 }
 
 export async function generateProjectGdd(projectId: string, workspaceId: string) {
@@ -585,7 +645,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     "- Keep market analysis updated as the concept evolves."
   ].join("\n");
 
-  await db.projectGdd.create({
+  const gdd = await db.projectGdd.create({
     data: {
       projectId: project.id,
       version: nextVersion,
@@ -594,12 +654,26 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     }
   });
 
-  return db.project.findUniqueOrThrow({
+  const result = await db.project.findUniqueOrThrow({
     where: {
       id: project.id
     },
     include: projectInclude
   });
+
+  await notifyOrganizationDiscordWebhook(project.organizationId, {
+    content: `A new GDD version is ready for **${project.name}**.`,
+    embeds: [
+      {
+        title: "GDD generated",
+        description: `Version ${gdd.version} was created. Review it in ${env.AUTH_URL}/projects/${project.id}.`,
+        color: 5763719,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return result;
 }
 
 export async function createKanbanColumn(params: {

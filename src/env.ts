@@ -17,6 +17,8 @@ const envSchema = z.object({
   STEAM_CRON_BATCH_SIZE: z.coerce.number().int().positive().max(100).default(25),
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().min(8).optional(),
+  DISCORD_CLIENT_ID: z.string().min(1).optional(),
+  DISCORD_CLIENT_SECRET: z.string().min(1).optional(),
   GOOGLE_SHEETS_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_SHEETS_PRIVATE_KEY: z.string().min(1).optional(),
   GOOGLE_SHEETS_FOLDER_ID: z.string().min(1).optional()

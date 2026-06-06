@@ -1,6 +1,7 @@
 import { Prisma, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { getSubscriptionPlanConfig, type SubscriptionMetric } from "@/lib/subscription-plans";
 
 type DbClient = Prisma.TransactionClient | typeof db;
@@ -269,7 +270,7 @@ export async function getOrganizationSubscriptionSnapshot(organizationId: string
 export async function updateOrganizationSubscriptionPlan(organizationId: string, plan: SubscriptionPlan) {
   const period = getCurrentSubscriptionPeriodRange();
 
-  return db.organization.update({
+  const organization = await db.organization.update({
     where: {
       id: organizationId
     },
@@ -281,4 +282,18 @@ export async function updateOrganizationSubscriptionPlan(organizationId: string,
       subscriptionCanceledAt: null
     }
   });
+
+  await notifyOrganizationDiscordWebhook(organizationId, {
+    content: `Organization subscription changed to **${plan}**.`,
+    embeds: [
+      {
+        title: "Subscription updated",
+        description: `${organization.name} is now on the ${plan} plan.`,
+        color: 15844367,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return organization;
 }

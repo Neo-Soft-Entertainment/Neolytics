@@ -21,7 +21,10 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 p-6">
       <div className="flex w-full max-w-xl flex-col items-center gap-6">
         <NeolyticsBrand />
-        <LoginForm inviteToken={inviteToken} />
+        <LoginForm
+          inviteToken={inviteToken}
+          hasDiscordLogin={Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET)}
+        />
       </div>
     </main>
   );

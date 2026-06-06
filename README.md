@@ -10,7 +10,7 @@ Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase
 - shadcn/ui-style component primitives
 - Supabase Postgres
 - Prisma
-- Auth.js with credentials login and optional GitHub OAuth
+- Auth.js with credentials login and optional GitHub or Discord OAuth
 - TanStack Query
 - Recharts
 - BullMQ + Redis for local Steam ingestion jobs
@@ -80,7 +80,24 @@ Optional OAuth:
 ```env
 GITHUB_ID=""
 GITHUB_SECRET=""
+DISCORD_CLIENT_ID=""
+DISCORD_CLIENT_SECRET=""
 ```
+
+Discord OAuth setup:
+
+- Create a Discord application in the Discord developer portal
+- Add an OAuth redirect URL pointing to `https://your-domain/api/auth/callback/discord`
+- Copy the client id into `DISCORD_CLIENT_ID`
+- Copy the client secret into `DISCORD_CLIENT_SECRET`
+- Once those values are present, the login screen will automatically show `Continue with Discord`
+
+Optional Discord webhook notifications:
+
+- Open `Settings > Organization > Discord webhooks`
+- Paste a Discord webhook URL from your server channel
+- Enable notifications and send a test message
+- Neolytics will post updates for invitations, reports, projects, project analysis, GDD generation, and subscription changes
 
 Optional Google Sheets publishing:
 

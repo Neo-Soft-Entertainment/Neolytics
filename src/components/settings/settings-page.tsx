@@ -7,6 +7,7 @@ import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service"
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
 import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
+import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -96,6 +97,11 @@ export async function SettingsPage() {
             </CardContent>
           </Card>
           <SubscriptionPanel snapshot={subscriptionSnapshot} canManage={canManageSubscription} />
+          <OrganizationDiscordPanel
+            canManage={canManageSubscription}
+            initialEnabled={organization.discordWebhookEnabled}
+            initialWebhookUrl={organization.discordWebhookUrl}
+          />
           <OrganizationMembersPanel
             canManage={canManageSubscription}
             members={currentMembers}

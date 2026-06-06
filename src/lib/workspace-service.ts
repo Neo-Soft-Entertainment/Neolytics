@@ -1,4 +1,6 @@
 import { db } from "@/lib/db";
+import { env } from "@/env";
+import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
 export async function getDefaultWorkspaceForUser(userId: string) {
@@ -76,7 +78,7 @@ export async function createCompetitorSet(params: {
 
   await enforceSubscriptionCapacity(params.organizationId, "competitorSets");
 
-  return db.competitorSet.create({
+  const competitorSet = await db.competitorSet.create({
     data: {
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
@@ -97,6 +99,20 @@ export async function createCompetitorSet(params: {
       }
     }
   });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `Competitor set **${competitorSet.name}** was created in Neolytics.`,
+    embeds: [
+      {
+        title: "Competitor set created",
+        description: `${competitorSet.name} now tracks ${games.length} Steam games.`,
+        color: 3447003,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return competitorSet;
 }
 
 export async function generateBasicMarketReport(params: {
@@ -160,7 +176,7 @@ export async function generateBasicMarketReport(params: {
     })
   ].join("\n");
 
-  return db.$transaction(async (tx) => {
+  const report = await db.$transaction(async (tx) => {
     await consumeSubscriptionUsage(params.organizationId, "reportsGenerated", tx);
 
     return tx.aiReport.create({
@@ -181,4 +197,18 @@ export async function generateBasicMarketReport(params: {
       }
     });
   });
+
+  await notifyOrganizationDiscordWebhook(params.organizationId, {
+    content: `Market report **${report.title}** is ready in Neolytics.`,
+    embeds: [
+      {
+        title: "Market report generated",
+        description: `Open ${env.AUTH_URL}/reports to review **${report.title}**.`,
+        color: 10181046,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  });
+
+  return report;
 }

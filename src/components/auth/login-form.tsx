@@ -20,7 +20,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function LoginForm({ inviteToken }: { inviteToken?: string }) {
+export function LoginForm({
+  inviteToken,
+  hasDiscordLogin
+}: {
+  inviteToken?: string;
+  hasDiscordLogin: boolean;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
@@ -49,6 +55,13 @@ export function LoginForm({ inviteToken }: { inviteToken?: string }) {
     router.refresh();
   }
 
+  async function onDiscordSignIn() {
+    setError(null);
+    await signIn("discord", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+    });
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -58,6 +71,21 @@ export function LoginForm({ inviteToken }: { inviteToken?: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {hasDiscordLogin ? (
+          <div className="mb-4 space-y-3">
+            <Button className="w-full" type="button" variant="outline" onClick={onDiscordSignIn}>
+              Continue with Discord
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or use email</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
