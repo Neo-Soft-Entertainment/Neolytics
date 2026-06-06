@@ -21,6 +21,7 @@ type FormValues = z.infer<typeof schema>;
 export function CreateWorkspaceForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -31,6 +32,7 @@ export function CreateWorkspaceForm() {
 
   async function onSubmit(values: FormValues) {
     setError(null);
+    setMessage(null);
 
     const response = await fetch("/api/workspaces", {
       method: "POST",
@@ -47,6 +49,7 @@ export function CreateWorkspaceForm() {
     }
 
     form.reset();
+    setMessage(`Workspace "${values.name}" created.`);
     router.refresh();
   }
 
@@ -63,6 +66,7 @@ export function CreateWorkspaceForm() {
         <Label htmlFor="workspace-description">Description</Label>
         <Textarea id="workspace-description" placeholder="Optional workspace focus or mandate." {...form.register("description")} />
       </div>
+      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div>
         <Button disabled={form.formState.isSubmitting} type="submit">

@@ -13,6 +13,7 @@ export function OrganizationDangerZone({
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   async function deleteOrganization() {
@@ -29,6 +30,7 @@ export function OrganizationDangerZone({
     }
 
     setMessage(null);
+    setError(null);
     setIsDeleting(true);
 
     const response = await fetch("/api/organizations", {
@@ -40,7 +42,7 @@ export function OrganizationDangerZone({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to delete organization.");
+      setError(payload?.message ?? "Unable to delete organization.");
       return;
     }
 
@@ -69,7 +71,8 @@ export function OrganizationDangerZone({
         {!canDelete ? (
           <p className="text-sm text-muted-foreground">Only organization owners can delete the organization.</p>
         ) : null}
-        {message ? <p className="text-sm text-destructive">{message}</p> : null}
+        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </CardContent>
     </Card>
   );

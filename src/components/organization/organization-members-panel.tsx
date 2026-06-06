@@ -39,15 +39,18 @@ export function OrganizationMembersPanel({
   const [role, setRole] = useState<OrganizationRole>(OrganizationRole.MEMBER);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
 
   async function createInvite() {
     if (!email.trim()) {
-      setMessage("Email is required.");
+      setError("Email is required.");
       return;
     }
 
     setIsSubmitting(true);
     setMessage(null);
+    setError(null);
 
     const response = await fetch("/api/organizations/invitations", {
       method: "POST",
@@ -65,7 +68,7 @@ export function OrganizationMembersPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string; token?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to create invitation.");
+      setError(payload?.message ?? "Unable to create invitation.");
       return;
     }
 
@@ -74,12 +77,14 @@ export function OrganizationMembersPanel({
     await navigator.clipboard.writeText(inviteUrl).catch(() => {});
     setEmail("");
     setRole(OrganizationRole.MEMBER);
+    setLastInviteUrl(inviteUrl);
     setMessage("Invitation created. The invite link was copied to your clipboard.");
     router.refresh();
   }
 
   async function revokeInvite(invitationId: string) {
     setMessage(null);
+    setError(null);
 
     const response = await fetch(`/api/organizations/invitations/${invitationId}`, {
       method: "DELETE"
@@ -88,7 +93,7 @@ export function OrganizationMembersPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to revoke invitation.");
+      setError(payload?.message ?? "Unable to revoke invitation.");
       return;
     }
 
@@ -100,7 +105,7 @@ export function OrganizationMembersPanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Organization members</CardTitle>
+          <CardTitle>Organization members ({members.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {members.map((member) => (
@@ -118,7 +123,7 @@ export function OrganizationMembersPanel({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Pending invitations</CardTitle>
+          <CardTitle>Pending invitations ({invitations.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {invitations.length > 0 ? invitations.map((invitation) => (
@@ -154,7 +159,7 @@ export function OrganizationMembersPanel({
         <CardHeader>
           <CardTitle>Invite teammate</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_auto]">
+        <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
           <div className="space-y-2">
             <Label htmlFor="invite-email">Email</Label>
             <Input
@@ -183,12 +188,31 @@ export function OrganizationMembersPanel({
               {isSubmitting ? "Inviting..." : "Invite"}
             </Button>
           </div>
+          {lastInviteUrl ? (
+            <div className="space-y-2 lg:col-span-3">
+              <Label htmlFor="invite-link">Last invite link</Label>
+              <div className="flex flex-col gap-2 md:flex-row">
+                <Input id="invite-link" readOnly value={lastInviteUrl} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(lastInviteUrl).catch(() => {});
+                    setMessage("Invitation link copied.");
+                  }}
+                >
+                  Copy link
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {!canManage ? (
-            <p className="text-sm text-muted-foreground md:col-span-3">
+            <p className="text-sm text-muted-foreground lg:col-span-3">
               Only organization admins can invite new members.
             </p>
           ) : null}
-          {message ? <p className="text-sm text-muted-foreground md:col-span-3">{message}</p> : null}
+          {message ? <p className="text-sm text-emerald-600 lg:col-span-3">{message}</p> : null}
+          {error ? <p className="text-sm text-destructive lg:col-span-3">{error}</p> : null}
         </CardContent>
       </Card>
     </div>

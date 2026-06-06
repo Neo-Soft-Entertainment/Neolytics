@@ -20,6 +20,7 @@ export function WorkspaceManagementPanel({
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function deleteWorkspace(workspaceId: string, workspaceName: string) {
@@ -36,6 +37,7 @@ export function WorkspaceManagementPanel({
     }
 
     setMessage(null);
+    setError(null);
     setDeletingId(workspaceId);
 
     const response = await fetch(`/api/workspaces?workspaceId=${workspaceId}`, {
@@ -47,7 +49,7 @@ export function WorkspaceManagementPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to delete workspace.");
+      setError(payload?.message ?? "Unable to delete workspace.");
       return;
     }
 
@@ -58,7 +60,7 @@ export function WorkspaceManagementPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Workspace list</CardTitle>
+        <CardTitle>Workspace list ({workspaces.length})</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {workspaces.map((workspace) => (
@@ -89,7 +91,8 @@ export function WorkspaceManagementPanel({
         {workspaces.length <= 1 ? (
           <p className="text-muted-foreground">At least one workspace must remain in the organization.</p>
         ) : null}
-        {message ? <p className="text-muted-foreground">{message}</p> : null}
+        {message ? <p className="text-emerald-600">{message}</p> : null}
+        {error ? <p className="text-destructive">{error}</p> : null}
       </CardContent>
     </Card>
   );

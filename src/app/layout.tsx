@@ -11,7 +11,17 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Neolytics",
-  description: "Steam market intelligence for studios, publishers, and investors."
+  description: "Steam market intelligence for studios, publishers, and investors.",
+  icons: {
+    icon: [
+      { url: "/icon.jpg", type: "image/jpeg" },
+      { url: "/neolytics-logo.jpg", type: "image/jpeg" }
+    ],
+    apple: [
+      { url: "/apple-icon.jpg", type: "image/jpeg" }
+    ],
+    shortcut: ["/icon.jpg"]
+  }
 };
 
 export default function RootLayout({
