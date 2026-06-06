@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
+import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -121,9 +122,17 @@ export function GamesPageClient() {
               {query.data?.total ? `${formatNumber(query.data.total)} games matched the current filters.` : "Adjust the inputs to explore the catalog."}
             </p>
           </div>
-          <Button variant="outline" onClick={() => setFilters({ query: "", genre: "", tag: "", minReviewScore: "any" })}>
-            Reset
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setFilters({ query: "", genre: "", tag: "", minReviewScore: "any" })}>
+              Reset
+            </Button>
+            <ExportActions
+              label="Export games"
+              xlsxHref={`/api/exports/games?format=xlsx&${queryString}`}
+              csvHref={`/api/exports/games?format=csv&${queryString}`}
+              googleSheetsEndpoint={`/api/exports/games?${queryString}`}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {query.isLoading ? (

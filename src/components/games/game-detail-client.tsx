@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/error-state";
+import { ExportActions } from "@/components/export/export-actions";
 import { ChartCard } from "@/components/charts/chart-card";
 import { HistoryLineChart } from "@/components/charts/history-line-chart";
 import { useGameDetails, useGameHistory } from "@/features/games/hooks";
@@ -40,8 +41,14 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </div>
         </div>
         <Card className="w-full max-w-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
             <CardTitle>Current snapshot</CardTitle>
+            <ExportActions
+              label="Export"
+              xlsxHref={`/api/exports/games/${appId}?format=xlsx`}
+              csvHref={`/api/exports/games/${appId}?format=csv`}
+              googleSheetsEndpoint={`/api/exports/games/${appId}`}
+            />
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex items-center justify-between">

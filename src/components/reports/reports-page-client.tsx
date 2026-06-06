@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,7 @@ export function ReportsPageClient() {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Export</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,6 +89,14 @@ export function ReportsPageClient() {
                     <TableCell>{report.reportType}</TableCell>
                     <TableCell>{report.status}</TableCell>
                     <TableCell>{new Date(report.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <ExportActions
+                        label="Export"
+                        xlsxHref={`/api/exports/reports/${report.id}?format=xlsx`}
+                        csvHref={`/api/exports/reports/${report.id}?format=csv`}
+                        googleSheetsEndpoint={`/api/exports/reports/${report.id}`}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

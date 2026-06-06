@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
+import { ExportActions } from "@/components/export/export-actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -54,6 +55,12 @@ export function DashboardClient() {
               <Button asChild variant="outline">
                 <Link href="/compare">Compare games</Link>
               </Button>
+              <ExportActions
+                label="Export report"
+                xlsxHref="/api/exports/dashboard?format=xlsx"
+                csvHref="/api/exports/dashboard?format=csv"
+                googleSheetsEndpoint="/api/exports/dashboard"
+              />
             </div>
           </div>
           <div className="grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-4 text-sm">

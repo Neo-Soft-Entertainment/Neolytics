@@ -70,6 +70,9 @@ STEAM_APP_SYNC_LIMIT="500"
 STEAM_CRON_BATCH_SIZE="25"
 ADMIN_EMAIL="admin@neolytics.local"
 ADMIN_PASSWORD="ChangeMe123!"
+GOOGLE_SHEETS_CLIENT_EMAIL=""
+GOOGLE_SHEETS_PRIVATE_KEY=""
+GOOGLE_SHEETS_FOLDER_ID=""
 ```
 
 Optional OAuth:
@@ -78,6 +81,14 @@ Optional OAuth:
 GITHUB_ID=""
 GITHUB_SECRET=""
 ```
+
+Optional Google Sheets publishing:
+
+- `GOOGLE_SHEETS_CLIENT_EMAIL`: service account email
+- `GOOGLE_SHEETS_PRIVATE_KEY`: service account private key
+- `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed
+
+When these variables are present, report exports can be pushed directly into Google Sheets and shared with the current signed-in user.
 
 ## Installation
 
@@ -184,6 +195,8 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" "http://localhost:3000/api/inte
 - `/games/[appId]`
 - `/compare`
 - `/opportunities`
+- `/projects`
+- `/projects/[projectId]`
 - `/reports`
 - `/settings`
 - `/login`
@@ -205,6 +218,16 @@ curl -H "Authorization: Bearer YOUR_CRON_SECRET" "http://localhost:3000/api/inte
 - `GET /api/dashboard`
 - `GET /api/opportunities`
 - `GET /api/internal/steam-sync`
+
+Workbook export routes:
+
+- `GET|POST /api/exports/dashboard`
+- `GET|POST /api/exports/games`
+- `GET|POST /api/exports/games/[appId]`
+- `GET|POST /api/exports/compare`
+- `GET|POST /api/exports/opportunities`
+- `GET|POST /api/exports/projects/[projectId]`
+- `GET|POST /api/exports/reports/[reportId]`
 
 ## Estimation model
 

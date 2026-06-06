@@ -1,0 +1,566 @@
+import { google } from "googleapis";
+import * as XLSX from "xlsx";
+import { env } from "@/env";
+import {
+  compareGames,
+  getDashboardData,
+  getGameByAppId,
+  getOpportunityFinderData,
+  getPlayerHistory,
+  getPriceHistory,
+  getReviewHistory,
+  searchGames
+} from "@/lib/game-service";
+import { getProjectById } from "@/lib/project-service";
+import { db } from "@/lib/db";
+
+type ExportValue = string | number | boolean | null;
+type ExportRow = Record<string, ExportValue>;
+
+export interface ExportWorkbook {
+  fileName: string;
+  title: string;
+  sheets: Array<{
+    name: string;
+    rows: ExportRow[];
+  }>;
+}
+
+function formatCurrency(value: number | bigint | null | undefined) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return (Number(value) / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0
+  });
+}
+
+function formatDate(value: Date | string | null | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return new Date(value).toISOString();
+}
+
+function sanitizeSheetName(value: string) {
+  return value.replace(/[\\/*?:[\]]/g, " ").slice(0, 31) || "Sheet1";
+}
+
+function getSheetRows(rows: ExportRow[]) {
+  if (rows.length > 0) {
+    return rows;
+  }
+
+  return [{ message: "No data available for this export." }];
+}
+
+function getColumnWidths(rows: ExportRow[]) {
+  const sample = getSheetRows(rows);
+  const keys = Object.keys(sample[0] ?? {});
+
+  return keys.map((key) => {
+    const contentWidth = Math.max(
+      key.length,
+      ...sample.map((row) => String(row[key] ?? "").length)
+    );
+
+    return {
+      wch: Math.min(Math.max(contentWidth + 2, 12), 48)
+    };
+  });
+}
+
+export function createWorkbookBuffer(workbook: ExportWorkbook) {
+  const book = XLSX.utils.book_new();
+
+  for (const sheet of workbook.sheets) {
+    const rows = getSheetRows(sheet.rows);
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    worksheet["!cols"] = getColumnWidths(rows);
+    XLSX.utils.book_append_sheet(book, worksheet, sanitizeSheetName(sheet.name));
+  }
+
+  return XLSX.write(book, {
+    type: "buffer",
+    bookType: "xlsx"
+  });
+}
+
+export function createCsvText(workbook: ExportWorkbook) {
+  const firstSheet = workbook.sheets[0];
+  const worksheet = XLSX.utils.json_to_sheet(getSheetRows(firstSheet?.rows ?? []));
+  return XLSX.utils.sheet_to_csv(worksheet);
+}
+
+export function createDownloadResponse(workbook: ExportWorkbook, format: "xlsx" | "csv") {
+  const fileName = `${workbook.fileName}.${format}`;
+  const body = format === "xlsx" ? createWorkbookBuffer(workbook) : createCsvText(workbook);
+  const contentType = format === "xlsx"
+    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    : "text/csv; charset=utf-8";
+
+  return new Response(body, {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+      "Cache-Control": "no-store"
+    }
+  });
+}
+
+export function isGoogleSheetsConfigured() {
+  return Boolean(env.GOOGLE_SHEETS_CLIENT_EMAIL && env.GOOGLE_SHEETS_PRIVATE_KEY);
+}
+
+export async function publishWorkbookToGoogleSheets(workbook: ExportWorkbook, userEmail: string) {
+  if (!isGoogleSheetsConfigured()) {
+    throw new Error("Google Sheets export is not configured.");
+  }
+
+  const auth = new google.auth.JWT({
+    email: env.GOOGLE_SHEETS_CLIENT_EMAIL,
+    key: env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    scopes: [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive"
+    ]
+  });
+
+  const sheets = google.sheets({ version: "v4", auth });
+  const drive = google.drive({ version: "v3", auth });
+  const spreadsheet = await sheets.spreadsheets.create({
+    requestBody: {
+      properties: {
+        title: workbook.title
+      },
+      sheets: workbook.sheets.map((sheet) => ({
+        properties: {
+          title: sanitizeSheetName(sheet.name)
+        }
+      }))
+    }
+  });
+  const spreadsheetId = spreadsheet.data.spreadsheetId;
+
+  if (!spreadsheetId) {
+    throw new Error("Google Sheets did not return a spreadsheet id.");
+  }
+
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      valueInputOption: "RAW",
+      data: workbook.sheets.map((sheet) => {
+        const rows = getSheetRows(sheet.rows);
+        const headers = Array.from(
+          rows.reduce((keys, row) => {
+            for (const key of Object.keys(row)) {
+              keys.add(key);
+            }
+
+            return keys;
+          }, new Set<string>())
+        );
+
+        return {
+          range: `${sanitizeSheetName(sheet.name)}!A1`,
+          values: [
+            headers,
+            ...rows.map((row) => headers.map((header) => row[header] ?? ""))
+          ]
+        };
+      })
+    }
+  });
+
+  await drive.permissions.create({
+    fileId: spreadsheetId,
+    requestBody: {
+      role: "writer",
+      type: "user",
+      emailAddress: userEmail
+    },
+    sendNotificationEmail: false
+  });
+
+  if (env.GOOGLE_SHEETS_FOLDER_ID) {
+    await drive.files.update({
+      fileId: spreadsheetId,
+      addParents: env.GOOGLE_SHEETS_FOLDER_ID
+    });
+  }
+
+  return {
+    spreadsheetId,
+    url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`
+  };
+}
+
+export async function buildDashboardWorkbook(workspaceId: string): Promise<ExportWorkbook> {
+  const data = await getDashboardData(workspaceId);
+
+  return {
+    fileName: "neolytics-dashboard",
+    title: "Neolytics Dashboard Report",
+    sheets: [
+      {
+        name: "Overview",
+        rows: [
+          { metric: "Catalog games", value: data.marketOverview.totalGames },
+          { metric: "Average review score", value: data.marketOverview.averageReviewScore.toFixed(1) },
+          { metric: "Tracked games", value: data.marketOverview.trackedGamesCount },
+          { metric: "Recent launches", value: data.recentLaunches.length }
+        ]
+      },
+      {
+        name: "Tracked Games",
+        rows: data.trackedGames.map((item) => ({
+          game: item.steamGame.name,
+          appId: item.steamGame.appId,
+          reviewCount: item.steamGame.reviewCount ?? 0
+        }))
+      },
+      {
+        name: "Recent Launches",
+        rows: data.recentLaunches.map((game) => ({
+          game: game.name,
+          appId: game.appId,
+          releaseDate: formatDate(game.releaseDate)
+        }))
+      },
+      {
+        name: "Top Revenue",
+        rows: data.topRevenue.map((item) => ({
+          game: item.steamGame.name,
+          appId: item.steamGame.appId,
+          medianNetRevenueCents: item.medianNetRevenueCents,
+          medianNetRevenueUsd: formatCurrency(item.medianNetRevenueCents)
+        }))
+      },
+      {
+        name: "Fastest Growing",
+        rows: data.fastestGrowing.map((game) => ({
+          game: game.name,
+          appId: game.appId,
+          reviewCount: game.reviewCount ?? 0
+        }))
+      }
+    ]
+  };
+}
+
+export async function buildGameSearchWorkbook(input: {
+  query?: string;
+  genre?: string;
+  tag?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minReviewScore?: number;
+  fromReleaseDate?: Date;
+  toReleaseDate?: Date;
+  page?: number;
+  pageSize?: number;
+}): Promise<ExportWorkbook> {
+  const result = await searchGames({
+    ...input,
+    page: 1,
+    pageSize: input.pageSize ?? 500
+  });
+
+  return {
+    fileName: "steam-games-search",
+    title: "Steam Games Search Export",
+    sheets: [
+      {
+        name: "Games",
+        rows: result.items.map((game) => ({
+          appId: game.appId,
+          name: game.name,
+          genres: game.genres.map((genre) => genre.steamGenre.name).join(", "),
+          priceCents: game.priceCurrent?.finalPriceCents ?? null,
+          priceUsd: formatCurrency(game.priceCurrent?.finalPriceCents ?? null),
+          reviewScore: game.reviewScore ?? null,
+          reviewCount: game.reviewCount ?? null,
+          releaseDate: formatDate(game.releaseDate)
+        }))
+      }
+    ]
+  };
+}
+
+export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> {
+  const [game, priceHistory, reviewHistory, playerHistory] = await Promise.all([
+    getGameByAppId(appId),
+    getPriceHistory(appId),
+    getReviewHistory(appId),
+    getPlayerHistory(appId)
+  ]);
+
+  if (!game) {
+    throw new Error("Game not found.");
+  }
+
+  const latestSalesEstimate = game.salesEstimates[0] ?? null;
+  const latestRevenueEstimate = game.revenueEstimates[0] ?? null;
+
+  return {
+    fileName: `steam-game-${appId}`,
+    title: `${game.name} Report`,
+    sheets: [
+      {
+        name: "Overview",
+        rows: [
+          { field: "App ID", value: game.appId },
+          { field: "Name", value: game.name },
+          { field: "Description", value: game.shortDescription ?? "" },
+          { field: "Release date", value: formatDate(game.releaseDate) },
+          { field: "Genres", value: game.genres.map((genre) => genre.steamGenre.name).join(", ") },
+          { field: "Developers", value: game.developers.map((developer) => developer.steamDeveloper.name).join(", ") },
+          { field: "Publishers", value: game.publishers.map((publisher) => publisher.steamPublisher.name).join(", ") },
+          { field: "Current price", value: formatCurrency(game.priceCurrent?.finalPriceCents ?? null) },
+          { field: "Review score", value: game.reviewScore ?? "" },
+          { field: "Review count", value: game.reviewCount ?? "" },
+          { field: "Current players", value: game.currentPlayers ?? "" },
+          { field: "Estimated median sales", value: latestSalesEstimate?.medianEstimate ?? "" },
+          { field: "Estimated median net revenue", value: formatCurrency(latestRevenueEstimate?.medianNetRevenueCents ?? null) }
+        ]
+      },
+      {
+        name: "Price History",
+        rows: priceHistory.map((item) => ({
+          snapshotDate: formatDate(item.snapshotDate),
+          finalPriceCents: item.finalPriceCents ?? null,
+          finalPriceUsd: formatCurrency(item.finalPriceCents ?? null),
+          initialPriceCents: item.initialPriceCents ?? null,
+          discountPercent: item.discountPercent ?? null,
+          currency: item.currency ?? ""
+        }))
+      },
+      {
+        name: "Review History",
+        rows: reviewHistory.map((item) => ({
+          snapshotDate: formatDate(item.snapshotDate),
+          totalReviews: item.totalReviews,
+          totalPositiveReviews: item.totalPositiveReviews,
+          totalNegativeReviews: item.totalNegativeReviews,
+          reviewScore: item.reviewScore ?? null,
+          reviewScoreLabel: item.reviewScoreLabel
+        }))
+      },
+      {
+        name: "Player History",
+        rows: playerHistory.map((item) => ({
+          snapshotDate: formatDate(item.snapshotDate),
+          currentPlayers: item.currentPlayers
+        }))
+      },
+      {
+        name: "Estimates",
+        rows: [
+          {
+            type: "Sales",
+            low: latestSalesEstimate?.lowEstimate ?? null,
+            median: latestSalesEstimate?.medianEstimate ?? null,
+            high: latestSalesEstimate?.highEstimate ?? null,
+            confidence: latestSalesEstimate?.confidence ?? "",
+            explanation: latestSalesEstimate?.explanation ?? ""
+          },
+          {
+            type: "Revenue",
+            low: latestRevenueEstimate ? Number(latestRevenueEstimate.lowNetRevenueCents) : null,
+            median: latestRevenueEstimate ? Number(latestRevenueEstimate.medianNetRevenueCents) : null,
+            high: latestRevenueEstimate ? Number(latestRevenueEstimate.highNetRevenueCents) : null,
+            confidence: latestRevenueEstimate?.confidence ?? "",
+            explanation: latestRevenueEstimate?.explanation ?? ""
+          }
+        ]
+      }
+    ]
+  };
+}
+
+export async function buildCompareWorkbook(appIds: number[]): Promise<ExportWorkbook> {
+  const games = await compareGames(appIds);
+
+  return {
+    fileName: "steam-games-compare",
+    title: "Steam Games Comparison",
+    sheets: [
+      {
+        name: "Comparison",
+        rows: games.map((game) => ({
+          appId: game.appId,
+          name: game.name,
+          priceUsd: formatCurrency(game.priceCurrent?.finalPriceCents ?? null),
+          reviewScore: game.reviewScore ?? null,
+          reviewCount: game.reviewCount ?? null,
+          medianSales: game.salesEstimates[0]?.medianEstimate ?? null,
+          medianNetRevenueUsd: formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null),
+          genres: game.genres.map((genre) => genre.steamGenre.name).join(", ")
+        }))
+      }
+    ]
+  };
+}
+
+export async function buildOpportunitiesWorkbook(): Promise<ExportWorkbook> {
+  const items = await getOpportunityFinderData();
+
+  return {
+    fileName: "steam-opportunities",
+    title: "Steam Opportunity Finder",
+    sheets: [
+      {
+        name: "Opportunities",
+        rows: items.map((item) => ({
+          appId: item.appId,
+          name: item.name,
+          opportunityScore: item.score,
+          reviewScore: item.reviewScore ?? null,
+          competitionCount: item.competitionCount,
+          medianNetRevenueUsd: formatCurrency(item.medianNetRevenueCents),
+          priceUsd: formatCurrency(item.priceCents)
+        }))
+      }
+    ]
+  };
+}
+
+export async function buildProjectWorkbook(projectId: string, workspaceId: string): Promise<ExportWorkbook> {
+  const project = await getProjectById(projectId, workspaceId);
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const latestGdd = project.gdds[0] ?? null;
+  const board = project.kanbanBoards[0] ?? null;
+
+  return {
+    fileName: `project-${project.slug}`,
+    title: `${project.name} Project Report`,
+    sheets: [
+      {
+        name: "Project",
+        rows: [
+          { field: "Name", value: project.name },
+          { field: "Stage", value: project.stage },
+          { field: "Elevator pitch", value: project.elevatorPitch ?? "" },
+          { field: "Description", value: project.description ?? "" },
+          { field: "Genres", value: project.genreInput ?? "" },
+          { field: "Tags", value: project.tagInput ?? "" },
+          { field: "Target audience", value: project.targetAudience ?? "" },
+          { field: "Core loop", value: project.coreLoop ?? "" },
+          { field: "Differentiator", value: project.differentiator ?? "" },
+          { field: "Monetization", value: project.monetizationModel ?? "" },
+          { field: "Art direction", value: project.artDirection ?? "" },
+          { field: "Player fantasy", value: project.playerFantasy ?? "" },
+          { field: "Price target", value: formatCurrency(project.pricePointCents ?? null) }
+        ]
+      },
+      {
+        name: "Market Analysis",
+        rows: project.analysis ? [
+          {
+            analyzedAt: formatDate(project.analysis.analyzedAt),
+            matchingGamesCount: project.analysis.matchingGamesCount,
+            competitionCount: project.analysis.competitionCount,
+            releaseMomentum: project.analysis.releaseMomentum,
+            averageReviewScore: project.analysis.averageReviewScore ?? null,
+            averagePriceUsd: formatCurrency(project.analysis.averagePriceCents ?? null),
+            medianRevenueUsd: formatCurrency(project.analysis.medianRevenueCents ?? null),
+            opportunitySummary: project.analysis.opportunitySummary,
+            riskSummary: project.analysis.riskSummary,
+            audienceAutofill: project.analysis.audienceAutofill ?? "",
+            coreLoopAutofill: project.analysis.coreLoopAutofill ?? "",
+            suggestedGenres: Array.isArray(project.analysis.suggestedGenres) ? project.analysis.suggestedGenres.join(", ") : "",
+            suggestedTags: Array.isArray(project.analysis.suggestedTags) ? project.analysis.suggestedTags.join(", ") : ""
+          }
+        ] : []
+      },
+      {
+        name: "Comparable Games",
+        rows: project.competitorGames.map((item) => ({
+          appId: item.steamGame.appId,
+          name: item.steamGame.name,
+          reviewScore: item.steamGame.reviewScore ?? null,
+          reviewCount: item.steamGame.reviewCount ?? null,
+          medianNetRevenueUsd: formatCurrency(item.steamGame.revenueEstimates[0]?.medianNetRevenueCents ?? null)
+        }))
+      },
+      {
+        name: "GDD",
+        rows: latestGdd ? latestGdd.content.split("\n").map((line, index) => ({
+          line: index + 1,
+          content: line
+        })) : []
+      },
+      {
+        name: "Kanban",
+        rows: board
+          ? board.columns.flatMap((column) => {
+              if (column.cards.length === 0) {
+                return [{
+                  column: column.name,
+                  title: "",
+                  assignee: "",
+                  dueDate: "",
+                  labels: ""
+                }];
+              }
+
+              return column.cards.map((card) => ({
+                column: column.name,
+                title: card.title,
+                assignee: card.assigneeLabel ?? "",
+                dueDate: formatDate(card.dueDate),
+                labels: Array.isArray(card.labels) ? card.labels.join(", ") : ""
+              }));
+            })
+          : []
+      }
+    ]
+  };
+}
+
+export async function buildReportWorkbook(reportId: string, organizationId: string): Promise<ExportWorkbook> {
+  const report = await db.aiReport.findFirst({
+    where: {
+      id: reportId,
+      organizationId
+    }
+  });
+
+  if (!report) {
+    throw new Error("Report not found.");
+  }
+
+  return {
+    fileName: `report-${report.id}`,
+    title: report.title,
+    sheets: [
+      {
+        name: "Summary",
+        rows: [
+          { field: "Title", value: report.title },
+          { field: "Type", value: report.reportType },
+          { field: "Status", value: report.status },
+          { field: "Subject", value: report.subject },
+          { field: "Created at", value: formatDate(report.createdAt) },
+          { field: "Updated at", value: formatDate(report.updatedAt) }
+        ]
+      },
+      {
+        name: "Content",
+        rows: (report.content ?? "").split("\n").map((line, index) => ({
+          line: index + 1,
+          content: line
+        }))
+      }
+    ]
+  };
+}

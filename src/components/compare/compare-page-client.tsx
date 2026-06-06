@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExportActions } from "@/components/export/export-actions";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCompareGames } from "@/features/games/hooks";
@@ -56,8 +57,14 @@ export function ComparePageClient() {
         </CardContent>
       </Card>
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle>Results</CardTitle>
+          <ExportActions
+            label="Export compare"
+            xlsxHref={`/api/exports/compare?format=xlsx&appIds=${appIds.join(",")}`}
+            csvHref={`/api/exports/compare?format=csv&appIds=${appIds.join(",")}`}
+            googleSheetsEndpoint={`/api/exports/compare?appIds=${appIds.join(",")}`}
+          />
         </CardHeader>
         <CardContent>
           {query.isLoading ? (

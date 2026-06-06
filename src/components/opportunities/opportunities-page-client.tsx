@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { ExportActions } from "@/components/export/export-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useOpportunities } from "@/features/opportunities/hooks";
@@ -19,8 +20,14 @@ export function OpportunitiesPageClient() {
         </p>
       </div>
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle>Opportunity finder</CardTitle>
+          <ExportActions
+            label="Export opportunities"
+            xlsxHref="/api/exports/opportunities?format=xlsx"
+            csvHref="/api/exports/opportunities?format=csv"
+            googleSheetsEndpoint="/api/exports/opportunities"
+          />
         </CardHeader>
         <CardContent>
           {query.isLoading ? (

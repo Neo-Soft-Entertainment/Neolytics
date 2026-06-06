@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
+import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -292,6 +293,12 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
             {isGeneratingGdd ? "Generating..." : "Generate GDD"}
           </Button>
+          <ExportActions
+            label="Export project"
+            xlsxHref={`/api/exports/projects/${projectId}?format=xlsx`}
+            csvHref={`/api/exports/projects/${projectId}?format=csv`}
+            googleSheetsEndpoint={`/api/exports/projects/${projectId}`}
+          />
         </div>
       </div>
       {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
