@@ -44,7 +44,7 @@ export function ReportsPageClient() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Reports</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate a basic market report from the current Steam dataset and keep the output in your organization.
+          Generate a deeper market intelligence report with segment sizing, concentration, opportunity, risk, and strategic read from the current Steam dataset.
         </p>
       </div>
       <Card>
@@ -80,35 +80,71 @@ export function ReportsPageClient() {
           {reportsQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading reports...</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Export</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reportsQuery.data?.map((report: any) => (
-                  <TableRow key={report.id}>
-                    <TableCell>{report.title}</TableCell>
-                    <TableCell>{report.reportType}</TableCell>
-                    <TableCell>{report.status}</TableCell>
-                    <TableCell>{new Date(report.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <ExportActions
-                        label="Export"
-                        xlsxHref={`/api/exports/reports/${report.id}?format=xlsx`}
-                        csvHref={`/api/exports/reports/${report.id}?format=csv`}
-                        googleSheetsEndpoint={`/api/exports/reports/${report.id}`}
-                      />
-                    </TableCell>
+            <div className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Export</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {reportsQuery.data?.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell>{report.title}</TableCell>
+                      <TableCell>{report.reportType}</TableCell>
+                      <TableCell>{report.status}</TableCell>
+                      <TableCell>{new Date(report.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <ExportActions
+                          label="Export"
+                          xlsxHref={`/api/exports/reports/${report.id}?format=xlsx`}
+                          csvHref={`/api/exports/reports/${report.id}?format=csv`}
+                          googleSheetsEndpoint={`/api/exports/reports/${report.id}`}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {reportsQuery.data?.slice(0, 3).map((report) => (
+                <Card key={`summary-${report.id}`} className="border-dashed">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{report.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    {report.metadata?.segment ? (
+                      <div className="grid gap-3 md:grid-cols-4">
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Market size</p>
+                          <p className="mt-2 font-semibold">{report.metadata.segment.marketSizeLabel}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Opportunity</p>
+                          <p className="mt-2 font-semibold">{report.metadata.segment.opportunityScore}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Risk</p>
+                          <p className="mt-2 font-semibold">{report.metadata.segment.riskScore}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Confidence</p>
+                          <p className="mt-2 font-semibold">
+                            {report.metadata.segment.confidenceLabel} ({report.metadata.segment.confidenceScore})
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+                    <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-4 text-xs">
+                      {(report.content ?? "").split("\n").slice(0, 18).join("\n")}
+                    </pre>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

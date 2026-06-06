@@ -89,6 +89,14 @@ export function DashboardClient() {
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
         <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
       </div>
+      {data.portfolioReadiness ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          <KpiCard label="Portfolio opportunity" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
+          <KpiCard label="Portfolio risk" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
+          <KpiCard label="Portfolio fit" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
+          <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignals.length)} />
+        </div>
+      ) : null}
       <Card>
         <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
@@ -134,6 +142,50 @@ export function DashboardClient() {
         </CardContent>
       </Card>
       <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Project intelligence board</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.projectSignals.length === 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Run market analysis on at least one project to start building a thesis-level board across your portfolio.
+                </p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/projects">Open projects</Link>
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Project</TableHead>
+                    <TableHead>Opportunity</TableHead>
+                    <TableHead>Risk</TableHead>
+                    <TableHead>Fit</TableHead>
+                    <TableHead>Confidence</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.projectSignals.map((item) => (
+                    <TableRow key={item.projectId}>
+                      <TableCell>
+                        <Link className="font-medium hover:underline" href={`/projects/${item.projectId}`}>
+                          {item.projectName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{formatNumber(item.opportunityScore)}</TableCell>
+                      <TableCell>{formatNumber(item.riskScore)}</TableCell>
+                      <TableCell>{formatNumber(item.fitScore)}</TableCell>
+                      <TableCell>{formatNumber(item.confidenceScore)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Tracked games</CardTitle>
@@ -200,6 +252,24 @@ export function DashboardClient() {
           </CardContent>
         </Card>
       </div>
+      {data.portfolioReadiness?.topThesis ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top current thesis</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-lg font-semibold">{data.portfolioReadiness.topThesis.projectName}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Stage: {data.portfolioReadiness.topThesis.stage.replaceAll("_", " ")} · Opportunity {formatNumber(data.portfolioReadiness.topThesis.opportunityScore)} · Fit {formatNumber(data.portfolioReadiness.topThesis.fitScore)}
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={`/projects/${data.portfolioReadiness.topThesis.projectId}`}>Open thesis</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>

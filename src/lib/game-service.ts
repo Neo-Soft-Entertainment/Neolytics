@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
 
 function revenueToNumber(value: bigint | number | null | undefined) {
   if (value === null || value === undefined) {
@@ -307,7 +308,8 @@ export async function getDashboardData(workspaceId: string) {
     projectsCount,
     analyzedProjectsCount,
     gddsCount,
-    reportsCount
+    reportsCount,
+    projectAnalyses
   ] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
@@ -396,6 +398,26 @@ export async function getDashboardData(workspaceId: string) {
       where: {
         workspaceId
       }
+    }),
+    db.projectAnalysis.findMany({
+      where: {
+        project: {
+          workspaceId
+        }
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            stage: true
+          }
+        }
+      },
+      orderBy: {
+        analyzedAt: "desc"
+      },
+      take: 12
     })
   ]);
   const topRevenue = topRevenueGames
@@ -473,6 +495,39 @@ export async function getDashboardData(workspaceId: string) {
     }
   ];
   const completedJourneySteps = guidedJourneySteps.filter((step) => step.completed).length;
+  const thesisSignals = projectAnalyses.map((analysis) => {
+    const metadata = (analysis.metadata ?? {}) as {
+      opportunityLayer?: {
+        opportunityScore: number;
+        riskScore: number;
+      };
+      projectFitLayer?: {
+        overallFitScore: number;
+      };
+      marketDepth?: {
+        confidenceScore: number;
+      };
+    };
+
+    return {
+      projectId: analysis.project.id,
+      projectName: analysis.project.name,
+      stage: analysis.project.stage,
+      opportunityScore: metadata.opportunityLayer?.opportunityScore ?? null,
+      riskScore: metadata.opportunityLayer?.riskScore ?? null,
+      fitScore: metadata.projectFitLayer?.overallFitScore ?? null,
+      confidenceScore: metadata.marketDepth?.confidenceScore ?? null
+    };
+  });
+  const scoredSignals = thesisSignals.filter((item) => item.opportunityScore !== null);
+  const portfolioReadiness = scoredSignals.length > 0
+    ? {
+        averageOpportunityScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.opportunityScore ?? 0), 0) / scoredSignals.length),
+        averageRiskScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.riskScore ?? 0), 0) / scoredSignals.length),
+        averageFitScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.fitScore ?? 0), 0) / scoredSignals.length),
+        topThesis: [...scoredSignals].sort((left, right) => (right.opportunityScore ?? 0) - (left.opportunityScore ?? 0))[0] ?? null
+      }
+    : null;
 
   return {
     marketOverview: {
@@ -487,6 +542,8 @@ export async function getDashboardData(workspaceId: string) {
       nextStep: guidedJourneySteps.find((step) => !step.completed) ?? null,
       steps: guidedJourneySteps
     },
+    projectSignals: thesisSignals,
+    portfolioReadiness,
     trackedGames,
     recentLaunches,
     topRevenue,
@@ -508,6 +565,11 @@ export async function getOpportunityFinderData() {
         include: {
           steamGenre: true
         }
+      },
+      tags: {
+        include: {
+          steamTag: true
+        }
       }
     },
     where: {
@@ -519,37 +581,31 @@ export async function getOpportunityFinderData() {
   });
 
   const items = games.map((game) => {
-    const revenue = game.revenueEstimates[0];
-    const medianNetRevenueCents = revenueToNumber(revenue?.medianNetRevenueCents);
-    const competitionCount = games.filter((candidate) =>
+    const peers = games.filter((candidate) =>
       candidate.genres.some((genre) =>
         game.genres.some((current) => current.steamGenreId === genre.steamGenreId)
       )
-    ).length;
-    const releaseMomentum = game.reviewCount ?? 0;
-    const priceBand = game.priceCurrent?.finalPriceCents ?? 0;
-    const score = Math.max(
-      0,
-      Math.min(
-        100,
-        Math.round(
-          (Math.min(medianNetRevenueCents / 100000, 40) +
-            (game.reviewScore ?? 0) * 0.3 +
-            Math.max(0, 20 - competitionCount * 0.15) +
-            Math.min(releaseMomentum / 50, 20) +
-            Math.min(priceBand / 500, 10))
-        )
-      )
     );
+    const profile = buildGameOpportunityProfile(game, peers);
+    const medianNetRevenueCents = revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents);
+    const priceBand = game.priceCurrent?.finalPriceCents ?? 0;
 
     return {
       appId: game.appId,
       name: game.name,
-      score,
+      score: profile.opportunityScore,
       reviewScore: game.reviewScore,
-      competitionCount,
+      competitionCount: profile.segmentSize,
       medianNetRevenueCents,
-      priceCents: priceBand
+      priceCents: priceBand,
+      riskScore: profile.riskScore,
+      revenuePotentialScore: profile.revenuePotentialScore,
+      underservedScore: profile.underservedScore,
+      executionBarScore: profile.executionBarScore,
+      confidenceScore: profile.confidenceScore,
+      marketSizeLabel: profile.marketSizeLabel,
+      premiumSharePercent: profile.premiumSharePercent,
+      launchDensityScore: profile.launchDensityScore
     };
   });
 

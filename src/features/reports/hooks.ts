@@ -10,6 +10,21 @@ export interface ReportItem {
   reportType: string;
   status: string;
   createdAt: string;
+  subject: string;
+  content: string | null;
+  metadata: {
+    genre?: string;
+    tag?: string;
+    generatedAt?: string;
+    segment?: {
+      marketSizeLabel: string;
+      opportunityScore: number;
+      riskScore: number;
+      confidenceLabel: string;
+      confidenceScore: number;
+      revenueConcentrationPercent: number;
+    };
+  } | null;
 }
 
 export function useReports() {

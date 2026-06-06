@@ -32,6 +32,29 @@ export function useDashboard() {
           completed: boolean;
         }>;
       };
+      portfolioReadiness: {
+        averageOpportunityScore: number;
+        averageRiskScore: number;
+        averageFitScore: number;
+        topThesis: {
+          projectId: string;
+          projectName: string;
+          stage: string;
+          opportunityScore: number | null;
+          riskScore: number | null;
+          fitScore: number | null;
+          confidenceScore: number | null;
+        } | null;
+      } | null;
+      projectSignals: Array<{
+        projectId: string;
+        projectName: string;
+        stage: string;
+        opportunityScore: number | null;
+        riskScore: number | null;
+        fitScore: number | null;
+        confidenceScore: number | null;
+      }>;
       trackedGames: Array<{
         id: string;
         steamGame: {

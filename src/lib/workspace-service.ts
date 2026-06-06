@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import { buildSegmentIntelligence } from "@/lib/market-intelligence";
 import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
 export async function getDefaultWorkspaceForUser(userId: string) {
@@ -149,24 +150,75 @@ export async function generateBasicMarketReport(params: {
         : {})
     },
     include: {
+      priceCurrent: true,
       revenueEstimates: {
         orderBy: {
           calculatedAt: "desc"
         },
         take: 1
+      },
+      genres: {
+        include: {
+          steamGenre: true
+        }
+      },
+      tags: {
+        include: {
+          steamTag: true
+        }
       }
     },
-    take: 10
+    take: 40
   });
+  const segment = buildSegmentIntelligence(topGames);
+  const leaders = [...topGames]
+    .sort((left, right) => Number(right.revenueEstimates[0]?.medianNetRevenueCents ?? 0n) - Number(left.revenueEstimates[0]?.medianNetRevenueCents ?? 0n))
+    .slice(0, 10);
 
   const content = [
     `# ${params.title}`,
     "",
     "## Summary",
-    `This report summarizes ${topGames.length} top Steam games${params.genre ? ` in the ${params.genre} segment` : ""}${params.tag ? ` tagged with ${params.tag}` : ""}.`,
+    `This report summarizes ${topGames.length} matched Steam games${params.genre ? ` in the ${params.genre} segment` : ""}${params.tag ? ` tagged with ${params.tag}` : ""}.`,
+    "",
+    "## Market Depth",
+    `- Segment size: ${segment.segmentSize} tracked games`,
+    `- Market size: ${segment.marketSizeLabel} (${(segment.marketSizeCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })})`,
+    `- Median revenue: ${(segment.medianRevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
+    `- P75 revenue: ${(segment.p75RevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
+    `- Avg review score: ${segment.averageReviewScore.toFixed(1)}%`,
+    `- Launch cohorts: ${segment.launches90} in 90d, ${segment.launches180} in 180d, ${segment.launches365} in 365d`,
+    "",
+    "## Competition Layer",
+    `- Crowdedness score: ${segment.crowdednessScore}`,
+    `- Revenue concentration: ${segment.revenueConcentrationPercent}% in the top 3 revenue leaders`,
+    `- Quality bar: ${segment.qualityBarScore}`,
+    `- Premium share: ${segment.premiumSharePercent}%`,
+    "",
+    "## Opportunity Layer",
+    `- Opportunity score: ${segment.opportunityScore}`,
+    `- Revenue potential: ${segment.revenuePotentialScore}`,
+    `- Underserved score: ${segment.underservedScore}`,
+    `- Execution bar: ${segment.executionBarScore}`,
+    `- Risk score: ${segment.riskScore}`,
+    `- Confidence: ${segment.confidenceLabel} (${segment.confidenceScore})`,
+    "",
+    "## Strategic Read",
+    segment.opportunityScore >= 70
+      ? "This segment shows strong upside and the data suggests room for a sharp entrant, but the team still has to clear a meaningful execution bar."
+      : "This segment is viable, but the data suggests the edge has to come from positioning and execution rather than from a structurally open market.",
+    segment.revenueConcentrationPercent >= 65
+      ? "Revenue is concentrated in a few leaders, so beating the winners on shelf clarity and quality is more important than simply matching the average feature set."
+      : "Revenue is relatively spread across the segment, which means there is a healthier path for mid-tier entrants to carve out a business.",
+    "",
+    "## Price Distribution",
+    `- Under $10: ${segment.priceBandDistribution.under10}`,
+    `- $10-$20: ${segment.priceBandDistribution.between10And20}`,
+    `- $20-$30: ${segment.priceBandDistribution.between20And30}`,
+    `- $30+: ${segment.priceBandDistribution.over30}`,
     "",
     "## Top estimated net revenue titles",
-    ...topGames.map((game, index) => {
+    ...leaders.map((game, index) => {
       const revenue = Number(game.revenueEstimates[0]?.medianNetRevenueCents ?? 0n);
       return `${index + 1}. ${game.name} - estimated net revenue ${(revenue / 100).toLocaleString("en-US", {
         style: "currency",
@@ -192,7 +244,8 @@ export async function generateBasicMarketReport(params: {
         metadata: {
           genre: params.genre,
           tag: params.tag,
-          generatedAt: new Date().toISOString()
+          generatedAt: new Date().toISOString(),
+          segment
         }
       }
     });

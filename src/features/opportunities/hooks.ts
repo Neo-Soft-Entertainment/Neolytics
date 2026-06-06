@@ -12,6 +12,14 @@ export interface OpportunityItem {
   competitionCount: number;
   medianNetRevenueCents: number;
   priceCents: number;
+  riskScore: number;
+  revenuePotentialScore: number;
+  underservedScore: number;
+  executionBarScore: number;
+  confidenceScore: number;
+  marketSizeLabel: string;
+  premiumSharePercent: number;
+  launchDensityScore: number;
 }
 
 export function useOpportunities() {
