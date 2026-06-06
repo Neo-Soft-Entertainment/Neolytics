@@ -39,6 +39,62 @@ enum ProjectStage {
   ARCHIVED
 }
 
+enum LegalEntityStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  CLOSED
+}
+
+enum TaxRegime {
+  MEI
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+  OTHER
+}
+
+enum CompanyDocumentType {
+  CNPJ_CARD
+  ARTICLES_OF_ASSOCIATION
+  CONTRACT_AMENDMENT
+  STATE_REGISTRATION
+  MUNICIPAL_REGISTRATION
+  TAX_CERTIFICATE
+  TRADEMARK
+  LICENSE
+  NDA
+  PUBLISHING_CONTRACT
+  INVESTMENT_CONTRACT
+  ACCOUNTING_RECORD
+  OTHER
+}
+
+enum CompanyDocumentStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  ARCHIVED
+}
+
+enum ComplianceType {
+  TAX
+  LEGAL
+  CORPORATE
+  LABOR
+  ACCOUNTING
+  CERTIFICATE
+  OTHER
+}
+
+enum ComplianceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  WAIVED
+  OVERDUE
+}
+
 enum CommunityPostType {
   GENERAL
   MARKET
@@ -107,6 +163,9 @@ model User {
   organizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationCreatedBy")
   communityPosts          CommunityPost[]          @relation("CommunityPostAuthor")
   communityLikes          CommunityPostLike[]
+  uploadedDocumentVersions CompanyDocumentVersion[] @relation("CompanyDocumentVersionUploadedBy")
+  complianceItemsOwned     ComplianceItem[]         @relation("ComplianceItemOwner")
+  auditEvents              AuditEvent[]
 }
 
 model Account {
@@ -167,6 +226,10 @@ model Organization {
   subscriptionUsage              OrganizationSubscriptionUsage[]
   invitations                    OrganizationInvitation[]
   communityPosts                 CommunityPost[]
+  legalEntities                  LegalEntity[]
+  companyDocuments               CompanyDocument[]
+  complianceItems                ComplianceItem[]
+  auditEvents                    AuditEvent[]
 }
 
 model OrganizationSubscriptionUsage {
@@ -585,10 +648,203 @@ model Project {
   kanbanBoards      KanbanBoard[]
   artAnalysis       ProjectArtAnalysis?
   communityPosts    CommunityPost[]
+  companyDocuments  CompanyDocument[]
+  complianceItems   ComplianceItem[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model LegalEntity {
+  id             String            @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  tradeName      String?
+  cnpj           String?           @unique
+  legalNature    String?
+  taxRegime      TaxRegime         @default(OTHER)
+  openingDate    DateTime?
+  status         LegalEntityStatus @default(DRAFT)
+  cnaePrimary    String?
+  cnaeSecondary  Json?
+  email          String?
+  phone          String?
+  websiteUrl     String?
+  addressLine1   String?
+  addressLine2   String?
+  district       String?
+  city           String?
+  state          String?
+  postalCode     String?
+  countryCode    String            @default("BR")
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branches       LegalEntityBranch[]
+  shareholders   LegalEntityShareholder[]
+  officers       LegalEntityOfficer[]
+  documents      CompanyDocument[]
+  complianceItems ComplianceItem[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, createdAt(sort: Desc)])
+}
+
+model LegalEntityBranch {
+  id                   String      @id @default(cuid())
+  legalEntityId        String
+  name                 String
+  tradeName            String?
+  code                 String?
+  cnpj                 String?
+  stateRegistration    String?
+  municipalRegistration String?
+  isHeadquarters       Boolean     @default(false)
+  addressLine1         String?
+  addressLine2         String?
+  district             String?
+  city                 String?
+  state                String?
+  postalCode           String?
+  countryCode          String      @default("BR")
+  active               Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  legalEntity          LegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+
+  @@unique([legalEntityId, code])
+  @@index([legalEntityId, createdAt(sort: Desc)])
+}
+
+model LegalEntityShareholder {
+  id               String      @id @default(cuid())
+  legalEntityId    String
+  name             String
+  documentNumber   String
+  role             String?
+  ownershipPercent Decimal?    @db.Decimal(5, 2)
+  joinedAt         DateTime?
+  notes            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  legalEntity      LegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+
+  @@index([legalEntityId, createdAt(sort: Desc)])
+  @@index([documentNumber])
+}
+
+model LegalEntityOfficer {
+  id             String      @id @default(cuid())
+  legalEntityId  String
+  name           String
+  email          String?
+  phone          String?
+  documentNumber String?
+  title          String
+  powers         String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  legalEntity    LegalEntity @relation(fields: [legalEntityId], references: [id], onDelete: Cascade)
+
+  @@index([legalEntityId, createdAt(sort: Desc)])
+  @@index([email])
+}
+
+model CompanyDocument {
+  id             String                @id @default(cuid())
+  organizationId String
+  legalEntityId  String?
+  projectId      String?
+  type           CompanyDocumentType
+  status         CompanyDocumentStatus @default(DRAFT)
+  title          String
+  description    String?
+  issuer         String?
+  documentNumber String?
+  issuedAt       DateTime?
+  expiresAt      DateTime?
+  tags           Json?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  legalEntity    LegalEntity?          @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  project        Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  versions       CompanyDocumentVersion[]
+  complianceItems ComplianceItem[]
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([legalEntityId, createdAt(sort: Desc)])
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([type, status])
+  @@index([expiresAt])
+}
+
+model CompanyDocumentVersion {
+  id           String          @id @default(cuid())
+  documentId   String
+  version      Int
+  storagePath  String
+  originalName String
+  mimeType     String
+  sizeBytes    Int?
+  checksum     String?
+  uploadedById String?
+  createdAt    DateTime        @default(now())
+  document     CompanyDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy   User?           @relation("CompanyDocumentVersionUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, version])
+  @@index([documentId, createdAt(sort: Desc)])
+  @@index([uploadedById, createdAt(sort: Desc)])
+}
+
+model ComplianceItem {
+  id               String           @id @default(cuid())
+  organizationId   String
+  legalEntityId    String?
+  projectId        String?
+  sourceDocumentId String?
+  ownerUserId      String?
+  type             ComplianceType
+  status           ComplianceStatus @default(PENDING)
+  title            String
+  description      String?
+  dueAt            DateTime?
+  completedAt      DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  legalEntity      LegalEntity?     @relation(fields: [legalEntityId], references: [id], onDelete: SetNull)
+  project          Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  sourceDocument   CompanyDocument? @relation(fields: [sourceDocumentId], references: [id], onDelete: SetNull)
+  ownerUser        User?            @relation("ComplianceItemOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status, dueAt])
+  @@index([legalEntityId, status, dueAt])
+  @@index([projectId, status, dueAt])
+  @@index([ownerUserId, status, dueAt])
+}
+
+model AuditEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String?
+  entityType     String
+  entityId       String
+  action         String
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model ProjectAnalysis {
