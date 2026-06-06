@@ -1,6 +1,7 @@
 import { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { createAuditEvent } from "@/lib/audit-service";
 import { slugify } from "@/lib/slugify";
 import { enforceSubscriptionCapacity, getCurrentSubscriptionPeriodRange } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
@@ -54,6 +55,18 @@ export async function createOrganizationForUser(params: {
       }
     });
 
+    await createAuditEvent(tx, {
+      organizationId: organization.id,
+      userId: params.userId,
+      entityType: "organization",
+      entityId: organization.id,
+      action: "organization.created",
+      metadata: {
+        name: organization.name,
+        workspaceId: workspace.id
+      }
+    });
+
     return {
       organization,
       workspace
@@ -80,7 +93,7 @@ export async function createWorkspaceForOrganization(params: {
     return count > 0;
   });
 
-  return db.workspace.create({
+  const workspace = await db.workspace.create({
     data: {
       organizationId: params.organizationId,
       createdById: params.createdById,
@@ -89,6 +102,19 @@ export async function createWorkspaceForOrganization(params: {
       description: params.description?.trim() || null
     }
   });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.createdById,
+    entityType: "workspace",
+    entityId: workspace.id,
+    action: "workspace.created",
+    metadata: {
+      name: workspace.name
+    }
+  });
+
+  return workspace;
 }
 
 export async function deleteOrganizationForUser(params: {
@@ -107,6 +133,14 @@ export async function deleteOrganizationForUser(params: {
   if (!membership || membership.role !== "OWNER") {
     throw new Error("Only organization owners can delete the organization.");
   }
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "organization",
+    entityId: params.organizationId,
+    action: "organization.deleted"
+  });
 
   await db.organization.delete({
     where: {
@@ -153,6 +187,17 @@ export async function deleteWorkspaceFromOrganization(params: {
   if (!workspace) {
     throw new Error("Workspace not found.");
   }
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "workspace",
+    entityId: workspace.id,
+    action: "workspace.deleted",
+    metadata: {
+      name: workspace.name
+    }
+  });
 
   await db.workspace.delete({
     where: {

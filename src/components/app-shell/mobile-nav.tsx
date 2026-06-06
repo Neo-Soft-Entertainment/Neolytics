@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/projects", label: "Projects" },
+  { href: "/company", label: "Company" },
   { href: "/community", label: "Community" },
   { href: "/games", label: "Games" },
   { href: "/compare", label: "Compare" },

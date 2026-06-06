@@ -1,0 +1,46 @@
+import { ComplianceStatus } from "@prisma/client";
+import { z } from "zod";
+
+import { badRequest, forbidden, ok, unauthorized } from "@/lib/api-response";
+import { getApiContext } from "@/lib/auth-helpers";
+import { updateComplianceItem } from "@/lib/company-service";
+import { parseJsonBody } from "@/lib/request";
+
+const schema = z.object({
+  status: z.nativeEnum(ComplianceStatus),
+  notes: z.string().optional()
+});
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ itemId: string }> }
+) {
+  const context = await getApiContext();
+
+  if (!context) {
+    return unauthorized();
+  }
+
+  if (!["OWNER", "ADMIN"].includes(context.organizationRole)) {
+    return forbidden("Only organization admins can manage company records.");
+  }
+
+  try {
+    const body = await parseJsonBody(request, schema);
+    const resolvedParams = await params;
+    const item = await updateComplianceItem({
+      organizationId: context.organizationId,
+      itemId: resolvedParams.itemId,
+      userId: context.userId,
+      ...body
+    });
+
+    return ok(item);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return badRequest(error.issues[0]?.message ?? "Invalid compliance update payload.");
+    }
+
+    return badRequest(error instanceof Error ? error.message : "Unable to update compliance item.");
+  }
+}
