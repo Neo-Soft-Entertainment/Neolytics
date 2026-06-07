@@ -22,14 +22,16 @@ type FormValues = z.infer<typeof schema>;
 export function LoginForm({
   inviteToken,
   hasGoogleLogin,
-  hasDiscordLogin
+  hasDiscordLogin,
+  hasAppleLogin
 }: {
   inviteToken?: string;
   hasGoogleLogin: boolean;
   hasDiscordLogin: boolean;
+  hasAppleLogin: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | null>(null);
+  const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | "apple" | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -38,7 +40,7 @@ export function LoginForm({
     }
   });
 
-  const hasSocialLogin = hasGoogleLogin || hasDiscordLogin;
+  const hasSocialLogin = hasGoogleLogin || hasDiscordLogin || hasAppleLogin;
 
   async function checkAuthAvailability() {
     const response = await fetch("/api/auth/status", {
@@ -125,6 +127,21 @@ export function LoginForm({
     setIsSocialLoading(null);
   }
 
+  async function onAppleSignIn() {
+    setError(null);
+    const isAvailable = await checkAuthAvailability();
+
+    if (!isAvailable) {
+      return;
+    }
+
+    setIsSocialLoading("apple");
+    await signIn("apple", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+    });
+    setIsSocialLoading(null);
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -156,6 +173,17 @@ export function LoginForm({
                 onClick={onDiscordSignIn}
               >
                 {isSocialLoading === "discord" ? "Redirecting to Discord..." : "Continue with Discord"}
+              </Button>
+            ) : null}
+            {hasAppleLogin ? (
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onAppleSignIn}
+              >
+                {isSocialLoading === "apple" ? "Redirecting to Apple..." : "Continue with Apple"}
               </Button>
             ) : null}
             <div className="relative">

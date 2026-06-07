@@ -57,6 +57,8 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: optionalString,
   DISCORD_CLIENT_ID: optionalString,
   DISCORD_CLIENT_SECRET: optionalString,
+  APPLE_CLIENT_ID: optionalString,
+  APPLE_CLIENT_SECRET: optionalString,
   STRIPE_SECRET_KEY: optionalString,
   STRIPE_WEBHOOK_SECRET: optionalString,
   STRIPE_PRICE_PLUS_MONTHLY: optionalString,

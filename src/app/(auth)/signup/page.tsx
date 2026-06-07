@@ -45,6 +45,8 @@ export default async function SignupPage({
           <SignupForm
             inviteToken={inviteToken}
             hasGoogleLogin={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
+            hasDiscordLogin={Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET)}
+            hasAppleLogin={Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET)}
             invitedOrganizationName={invitation?.organization.name}
             invitedEmail={invitation?.email}
           />

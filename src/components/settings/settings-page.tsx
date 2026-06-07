@@ -85,6 +85,8 @@ export async function SettingsPage() {
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
   const canDeleteOrganization = currentMembership?.role === "OWNER";
   const hasGoogleLogin = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const hasDiscordLogin = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
+  const hasAppleLogin = Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET);
   const hasGoogleSheets = Boolean(process.env.GOOGLE_SHEETS_CLIENT_EMAIL && process.env.GOOGLE_SHEETS_PRIVATE_KEY);
   const seatLimitLabel = subscriptionSnapshot.limits.seats === null
     ? "Unlimited"
@@ -283,7 +285,7 @@ export async function SettingsPage() {
             <Card className="overflow-hidden">
               <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
-                <CardTitle>Google integrations</CardTitle>
+                <CardTitle>Authentication providers</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
@@ -299,6 +301,41 @@ export async function SettingsPage() {
                       : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment."}
                   </p>
                 </div>
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium">Discord login</p>
+                    <Badge variant={hasDiscordLogin ? "default" : "secondary"}>
+                      {hasDiscordLogin ? "Enabled" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    {hasDiscordLogin
+                      ? "The login and signup pages now show Continue with Discord."
+                      : "Set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET in the environment."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium">Apple login</p>
+                    <Badge variant={hasAppleLogin ? "default" : "secondary"}>
+                      {hasAppleLogin ? "Enabled" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    {hasAppleLogin
+                      ? "The login and signup pages now show Continue with Apple."
+                      : "Set APPLE_CLIENT_ID and APPLE_CLIENT_SECRET in the environment."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+              <CardHeader>
+                <CardTitle>Google Sheets export</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">Google Sheets export</p>

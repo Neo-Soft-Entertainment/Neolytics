@@ -10,7 +10,7 @@ Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase
 - shadcn/ui-style component primitives
 - Supabase Postgres
 - Prisma
-- Auth.js with credentials login and optional GitHub, Google, or Discord OAuth
+- Auth.js with credentials login and optional GitHub, Google, Discord, or Apple OAuth
 - TanStack Query
 - Recharts
 - BullMQ + Redis for local Steam ingestion jobs
@@ -90,6 +90,8 @@ GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 DISCORD_CLIENT_ID=""
 DISCORD_CLIENT_SECRET=""
+APPLE_CLIENT_ID=""
+APPLE_CLIENT_SECRET=""
 ```
 
 Google OAuth setup:
@@ -108,6 +110,14 @@ Discord OAuth setup:
 - Copy the client secret into `DISCORD_CLIENT_SECRET`
 - Once those values are present, the login screen will automatically show `Continue with Discord`
 
+Apple OAuth setup:
+
+- Create a Sign in with Apple web configuration for your domain
+- Add a return URL pointing to `https://your-domain/api/auth/callback/apple`
+- Copy the Apple Services ID into `APPLE_CLIENT_ID`
+- Copy the generated client secret into `APPLE_CLIENT_SECRET`
+- Once those values are present, the login and signup pages will automatically show `Continue with Apple`
+
 Optional Discord webhook notifications:
 
 - Open `Settings > Organization > Discord webhooks`
@@ -124,6 +134,10 @@ Optional Google Sheets publishing:
 - `OPENAI_MARKET_ANALYSIS_MODEL`: optional model override for the AI marketing layer. Default: `gpt-5.4-mini`
 - `GOOGLE_CLIENT_ID`: optional Google OAuth client id for social login
 - `GOOGLE_CLIENT_SECRET`: optional Google OAuth client secret for social login
+- `DISCORD_CLIENT_ID`: optional Discord OAuth client id for social login
+- `DISCORD_CLIENT_SECRET`: optional Discord OAuth client secret for social login
+- `APPLE_CLIENT_ID`: optional Apple Services ID for social login
+- `APPLE_CLIENT_SECRET`: optional Apple client secret for social login
 - `GOOGLE_SHEETS_CLIENT_EMAIL`: service account email
 - `GOOGLE_SHEETS_PRIVATE_KEY`: service account private key
 - `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed

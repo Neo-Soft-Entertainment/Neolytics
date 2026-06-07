@@ -27,17 +27,21 @@ type FormValues = {
 export function SignupForm({
   inviteToken,
   hasGoogleLogin,
+  hasDiscordLogin,
+  hasAppleLogin,
   invitedOrganizationName,
   invitedEmail
 }: {
   inviteToken?: string;
   hasGoogleLogin: boolean;
+  hasDiscordLogin: boolean;
+  hasAppleLogin: boolean;
   invitedOrganizationName?: string;
   invitedEmail?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | "apple" | null>(null);
   const schema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
@@ -61,11 +65,29 @@ export function SignupForm({
 
   async function onGoogleSignIn() {
     setError(null);
-    setIsGoogleLoading(true);
+    setIsSocialLoading("google");
     await signIn("google", {
       callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
     });
-    setIsGoogleLoading(false);
+    setIsSocialLoading(null);
+  }
+
+  async function onDiscordSignIn() {
+    setError(null);
+    setIsSocialLoading("discord");
+    await signIn("discord", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+    });
+    setIsSocialLoading(null);
+  }
+
+  async function onAppleSignIn() {
+    setError(null);
+    setIsSocialLoading("apple");
+    await signIn("apple", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+    });
+    setIsSocialLoading(null);
   }
 
   async function onSubmit(values: FormValues) {
@@ -141,20 +163,44 @@ export function SignupForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {hasGoogleLogin ? (
+        {hasGoogleLogin || hasDiscordLogin || hasAppleLogin ? (
           <div className="mb-4 space-y-3">
-            <Button
-              className="w-full"
-              disabled={form.formState.isSubmitting || isGoogleLoading}
-              type="button"
-              variant="outline"
-              onClick={onGoogleSignIn}
-            >
-              {isGoogleLoading ? "Redirecting to Google..." : "Continue with Google"}
-            </Button>
+            {hasGoogleLogin ? (
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onGoogleSignIn}
+              >
+                {isSocialLoading === "google" ? "Redirecting to Google..." : "Continue with Google"}
+              </Button>
+            ) : null}
+            {hasDiscordLogin ? (
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onDiscordSignIn}
+              >
+                {isSocialLoading === "discord" ? "Redirecting to Discord..." : "Continue with Discord"}
+              </Button>
+            ) : null}
+            {hasAppleLogin ? (
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onAppleSignIn}
+              >
+                {isSocialLoading === "apple" ? "Redirecting to Apple..." : "Continue with Apple"}
+              </Button>
+            ) : null}
             {!inviteToken ? (
               <p className="text-sm text-muted-foreground">
-                Google signup continues into setup, where you can create the organization and manage billing.
+                Social signup continues into setup, where you can create the organization and manage billing.
               </p>
             ) : null}
             <div className="relative">
@@ -283,7 +329,7 @@ export function SignupForm({
                 Sign in
               </Link>
             </p>
-            <Button disabled={form.formState.isSubmitting || isGoogleLoading} type="submit">
+            <Button disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
               {form.formState.isSubmitting ? "Creating..." : inviteToken ? "Create account and join" : "Create account"}
             </Button>
           </div>
