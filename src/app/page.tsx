@@ -34,7 +34,7 @@ export default async function HomePage() {
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
           <div className="max-w-4xl space-y-6">
             <span className="glass-surface animate-rise-in inline-flex rounded-full px-3 py-1 text-sm text-muted-foreground">
-              Steam-first market intelligence for studios with operational depth
+              Steam-first game studio ERP with commercial intelligence
             </span>
             <div className="space-y-4">
               <h1 className="animate-rise-in text-5xl font-bold tracking-[-0.07em] sm:text-7xl">
@@ -44,7 +44,7 @@ export default async function HomePage() {
                 </span>
               </h1>
               <p className="animate-rise-in-delay max-w-2xl text-lg leading-8 text-muted-foreground">
-                Neolytics turns Steam market intelligence into a studio operating system:
+                Neolytics turns Steam commercial intelligence into a game studio ERP:
                 track the market, validate a project, pressure-test the business case, and move into execution without context switching.
               </p>
             </div>
@@ -86,7 +86,7 @@ export default async function HomePage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-[1.75rem] border border-white/10 bg-slate-950 p-5 text-slate-50 shadow-[0_30px_60px_rgba(2,6,23,0.24)]">
                 <p className="text-xs uppercase tracking-[0.25em] text-cyan-200/80">Operating thesis</p>
-                <p className="mt-3 text-lg font-semibold">Market intelligence should feed production, finance, and execution directly.</p>
+                <p className="mt-3 text-lg font-semibold">Commercial intelligence should feed production, finance, and execution directly.</p>
               </div>
               <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Who it serves</p>

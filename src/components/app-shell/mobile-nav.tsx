@@ -38,10 +38,15 @@ export function MobileNav() {
           <Menu className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 border-white/10 bg-background/90 p-1 backdrop-blur-xl">
+      <DropdownMenuContent align="end" className="w-72 border-white/10 bg-background/95 p-2 backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/10 bg-white/45 px-3 py-3 dark:bg-white/[0.04]">
+          <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Neolytics</p>
+          <p className="mt-2 text-sm font-medium">Game Studio ERP</p>
+        </div>
+        <DropdownMenuSeparator />
         {items.map((item) => (
           <DropdownMenuItem key={item.href} asChild>
-            <Link className={cn("rounded-xl", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
+            <Link className={cn("min-h-11 rounded-xl px-3", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
               {item.label}
             </Link>
           </DropdownMenuItem>

@@ -78,7 +78,7 @@ export function LoginForm({
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>
-          Access your workspace, Steam market intelligence, automated GDDs, and project execution boards.
+          Access your workspace, Steam commercial intelligence, automated GDDs, and studio execution boards.
         </CardDescription>
       </CardHeader>
       <CardContent>

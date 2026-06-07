@@ -30,6 +30,7 @@ export function OrganizationSwitcher({
   }, [currentOrganizationId]);
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+  const hasMultipleOrganizations = organizations.length > 1;
 
   async function onValueChange(organizationId: string) {
     if (organizationId === selectedOrganizationId) {
@@ -60,20 +61,26 @@ export function OrganizationSwitcher({
   }
 
   return (
-    <div className="min-w-[220px]">
-      <Select disabled={isSubmitting} onValueChange={onValueChange} value={selectedOrganizationId}>
-        <SelectTrigger className="h-9 rounded-full border-white/10 bg-transparent px-3 text-left shadow-none focus:ring-0">
-          <SelectValue placeholder="Select organization" />
-        </SelectTrigger>
-        <SelectContent align="start" className="border-white/10 bg-background/90 backdrop-blur-xl">
-          {organizations.map((organization) => (
-            <SelectItem key={organization.id} value={organization.id}>
-              {organization.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <p className="text-xs text-muted-foreground">
+    <div className="min-w-0 space-y-1.5">
+      {hasMultipleOrganizations ? (
+        <Select disabled={isSubmitting} onValueChange={onValueChange} value={selectedOrganizationId}>
+          <SelectTrigger className="h-11 rounded-2xl border-white/10 bg-transparent px-3 text-left shadow-none focus:ring-0">
+            <SelectValue placeholder="Select organization" />
+          </SelectTrigger>
+          <SelectContent align="start" className="border-white/10 bg-background/95 backdrop-blur-xl">
+            {organizations.map((organization) => (
+              <SelectItem key={organization.id} value={organization.id}>
+                {organization.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <div className="flex min-h-11 items-center rounded-2xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
+          <span className="truncate">{currentOrganization?.name ?? "Organization"}</span>
+        </div>
+      )}
+      <p className="truncate text-xs text-muted-foreground">
         {currentOrganization ? `${currentOrganization.role} access` : "Organization access"}
       </p>
       {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}

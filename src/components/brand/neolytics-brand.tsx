@@ -31,7 +31,7 @@ export function NeolyticsBrand({
             Neolytics
           </span>
           <span className="mt-1 hidden text-[10px] uppercase tracking-[0.28em] text-muted-foreground sm:block">
-            Market intelligence OS
+            Game Studio ERP
           </span>
         </span>
       ) : null}
