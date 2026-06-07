@@ -58,8 +58,8 @@ export function AppHeader({
             />
           </div>
         </div>
-        <div className="grid gap-3 rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
-          <div>
+        <div className="grid gap-2">
+          <div className="rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
               Organization
             </p>
@@ -69,7 +69,7 @@ export function AppHeader({
               organizations={organizations}
             />
           </div>
-          <div>
+          <div className="rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
               Workspace
             </p>
@@ -86,8 +86,8 @@ export function AppHeader({
       </div>
 
       <div className="hidden h-16 items-center justify-between gap-4 lg:flex">
-        <div className="grid min-w-0 max-w-3xl flex-1 grid-cols-[minmax(260px,360px)_minmax(240px,320px)_auto] items-end gap-3 rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
-          <div>
+        <div className="flex min-w-0 max-w-4xl flex-1 items-end gap-3">
+          <div className="min-w-0 min-w-[260px] max-w-[360px] rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
               Organization
             </p>
@@ -97,7 +97,7 @@ export function AppHeader({
               organizations={organizations}
             />
           </div>
-          <div>
+          <div className="min-w-0 min-w-[240px] max-w-[320px] rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
               Workspace
             </p>
