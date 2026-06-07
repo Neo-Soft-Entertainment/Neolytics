@@ -106,19 +106,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return session;
       }
 
-      const memberships = await db.organizationMember.findMany({
-        where: {
-          userId
-        },
-        include: {
-          organization: true
-        },
-        orderBy: {
-          joinedAt: "asc"
-        }
-      });
+      const [memberships, dbUser] = await Promise.all([
+        db.organizationMember.findMany({
+          where: {
+            userId
+          },
+          include: {
+            organization: true
+          },
+          orderBy: {
+            joinedAt: "asc"
+          }
+        }),
+        db.user.findUnique({
+          where: {
+            id: userId
+          },
+          select: {
+            preferredLanguage: true
+          }
+        })
+      ]);
 
       session.user.id = userId;
+      session.user.preferredLanguage = dbUser?.preferredLanguage ?? "en";
       session.user.organizations = memberships.map((membership) => ({
         id: membership.organization.id,
         name: membership.organization.name,

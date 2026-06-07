@@ -5,6 +5,7 @@ declare module "next-auth" {
   interface Session {
     user: DefaultSession["user"] & {
       id: string;
+      preferredLanguage: string;
       organizations: Array<{
         id: string;
         name: string;

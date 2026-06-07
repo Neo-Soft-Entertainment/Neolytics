@@ -6,17 +6,19 @@ import { OrganizationMembershipsPanel } from "@/components/settings/organization
 import { OrganizationDangerZone } from "@/components/settings/organization-danger-zone";
 import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
+import { UserLanguagePanel } from "@/components/settings/user-language-panel";
 import { WorkspaceManagementPanel } from "@/components/settings/workspace-management-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
+import { languageOptions } from "@/lib/company-localization";
 import { db } from "@/lib/db";
 import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 export async function SettingsPage() {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
-  const [subscriptionSnapshot, currentMembers, invitations] = await Promise.all([
+  const [subscriptionSnapshot, currentMembers, invitations, currentUser] = await Promise.all([
     getOrganizationSubscriptionSnapshot(organization.id),
     db.organizationMember.findMany({
       where: {
@@ -46,7 +48,17 @@ export async function SettingsPage() {
       orderBy: {
         createdAt: "desc"
       }
-    })
+    }),
+    session?.user?.id
+      ? db.user.findUnique({
+          where: {
+            id: session.user.id
+          },
+          select: {
+            preferredLanguage: true
+          }
+        })
+      : null
   ]);
   const memberships = session?.user?.id
     ? await db.organizationMember.findMany({
@@ -255,8 +267,17 @@ export async function SettingsPage() {
               <p>Email: {session?.user?.email ?? "N/A"}</p>
               <p>Organizations: {memberships.length}</p>
               <p>Current role: {currentMembership?.role ?? "N/A"}</p>
+              <p>Language: {languageOptions.find((option) => option.value === (currentUser?.preferredLanguage ?? session?.user?.preferredLanguage ?? "en"))?.label ?? (currentUser?.preferredLanguage ?? session?.user?.preferredLanguage ?? "en")}</p>
             </CardContent>
           </Card>
+
+          <UserLanguagePanel
+            currentLanguage={currentUser?.preferredLanguage ?? session?.user?.preferredLanguage ?? "en"}
+            languageOptions={languageOptions.map((option) => ({
+              value: option.value,
+              label: option.label
+            }))}
+          />
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="overflow-hidden">
