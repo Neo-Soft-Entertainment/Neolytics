@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   formatSubscriptionLimit,
   subscriptionFeatureRows,
-  subscriptionPlans
+  subscriptionPlans,
+  subscriptionTruthNotes
 } from "@/lib/subscription-plans";
 
 type SubscriptionSnapshot = {
@@ -265,6 +266,14 @@ export function SubscriptionPanel({
                 </div>
               </div>
             ))}
+          </div>
+          <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Official live scope</p>
+            <div className="mt-3 space-y-2">
+              {subscriptionTruthNotes.map((note) => (
+                <p key={note}>{note}</p>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

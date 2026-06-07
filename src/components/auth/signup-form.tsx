@@ -227,6 +227,9 @@ export function SignupForm({
               </div>
               <div className="space-y-3 md:col-span-2">
                 <Label>Plan</Label>
+                <p className="text-sm text-muted-foreground">
+                  These plan details reflect the live product scope today. Community, PDF export, project caps, GDD caps, art analyses, and viability analysis limits are enforced in the app.
+                </p>
                 <div className="grid gap-3 md:grid-cols-3">
                   {Object.entries(subscriptionPlans).map(([planKey, plan]) => {
                     const planId = planKey as SubscriptionPlan;
