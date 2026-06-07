@@ -359,9 +359,19 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
           { metric: "Revenue received", value: formatCurrency(data.summary.totalRevenueNetCents) },
           { metric: "Expenses paid", value: formatCurrency(data.summary.totalExpensesPaidCents) },
           { metric: "Pending receivables", value: formatCurrency(data.summary.pendingRevenueCents) },
-          { metric: "Pending payables", value: formatCurrency(data.summary.pendingExpenseCents) },
+          { metric: "Pending expense entries", value: formatCurrency(data.summary.pendingExpenseCents) },
+          { metric: "Accounts payable open", value: formatCurrency(data.summary.payableOpenCents) },
+          { metric: "Overdue payable titles", value: data.summary.overduePayablesCount },
           { metric: "Net cash", value: formatCurrency(data.summary.netCashCents) }
         ]
+      },
+      {
+        name: "Cost Centers",
+        rows: data.costCenters.map((costCenter) => ({
+          code: costCenter.code,
+          name: costCenter.name,
+          active: costCenter.active ? "Yes" : "No"
+        }))
       },
       {
         name: "Cash Flow",
@@ -424,6 +434,61 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
           paidAt: formatDate(entry.paidAt),
           notes: entry.notes ?? ""
         }))
+      },
+      {
+        name: "Accounts Payable",
+        rows: data.payableTitles.map((title) => ({
+          prefix: title.prefix,
+          titleNumber: title.titleNumber,
+          documentType: title.documentType,
+          nature: title.natureDescription,
+          supplierIdentifier: title.supplierIdentifier,
+          supplierName: title.supplierName,
+          project: title.project?.name ?? "Organization-wide",
+          costCenter: `${title.costCenter.code} - ${title.costCenter.name}`,
+          issueDate: formatDate(title.issueDate),
+          dueDate: formatDate(title.dueDate),
+          actualDueDate: formatDate(title.actualDueDate),
+          titleAmountUsd: formatCurrency(title.titleAmountCents),
+          additionalAmountUsd: formatCurrency(title.additionalAmountCents),
+          totalAmountUsd: formatCurrency(title.totalAmountCents),
+          paidAmountUsd: formatCurrency(title.paidAmountCents),
+          openAmountUsd: formatCurrency(Math.max(Number(title.totalAmountCents) - Number(title.paidAmountCents), 0)),
+          status: title.status,
+          notes: title.notes ?? ""
+        }))
+      },
+      {
+        name: "Payable Allocations",
+        rows: data.payableTitles.flatMap((title) =>
+          title.allocations.map((allocation) => ({
+            prefix: title.prefix,
+            titleNumber: title.titleNumber,
+            supplierName: title.supplierName,
+            costCenter: `${allocation.costCenter.code} - ${allocation.costCenter.name}`,
+            nature: allocation.natureDescription,
+            amountUsd: formatCurrency(allocation.amountCents)
+          }))
+        )
+      },
+      {
+        name: "Payable Payments",
+        rows: data.payableTitles.flatMap((title) =>
+          title.payments.map((payment) => ({
+            prefix: title.prefix,
+            titleNumber: title.titleNumber,
+            supplierName: title.supplierName,
+            paymentType: payment.paymentType,
+            paymentDate: formatDate(payment.paymentDate),
+            bank: payment.bank ?? "",
+            branch: payment.branch ?? "",
+            account: payment.account ?? "",
+            amountPaidUsd: formatCurrency(payment.amountPaidCents),
+            fineUsd: formatCurrency(payment.fineCents),
+            interestUsd: formatCurrency(payment.interestCents),
+            history: payment.history ?? ""
+          }))
+        )
       },
       {
         name: "Project PnL",

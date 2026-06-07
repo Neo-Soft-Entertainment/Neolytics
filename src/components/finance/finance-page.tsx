@@ -8,6 +8,8 @@ import {
   ExpenseCategory,
   FinanceEntryStatus,
   InvoiceStatus,
+  PayablePaymentType,
+  PayableTitleStatus,
   RevenueSourceType,
   RoyaltyStatus
 } from "@prisma/client";
@@ -15,6 +17,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AccountsPayableSection } from "@/components/finance/accounts-payable-section";
 import { ExportActions } from "@/components/export/export-actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +55,12 @@ export function FinancePage({
   canManage: boolean;
   data: {
     projects: Array<{ id: string; name: string; stage: string }>;
+    costCenters: Array<{
+      id: string;
+      code: string;
+      name: string;
+      active: boolean;
+    }>;
     budgets: Array<{
       id: string;
       projectId: string | null;
@@ -100,6 +109,47 @@ export function FinancePage({
       paidAt: string | null;
       notes: string | null;
       project: { id: string; name: string } | null;
+    }>;
+    payableTitles: Array<{
+      id: string;
+      projectId: string | null;
+      costCenterId: string;
+      prefix: string;
+      titleNumber: string;
+      documentType: string;
+      natureDescription: string;
+      supplierIdentifier: string;
+      supplierName: string;
+      issueDate: string;
+      dueDate: string;
+      actualDueDate: string;
+      titleAmountCents: number;
+      additionalAmountCents: number;
+      totalAmountCents: number;
+      paidAmountCents: number;
+      currencyCode: string;
+      status: PayableTitleStatus;
+      notes: string | null;
+      project: { id: string; name: string } | null;
+      costCenter: { id: string; code: string; name: string };
+      allocations: Array<{
+        id: string;
+        natureDescription: string;
+        amountCents: number;
+        costCenter: { id: string; code: string; name: string };
+      }>;
+      payments: Array<{
+        id: string;
+        paymentType: PayablePaymentType;
+        bank: string | null;
+        branch: string | null;
+        account: string | null;
+        paymentDate: string;
+        history: string | null;
+        fineCents: number;
+        interestCents: number;
+        amountPaidCents: number;
+      }>;
     }>;
     contracts: Array<{
       id: string;
@@ -203,6 +253,8 @@ export function FinancePage({
       totalExpensesPaidCents: number;
       pendingRevenueCents: number;
       pendingExpenseCents: number;
+      payableOpenCents: number;
+      overduePayablesCount: number;
       royaltiesDueCents: number;
       pendingApprovalsCount: number;
       netCashCents: number;
@@ -333,7 +385,7 @@ export function FinancePage({
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">Pending payables</span>
-              <span className="font-medium">{formatCurrency(data.summary.pendingExpenseCents)}</span>
+              <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Live operating view</p>
@@ -348,9 +400,21 @@ export function FinancePage({
         <KpiCard label="Planned budget" value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
         <KpiCard label="Revenue received" value={formatCurrency(data.summary.totalRevenueNetCents)} />
         <KpiCard label="Expenses paid" value={formatCurrency(data.summary.totalExpensesPaidCents)} />
-        <KpiCard label="Royalties due" value={formatCurrency(data.summary.royaltiesDueCents)} />
-        <KpiCard label="Pending approvals" value={formatNumber(data.summary.pendingApprovalsCount)} />
+        <KpiCard label="Payables open" value={formatCurrency(data.summary.payableOpenCents)} />
+        <KpiCard label="Titles overdue" value={formatNumber(data.summary.overduePayablesCount)} />
       </div>
+
+      <AccountsPayableSection
+        canManage={canManage}
+        costCenters={data.costCenters}
+        payableTitles={data.payableTitles}
+        projects={data.projects}
+        submitJson={submitJson}
+        summary={{
+          payableOpenCents: data.summary.payableOpenCents,
+          overduePayablesCount: data.summary.overduePayablesCount
+        }}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="overflow-hidden">

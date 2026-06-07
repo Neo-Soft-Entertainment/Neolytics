@@ -3,6 +3,8 @@ import {
   BudgetStatus,
   ContractCounterpartyType,
   ContractStatus,
+  PayablePaymentType,
+  PayableTitleStatus,
   ExpenseCategory,
   FinanceEntryStatus,
   InvoiceStatus,
@@ -51,6 +53,75 @@ function getRecentMonths(total: number) {
   }
 
   return months;
+}
+
+function getUtcDateKey(value: Date) {
+  return [
+    value.getUTCFullYear(),
+    String(value.getUTCMonth() + 1).padStart(2, "0"),
+    String(value.getUTCDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function getEasterSunday(year: number) {
+  const century = Math.floor(year / 100);
+  const yearInCentury = year % 100;
+  const correction = Math.floor(century / 4);
+  const skippedLeapYears = century % 4;
+  const moonCycle = Math.floor((century + 8) / 25);
+  const leapYearAdjustment = Math.floor((century - moonCycle + 1) / 3);
+  const epact = (19 * (year % 19) + century - correction - leapYearAdjustment + 15) % 30;
+  const yearQuarter = Math.floor(yearInCentury / 4);
+  const yearRemainder = yearInCentury % 4;
+  const weekdayCorrection = (32 + 2 * skippedLeapYears + 2 * yearQuarter - epact - yearRemainder) % 7;
+  const monthOffset = Math.floor((year % 19 + 11 * epact + 22 * weekdayCorrection) / 451);
+  const month = Math.floor((epact + weekdayCorrection - 7 * monthOffset + 114) / 31);
+  const day = ((epact + weekdayCorrection - 7 * monthOffset + 114) % 31) + 1;
+
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function addUtcDays(value: Date, days: number) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() + days));
+}
+
+function isBrazilBusinessHoliday(value: Date) {
+  const year = value.getUTCFullYear();
+  const fixedHolidays = new Set([
+    `${year}-01-01`,
+    `${year}-04-21`,
+    `${year}-05-01`,
+    `${year}-09-07`,
+    `${year}-10-12`,
+    `${year}-11-02`,
+    `${year}-11-15`,
+    `${year}-11-20`,
+    `${year}-12-25`
+  ]);
+
+  if (fixedHolidays.has(getUtcDateKey(value))) {
+    return true;
+  }
+
+  const easterSunday = getEasterSunday(year);
+  const movableHolidays = new Set([
+    getUtcDateKey(addUtcDays(easterSunday, -48)),
+    getUtcDateKey(addUtcDays(easterSunday, -47)),
+    getUtcDateKey(addUtcDays(easterSunday, -2)),
+    getUtcDateKey(addUtcDays(easterSunday, 60))
+  ]);
+
+  return movableHolidays.has(getUtcDateKey(value));
+}
+
+function getNextBusinessDay(value: Date) {
+  const date = new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+
+  while (date.getUTCDay() === 0 || date.getUTCDay() === 6 || isBrazilBusinessHoliday(date)) {
+    date.setUTCDate(date.getUTCDate() + 1);
+  }
+
+  return date;
 }
 
 async function ensureApprovalRequest(params: {
@@ -108,7 +179,7 @@ async function ensureApprovalRequest(params: {
 }
 
 export async function getFinanceOverview(organizationId: string) {
-  const [projects, budgets, revenueEntries, expenseEntries, contracts, royaltyAgreements, royaltyStatements, issuedInvoices, receivedInvoices, approvalRequests] = await Promise.all([
+  const [projects, costCenters, budgets, revenueEntries, expenseEntries, payableTitles, contracts, royaltyAgreements, royaltyStatements, issuedInvoices, receivedInvoices, approvalRequests] = await Promise.all([
     db.project.findMany({
       where: {
         organizationId
@@ -121,6 +192,15 @@ export async function getFinanceOverview(organizationId: string) {
       orderBy: {
         createdAt: "asc"
       }
+    }),
+    db.costCenter.findMany({
+      where: {
+        organizationId
+      },
+      orderBy: [
+        { active: "desc" },
+        { code: "asc" }
+      ]
     }),
     db.budget.findMany({
       where: {
@@ -175,6 +255,49 @@ export async function getFinanceOverview(organizationId: string) {
       orderBy: {
         occurredAt: "desc"
       }
+    }),
+    db.payableTitle.findMany({
+      where: {
+        organizationId
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        costCenter: {
+          select: {
+            id: true,
+            code: true,
+            name: true
+          }
+        },
+        allocations: {
+          include: {
+            costCenter: {
+              select: {
+                id: true,
+                code: true,
+                name: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: "asc"
+          }
+        },
+        payments: {
+          orderBy: {
+            paymentDate: "desc"
+          }
+        }
+      },
+      orderBy: [
+        { actualDueDate: "asc" },
+        { createdAt: "desc" }
+      ]
     }),
     db.contract.findMany({
       where: {
@@ -336,6 +459,16 @@ export async function getFinanceOverview(organizationId: string) {
   const pendingExpenseCents = expenseEntries
     .filter((entry) => entry.status !== FinanceEntryStatus.PAID && entry.status !== FinanceEntryStatus.CANCELED)
     .reduce((sum, entry) => sum + toNumber(entry.amountCents), 0);
+  const payableOpenCents = payableTitles
+    .filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED)
+    .reduce((sum, title) => sum + Math.max(toNumber(title.totalAmountCents) - toNumber(title.paidAmountCents), 0), 0);
+  const overduePayablesCount = payableTitles.filter((title) => {
+    if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
+      return false;
+    }
+
+    return title.actualDueDate < new Date();
+  }).length;
   const royaltiesDueCents = royaltyStatements
     .filter((statement) => !statement.paidAt)
     .reduce((sum, statement) => sum + toNumber(statement.royaltyDueCents), 0);
@@ -448,9 +581,11 @@ export async function getFinanceOverview(organizationId: string) {
 
   return {
     projects,
+    costCenters,
     budgets,
     revenueEntries,
     expenseEntries,
+    payableTitles,
     contracts,
     royaltyAgreements,
     royaltyStatements,
@@ -465,6 +600,8 @@ export async function getFinanceOverview(organizationId: string) {
       totalExpensesPaidCents,
       pendingRevenueCents,
       pendingExpenseCents,
+      payableOpenCents,
+      overduePayablesCount,
       royaltiesDueCents,
       pendingApprovalsCount,
       netCashCents: totalRevenueNetCents - totalExpensesPaidCents
@@ -985,6 +1122,404 @@ export async function updateExpenseEntry(params: {
   });
 
   return updated;
+}
+
+export async function createCostCenter(params: {
+  organizationId: string;
+  userId: string;
+  code: string;
+  name: string;
+}) {
+  const costCenter = await db.costCenter.create({
+    data: {
+      organizationId: params.organizationId,
+      code: params.code.trim().toUpperCase(),
+      name: params.name.trim()
+    }
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "cost_center",
+    entityId: costCenter.id,
+    action: "cost_center.created",
+    metadata: {
+      code: costCenter.code,
+      name: costCenter.name
+    }
+  });
+
+  return costCenter;
+}
+
+export async function createPayableTitle(params: {
+  organizationId: string;
+  userId: string;
+  projectId?: string;
+  costCenterId: string;
+  prefix: string;
+  titleNumber: string;
+  documentType: string;
+  natureDescription: string;
+  supplierIdentifier: string;
+  supplierName: string;
+  issueDate: Date;
+  dueDate: Date;
+  titleAmountCents: number;
+  additionalAmountCents?: number;
+  currencyCode?: string;
+  notes?: string;
+  allocations?: Array<{
+    costCenterId: string;
+    natureDescription: string;
+    amountCents: number;
+  }>;
+}) {
+  const costCenter = await db.costCenter.findFirst({
+    where: {
+      id: params.costCenterId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (!costCenter) {
+    throw new Error("Cost center not found.");
+  }
+
+  const additionalAmountCents = params.additionalAmountCents ?? 0;
+  const totalAmountCents = params.titleAmountCents + additionalAmountCents;
+  const actualDueDate = getNextBusinessDay(params.dueDate);
+  const allocations = params.allocations?.length
+    ? params.allocations
+    : [{
+        costCenterId: params.costCenterId,
+        natureDescription: params.natureDescription,
+        amountCents: totalAmountCents
+      }];
+
+  const allocatedTotal = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+
+  if (allocatedTotal !== totalAmountCents) {
+    throw new Error("Allocation total must match the title total.");
+  }
+
+  const allocationCostCenterIds = [...new Set(allocations.map((allocation) => allocation.costCenterId))];
+  const allocationCostCenters = await db.costCenter.count({
+    where: {
+      organizationId: params.organizationId,
+      id: {
+        in: allocationCostCenterIds
+      }
+    }
+  });
+
+  if (allocationCostCenters !== allocationCostCenterIds.length) {
+    throw new Error("One or more allocation cost centers are invalid.");
+  }
+
+  const title = await db.$transaction(async (tx) => {
+    const created = await tx.payableTitle.create({
+      data: {
+        organizationId: params.organizationId,
+        projectId: params.projectId || null,
+        costCenterId: params.costCenterId,
+        prefix: params.prefix.trim().toUpperCase(),
+        titleNumber: params.titleNumber.trim(),
+        documentType: params.documentType.trim(),
+        natureDescription: params.natureDescription.trim(),
+        supplierIdentifier: params.supplierIdentifier.trim(),
+        supplierName: params.supplierName.trim(),
+        issueDate: params.issueDate,
+        dueDate: params.dueDate,
+        actualDueDate,
+        titleAmountCents: BigInt(params.titleAmountCents),
+        additionalAmountCents: BigInt(additionalAmountCents),
+        totalAmountCents: BigInt(totalAmountCents),
+        currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
+        notes: params.notes?.trim() || null
+      }
+    });
+
+    await tx.payableAllocation.createMany({
+      data: allocations.map((allocation) => ({
+        payableTitleId: created.id,
+        costCenterId: allocation.costCenterId,
+        natureDescription: allocation.natureDescription.trim(),
+        amountCents: BigInt(allocation.amountCents)
+      }))
+    });
+
+    return created;
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "payable_title",
+    entityId: title.id,
+    action: "payable_title.created",
+    metadata: {
+      prefix: title.prefix,
+      titleNumber: title.titleNumber,
+      supplierIdentifier: title.supplierIdentifier,
+      supplierName: title.supplierName
+    }
+  });
+
+  await ensureApprovalRequest({
+    organizationId: params.organizationId,
+    projectId: title.projectId,
+    requestedById: params.userId,
+    entityType: "payable_title",
+    entityId: title.id,
+    actionLabel: "Accounts payable title review",
+    amountCents: title.totalAmountCents,
+    reason: "Accounts payable title above review threshold."
+  });
+
+  return title;
+}
+
+export async function updatePayableTitle(params: {
+  organizationId: string;
+  userId: string;
+  titleId: string;
+  projectId?: string;
+  costCenterId: string;
+  prefix: string;
+  titleNumber: string;
+  documentType: string;
+  natureDescription: string;
+  supplierIdentifier: string;
+  supplierName: string;
+  issueDate: Date;
+  dueDate: Date;
+  titleAmountCents: number;
+  additionalAmountCents?: number;
+  currencyCode?: string;
+  notes?: string;
+  status?: PayableTitleStatus;
+  allocations?: Array<{
+    costCenterId: string;
+    natureDescription: string;
+    amountCents: number;
+  }>;
+}) {
+  const title = await db.payableTitle.findFirst({
+    where: {
+      id: params.titleId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (!title) {
+    throw new Error("Accounts payable title not found.");
+  }
+
+  const additionalAmountCents = params.additionalAmountCents ?? 0;
+  const totalAmountCents = params.titleAmountCents + additionalAmountCents;
+  const actualDueDate = getNextBusinessDay(params.dueDate);
+  const allocations = params.allocations?.length
+    ? params.allocations
+    : [{
+        costCenterId: params.costCenterId,
+        natureDescription: params.natureDescription,
+        amountCents: totalAmountCents
+      }];
+
+  const allocatedTotal = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+
+  if (allocatedTotal !== totalAmountCents) {
+    throw new Error("Allocation total must match the title total.");
+  }
+
+  const allocationCostCenterIds = [...new Set(allocations.map((allocation) => allocation.costCenterId))];
+  const allocationCostCenters = await db.costCenter.count({
+    where: {
+      organizationId: params.organizationId,
+      id: {
+        in: allocationCostCenterIds
+      }
+    }
+  });
+
+  if (allocationCostCenters !== allocationCostCenterIds.length) {
+    throw new Error("One or more allocation cost centers are invalid.");
+  }
+
+  const nextStatus = toNumber(title.paidAmountCents) >= totalAmountCents
+    ? PayableTitleStatus.PAID
+    : toNumber(title.paidAmountCents) > 0
+      ? PayableTitleStatus.PARTIALLY_PAID
+      : params.status ?? PayableTitleStatus.OPEN;
+
+  const updated = await db.$transaction(async (tx) => {
+    const saved = await tx.payableTitle.update({
+      where: {
+        id: title.id
+      },
+      data: {
+        projectId: params.projectId || null,
+        costCenterId: params.costCenterId,
+        prefix: params.prefix.trim().toUpperCase(),
+        titleNumber: params.titleNumber.trim(),
+        documentType: params.documentType.trim(),
+        natureDescription: params.natureDescription.trim(),
+        supplierIdentifier: params.supplierIdentifier.trim(),
+        supplierName: params.supplierName.trim(),
+        issueDate: params.issueDate,
+        dueDate: params.dueDate,
+        actualDueDate,
+        titleAmountCents: BigInt(params.titleAmountCents),
+        additionalAmountCents: BigInt(additionalAmountCents),
+        totalAmountCents: BigInt(totalAmountCents),
+        currencyCode: params.currencyCode?.trim().toUpperCase() || title.currencyCode,
+        notes: params.notes?.trim() || null,
+        status: nextStatus
+      }
+    });
+
+    await tx.payableAllocation.deleteMany({
+      where: {
+        payableTitleId: title.id
+      }
+    });
+
+    await tx.payableAllocation.createMany({
+      data: allocations.map((allocation) => ({
+        payableTitleId: title.id,
+        costCenterId: allocation.costCenterId,
+        natureDescription: allocation.natureDescription.trim(),
+        amountCents: BigInt(allocation.amountCents)
+      }))
+    });
+
+    return saved;
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "payable_title",
+    entityId: updated.id,
+    action: "payable_title.updated",
+    metadata: {
+      status: updated.status,
+      supplierIdentifier: updated.supplierIdentifier
+    }
+  });
+
+  await ensureApprovalRequest({
+    organizationId: params.organizationId,
+    projectId: updated.projectId,
+    requestedById: params.userId,
+    entityType: "payable_title",
+    entityId: updated.id,
+    actionLabel: "Accounts payable title review",
+    amountCents: updated.totalAmountCents,
+    reason: "Accounts payable title above review threshold."
+  });
+
+  return updated;
+}
+
+export async function createPayablePayment(params: {
+  organizationId: string;
+  userId: string;
+  titleId: string;
+  paymentType: PayablePaymentType;
+  bank?: string;
+  branch?: string;
+  account?: string;
+  paymentDate: Date;
+  history?: string;
+  fineCents?: number;
+  interestCents?: number;
+  amountPaidCents: number;
+}) {
+  const title = await db.payableTitle.findFirst({
+    where: {
+      id: params.titleId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (!title) {
+    throw new Error("Accounts payable title not found.");
+  }
+
+  const payment = await db.$transaction(async (tx) => {
+    const created = await tx.payablePayment.create({
+      data: {
+        organizationId: params.organizationId,
+        payableTitleId: title.id,
+        paymentType: params.paymentType,
+        bank: params.bank?.trim() || null,
+        branch: params.branch?.trim() || null,
+        account: params.account?.trim() || null,
+        paymentDate: params.paymentDate,
+        history: params.history?.trim() || null,
+        fineCents: BigInt(params.fineCents ?? 0),
+        interestCents: BigInt(params.interestCents ?? 0),
+        amountPaidCents: BigInt(params.amountPaidCents)
+      }
+    });
+
+    const aggregate = await tx.payablePayment.aggregate({
+      where: {
+        payableTitleId: title.id
+      },
+      _sum: {
+        amountPaidCents: true
+      }
+    });
+
+    const paidAmountCents = aggregate._sum.amountPaidCents ?? BigInt(0);
+    const nextStatus = paidAmountCents >= title.totalAmountCents
+      ? PayableTitleStatus.PAID
+      : paidAmountCents > BigInt(0)
+        ? PayableTitleStatus.PARTIALLY_PAID
+        : PayableTitleStatus.OPEN;
+
+    await tx.payableTitle.update({
+      where: {
+        id: title.id
+      },
+      data: {
+        paidAmountCents,
+        status: nextStatus
+      }
+    });
+
+    return created;
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "payable_payment",
+    entityId: payment.id,
+    action: "payable_payment.created",
+    metadata: {
+      titleId: title.id,
+      paymentType: payment.paymentType,
+      amountPaidCents: Number(payment.amountPaidCents)
+    }
+  });
+
+  await ensureApprovalRequest({
+    organizationId: params.organizationId,
+    projectId: title.projectId,
+    requestedById: params.userId,
+    entityType: "payable_payment",
+    entityId: payment.id,
+    actionLabel: "Accounts payable payment review",
+    amountCents: payment.amountPaidCents,
+    reason: "Accounts payable payment above review threshold."
+  });
+
+  return payment;
 }
 
 export async function createContract(params: {

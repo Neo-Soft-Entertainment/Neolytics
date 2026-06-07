@@ -167,6 +167,24 @@ enum InvoiceStatus {
   CANCELED
 }
 
+enum PayableTitleStatus {
+  OPEN
+  PARTIALLY_PAID
+  PAID
+  CANCELED
+}
+
+enum PayablePaymentType {
+  BANK
+  CASH
+  CARD
+  TRANSFER
+  PIX
+  CHECK
+  BOLETO
+  OTHER
+}
+
 enum ProjectMilestoneStatus {
   PLANNED
   IN_PROGRESS
@@ -332,6 +350,9 @@ model Organization {
   issuedInvoices                 IssuedInvoice[]
   receivedInvoices               ReceivedInvoice[]
   approvalRequests               ApprovalRequest[]
+  costCenters                    CostCenter[]
+  payableTitles                  PayableTitle[]
+  payablePayments                PayablePayment[]
 }
 
 model OrganizationSubscriptionUsage {
@@ -762,10 +783,27 @@ model Project {
   receivedInvoices  ReceivedInvoice[]
   milestones        ProjectMilestone[]
   approvalRequests  ApprovalRequest[]
+  payableTitles     PayableTitle[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model CostCenter {
+  id             String              @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  active         Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payableTitles  PayableTitle[]
+  allocations    PayableAllocation[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, createdAt(sort: Desc)])
 }
 
 model Budget {
@@ -852,6 +890,81 @@ model ExpenseEntry {
   @@index([projectId, occurredAt(sort: Desc)])
   @@index([organizationId, category, occurredAt(sort: Desc)])
   @@index([organizationId, status, dueAt])
+}
+
+model PayableTitle {
+  id                    String               @id @default(cuid())
+  organizationId        String
+  projectId             String?
+  costCenterId          String
+  prefix                String
+  titleNumber           String
+  documentType          String
+  natureDescription     String
+  supplierIdentifier    String
+  supplierName          String
+  issueDate             DateTime
+  dueDate               DateTime
+  actualDueDate         DateTime
+  titleAmountCents      BigInt
+  additionalAmountCents BigInt               @default(0)
+  totalAmountCents      BigInt
+  paidAmountCents       BigInt               @default(0)
+  currencyCode          String               @default("USD")
+  status                PayableTitleStatus   @default(OPEN)
+  notes                 String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  organization          Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project               Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  costCenter            CostCenter           @relation(fields: [costCenterId], references: [id], onDelete: Restrict)
+  allocations           PayableAllocation[]
+  payments              PayablePayment[]
+
+  @@unique([organizationId, prefix, titleNumber])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status, actualDueDate])
+  @@index([projectId, actualDueDate])
+  @@index([supplierIdentifier])
+  @@index([supplierName])
+  @@index([natureDescription])
+}
+
+model PayableAllocation {
+  id                String       @id @default(cuid())
+  payableTitleId    String
+  costCenterId      String
+  natureDescription String
+  amountCents       BigInt
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  payableTitle      PayableTitle @relation(fields: [payableTitleId], references: [id], onDelete: Cascade)
+  costCenter        CostCenter   @relation(fields: [costCenterId], references: [id], onDelete: Restrict)
+
+  @@index([payableTitleId, createdAt(sort: Desc)])
+  @@index([costCenterId, createdAt(sort: Desc)])
+}
+
+model PayablePayment {
+  id             String             @id @default(cuid())
+  organizationId String
+  payableTitleId String
+  paymentType    PayablePaymentType
+  bank           String?
+  branch         String?
+  account        String?
+  paymentDate    DateTime
+  history        String?
+  fineCents      BigInt             @default(0)
+  interestCents  BigInt             @default(0)
+  amountPaidCents BigInt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payableTitle   PayableTitle       @relation(fields: [payableTitleId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, paymentDate(sort: Desc)])
+  @@index([payableTitleId, paymentDate(sort: Desc)])
 }
 
 model Contract {
