@@ -1033,7 +1033,7 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     opportunityLayer,
     projectFitLayer,
     aiLayer
-  } as Prisma.InputJsonObject;
+  } as unknown as Prisma.InputJsonObject;
 
   await db.project.update({
     where: {
@@ -1412,7 +1412,17 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
       artAnalysis: true,
       competitorGames: {
         include: {
-          steamGame: true
+          steamGame: {
+            include: {
+              priceCurrent: true,
+              revenueEstimates: {
+                orderBy: {
+                  calculatedAt: "desc"
+                },
+                take: 1
+              }
+            }
+          }
         }
       },
       gdds: {
@@ -1427,7 +1437,68 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
 
   const nextVersion = (project.gdds[0]?.version ?? 0) + 1;
   const analysis = project.analysis;
-  const competitorNames = project.competitorGames.map((item) => item.steamGame.name).slice(0, 6);
+  const analysisMetadata = (analysis?.metadata ?? null) as {
+    marketDepth?: {
+      marketSizeLabel?: string;
+      marketSizeCents?: number;
+      confidenceLabel?: string;
+      confidenceScore?: number;
+      reviewVelocity90?: number;
+      launchCohorts?: {
+        last90Days?: number;
+        last180Days?: number;
+        last365Days?: number;
+      };
+      revenueConcentrationPercent?: number;
+    };
+    competitionLayer?: {
+      crowdednessScore?: number;
+      qualityBarScore?: number;
+      dominantMonetization?: string;
+      premiumSharePercent?: number;
+    };
+    opportunityLayer?: {
+      opportunityScore?: number;
+      riskScore?: number;
+      executionBarScore?: number;
+      practicalRecommendations?: string[];
+      keyMismatches?: string[];
+    };
+    projectFitLayer?: {
+      overallFitScore?: number;
+      priceFitScore?: number;
+      monetizationFitScore?: number;
+      positioningClarityScore?: number;
+    };
+    aiLayer?: {
+      strategicNarrative?: string;
+      positioningSummary?: string;
+      launchStrategy?: string;
+      pricingNarrative?: string;
+      storeCapsuleAdvice?: string;
+      confidenceNarrative?: string;
+      creativeAngles?: string[];
+      acquisitionChannels?: string[];
+      wishlistDrivers?: string[];
+      redFlags?: string[];
+    };
+  } | null;
+  const comparables = project.competitorGames
+    .map((item) => ({
+      name: item.steamGame.name,
+      reviewScore: item.steamGame.reviewScore,
+      reviewCount: item.steamGame.reviewCount,
+      priceCents: item.steamGame.priceCurrent?.finalPriceCents ?? null,
+      revenueCents: revenueToNumber(item.steamGame.revenueEstimates[0]?.medianNetRevenueCents)
+    }))
+    .slice(0, 6);
+  const launchCohorts = analysisMetadata?.marketDepth?.launchCohorts;
+  const recommendations = analysisMetadata?.opportunityLayer?.practicalRecommendations ?? [];
+  const keyMismatches = analysisMetadata?.opportunityLayer?.keyMismatches ?? [];
+  const creativeAngles = analysisMetadata?.aiLayer?.creativeAngles ?? [];
+  const acquisitionChannels = analysisMetadata?.aiLayer?.acquisitionChannels ?? [];
+  const wishlistDrivers = analysisMetadata?.aiLayer?.wishlistDrivers ?? [];
+  const redFlags = analysisMetadata?.aiLayer?.redFlags ?? [];
   const content = [
     `# ${project.name} - Game Design Document`,
     "",
@@ -1449,6 +1520,9 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     project.differentiator || "",
     ...(Array.isArray(analysis?.differentiators) ? (analysis?.differentiators as string[]).map((item) => `- ${item}`) : []),
     "",
+    "## Commercial Thesis",
+    analysisMetadata?.aiLayer?.strategicNarrative || "Run market analysis to generate the commercial thesis layer.",
+    "",
     "## Market Snapshot",
     analysis?.marketSummary || "Run market analysis to populate this section.",
     "",
@@ -1458,6 +1532,35 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     "## Risks",
     analysis?.riskSummary || "Risk analysis pending.",
     "",
+    "## Market Operating Read",
+    `- Market size: ${analysisMetadata?.marketDepth?.marketSizeLabel || "Unknown"}`,
+    `- Opportunity score: ${analysisMetadata?.opportunityLayer?.opportunityScore ?? "N/A"}`,
+    `- Risk score: ${analysisMetadata?.opportunityLayer?.riskScore ?? "N/A"}`,
+    `- Fit score: ${analysisMetadata?.projectFitLayer?.overallFitScore ?? "N/A"}`,
+    `- Confidence: ${analysisMetadata?.marketDepth?.confidenceLabel ? `${analysisMetadata.marketDepth.confidenceLabel} (${analysisMetadata.marketDepth.confidenceScore ?? "N/A"})` : "Unknown"}`,
+    `- Revenue concentration: ${analysisMetadata?.marketDepth?.revenueConcentrationPercent ?? "N/A"}%`,
+    `- Review velocity (90d): ${analysisMetadata?.marketDepth?.reviewVelocity90?.toLocaleString("en-US") ?? "N/A"}`,
+    `- Launches in 90d: ${launchCohorts?.last90Days ?? "N/A"}`,
+    `- Launches in 180d: ${launchCohorts?.last180Days ?? "N/A"}`,
+    "",
+    "## Positioning",
+    analysisMetadata?.aiLayer?.positioningSummary || "Positioning layer pending analysis.",
+    "",
+    "## Pricing",
+    analysisMetadata?.aiLayer?.pricingNarrative || `Current target price: ${project.pricePointCents ? formatMoney(project.pricePointCents) : "TBD"}.`,
+    "",
+    "## Go-to-Market",
+    analysisMetadata?.aiLayer?.launchStrategy || "Run market analysis to generate launch strategy guidance.",
+    "",
+    "### Acquisition channels",
+    ...(acquisitionChannels.length > 0 ? acquisitionChannels.map((item) => `- ${item}`) : ["- Acquisition channel guidance pending analysis."]),
+    "",
+    "### Wishlist drivers",
+    ...(wishlistDrivers.length > 0 ? wishlistDrivers.map((item) => `- ${item}`) : ["- Wishlist driver guidance pending analysis."]),
+    "",
+    "### Creative angles",
+    ...(creativeAngles.length > 0 ? creativeAngles.map((item) => `- ${item}`) : ["- Creative angle guidance pending analysis."]),
+    "",
     "## Art direction analysis",
     project.artAnalysis?.styleSummary || "Run art analysis to populate this section.",
     "",
@@ -1465,19 +1568,34 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     project.artAnalysis?.productionSummary || "Production notes pending.",
     "",
     "## Competitive Set",
-    ...(competitorNames.length > 0 ? competitorNames.map((item, index) => `${index + 1}. ${item}`) : ["No competitor set has been attached yet."]),
+    ...(comparables.length > 0
+      ? comparables.map((item, index) => `${index + 1}. ${item.name} - ${item.priceCents ? formatMoney(item.priceCents) : "price unknown"} · ${item.reviewScore ? `${item.reviewScore.toFixed(1)}% review score` : "review score unknown"} · ${item.revenueCents > 0 ? `${formatMoney(item.revenueCents)} est. net revenue` : "revenue estimate unavailable"}`)
+      : ["No competitor set has been attached yet."]),
     "",
     "## Production Pillars",
     `- Genre focus: ${project.genreInput || "TBD"}`,
     `- Tag focus: ${project.tagInput || "TBD"}`,
-    `- Monetization: ${project.monetizationModel || "TBD"}`,
+    `- Monetization: ${project.monetizationModel || "TBD"}${analysisMetadata?.competitionLayer?.dominantMonetization ? ` (market baseline: ${analysisMetadata.competitionLayer.dominantMonetization})` : ""}`,
     `- Price target: ${project.pricePointCents ? (project.pricePointCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "TBD"}`,
     `- Art direction: ${project.artDirection || "TBD"}`,
+    `- Positioning clarity score: ${analysisMetadata?.projectFitLayer?.positioningClarityScore ?? "N/A"}`,
+    `- Price fit score: ${analysisMetadata?.projectFitLayer?.priceFitScore ?? "N/A"}`,
+    `- Monetization fit score: ${analysisMetadata?.projectFitLayer?.monetizationFitScore ?? "N/A"}`,
+    "",
+    "## Store Read",
+    analysisMetadata?.aiLayer?.storeCapsuleAdvice || "Store-facing guidance pending analysis.",
+    "",
+    "## Risk Register",
+    ...(redFlags.length > 0 ? redFlags.map((item) => `- ${item}`) : keyMismatches.length > 0 ? keyMismatches.map((item) => `- ${item}`) : ["- Risk register pending analysis."]),
+    "",
+    "## Recommended next moves",
+    ...(recommendations.length > 0 ? recommendations.map((item) => `- ${item}`) : ["- Keep refining the concept against direct Steam comparables."]),
     "",
     "## Next Validation Steps",
     "- Confirm the feature stack against the top Steam comps.",
     "- Tighten the fantasy and store positioning before production lock.",
-    "- Keep market analysis updated as the concept evolves."
+    "- Keep market analysis updated as the concept evolves.",
+    ...(analysisMetadata?.marketDepth?.confidenceLabel === "Low" ? ["- Improve research coverage before final budget or production commitments."] : [])
   ].join("\n");
 
   const gdd = await db.projectGdd.create({

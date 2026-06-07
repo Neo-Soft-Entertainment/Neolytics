@@ -319,7 +319,7 @@ export async function generateBasicMarketReport(params: {
     aiNarrative,
     operatingBrief,
     planLabel: organization.subscriptionPlan
-  } as Prisma.InputJsonObject;
+  } as unknown as Prisma.InputJsonObject;
 
   const report = await db.$transaction(async (tx) => {
     await consumeSubscriptionUsage(params.organizationId, "reportsGenerated", tx);
