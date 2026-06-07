@@ -76,7 +76,7 @@ async function requestStructuredOutput<T>(schemaName: string, schema: Record<str
         Authorization: `Bearer ${env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: env.OPENAI_MARKET_ANALYSIS_MODEL || "gpt-5-mini",
+        model: env.OPENAI_MARKET_ANALYSIS_MODEL || "gpt-5.4-mini",
         input: [
           {
             role: "developer",
