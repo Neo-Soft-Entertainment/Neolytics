@@ -31,19 +31,19 @@ export const subscriptionFeatureRows: Array<{
   key: SubscriptionCapability;
   label: string;
 }> = [
-  { key: "steamRadar", label: "Radar Steam" },
-  { key: "marketResearch", label: "Pesquisa de Mercado" },
-  { key: "revenueCalculator", label: "Calculadora de Receita" },
-  { key: "communityFeed", label: "Comunidade (Feed)" },
-  { key: "steamXray", label: "Raio-X Steam" },
-  { key: "viabilityAnalyses", label: "Análises de Viabilidade" },
-  { key: "artAnalyses", label: "Análises de Artes" },
-  { key: "gameBoardProjects", label: "Projetos no Game Board" },
+  { key: "steamRadar", label: "Steam Radar" },
+  { key: "marketResearch", label: "Market Research" },
+  { key: "revenueCalculator", label: "Revenue Calculator" },
+  { key: "communityFeed", label: "Community Feed" },
+  { key: "steamXray", label: "Steam X-Ray" },
+  { key: "viabilityAnalyses", label: "Viability Analyses" },
+  { key: "artAnalyses", label: "Art Analyses" },
+  { key: "gameBoardProjects", label: "Game Board Projects" },
   { key: "gdds", label: "GDDs" },
-  { key: "communityRanking", label: "Ranking da Comunidade" },
-  { key: "guidedJourney", label: "Jornada guiada" },
-  { key: "pdfExport", label: "Exportação PDF" },
-  { key: "earlyAccess", label: "Acesso Antecipado a novas funcionalidades" }
+  { key: "communityRanking", label: "Community Ranking" },
+  { key: "guidedJourney", label: "Guided Journey" },
+  { key: "pdfExport", label: "PDF Export" },
+  { key: "earlyAccess", label: "Early Access to New Features" }
 ];
 
 export const subscriptionPlans = {
@@ -52,12 +52,12 @@ export const subscriptionPlans = {
     priceLabel: "$0",
     description: "For solo exploration and early validation.",
     highlights: [
-      "Radar Steam, pesquisa de mercado e calculadora de receita",
-      "1 seat e 1 workspace",
-      "3 projetos ativos no Game Board",
-      "10 análises de viabilidade por mês",
-      "10 GDDs por mês",
-      "Jornada guiada para onboarding"
+      "Steam Radar, market research, and revenue calculator",
+      "1 seat and 1 workspace",
+      "3 active Game Board projects",
+      "10 viability analyses per month",
+      "10 GDDs per month",
+      "Guided onboarding journey"
     ],
     featureAccess: {
       steamRadar: "Included",
@@ -92,12 +92,12 @@ export const subscriptionPlans = {
     priceLabel: "$20",
     description: "For serious studios building a steady research workflow.",
     highlights: [
-      "Comunidade, ranking e PDF export",
-      "5 seats e 5 workspaces",
-      "Raio-X Steam mais profundo",
-      "20 projetos ativos no Game Board",
-      "100 análises de viabilidade por mês",
-      "100 GDDs por mês"
+      "Community, ranking, and PDF export",
+      "5 seats and 5 workspaces",
+      "Deeper Steam X-Ray access",
+      "20 active Game Board projects",
+      "100 viability analyses per month",
+      "100 GDDs per month"
     ],
     featureAccess: {
       steamRadar: "Included",
@@ -132,12 +132,12 @@ export const subscriptionPlans = {
     priceLabel: "$200",
     description: "For power users who want essentially unrestricted research velocity.",
     highlights: [
-      "Raio-X Steam ilimitado",
-      "Análises de viabilidade ilimitadas",
-      "Projetos no Game Board ilimitados",
-      "GDDs ilimitados",
-      "PDF export e early access",
-      "Seats e workspaces ilimitados"
+      "Unlimited Steam X-Ray",
+      "Unlimited viability analyses",
+      "Unlimited Game Board projects",
+      "Unlimited GDDs",
+      "PDF export and early access",
+      "Unlimited seats and workspaces"
     ],
     featureAccess: {
       steamRadar: "Included",

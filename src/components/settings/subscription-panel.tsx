@@ -72,6 +72,7 @@ export function SubscriptionPanel({
 }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState<SubscriptionPlan | null>(null);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   async function changePlan(plan: SubscriptionPlan) {
@@ -111,21 +112,51 @@ export function SubscriptionPanel({
     router.refresh();
   }
 
+  async function openBillingPortal() {
+    setMessage(null);
+    setIsOpeningPortal(true);
+
+    const response = await fetch("/api/organizations/subscription/portal", {
+      method: "POST"
+    });
+    const payload = (await response.json().catch(() => null)) as { url?: string; message?: string } | null;
+    setIsOpeningPortal(false);
+
+    if (!response.ok || !payload?.url) {
+      setMessage(payload?.message ?? "Unable to open Stripe billing portal.");
+      return;
+    }
+
+    window.location.assign(payload.url);
+  }
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Subscription overview</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-2 text-sm md:grid-cols-2">
-          <p>Current plan: {snapshot.planLabel}</p>
-          <p>Status: {snapshot.status}</p>
-          <p>Current period: {snapshot.periodKey}</p>
-          <p>
-            Renewal:
-            {" "}
-            {snapshot.currentPeriodEnd ? new Date(snapshot.currentPeriodEnd).toLocaleDateString() : "Not set"}
-          </p>
+        <CardContent className="space-y-4">
+          <div className="grid gap-2 text-sm md:grid-cols-2">
+            <p>Current plan: {snapshot.planLabel}</p>
+            <p>Status: {snapshot.status}</p>
+            <p>Current period: {snapshot.periodKey}</p>
+            <p>
+              Renewal:
+              {" "}
+              {snapshot.currentPeriodEnd ? new Date(snapshot.currentPeriodEnd).toLocaleDateString() : "Not set"}
+            </p>
+          </div>
+          {canManage && snapshot.hasStripeSubscription ? (
+            <div className="flex flex-wrap gap-3">
+              <Button disabled={isOpeningPortal || isSubmitting !== null} type="button" onClick={openBillingPortal}>
+                {isOpeningPortal ? "Opening billing..." : "Manage billing in Stripe"}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Upgrade, downgrade, payment method changes, invoices, and cancellation now run through Stripe Billing Portal.
+              </p>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       <div className="grid gap-4 xl:grid-cols-3">
@@ -134,7 +165,8 @@ export function SubscriptionPanel({
           const isCurrent = snapshot.plan === planId;
           const canCheckout = snapshot.plan === SubscriptionPlan.FREE && planId !== SubscriptionPlan.FREE;
           const canDowngrade = planId === SubscriptionPlan.FREE && snapshot.plan !== SubscriptionPlan.FREE && !snapshot.hasStripeSubscription;
-          const canSwitch = isCurrent || canCheckout || canDowngrade;
+          const canManageInStripe = snapshot.hasStripeSubscription && !isCurrent;
+          const canSwitch = isCurrent || canCheckout || canDowngrade || canManageInStripe;
 
           return (
             <Card key={planId} className={isCurrent ? "border-primary shadow-sm shadow-primary/10" : undefined}>
@@ -159,8 +191,8 @@ export function SubscriptionPanel({
                 {canManage ? (
                   <Button
                     className="w-full"
-                    disabled={!canSwitch || isCurrent || isSubmitting !== null}
-                    onClick={() => changePlan(planId)}
+                    disabled={!canSwitch || isCurrent || isSubmitting !== null || isOpeningPortal}
+                    onClick={canManageInStripe ? openBillingPortal : () => changePlan(planId)}
                     variant={isCurrent ? "secondary" : "default"}
                   >
                     {isCurrent
@@ -169,6 +201,10 @@ export function SubscriptionPanel({
                         ? "Loading..."
                         : canCheckout
                           ? `Checkout ${plan.label}`
+                          : canManageInStripe
+                            ? isOpeningPortal
+                              ? "Opening billing..."
+                              : "Manage in billing"
                           : canDowngrade
                             ? "Move to Free"
                             : "Coming soon"}
@@ -182,7 +218,7 @@ export function SubscriptionPanel({
         })}
       </div>
       <p className="text-sm text-muted-foreground">
-        Paid plans now continue through Stripe Checkout. Direct downgrade from Stripe-managed subscriptions is the next billing step.
+        Free-to-paid upgrades start in Stripe Checkout. Once a paid subscription is active, billing changes are managed through Stripe Billing Portal.
       </p>
       <Card>
         <CardHeader>

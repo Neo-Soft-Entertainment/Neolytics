@@ -100,6 +100,35 @@ export async function createStripeCheckoutSession(params: {
   return session;
 }
 
+export async function createStripeBillingPortalSession(params: {
+  organizationId: string;
+}) {
+  const stripe = getStripe();
+  const organization = await db.organization.findUniqueOrThrow({
+    where: {
+      id: params.organizationId
+    },
+    select: {
+      stripeCustomerId: true
+    }
+  });
+
+  if (!organization.stripeCustomerId) {
+    throw new Error("This organization does not have an active Stripe customer yet.");
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: organization.stripeCustomerId,
+    return_url: `${env.AUTH_URL}/settings`
+  });
+
+  if (!session.url) {
+    throw new Error("Stripe billing portal did not return a redirect URL.");
+  }
+
+  return session;
+}
+
 export async function syncStripeCheckoutSession(sessionId: string) {
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.retrieve(sessionId);

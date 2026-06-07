@@ -295,7 +295,7 @@ export async function SettingsPage() {
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {hasGoogleLogin
-                      ? "The login page now shows Continue with Google."
+                      ? "The login and signup pages now show Continue with Google."
                       : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment."}
                   </p>
                 </div>

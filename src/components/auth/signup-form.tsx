@@ -26,15 +26,18 @@ type FormValues = {
 
 export function SignupForm({
   inviteToken,
+  hasGoogleLogin,
   invitedOrganizationName,
   invitedEmail
 }: {
   inviteToken?: string;
+  hasGoogleLogin: boolean;
   invitedOrganizationName?: string;
   invitedEmail?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const schema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
@@ -55,6 +58,15 @@ export function SignupForm({
     }
   });
   const selectedPlan = form.watch("plan") ?? SubscriptionPlan.FREE;
+
+  async function onGoogleSignIn() {
+    setError(null);
+    setIsGoogleLoading(true);
+    await signIn("google", {
+      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+    });
+    setIsGoogleLoading(false);
+  }
 
   async function onSubmit(values: FormValues) {
     setError(null);
@@ -129,6 +141,32 @@ export function SignupForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {hasGoogleLogin ? (
+          <div className="mb-4 space-y-3">
+            <Button
+              className="w-full"
+              disabled={form.formState.isSubmitting || isGoogleLoading}
+              type="button"
+              variant="outline"
+              onClick={onGoogleSignIn}
+            >
+              {isGoogleLoading ? "Redirecting to Google..." : "Continue with Google"}
+            </Button>
+            {!inviteToken ? (
+              <p className="text-sm text-muted-foreground">
+                Google signup continues into setup, where you can create the organization and manage billing.
+              </p>
+            ) : null}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or use email</span>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="name">Your name</Label>
@@ -234,7 +272,7 @@ export function SignupForm({
                 Sign in
               </Link>
             </p>
-            <Button disabled={form.formState.isSubmitting} type="submit">
+            <Button disabled={form.formState.isSubmitting || isGoogleLoading} type="submit">
               {form.formState.isSubmitting ? "Creating..." : inviteToken ? "Create account and join" : "Create account"}
             </Button>
           </div>
