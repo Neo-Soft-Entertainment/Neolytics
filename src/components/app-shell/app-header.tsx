@@ -1,6 +1,7 @@
 import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 
 import { OrganizationSwitcher } from "@/components/app-shell/organization-switcher";
+import { WorkspaceSwitcher } from "@/components/app-shell/workspace-switcher";
 import { MobileNav } from "@/components/app-shell/mobile-nav";
 import { SignOutButton } from "@/components/auth/signout-button";
 import { NeolyticsBrand } from "@/components/brand/neolytics-brand";
@@ -11,6 +12,14 @@ import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 interface AppHeaderProps {
   currentOrganizationId: string;
   organizationName: string;
+  currentWorkspaceId?: string | null;
+  currentWorkspaceName?: string | null;
+  workspaces: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+  }>;
   organizations: Array<{
     id: string;
     name: string;
@@ -23,6 +32,9 @@ interface AppHeaderProps {
 export function AppHeader({
   currentOrganizationId,
   organizationName,
+  currentWorkspaceId,
+  currentWorkspaceName,
+  workspaces,
   organizations,
   subscriptionPlan
 }: AppHeaderProps) {
@@ -41,36 +53,61 @@ export function AppHeader({
             <MobileNav
               currentOrganizationName={currentOrganization?.name ?? organizationName}
               currentOrganizationRole={currentOrganization?.role}
+              currentWorkspaceName={currentWorkspaceName ?? workspaces[0]?.name ?? "Workspace"}
               subscriptionPlan={subscriptionPlan}
             />
           </div>
         </div>
-        <div className="min-w-0 rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
-          <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-            Organization
-          </p>
-          <OrganizationSwitcher
-            currentOrganizationId={currentOrganizationId}
-            fallbackOrganizationName={organizationName}
-            organizations={organizations}
-          />
-          <Badge variant="secondary" className="mt-2 border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
+        <div className="grid gap-3 rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
+          <div>
+            <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+              Organization
+            </p>
+            <OrganizationSwitcher
+              currentOrganizationId={currentOrganizationId}
+              fallbackOrganizationName={organizationName}
+              organizations={organizations}
+            />
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+              Workspace
+            </p>
+            <WorkspaceSwitcher
+              currentWorkspaceId={currentWorkspaceId}
+              fallbackWorkspaceName={currentWorkspaceName}
+              workspaces={workspaces}
+            />
+          </div>
+          <Badge variant="secondary" className="w-fit border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>
       </div>
 
       <div className="hidden h-16 items-center justify-between gap-4 lg:flex">
-        <div className="min-w-0 max-w-md rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
-          <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-            Organization
-          </p>
-          <OrganizationSwitcher
-            currentOrganizationId={currentOrganizationId}
-            fallbackOrganizationName={organizationName}
-            organizations={organizations}
-          />
-          <Badge variant="secondary" className="mt-2 border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
+        <div className="grid min-w-0 max-w-3xl flex-1 grid-cols-[minmax(260px,360px)_minmax(240px,320px)_auto] items-end gap-3 rounded-[1.35rem] border border-white/10 bg-white/40 px-3 py-2.5 backdrop-blur-xl dark:bg-white/[0.03]">
+          <div>
+            <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+              Organization
+            </p>
+            <OrganizationSwitcher
+              currentOrganizationId={currentOrganizationId}
+              fallbackOrganizationName={organizationName}
+              organizations={organizations}
+            />
+          </div>
+          <div>
+            <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+              Workspace
+            </p>
+            <WorkspaceSwitcher
+              currentWorkspaceId={currentWorkspaceId}
+              fallbackWorkspaceName={currentWorkspaceName}
+              workspaces={workspaces}
+            />
+          </div>
+          <Badge variant="secondary" className="mb-0.5 w-fit border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>

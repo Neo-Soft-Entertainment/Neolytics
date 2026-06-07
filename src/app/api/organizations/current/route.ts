@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { badRequest, ok, unauthorized } from "@/lib/api-response";
 import { setActiveOrganizationCookie } from "@/lib/active-organization";
+import { setActiveWorkspaceCookie } from "@/lib/active-workspace";
 import { requireApiUser } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/request";
@@ -32,8 +33,22 @@ export async function PATCH(request: Request) {
       return badRequest("You do not belong to this organization.");
     }
 
+    const workspace = await db.workspace.findFirst({
+      where: {
+        organizationId: body.organizationId
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
+
     const response = ok({ success: true, organizationId: body.organizationId });
     setActiveOrganizationCookie(response, body.organizationId);
+
+    if (workspace) {
+      setActiveWorkspaceCookie(response, workspace.id);
+    }
+
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {

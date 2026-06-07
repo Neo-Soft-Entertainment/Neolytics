@@ -19,8 +19,11 @@ export default async function AppLayout({
           <AppHeader
             currentOrganizationId={organization.id}
             organizationName={organization.name}
+            currentWorkspaceId={organization.currentWorkspace?.id ?? null}
+            currentWorkspaceName={organization.currentWorkspace?.name ?? null}
             organizations={session?.user.organizations ?? []}
             subscriptionPlan={organization.subscriptionPlan}
+            workspaces={organization.workspaces}
           />
           <main className="relative flex-1 px-4 py-5 pb-8 lg:px-8 lg:py-6">{children}</main>
         </div>

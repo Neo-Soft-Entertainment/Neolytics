@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
+import { setActiveWorkspaceCookie } from "@/lib/active-workspace";
 import { getApiContext } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 import { createWorkspaceForOrganization, deleteWorkspaceFromOrganization } from "@/lib/organization-service";
 import { parseJsonBody, parseSearchParams } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
@@ -27,7 +29,9 @@ export async function POST(request: Request) {
       description: body.description
     });
 
-    return ok(workspace, { status: 201 });
+    const response = ok(workspace, { status: 201 });
+    setActiveWorkspaceCookie(response, workspace.id);
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid workspace payload.");
@@ -53,6 +57,17 @@ export async function DELETE(request: Request) {
     const query = parseSearchParams(url, z.object({
       workspaceId: z.string().min(1)
     }));
+    const nextWorkspace = await db.workspace.findFirst({
+      where: {
+        organizationId: context.organizationId,
+        id: {
+          not: query.workspaceId
+        }
+      },
+      orderBy: {
+        createdAt: "asc"
+      }
+    });
 
     await deleteWorkspaceFromOrganization({
       organizationId: context.organizationId,
@@ -60,7 +75,13 @@ export async function DELETE(request: Request) {
       userId: context.userId
     });
 
-    return ok({ success: true });
+    const response = ok({ success: true });
+
+    if (nextWorkspace) {
+      setActiveWorkspaceCookie(response, nextWorkspace.id);
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid workspace delete payload.");

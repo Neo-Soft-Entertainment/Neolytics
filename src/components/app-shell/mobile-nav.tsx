@@ -33,10 +33,12 @@ const items = [
 export function MobileNav({
   currentOrganizationName,
   currentOrganizationRole,
+  currentWorkspaceName,
   subscriptionPlan
 }: {
   currentOrganizationName: string;
   currentOrganizationRole?: OrganizationRole | null;
+  currentWorkspaceName: string;
   subscriptionPlan: SubscriptionPlan;
 }) {
   const pathname = usePathname();
@@ -56,6 +58,7 @@ export function MobileNav({
           <p className="mt-1 text-xs text-muted-foreground">
             {currentOrganizationRole ? `${currentOrganizationRole} access` : "Active organization"} · {getSubscriptionPlanLabel(subscriptionPlan)}
           </p>
+          <p className="mt-2 truncate text-xs text-muted-foreground">Workspace: {currentWorkspaceName}</p>
         </div>
         <DropdownMenuSeparator />
         {items.map((item) => (

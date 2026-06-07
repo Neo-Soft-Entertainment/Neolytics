@@ -3,14 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function WorkspaceManagementPanel({
   canManage,
+  currentWorkspaceId,
   workspaces
 }: {
   canManage: boolean;
+  currentWorkspaceId: string | null;
   workspaces: Array<{
     id: string;
     name: string;
@@ -22,6 +25,37 @@ export function WorkspaceManagementPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [switchingId, setSwitchingId] = useState<string | null>(null);
+
+  async function setActiveWorkspace(workspaceId: string, workspaceName: string) {
+    if (workspaceId === currentWorkspaceId) {
+      return;
+    }
+
+    setMessage(null);
+    setError(null);
+    setSwitchingId(workspaceId);
+
+    const response = await fetch("/api/workspaces/current", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ workspaceId })
+    });
+
+    setSwitchingId(null);
+
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+    if (!response.ok) {
+      setError(payload?.message ?? "Unable to switch workspace.");
+      return;
+    }
+
+    setMessage(`Workspace "${workspaceName}" is now active.`);
+    router.refresh();
+  }
 
   async function deleteWorkspace(workspaceId: string, workspaceName: string) {
     if (!canManage) {
@@ -67,21 +101,37 @@ export function WorkspaceManagementPanel({
           <div key={workspace.id} className="rounded-2xl border p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="font-medium">{workspace.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{workspace.name}</p>
+                  {workspace.id === currentWorkspaceId ? <Badge>Current</Badge> : null}
+                </div>
                 <p className="mt-1 text-muted-foreground">Slug: {workspace.slug}</p>
                 <p className="mt-1 text-muted-foreground">
                   {workspace.description || "No description yet."}
                 </p>
               </div>
-              <Button
-                disabled={!canManage || workspaces.length <= 1 || deletingId === workspace.id}
-                onClick={() => deleteWorkspace(workspace.id, workspace.name)}
-                size="sm"
-                type="button"
-                variant="destructive"
-              >
-                {deletingId === workspace.id ? "Deleting..." : "Delete"}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={workspace.id === currentWorkspaceId || switchingId === workspace.id}
+                  onClick={() => {
+                    void setActiveWorkspace(workspace.id, workspace.name);
+                  }}
+                  size="sm"
+                  type="button"
+                  variant={workspace.id === currentWorkspaceId ? "secondary" : "outline"}
+                >
+                  {workspace.id === currentWorkspaceId ? "Active" : switchingId === workspace.id ? "Switching..." : "Set active"}
+                </Button>
+                <Button
+                  disabled={!canManage || workspaces.length <= 1 || deletingId === workspace.id}
+                  onClick={() => deleteWorkspace(workspace.id, workspace.name)}
+                  size="sm"
+                  type="button"
+                  variant="destructive"
+                >
+                  {deletingId === workspace.id ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
             </div>
           </div>
         ))}

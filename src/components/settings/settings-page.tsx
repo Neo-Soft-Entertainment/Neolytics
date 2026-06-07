@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
 import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
+import { OrganizationMembershipsPanel } from "@/components/settings/organization-memberships-panel";
 import { OrganizationDangerZone } from "@/components/settings/organization-danger-zone";
 import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
@@ -11,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 export async function SettingsPage() {
@@ -218,34 +218,10 @@ export async function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>Your organizations</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm lg:grid-cols-2">
-              {memberships.map((membership) => (
-                <div key={membership.organizationId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">{membership.organization.name}</p>
-                      <p className="mt-1 text-muted-foreground">
-                        {membership.organization.workspaces.length} workspace(s)
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <Badge variant={membership.organizationId === organization.id ? "default" : "secondary"}>
-                        {membership.organizationId === organization.id ? "Current" : membership.role}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {getSubscriptionPlanLabel(membership.organization.subscriptionPlan)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <OrganizationMembershipsPanel
+            currentOrganizationId={organization.id}
+            memberships={memberships}
+          />
 
           <OrganizationDangerZone canDelete={Boolean(canDeleteOrganization)} />
         </TabsContent>
@@ -263,6 +239,7 @@ export async function SettingsPage() {
 
           <WorkspaceManagementPanel
             canManage={Boolean(canManageSubscription)}
+            currentWorkspaceId={organization.currentWorkspace?.id ?? null}
             workspaces={organization.workspaces}
           />
         </TabsContent>

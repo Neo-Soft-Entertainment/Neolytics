@@ -49,7 +49,7 @@ export function CreateWorkspaceForm() {
     }
 
     form.reset();
-    setMessage(`Workspace "${values.name}" created.`);
+    setMessage(`Workspace "${values.name}" created and set as active.`);
     router.refresh();
   }
 

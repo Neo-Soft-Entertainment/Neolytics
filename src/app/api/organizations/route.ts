@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { setActiveOrganizationCookie } from "@/lib/active-organization";
+import { setActiveWorkspaceCookie } from "@/lib/active-workspace";
 import { getApiContext, requireApiUser } from "@/lib/auth-helpers";
 import { createOrganizationForUser, deleteOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
 
     const response = ok(created, { status: 201 });
     setActiveOrganizationCookie(response, created.organization.id);
+    setActiveWorkspaceCookie(response, created.workspace.id);
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {

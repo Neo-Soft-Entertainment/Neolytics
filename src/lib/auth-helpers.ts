@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { getActiveOrganizationId } from "@/lib/active-organization";
+import { getActiveWorkspaceId } from "@/lib/active-workspace";
 import { db } from "@/lib/db";
 
 export async function requireUser() {
@@ -22,7 +23,7 @@ export async function getCurrentOrganization() {
     redirect("/setup");
   }
 
-  return db.organization.findUniqueOrThrow({
+  const organization = await db.organization.findUniqueOrThrow({
     where: {
       id: membership.organizationId
     },
@@ -34,6 +35,16 @@ export async function getCurrentOrganization() {
       }
     }
   });
+  const activeWorkspaceId = await getActiveWorkspaceId();
+  const currentWorkspace =
+    organization.workspaces.find((workspace) => workspace.id === activeWorkspaceId) ??
+    organization.workspaces[0] ??
+    null;
+
+  return {
+    ...organization,
+    currentWorkspace
+  };
 }
 
 export async function requireApiUser() {
@@ -59,16 +70,29 @@ export async function getApiContext() {
     return null;
   }
 
+  const activeWorkspaceId = await getActiveWorkspaceId();
   const workspace = await db.workspace.findFirst({
     where: {
-      organizationId: membership.organizationId
+      organizationId: membership.organizationId,
+      ...(activeWorkspaceId ? { id: activeWorkspaceId } : {})
     },
     orderBy: {
       createdAt: "asc"
     }
   });
 
-  if (!workspace) {
+  const fallbackWorkspace = workspace
+    ? workspace
+    : await db.workspace.findFirst({
+        where: {
+          organizationId: membership.organizationId
+        },
+        orderBy: {
+          createdAt: "asc"
+        }
+      });
+
+  if (!fallbackWorkspace) {
     return null;
   }
 
@@ -77,7 +101,7 @@ export async function getApiContext() {
     userId: session.user.id,
     organizationId: membership.organizationId,
     organizationRole: membership.role,
-    workspace
+    workspace: fallbackWorkspace
   };
 }
 
