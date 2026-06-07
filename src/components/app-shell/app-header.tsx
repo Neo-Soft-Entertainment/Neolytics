@@ -85,8 +85,8 @@ export function AppHeader({
         </div>
       </div>
 
-      <div className="hidden h-16 items-center justify-between gap-4 lg:flex">
-        <div className="flex min-w-0 max-w-4xl flex-1 items-end gap-3">
+      <div className="hidden items-start justify-between gap-4 py-3 lg:flex">
+        <div className="flex min-w-0 max-w-4xl flex-1 items-start gap-3">
           <div className="min-w-0 min-w-[260px] max-w-[360px] px-1">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
               Organization
@@ -107,12 +107,12 @@ export function AppHeader({
               workspaces={workspaces}
             />
           </div>
-          <Badge variant="secondary" className="mb-0.5 w-fit border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
+          <Badge variant="secondary" className="mt-6 w-fit border-white/10 bg-white/60 text-[11px] backdrop-blur dark:bg-white/5">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-6">
           <ThemeToggle />
           <SignOutButton />
         </div>
