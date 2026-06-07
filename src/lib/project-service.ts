@@ -26,7 +26,7 @@ function parseCsv(value?: string | null) {
   }
 
   return value
-    .split(",")
+    .split(/[,\n;|/]+/)
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -262,13 +262,91 @@ function getDominantMonetization(project: {
   };
 }
 
-function buildProjectMatchingRules(project: {
+async function getProjectSignalSlugs(project: {
   name: string;
   genreInput: string | null;
   tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
 }) {
   const genreTokens = parseCsv(project.genreInput).map(slugify);
   const tagTokens = parseCsv(project.tagInput).map(slugify);
+  const corpus = [
+    project.genreInput,
+    project.tagInput,
+    project.elevatorPitch,
+    project.description,
+    project.differentiator,
+    project.playerFantasy,
+    project.targetAudience,
+    project.coreLoop
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!corpus.trim()) {
+    return {
+      genreTokens,
+      tagTokens
+    };
+  }
+
+  const [genres, tags] = await Promise.all([
+    db.steamGenre.findMany({
+      select: {
+        slug: true,
+        name: true
+      }
+    }),
+    db.steamTag.findMany({
+      select: {
+        slug: true,
+        name: true
+      }
+    })
+  ]);
+
+  for (const genre of genres) {
+    const normalizedName = genre.name.toLowerCase();
+    const normalizedSlug = genre.slug.replaceAll("-", " ").toLowerCase();
+
+    if (corpus.includes(normalizedName) || corpus.includes(normalizedSlug)) {
+      genreTokens.push(genre.slug);
+    }
+  }
+
+  for (const tag of tags) {
+    const normalizedName = tag.name.toLowerCase();
+    const normalizedSlug = tag.slug.replaceAll("-", " ").toLowerCase();
+
+    if (corpus.includes(normalizedName) || corpus.includes(normalizedSlug)) {
+      tagTokens.push(tag.slug);
+    }
+  }
+
+  return {
+    genreTokens: [...new Set(genreTokens)],
+    tagTokens: [...new Set(tagTokens)]
+  };
+}
+
+async function buildProjectMatchingRules(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
+}) {
+  const { genreTokens, tagTokens } = await getProjectSignalSlugs(project);
   const matchingRules: Prisma.SteamGameWhereInput[] = [];
 
   if (genreTokens.length > 0) {
@@ -315,8 +393,14 @@ async function getComparableGames(project: {
   name: string;
   genreInput: string | null;
   tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
 }) {
-  const matchingRules = buildProjectMatchingRules(project);
+  const matchingRules = await buildProjectMatchingRules(project);
 
   return db.steamGame.findMany({
     where: matchingRules.length > 0 ? { OR: matchingRules } : undefined,
@@ -677,8 +761,7 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
 
   await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
   const matchingGames = await getComparableGames(project);
-  const projectGenres = parseCsv(project.genreInput).map(slugify);
-  const projectTags = parseCsv(project.tagInput).map(slugify);
+  const { genreTokens: projectGenres, tagTokens: projectTags } = await getProjectSignalSlugs(project);
   const now = Date.now();
   const enrichedGames = matchingGames.map((game) => {
     const gameGenres = game.genres.map((genre) => genre.steamGenre.slug);
