@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,8 +28,8 @@ export function LoginForm({
   hasGoogleLogin: boolean;
   hasDiscordLogin: boolean;
 }) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -43,34 +42,54 @@ export function LoginForm({
 
   async function onSubmit(values: FormValues) {
     setError(null);
+    const callbackUrl = inviteToken ? `/invite/${inviteToken}` : "/dashboard";
 
-    const result = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+        redirect: false,
+        callbackUrl
+      });
 
-    if (result?.error) {
-      setError("Invalid email or password.");
+      if (!result) {
+        setError("We could not reach the authentication service. Try again.");
+        return;
+      }
+
+      if (result.error) {
+        setError("Invalid email or password.");
+        return;
+      }
+
+      if (!result.ok || !result.url) {
+        setError("The sign-in completed, but we could not finish the redirect. Try again.");
+        return;
+      }
+
+      window.location.assign(result.url);
       return;
+    } catch {
+      setError("We could not sign you in right now. Try again in a few seconds.");
     }
-
-    router.push(inviteToken ? `/invite/${inviteToken}` : "/dashboard");
-    router.refresh();
   }
 
   async function onGoogleSignIn() {
     setError(null);
+    setIsSocialLoading("google");
     await signIn("google", {
       callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
     });
+    setIsSocialLoading(null);
   }
 
   async function onDiscordSignIn() {
     setError(null);
+    setIsSocialLoading("discord");
     await signIn("discord", {
       callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
     });
+    setIsSocialLoading(null);
   }
 
   return (
@@ -85,13 +104,25 @@ export function LoginForm({
         {hasSocialLogin ? (
           <div className="mb-4 space-y-3">
             {hasGoogleLogin ? (
-              <Button className="w-full" type="button" variant="outline" onClick={onGoogleSignIn}>
-                Continue with Google
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onGoogleSignIn}
+              >
+                {isSocialLoading === "google" ? "Redirecting to Google..." : "Continue with Google"}
               </Button>
             ) : null}
             {hasDiscordLogin ? (
-              <Button className="w-full" type="button" variant="outline" onClick={onDiscordSignIn}>
-                Continue with Discord
+              <Button
+                className="w-full"
+                disabled={form.formState.isSubmitting || isSocialLoading !== null}
+                type="button"
+                variant="outline"
+                onClick={onDiscordSignIn}
+              >
+                {isSocialLoading === "discord" ? "Redirecting to Discord..." : "Continue with Discord"}
               </Button>
             ) : null}
             <div className="relative">
@@ -125,7 +156,7 @@ export function LoginForm({
             ) : null}
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button className="w-full" disabled={form.formState.isSubmitting} type="submit">
+          <Button className="w-full" disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
             {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
           {inviteToken ? (
