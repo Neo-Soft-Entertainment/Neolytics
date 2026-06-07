@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/app-shell/app-header";
 import { AppSidebar } from "@/components/app-shell/app-sidebar";
 import { auth } from "@/auth";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
+import { db } from "@/lib/db";
 
 export default async function AppLayout({
   children
@@ -9,6 +10,19 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
+  const organizations = session?.user?.id
+    ? await db.organizationMember.findMany({
+        where: {
+          userId: session.user.id
+        },
+        include: {
+          organization: true
+        },
+        orderBy: {
+          joinedAt: "asc"
+        }
+      })
+    : [];
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -21,7 +35,12 @@ export default async function AppLayout({
             organizationName={organization.name}
             currentWorkspaceId={organization.currentWorkspace?.id ?? null}
             currentWorkspaceName={organization.currentWorkspace?.name ?? null}
-            organizations={session?.user.organizations ?? []}
+            organizations={organizations.map((membership) => ({
+              id: membership.organization.id,
+              name: membership.organization.name,
+              role: membership.role,
+              subscriptionPlan: membership.organization.subscriptionPlan
+            }))}
             subscriptionPlan={organization.subscriptionPlan}
             workspaces={organization.workspaces}
           />
