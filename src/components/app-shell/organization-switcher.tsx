@@ -1,10 +1,20 @@
 "use client";
 
 import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 
 type OrganizationOption = {
   id: string;
@@ -15,10 +25,12 @@ type OrganizationOption = {
 
 export function OrganizationSwitcher({
   currentOrganizationId,
-  organizations
+  organizations,
+  fallbackOrganizationName
 }: {
   currentOrganizationId: string;
   organizations: OrganizationOption[];
+  fallbackOrganizationName?: string;
 }) {
   const router = useRouter();
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(currentOrganizationId);
@@ -30,9 +42,10 @@ export function OrganizationSwitcher({
   }, [currentOrganizationId]);
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
-  const hasMultipleOrganizations = organizations.length > 1;
+  const activeOrganizationName = currentOrganization?.name ?? fallbackOrganizationName ?? "Organization";
+  const activeRoleLabel = currentOrganization ? `${currentOrganization.role} access` : "Active organization";
 
-  async function onValueChange(organizationId: string) {
+  async function onOrganizationSelect(organizationId: string) {
     if (organizationId === selectedOrganizationId) {
       return;
     }
@@ -60,30 +73,66 @@ export function OrganizationSwitcher({
     router.refresh();
   }
 
+  if (organizations.length <= 1) {
+    return (
+      <div className="min-w-0 space-y-1.5">
+        <div className="flex min-h-11 items-center rounded-2xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
+          <span className="truncate">{activeOrganizationName}</span>
+        </div>
+        <p className="truncate text-xs text-muted-foreground">{activeRoleLabel}</p>
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      </div>
+    );
+  }
+
   return (
     <div className="min-w-0 space-y-1.5">
-      {hasMultipleOrganizations ? (
-        <Select disabled={isSubmitting} onValueChange={onValueChange} value={selectedOrganizationId}>
-          <SelectTrigger className="h-11 rounded-2xl border-white/10 bg-transparent px-3 text-left shadow-none focus:ring-0">
-            <SelectValue placeholder="Select organization" />
-          </SelectTrigger>
-          <SelectContent align="start" className="border-white/10 bg-background/95 backdrop-blur-xl">
-            {organizations.map((organization) => (
-              <SelectItem key={organization.id} value={organization.id}>
-                {organization.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <div className="flex min-h-11 items-center rounded-2xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
-          <span className="truncate">{currentOrganization?.name ?? "Organization"}</span>
-        </div>
-      )}
-      <p className="truncate text-xs text-muted-foreground">
-        {currentOrganization ? `${currentOrganization.role} access` : "Organization access"}
-      </p>
-      {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="h-auto w-full items-start justify-between rounded-2xl border-white/10 bg-transparent px-3 py-2 text-left shadow-none hover:bg-white/5"
+            disabled={isSubmitting}
+            variant="outline"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{activeOrganizationName}</p>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {isSubmitting ? "Switching organization..." : activeRoleLabel}
+              </p>
+            </div>
+            <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-[320px] border-white/10 bg-background/95 p-2 backdrop-blur-xl">
+          <DropdownMenuLabel>Switch organization</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {organizations.map((organization) => {
+            const isCurrent = organization.id === selectedOrganizationId;
+
+            return (
+              <DropdownMenuItem
+                key={organization.id}
+                className="flex items-start justify-between gap-3 rounded-xl px-3 py-3"
+                disabled={isCurrent || isSubmitting}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  void onOrganizationSelect(organization.id);
+                }}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{organization.name}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {organization.role} · {getSubscriptionPlanLabel(organization.subscriptionPlan)}
+                  </p>
+                </div>
+                {isCurrent ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" /> : null}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <p className="truncate text-xs text-muted-foreground">{activeRoleLabel}</p>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );
 }

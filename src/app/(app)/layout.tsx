@@ -18,6 +18,7 @@ export default async function AppLayout({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.12),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(16,185,129,0.09),_transparent_28%)]" />
           <AppHeader
             currentOrganizationId={organization.id}
+            organizationName={organization.name}
             organizations={session?.user.organizations ?? []}
             subscriptionPlan={organization.subscriptionPlan}
           />
