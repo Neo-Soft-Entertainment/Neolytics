@@ -47,9 +47,9 @@ export const subscriptionFeatureRows: Array<{
 ];
 
 export const subscriptionTruthNotes = [
-  "Steam Radar, Market Research, Revenue Calculator, Steam X-Ray, and Guided Journey are live across all plans today.",
-  "Community access, Community Ranking, PDF Export, Art Analyses, Viability Analysis volume, GDD volume, and Game Board project limits are enforced in the product now.",
-  "Early Access applies to future beta features and staged releases as they are introduced."
+  "Steam Radar, Market Research, Revenue Calculator, and Guided Journey are live across all plans today.",
+  "Community access, Community Ranking, PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and Steam X-Ray tiers are enforced in the product now.",
+  "Early Access currently unlocks the raw Steam snapshot stream beta on Pro."
 ];
 
 export const subscriptionPlans = {
@@ -59,7 +59,7 @@ export const subscriptionPlans = {
     description: "For solo exploration and early validation.",
     highlights: [
       "Steam Radar, market research, and revenue calculator",
-      "Full Steam X-Ray access with current live scope",
+      "Basic Steam X-Ray access",
       "1 seat and 1 workspace",
       "3 active Game Board projects",
       "10 viability analyses per month",
@@ -71,7 +71,7 @@ export const subscriptionPlans = {
       marketResearch: "Included",
       revenueCalculator: "Included",
       communityFeed: "Not included",
-      steamXray: "Included",
+      steamXray: "Basic access",
       viabilityAnalyses: "10 / month",
       artAnalyses: "Not included",
       gameBoardProjects: "3 active",
@@ -100,7 +100,7 @@ export const subscriptionPlans = {
     description: "For serious studios building a steady research workflow.",
     highlights: [
       "Community, ranking, and PDF export",
-      "Full Steam X-Ray access with current live scope",
+      "Advanced Steam X-Ray access",
       "5 seats and 5 workspaces",
       "20 active Game Board projects",
       "100 viability analyses per month",
@@ -111,7 +111,7 @@ export const subscriptionPlans = {
       marketResearch: "Included",
       revenueCalculator: "Included",
       communityFeed: "Included",
-      steamXray: "Included",
+      steamXray: "Advanced access",
       viabilityAnalyses: "100 / month",
       artAnalyses: "25 / month",
       gameBoardProjects: "20 active",
@@ -139,7 +139,7 @@ export const subscriptionPlans = {
     priceLabel: "$200",
     description: "For power users who want essentially unrestricted research velocity.",
     highlights: [
-      "Full Steam X-Ray access with current live scope",
+      "Unlimited Steam X-Ray history",
       "Unlimited viability analyses",
       "Unlimited Game Board projects",
       "Unlimited GDDs",
@@ -151,7 +151,7 @@ export const subscriptionPlans = {
       marketResearch: "Included",
       revenueCalculator: "Included",
       communityFeed: "Included",
-      steamXray: "Included",
+      steamXray: "Unlimited",
       viabilityAnalyses: "Unlimited",
       artAnalyses: "Unlimited",
       gameBoardProjects: "Unlimited",
@@ -195,4 +195,20 @@ export function formatSubscriptionLimit(limit: number | null) {
 export function hasSubscriptionCapability(plan: SubscriptionPlan, capability: SubscriptionCapability) {
   const value = subscriptionPlans[plan].featureAccess[capability];
   return value !== "Not included";
+}
+
+export function getSteamXrayHistoryLimit(plan: SubscriptionPlan) {
+  if (plan === SubscriptionPlan.FREE) {
+    return 30;
+  }
+
+  if (plan === SubscriptionPlan.PLUS) {
+    return 180;
+  }
+
+  return 365;
+}
+
+export function canAccessSteamXrayPlayerHistory(plan: SubscriptionPlan) {
+  return plan !== SubscriptionPlan.FREE;
 }

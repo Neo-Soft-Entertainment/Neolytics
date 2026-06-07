@@ -6,12 +6,11 @@ import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
 import { ChartCard } from "@/components/charts/chart-card";
 import { HistoryLineChart } from "@/components/charts/history-line-chart";
-import { useGameDetails, useGameHistory } from "@/features/games/hooks";
+import { useGameDetails, useGameHistory, useGameSnapshots } from "@/features/games/hooks";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export function GameDetailClient({ appId }: { appId: number }) {
   const detailsQuery = useGameDetails(appId);
-  const historyQuery = useGameHistory(appId);
 
   if (detailsQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading game details...</p>;
@@ -22,7 +21,10 @@ export function GameDetailClient({ appId }: { appId: number }) {
   }
 
   const game: any = detailsQuery.data;
+  const historyQuery = useGameHistory(appId);
+  const snapshotsQuery = useGameSnapshots(appId, game.steamXrayAccess.rawSnapshotsBetaAvailable);
   const history: any = historyQuery.data;
+  const snapshots: any[] = snapshotsQuery.data ?? [];
 
   return (
     <div className="space-y-6">
@@ -42,7 +44,10 @@ export function GameDetailClient({ appId }: { appId: number }) {
         </div>
         <Card className="w-full max-w-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
-            <CardTitle>Current snapshot</CardTitle>
+            <div className="space-y-2">
+              <CardTitle>Current snapshot</CardTitle>
+              <Badge variant="outline">{`Steam X-Ray · ${game.steamXrayAccess.label}`}</Badge>
+            </div>
             <ExportActions
               label="Export"
               xlsxHref={`/api/exports/games/${appId}?format=xlsx`}
@@ -51,6 +56,11 @@ export function GameDetailClient({ appId }: { appId: number }) {
             />
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              {game.steamXrayAccess.playerHistoryAvailable
+                ? `${game.steamXrayAccess.historyLimit} days of history are available on this plan.`
+                : `This plan includes ${game.steamXrayAccess.historyLimit} days of price and review history.`}
+            </p>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Price</span>
               <span>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</span>
@@ -126,7 +136,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
           )}
         </ChartCard>
         <ChartCard title="Player history">
-          {history?.playerHistory?.length ? (
+          {game.steamXrayAccess.playerHistoryAvailable && history?.playerHistory?.length ? (
             <HistoryLineChart
               data={history.playerHistory.map((item: any) => ({
                 date: new Date(item.snapshotDate).toLocaleDateString(),
@@ -135,11 +145,45 @@ export function GameDetailClient({ appId }: { appId: number }) {
               xKey="date"
               yKey="players"
             />
-          ) : (
+          ) : game.steamXrayAccess.playerHistoryAvailable ? (
             <p className="text-sm text-muted-foreground">No player history yet.</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Player concurrency history starts on Plus.</p>
           )}
         </ChartCard>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Steam X-Ray scope</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>{`Current tier: ${game.steamXrayAccess.label}.`}</p>
+          <p>{`History window: ${game.steamXrayAccess.historyLimit} days for chart data.`}</p>
+          <p>{game.steamXrayAccess.playerHistoryAvailable ? "Player history is available on this plan." : "Player history unlocks on Plus and Pro."}</p>
+          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Raw snapshot stream beta is enabled on this plan." : "Raw snapshot stream beta is available on Pro."}</p>
+        </CardContent>
+      </Card>
+      {game.steamXrayAccess.rawSnapshotsBetaAvailable ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Raw snapshot stream beta</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {snapshots.length > 0 ? (
+              snapshots.slice(0, 10).map((snapshot) => (
+                <div key={snapshot.snapshotDate} className="rounded-2xl border p-3">
+                  <p className="font-medium">{new Date(snapshot.snapshotDate).toLocaleString()}</p>
+                  <p className="text-muted-foreground">
+                    {`Players: ${formatNumber(snapshot.currentPlayers ?? null)} · Review score: ${snapshot.reviewScore ? `${snapshot.reviewScore.toFixed(1)}%` : "N/A"}`}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-muted-foreground">No raw snapshots available yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>

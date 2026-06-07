@@ -1,8 +1,13 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, SubscriptionPlan } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { getFinanceOverview } from "@/lib/finance-service";
 import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
+import {
+  canAccessSteamXrayPlayerHistory,
+  getSteamXrayHistoryLimit,
+  hasSubscriptionCapability
+} from "@/lib/subscription-plans";
 
 function revenueToNumber(value: bigint | number | null | undefined) {
   if (value === null || value === undefined) {
@@ -163,7 +168,21 @@ export async function getGameByAppId(appId: number) {
   });
 }
 
-export async function getGameSnapshots(appId: number) {
+export function getSteamXrayAccess(plan: SubscriptionPlan) {
+  return {
+    label:
+      plan === "FREE"
+        ? "Basic access"
+        : plan === "PLUS"
+          ? "Advanced access"
+          : "Unlimited",
+    historyLimit: getSteamXrayHistoryLimit(plan),
+    playerHistoryAvailable: canAccessSteamXrayPlayerHistory(plan),
+    rawSnapshotsBetaAvailable: hasSubscriptionCapability(plan, "earlyAccess")
+  };
+}
+
+export async function getGameSnapshots(appId: number, limit = 90) {
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -180,11 +199,11 @@ export async function getGameSnapshots(appId: number) {
     orderBy: {
       snapshotDate: "desc"
     },
-    take: 90
+    take: limit
   });
 }
 
-export async function getPriceHistory(appId: number) {
+export async function getPriceHistory(appId: number, limit = 180) {
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -201,11 +220,11 @@ export async function getPriceHistory(appId: number) {
     orderBy: {
       snapshotDate: "asc"
     },
-    take: 180
+    take: limit
   });
 }
 
-export async function getReviewHistory(appId: number) {
+export async function getReviewHistory(appId: number, limit = 180) {
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -222,11 +241,11 @@ export async function getReviewHistory(appId: number) {
     orderBy: {
       snapshotDate: "asc"
     },
-    take: 180
+    take: limit
   });
 }
 
-export async function getPlayerHistory(appId: number) {
+export async function getPlayerHistory(appId: number, limit = 180) {
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -243,7 +262,7 @@ export async function getPlayerHistory(appId: number) {
     orderBy: {
       snapshotDate: "asc"
     },
-    take: 180
+    take: limit
   });
 }
 

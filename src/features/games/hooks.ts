@@ -30,6 +30,12 @@ export interface GameSearchResponse {
 export interface GameDetailResponse extends GameListItem {
   shortDescription: string | null;
   currentPlayers: number | null;
+  steamXrayAccess: {
+    label: string;
+    historyLimit: number;
+    playerHistoryAvailable: boolean;
+    rawSnapshotsBetaAvailable: boolean;
+  };
   developers: Array<{
     steamDeveloper: {
       name: string;
@@ -58,6 +64,8 @@ export interface GameDetailResponse extends GameListItem {
 
 export interface SnapshotPoint {
   snapshotDate: string;
+  currentPlayers?: number | null;
+  reviewScore?: number | null;
 }
 
 export interface PriceHistoryPoint extends SnapshotPoint {
@@ -114,6 +122,14 @@ export function useGameHistory(appId: number) {
         estimates
       };
     }
+  });
+}
+
+export function useGameSnapshots(appId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["games", appId, "snapshots"],
+    queryFn: () => apiClient<SnapshotPoint[]>(`/api/games/${appId}/snapshots`),
+    enabled
   });
 }
 

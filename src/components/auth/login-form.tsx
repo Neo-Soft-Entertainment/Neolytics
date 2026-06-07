@@ -40,11 +40,32 @@ export function LoginForm({
 
   const hasSocialLogin = hasGoogleLogin || hasDiscordLogin;
 
+  async function checkAuthAvailability() {
+    const response = await fetch("/api/auth/status", {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    if (response.ok) {
+      return true;
+    }
+
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    setError(payload?.message ?? "Authentication servers are temporarily unavailable. Try again later.");
+    return false;
+  }
+
   async function onSubmit(values: FormValues) {
     setError(null);
     const callbackUrl = inviteToken ? `/invite/${inviteToken}` : "/dashboard";
 
     try {
+      const isAvailable = await checkAuthAvailability();
+
+      if (!isAvailable) {
+        return;
+      }
+
       const result = await signIn("credentials", {
         email: values.email.trim().toLowerCase(),
         password: values.password,
@@ -58,7 +79,7 @@ export function LoginForm({
       }
 
       if (result.error) {
-        setError("Invalid email or password.");
+        setError(result.error === "CredentialsSignin" ? "Invalid email or password." : "Authentication failed. Try again later.");
         return;
       }
 
@@ -70,12 +91,18 @@ export function LoginForm({
       window.location.assign(result.url);
       return;
     } catch {
-      setError("We could not sign you in right now. Try again in a few seconds.");
+      setError("Authentication servers are temporarily unavailable. Try again later.");
     }
   }
 
   async function onGoogleSignIn() {
     setError(null);
+    const isAvailable = await checkAuthAvailability();
+
+    if (!isAvailable) {
+      return;
+    }
+
     setIsSocialLoading("google");
     await signIn("google", {
       callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
@@ -85,6 +112,12 @@ export function LoginForm({
 
   async function onDiscordSignIn() {
     setError(null);
+    const isAvailable = await checkAuthAvailability();
+
+    if (!isAvailable) {
+      return;
+    }
+
     setIsSocialLoading("discord");
     await signIn("discord", {
       callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
