@@ -1,6 +1,9 @@
+import { Prisma } from "@prisma/client";
+
 import { db } from "@/lib/db";
 import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import { generateAiSegmentReportLayer } from "@/lib/market-analysis-ai";
 import { buildSegmentIntelligence } from "@/lib/market-intelligence";
 import { consumeSubscriptionUsage, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
@@ -174,6 +177,21 @@ export async function generateBasicMarketReport(params: {
   const leaders = [...topGames]
     .sort((left, right) => Number(right.revenueEstimates[0]?.medianNetRevenueCents ?? 0n) - Number(left.revenueEstimates[0]?.medianNetRevenueCents ?? 0n))
     .slice(0, 10);
+  const aiNarrative = await generateAiSegmentReportLayer({
+    title: params.title,
+    genre: params.genre,
+    tag: params.tag,
+    segment,
+    leaders: leaders.map((game) => ({
+      name: game.name,
+      priceCents: game.priceCurrent?.finalPriceCents ?? null,
+      reviewScore: game.reviewScore,
+      reviewCount: game.reviewCount,
+      medianRevenueCents: Number(game.revenueEstimates[0]?.medianNetRevenueCents ?? 0n),
+      genres: game.genres.map((genre) => genre.steamGenre.name),
+      tags: game.tags.map((tag) => tag.steamTag.name)
+    }))
+  });
 
   const content = [
     `# ${params.title}`,
@@ -210,6 +228,34 @@ export async function generateBasicMarketReport(params: {
     segment.revenueConcentrationPercent >= 65
       ? "Revenue is concentrated in a few leaders, so beating the winners on shelf clarity and quality is more important than simply matching the average feature set."
       : "Revenue is relatively spread across the segment, which means there is a healthier path for mid-tier entrants to carve out a business.",
+    ...(aiNarrative
+      ? [
+          "",
+          "## AI Strategic Read",
+          aiNarrative.executiveSummary,
+          "",
+          "### Demand drivers",
+          aiNarrative.demandDrivers,
+          "",
+          "### Saturation",
+          aiNarrative.saturationRead,
+          "",
+          "### Pricing",
+          aiNarrative.pricingRead,
+          "",
+          "### Launch window",
+          aiNarrative.launchWindowAdvice,
+          "",
+          "### Monetization",
+          aiNarrative.monetizationRead,
+          "",
+          "### Confidence",
+          aiNarrative.confidenceNarrative,
+          "",
+          "### Recommended next moves",
+          ...aiNarrative.actionItems.map((item) => `- ${item}`)
+        ]
+      : []),
     "",
     "## Price Distribution",
     `- Under $10: ${segment.priceBandDistribution.under10}`,
@@ -227,6 +273,13 @@ export async function generateBasicMarketReport(params: {
       })}`;
     })
   ].join("\n");
+  const reportMetadata = {
+    genre: params.genre,
+    tag: params.tag,
+    generatedAt: new Date().toISOString(),
+    segment,
+    aiNarrative
+  } as Prisma.InputJsonObject;
 
   const report = await db.$transaction(async (tx) => {
     await consumeSubscriptionUsage(params.organizationId, "reportsGenerated", tx);
@@ -241,12 +294,7 @@ export async function generateBasicMarketReport(params: {
         title: params.title,
         subject: params.genre ?? params.tag ?? "steam-market",
         content,
-        metadata: {
-          genre: params.genre,
-          tag: params.tag,
-          generatedAt: new Date().toISOString(),
-          segment
-        }
+        metadata: reportMetadata
       }
     });
   });

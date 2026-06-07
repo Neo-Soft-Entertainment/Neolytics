@@ -101,6 +101,23 @@ export interface ProjectDetailResponse extends ProjectListItem {
         positioningClarityScore: number;
         overallFitScore: number;
       };
+      aiLayer?: {
+        marketSummary: string;
+        opportunitySummary: string;
+        riskSummary: string;
+        audienceAutofill: string;
+        coreLoopAutofill: string;
+        strategicNarrative: string;
+        positioningSummary: string;
+        launchStrategy: string;
+        pricingNarrative: string;
+        storeCapsuleAdvice: string;
+        confidenceNarrative: string;
+        creativeAngles: string[];
+        acquisitionChannels: string[];
+        wishlistDrivers: string[];
+        redFlags: string[];
+      };
     } | null;
   } | null;
   artAnalysis: {

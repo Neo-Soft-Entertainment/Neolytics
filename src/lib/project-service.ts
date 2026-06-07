@@ -3,6 +3,7 @@ import { Prisma, ProjectStage } from "@prisma/client";
 import { db } from "@/lib/db";
 import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { slugify } from "@/lib/slugify";
 import {
   consumeSubscriptionUsage,
@@ -956,16 +957,91 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     project.differentiator?.trim(),
     crowdednessScore >= 65 ? "The positioning hook must be visible in the first few seconds of store exposure because the direct shelf is crowded." : "There is room to win with a more focused concept if the store fantasy lands cleanly.",
     priceFitScore < 60 && medianPriceCents > 0 ? `Revisit pricing toward the segment center around ${formatMoney(medianPriceCents)} unless scope clearly justifies the gap.` : null,
-    dominantMonetization.fitScore < 55 ? `Clarify why your monetization model should outperform the segment's ${dominantMonetization.dominant} baseline.` : null
+     dominantMonetization.fitScore < 55 ? `Clarify why your monetization model should outperform the segment's ${dominantMonetization.dominant} baseline.` : null
   ].filter((item): item is string => Boolean(item));
+  const aiLayer = await generateAiProjectMarketAnalysis({
+    project: {
+      name: project.name,
+      elevatorPitch: project.elevatorPitch,
+      description: project.description,
+      genreInput: project.genreInput,
+      tagInput: project.tagInput,
+      targetAudience: project.targetAudience,
+      coreLoop: project.coreLoop,
+      differentiator: project.differentiator,
+      monetizationModel: project.monetizationModel,
+      playerFantasy: project.playerFantasy,
+      pricePointCents: project.pricePointCents
+    },
+    market: {
+      matchingGamesCount: matchingGames.length,
+      directComparableCount: directComparables.length,
+      adjacentComparableCount: adjacentComparables.length,
+      marketSizeLabel: marketDepth.marketSizeLabel,
+      marketSizeCents: totalRevenueCents,
+      medianRevenueCents,
+      averageReviewScore,
+      medianPriceCents,
+      crowdednessScore,
+      revenueConcentrationPercent,
+      confidenceScore,
+      confidenceLabel: marketDepth.confidenceLabel,
+      opportunityScore,
+      riskScore,
+      executionBarScore,
+      reviewVelocity90: reviewVelocity.reviewVelocity90,
+      previousReviewVelocity90: reviewVelocity.previousReviewVelocity90,
+      playerMomentum30: Math.round(playerMomentum.playerMomentum30),
+      previousPlayerMomentum30: Math.round(playerMomentum.previousPlayerMomentum30),
+      launches90,
+      launches180,
+      launches365,
+      dominantMonetization: dominantMonetization.dominant,
+      premiumSharePercent: competitionLayer.premiumSharePercent,
+      practicalRecommendations,
+      keyMismatches,
+      directComparables: directComparables.slice(0, 8).map((game) => ({
+        name: game.name,
+        reviewScore: game.reviewScore,
+        reviewCount: game.reviewCount,
+        priceCents: game.priceCurrent?.finalPriceCents ?? null,
+        medianRevenueCents: revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents),
+        genres: game.genres.map((genre) => genre.steamGenre.name),
+        tags: game.tags.map((tag) => tag.steamTag.name)
+      })),
+      adjacentComparables: adjacentComparables.slice(0, 8).map((game) => ({
+        name: game.name,
+        reviewScore: game.reviewScore,
+        reviewCount: game.reviewCount,
+        priceCents: game.priceCurrent?.finalPriceCents ?? null,
+        medianRevenueCents: revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents),
+        genres: game.genres.map((genre) => genre.steamGenre.name),
+        tags: game.tags.map((tag) => tag.steamTag.name)
+      }))
+    }
+  });
+  const finalMarketSummary = aiLayer?.marketSummary || marketSummary;
+  const finalOpportunitySummary = aiLayer?.opportunitySummary || opportunitySummary;
+  const finalRiskSummary = aiLayer?.riskSummary || riskSummary;
+  const finalAudienceAutofill = aiLayer?.audienceAutofill || audienceAutofill;
+  const finalCoreLoopAutofill = aiLayer?.coreLoopAutofill || coreLoopAutofill;
+  const analysisMetadata = {
+    topCompetitorIds: topCompetitors.map((game) => game.id),
+    topCompetitorNames: topCompetitors.map((game) => game.name),
+    marketDepth,
+    competitionLayer,
+    opportunityLayer,
+    projectFitLayer,
+    aiLayer
+  } as Prisma.InputJsonObject;
 
   await db.project.update({
     where: {
       id: project.id
     },
     data: {
-      targetAudience: project.targetAudience?.trim() || audienceAutofill,
-      coreLoop: project.coreLoop?.trim() || coreLoopAutofill,
+      targetAudience: project.targetAudience?.trim() || finalAudienceAutofill,
+      coreLoop: project.coreLoop?.trim() || finalCoreLoopAutofill,
       differentiator: project.differentiator?.trim() || differentiators[0] || null,
       genreInput: project.genreInput?.trim() || (suggestedGenres.length > 0 ? suggestedGenres.join(", ") : null),
       tagInput: project.tagInput?.trim() || (suggestedTags.length > 0 ? suggestedTags.join(", ") : null)
@@ -984,22 +1060,15 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       averageReviewScore,
       averagePriceCents,
       medianRevenueCents: BigInt(medianRevenueCents),
-      marketSummary,
-      opportunitySummary,
-      riskSummary,
-      audienceAutofill,
-      coreLoopAutofill,
+      marketSummary: finalMarketSummary,
+      opportunitySummary: finalOpportunitySummary,
+      riskSummary: finalRiskSummary,
+      audienceAutofill: finalAudienceAutofill,
+      coreLoopAutofill: finalCoreLoopAutofill,
       suggestedGenres,
       suggestedTags,
       differentiators,
-      metadata: {
-        topCompetitorIds: topCompetitors.map((game) => game.id),
-        topCompetitorNames: topCompetitors.map((game) => game.name),
-        marketDepth,
-        competitionLayer,
-        opportunityLayer,
-        projectFitLayer
-      }
+      metadata: analysisMetadata
     },
     create: {
       projectId: project.id,
@@ -1009,22 +1078,15 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       averageReviewScore,
       averagePriceCents,
       medianRevenueCents: BigInt(medianRevenueCents),
-      marketSummary,
-      opportunitySummary,
-      riskSummary,
-      audienceAutofill,
-      coreLoopAutofill,
+      marketSummary: finalMarketSummary,
+      opportunitySummary: finalOpportunitySummary,
+      riskSummary: finalRiskSummary,
+      audienceAutofill: finalAudienceAutofill,
+      coreLoopAutofill: finalCoreLoopAutofill,
       suggestedGenres,
       suggestedTags,
       differentiators,
-      metadata: {
-        topCompetitorIds: topCompetitors.map((game) => game.id),
-        topCompetitorNames: topCompetitors.map((game) => game.name),
-        marketDepth,
-        competitionLayer,
-        opportunityLayer,
-        projectFitLayer
-      }
+      metadata: analysisMetadata
     }
   });
 

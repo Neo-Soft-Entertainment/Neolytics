@@ -607,6 +607,7 @@ export function ProjectDetailClient({
   const competitionLayer = project.analysis?.metadata?.competitionLayer ?? null;
   const opportunityLayer = project.analysis?.metadata?.opportunityLayer ?? null;
   const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
+  const aiLayer = project.analysis?.metadata?.aiLayer ?? null;
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
   const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
@@ -839,6 +840,76 @@ export function ProjectDetailClient({
                   </p>
                   </div>
                 </div>
+                {aiLayer ? (
+                  <>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">AI strategic read</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.strategicNarrative}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Positioning wedge</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.positioningSummary}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Launch strategy</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.launchStrategy}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Pricing and offer design</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.pricingNarrative}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Store capsule and messaging</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.storeCapsuleAdvice}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">AI confidence read</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.confidenceNarrative}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Creative angles</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiLayer.creativeAngles.map((item) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Acquisition channels</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiLayer.acquisitionChannels.map((item) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Wishlist drivers</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiLayer.wishlistDrivers.map((item) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">AI red flags</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiLayer.redFlags.map((item) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
               </CardContent>
             </Card>
             <div className="grid gap-4 xl:grid-cols-2">
