@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { subscriptionPlans } from "@/lib/subscription-plans";
+import { subscriptionPlans, subscriptionTruthNotes } from "@/lib/subscription-plans";
 
 type FormValues = {
   name: string;
@@ -228,7 +228,7 @@ export function SignupForm({
               <div className="space-y-3 md:col-span-2">
                 <Label>Plan</Label>
                 <p className="text-sm text-muted-foreground">
-                  These plan details reflect the live product scope today. Community, PDF export, project caps, GDD caps, art analyses, and viability analysis limits are enforced in the app.
+                  These plan details reflect the official live product scope today, not a speculative roadmap.
                 </p>
                 <div className="grid gap-3 md:grid-cols-3">
                   {Object.entries(subscriptionPlans).map(([planKey, plan]) => {
@@ -257,6 +257,14 @@ export function SignupForm({
                       </button>
                     );
                   })}
+                </div>
+                <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground">Official live scope</p>
+                  <div className="mt-3 space-y-2">
+                    {subscriptionTruthNotes.map((note) => (
+                      <p key={note}>{note}</p>
+                    ))}
+                  </div>
                 </div>
                 {form.formState.errors.plan ? (
                   <p className="text-sm text-destructive">{form.formState.errors.plan.message}</p>
