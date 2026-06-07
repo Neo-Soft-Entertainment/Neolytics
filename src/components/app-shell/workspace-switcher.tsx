@@ -4,7 +4,6 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,7 +72,7 @@ export function WorkspaceSwitcher({
   if (workspaces.length <= 1) {
     return (
       <div className="min-w-0 space-y-1.5">
-        <div className="flex min-h-11 items-center rounded-2xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
+        <div className="flex min-h-11 items-center rounded-xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
           <span className="truncate">{activeWorkspaceName}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">Current workspace</p>
@@ -86,10 +85,10 @@ export function WorkspaceSwitcher({
     <div className="min-w-0 space-y-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            className="h-auto w-full items-start justify-between rounded-2xl border-white/10 bg-transparent px-3 py-2 text-left shadow-none hover:bg-white/5"
+          <button
+            className="flex min-h-11 w-full items-center justify-between rounded-xl border border-white/10 bg-white/35 px-3 py-2 text-left transition-colors hover:bg-white/45 disabled:pointer-events-none disabled:opacity-50 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
             disabled={isSubmitting}
-            variant="outline"
+            type="button"
           >
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{activeWorkspaceName}</p>
@@ -98,9 +97,9 @@ export function WorkspaceSwitcher({
               </p>
             </div>
             <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
-          </Button>
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[320px] border-white/10 bg-background/95 p-2 backdrop-blur-xl">
+        <DropdownMenuContent align="start" className="mt-2 w-[320px] rounded-2xl border-white/10 bg-background/95 p-2 shadow-[0_24px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl" sideOffset={10}>
           <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {workspaces.map((workspace) => {
