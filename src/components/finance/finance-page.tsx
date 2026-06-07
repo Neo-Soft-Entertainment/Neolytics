@@ -47,11 +47,21 @@ function formatDateInput(value?: string | null) {
 }
 
 export function FinancePage({
+  canAccessApprovalsAudit,
+  canAccessContractsRoyalties,
+  canAccessFinanceWorkspace,
+  canAccessInvoiceOps,
   organizationName,
+  planLabel,
   canManage,
   data
 }: {
+  canAccessApprovalsAudit: boolean;
+  canAccessContractsRoyalties: boolean;
+  canAccessFinanceWorkspace: boolean;
+  canAccessInvoiceOps: boolean;
   organizationName: string;
+  planLabel: string;
   canManage: boolean;
   data: {
     projects: Array<{ id: string; name: string; stage: string }>;
@@ -275,11 +285,45 @@ export function FinancePage({
       expensesPaidCents: number;
       netCents: number;
     }>;
-  };
+  } | null;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  if (!canAccessFinanceWorkspace || !data) {
+    return (
+      <div className="space-y-6">
+        <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
+          <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+            <div className="space-y-4">
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Finance</h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  Run budgets, revenue, expenses, contracts, invoices, payables, and approvals as one studio finance workspace.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
+                  ERP finance layer
+                </Badge>
+                <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
+                  Current plan: {planLabel}
+                </Badge>
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] border border-amber-400/25 bg-amber-500/10 p-4 text-sm">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">Upgrade required</p>
+              <p className="mt-2 font-medium text-foreground">Finance Workspace starts on Plus.</p>
+              <p className="mt-2 text-muted-foreground">
+                Upgrade to unlock budgets, revenue, expenses, and the operating finance layer for the studio.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   async function submitJson(url: string, body: Record<string, unknown>, successMessage: string) {
     setMessage(null);
@@ -383,10 +427,17 @@ export function FinancePage({
               <span className="text-muted-foreground">Pending receivables</span>
               <span className="font-medium">{formatCurrency(data.summary.pendingRevenueCents)}</span>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Pending payables</span>
-              <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
-            </div>
+            {canAccessInvoiceOps ? (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Pending payables</span>
+                <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Invoice ops</span>
+                <span className="font-medium">Pro</span>
+              </div>
+            )}
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Live operating view</p>
               <p className="mt-2 font-medium">Keep project economics, contracts, royalties, invoices, and approvals in one operating ledger.</p>
@@ -400,21 +451,34 @@ export function FinancePage({
         <KpiCard label="Planned budget" value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
         <KpiCard label="Revenue received" value={formatCurrency(data.summary.totalRevenueNetCents)} />
         <KpiCard label="Expenses paid" value={formatCurrency(data.summary.totalExpensesPaidCents)} />
-        <KpiCard label="Payables open" value={formatCurrency(data.summary.payableOpenCents)} />
-        <KpiCard label="Titles overdue" value={formatNumber(data.summary.overduePayablesCount)} />
+        {canAccessInvoiceOps ? <KpiCard label="Payables open" value={formatCurrency(data.summary.payableOpenCents)} /> : null}
+        {canAccessInvoiceOps ? <KpiCard label="Titles overdue" value={formatNumber(data.summary.overduePayablesCount)} /> : null}
       </div>
 
-      <AccountsPayableSection
-        canManage={canManage}
-        costCenters={data.costCenters}
-        payableTitles={data.payableTitles}
-        projects={data.projects}
-        submitJson={submitJson}
-        summary={{
-          payableOpenCents: data.summary.payableOpenCents,
-          overduePayablesCount: data.summary.overduePayablesCount
-        }}
-      />
+      {canAccessInvoiceOps ? (
+        <AccountsPayableSection
+          canManage={canManage}
+          costCenters={data.costCenters}
+          payableTitles={data.payableTitles}
+          projects={data.projects}
+          submitJson={submitJson}
+          summary={{
+            payableOpenCents: data.summary.payableOpenCents,
+            overduePayablesCount: data.summary.overduePayablesCount
+          }}
+        />
+      ) : (
+        <Card className="overflow-hidden border-amber-400/20">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Invoices & payables</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Accounts payable, issued invoices, received invoices, and payment tracking start on Pro.</p>
+            <p>Your current plan can still run budgets, revenue, expenses, and project finance snapshots.</p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="overflow-hidden">
@@ -877,7 +941,7 @@ export function FinancePage({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="overflow-hidden">
+          <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Revenue ledger</CardTitle>
@@ -938,7 +1002,7 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden">
+          <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Expense ledger</CardTitle>
@@ -999,11 +1063,12 @@ export function FinancePage({
               <p className="text-sm text-muted-foreground">No expense entries yet.</p>
             ) : null}
           </CardContent>
-        </Card>
+          </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card className="overflow-hidden">
+      {canAccessContractsRoyalties ? (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Contracts</CardTitle>
@@ -1124,7 +1189,7 @@ export function FinancePage({
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden">
+          <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Royalties</CardTitle>
@@ -1235,8 +1300,21 @@ export function FinancePage({
           </CardContent>
         </Card>
       </div>
+      ) : (
+        <Card className="overflow-hidden border-amber-400/20">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Contracts & royalties</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Commercial agreements, recoup structures, royalty statements, and linked deal records are part of Pro.</p>
+            <p>That keeps the deeper commercial operations layer distinct from the core finance workspace.</p>
+          </CardContent>
+        </Card>
+      )}
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      {canAccessInvoiceOps ? (
+        <div className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
@@ -1381,52 +1459,66 @@ export function FinancePage({
               </div>
             ))}
           </CardContent>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      ) : null}
 
-      <Card className="overflow-hidden">
-        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-        <CardHeader>
-          <CardTitle>Approvals</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {data.approvalRequests.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No approval requests yet.</p>
-          ) : (
-            data.approvalRequests.map((approval) => (
-              <div key={approval.id} className="rounded-2xl border p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium">{approval.actionLabel}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {approval.entityType} · {approval.project?.name ?? approval.contract?.title ?? "Organization-wide"} · requested by {approval.requestedBy.name ?? approval.requestedBy.email}
-                    </p>
-                    {approval.reason ? <p className="text-sm text-muted-foreground">{approval.reason}</p> : null}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={approval.status === ApprovalStatus.PENDING ? "secondary" : "default"}>
-                      {approval.status}
-                    </Badge>
-                    <span className="text-sm font-medium">
-                      {approval.amountCents !== null ? formatCurrency(approval.amountCents) : "No amount"}
-                    </span>
-                    {approval.status === ApprovalStatus.PENDING && canManage ? (
-                      <>
-                        <Button size="sm" type="button" onClick={() => patchApproval(approval.id, ApprovalStatus.APPROVED)}>
-                          Approve
-                        </Button>
-                        <Button size="sm" type="button" variant="destructive" onClick={() => patchApproval(approval.id, ApprovalStatus.REJECTED)}>
-                          Reject
-                        </Button>
-                      </>
-                    ) : null}
+      {canAccessApprovalsAudit ? (
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Approvals</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {data.approvalRequests.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No approval requests yet.</p>
+            ) : (
+              data.approvalRequests.map((approval) => (
+                <div key={approval.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-1">
+                      <p className="font-medium">{approval.actionLabel}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {approval.entityType} · {approval.project?.name ?? approval.contract?.title ?? "Organization-wide"} · requested by {approval.requestedBy.name ?? approval.requestedBy.email}
+                      </p>
+                      {approval.reason ? <p className="text-sm text-muted-foreground">{approval.reason}</p> : null}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={approval.status === ApprovalStatus.PENDING ? "secondary" : "default"}>
+                        {approval.status}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {approval.amountCents !== null ? formatCurrency(approval.amountCents) : "No amount"}
+                      </span>
+                      {approval.status === ApprovalStatus.PENDING && canManage ? (
+                        <>
+                          <Button size="sm" type="button" onClick={() => patchApproval(approval.id, ApprovalStatus.APPROVED)}>
+                            Approve
+                          </Button>
+                          <Button size="sm" type="button" variant="destructive" onClick={() => patchApproval(approval.id, ApprovalStatus.REJECTED)}>
+                            Reject
+                          </Button>
+                        </>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden border-amber-400/20">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Approvals & audit</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Approval queues and decision audit trails are part of Pro.</p>
+            <p>Upgrade when the studio needs formal finance governance across contracts, invoices, payables, and large entries.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

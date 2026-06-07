@@ -5,6 +5,7 @@ import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-
 import { getApiContext } from "@/lib/auth-helpers";
 import { createLegalEntity, getCompanyModuleData } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -29,6 +30,7 @@ export async function GET() {
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "companyHub");
     const data = await getCompanyModuleData(context.organizationId);
     return ok({ legalEntities: data.legalEntities });
   } catch {
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "companyHub");
     const body = await parseJsonBody(request, schema);
     const entity = await createLegalEntity({
       organizationId: context.organizationId,

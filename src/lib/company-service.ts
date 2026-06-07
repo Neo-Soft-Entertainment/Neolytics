@@ -3,6 +3,7 @@ import { CompanyDocumentStatus, CompanyDocumentType, ComplianceStatus, Complianc
 import { createAuditEvent } from "@/lib/audit-service";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/slugify";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
 export async function getCompanyModuleData(organizationId: string) {
@@ -174,6 +175,8 @@ export async function createLegalEntity(params: {
   city?: string;
   state?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const slug = await buildUniqueSlug(slugify(params.name), async (candidate) => {
     const count = await db.legalEntity.count({
       where: {
@@ -241,6 +244,8 @@ export async function updateLegalEntity(params: {
   postalCode?: string;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const entity = await db.legalEntity.findFirst({
     where: {
       id: params.entityId,
@@ -300,6 +305,8 @@ export async function createLegalEntityBranch(params: {
   state?: string;
   cnpj?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const entity = await db.legalEntity.findFirst({
     where: {
       id: params.legalEntityId,
@@ -346,6 +353,8 @@ export async function createLegalEntityShareholder(params: {
   role?: string;
   ownershipPercent?: number;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const entity = await db.legalEntity.findFirst({
     where: {
       id: params.legalEntityId,
@@ -390,6 +399,8 @@ export async function createLegalEntityOfficer(params: {
   title: string;
   email?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const entity = await db.legalEntity.findFirst({
     where: {
       id: params.legalEntityId,
@@ -440,6 +451,8 @@ export async function createCompanyDocument(params: {
   mimeType: string;
   sizeBytes?: number;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "documentVault");
+
   const document = await db.companyDocument.create({
     data: {
       organizationId: params.organizationId,
@@ -491,6 +504,8 @@ export async function addCompanyDocumentVersion(params: {
   mimeType: string;
   sizeBytes?: number;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "documentVault");
+
   const document = await db.companyDocument.findFirst({
     where: {
       id: params.documentId,
@@ -550,6 +565,8 @@ export async function createComplianceItem(params: {
   dueAt?: Date | null;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const item = await db.complianceItem.create({
     data: {
       organizationId: params.organizationId,
@@ -586,6 +603,8 @@ export async function updateComplianceItem(params: {
   status: ComplianceStatus;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "companyHub");
+
   const item = await db.complianceItem.findFirst({
     where: {
       id: params.itemId,

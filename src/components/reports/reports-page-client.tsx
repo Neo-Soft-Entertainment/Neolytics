@@ -44,7 +44,7 @@ export function ReportsPageClient() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Reports</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate a deeper commercial intelligence report with segment sizing, concentration, opportunity, risk, and strategic read from the current Steam dataset.
+          Generate deeper market, commercial, and operating reports with segment sizing, concentration, opportunity, risk, and strategic read from the current studio dataset.
         </p>
       </div>
       <Card>

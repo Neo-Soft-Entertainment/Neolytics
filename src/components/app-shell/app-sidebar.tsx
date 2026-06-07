@@ -32,11 +32,11 @@ export function AppSidebar() {
           className="animate-rise-in"
         />
         <p className="mt-3 text-xs uppercase tracking-[0.3em] text-slate-400">
-          Game Studio ERP
+          Studio ERP + Market OS
         </p>
         <div className="mt-5 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
           <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-200/80">Today</p>
-          <p className="mt-2 text-sm font-medium text-white">Track Steam demand, validate projects, and run finance and company operations from one place.</p>
+          <p className="mt-2 text-sm font-medium text-white">Track demand, validate projects, and run studio finance, company, and execution operations from one place.</p>
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1.5 p-4">

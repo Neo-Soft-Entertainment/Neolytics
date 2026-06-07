@@ -5,6 +5,7 @@ import { createAuditEvent } from "@/lib/audit-service";
 import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/request";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const schema = z.object({
   defaultLanguage: z.string().min(2).max(16),
@@ -23,6 +24,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "companyHub");
     const body = await parseJsonBody(request, schema);
     const organization = await db.organization.update({
       where: {

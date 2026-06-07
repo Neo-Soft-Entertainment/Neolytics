@@ -2,6 +2,7 @@ import { badRequest, forbidden, ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { createCompanyDocumentSignedUrl } from "@/lib/company-storage";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 export async function GET(
   request: Request,
@@ -18,6 +19,7 @@ export async function GET(
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "documentVault");
     const resolvedParams = await params;
     const url = new URL(request.url);
     const versionId = url.searchParams.get("versionId");

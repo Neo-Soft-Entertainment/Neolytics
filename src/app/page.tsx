@@ -34,7 +34,7 @@ export default async function HomePage() {
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
           <div className="max-w-4xl space-y-6">
             <span className="glass-surface animate-rise-in inline-flex rounded-full px-3 py-1 text-sm text-muted-foreground">
-              Steam-first game studio ERP with commercial intelligence
+              Steam-first studio ERP, market operating system, and commercial intelligence layer
             </span>
             <div className="space-y-4">
               <h1 className="animate-rise-in text-5xl font-bold tracking-[-0.07em] sm:text-7xl">
@@ -44,8 +44,8 @@ export default async function HomePage() {
                 </span>
               </h1>
               <p className="animate-rise-in-delay max-w-2xl text-lg leading-8 text-muted-foreground">
-                Neolytics turns Steam commercial intelligence into a game studio ERP:
-                track the market, validate a project, pressure-test the business case, and move into execution without context switching.
+                Neolytics turns Steam intelligence into a studio operating system:
+                research the market, validate the concept, pressure-test the business case, and move into projects, finance, contracts, and company operations without context switching.
               </p>
             </div>
             <div className="animate-rise-in-delay flex flex-wrap gap-3">
@@ -72,7 +72,7 @@ export default async function HomePage() {
               </div>
               <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Layer</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">ERP workflow</p>
+                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Operating system</p>
               </div>
               <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
                 <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Output</p>
@@ -159,7 +159,7 @@ export default async function HomePage() {
               <CardTitle className="text-base">Project operating system</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Run concept analysis, auto-fill market assumptions, generate GDDs, and manage execution in one workspace.
+              Run concept analysis, auto-fill market assumptions, generate GDDs, manage execution, and grow into finance and company workflows in one workspace.
             </CardContent>
           </Card>
         </section>

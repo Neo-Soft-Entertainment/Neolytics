@@ -11,7 +11,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Neolytics",
-  description: "Steam-first game studio ERP for market, projects, finance, and company operations.",
+  description: "Steam-first studio ERP and market operating system for research, projects, finance, contracts, and company operations.",
   icons: {
     icon: [
       { url: "/icon.jpg", type: "image/jpeg" },

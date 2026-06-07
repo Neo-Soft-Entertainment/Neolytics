@@ -4,9 +4,13 @@ import type { CompanyAuditRecord, CompanyComplianceRecord, CompanyDocumentRecord
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { getCompanyModuleData } from "@/lib/company-service";
 import { db } from "@/lib/db";
+import { getSubscriptionPlanLabel, hasSubscriptionCapability } from "@/lib/subscription-plans";
 
 export default async function CompanyRoute() {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
+  const canAccessCompanyHub = hasSubscriptionCapability(organization.subscriptionPlan, "companyHub");
+  const canAccessDocumentVault = hasSubscriptionCapability(organization.subscriptionPlan, "documentVault");
+  const canAccessApprovalsAudit = hasSubscriptionCapability(organization.subscriptionPlan, "approvalsAudit");
   const [membership, data] = await Promise.all([
     session?.user?.id
       ? db.organizationMember.findUnique({
@@ -18,11 +22,11 @@ export default async function CompanyRoute() {
           }
         })
       : null,
-    getCompanyModuleData(organization.id)
+    canAccessCompanyHub ? getCompanyModuleData(organization.id) : null
   ]);
 
-  const legalEntities = JSON.parse(JSON.stringify(data.legalEntities)) as CompanyLegalEntityRecord[];
-  const documents = data.documents.map((document) => ({
+  const legalEntities = JSON.parse(JSON.stringify(data?.legalEntities ?? [])) as CompanyLegalEntityRecord[];
+  const documents = (data?.documents ?? []).map((document) => ({
     ...JSON.parse(JSON.stringify(document)),
     expiresAt: document.expiresAt?.toISOString() ?? null,
     versions: document.versions.map((version) => ({
@@ -30,11 +34,11 @@ export default async function CompanyRoute() {
       createdAt: version.createdAt.toISOString()
     }))
   })) as CompanyDocumentRecord[];
-  const complianceItems = data.complianceItems.map((item) => ({
+  const complianceItems = (data?.complianceItems ?? []).map((item) => ({
     ...JSON.parse(JSON.stringify(item)),
     dueAt: item.dueAt?.toISOString() ?? null
   })) as CompanyComplianceRecord[];
-  const auditEvents = data.auditEvents.map((event) => ({
+  const auditEvents = (data?.auditEvents ?? []).map((event) => ({
     ...JSON.parse(JSON.stringify(event)),
     createdAt: event.createdAt.toISOString()
   })) as CompanyAuditRecord[];
@@ -42,15 +46,19 @@ export default async function CompanyRoute() {
   return (
     <CompanyPage
       auditEvents={auditEvents}
+      canAccessApprovalsAudit={canAccessApprovalsAudit}
+      canAccessCompanyHub={canAccessCompanyHub}
+      canAccessDocumentVault={canAccessDocumentVault}
       canManage={membership?.role === "OWNER" || membership?.role === "ADMIN"}
       complianceItems={complianceItems}
       documents={documents}
       legalEntities={legalEntities}
-      members={JSON.parse(JSON.stringify(data.members))}
+      members={JSON.parse(JSON.stringify(data?.members ?? []))}
       organizationCountryCode={organization.countryCode}
       organizationDefaultLanguage={organization.defaultLanguage}
       organizationName={organization.name}
-      projects={JSON.parse(JSON.stringify(data.projects))}
+      planLabel={getSubscriptionPlanLabel(organization.subscriptionPlan)}
+      projects={JSON.parse(JSON.stringify(data?.projects ?? []))}
     />
   );
 }

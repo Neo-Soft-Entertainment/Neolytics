@@ -15,6 +15,7 @@ import {
 
 import { createAuditEvent } from "@/lib/audit-service";
 import { db } from "@/lib/db";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const approvalThresholdCents = 100_000;
 
@@ -624,6 +625,8 @@ export async function createBudget(params: {
   endsAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const budget = await db.budget.create({
     data: {
       organizationId: params.organizationId,
@@ -664,6 +667,8 @@ export async function updateBudget(params: {
   endsAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const budget = await db.budget.findFirst({
     where: {
       id: params.budgetId,
@@ -717,6 +722,8 @@ export async function createBudgetLine(params: {
   dueAt?: Date;
   paidAt?: Date;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const budget = await db.budget.findFirst({
     where: {
       id: params.budgetId,
@@ -799,6 +806,8 @@ export async function updateBudgetLine(params: {
   dueAt?: Date;
   paidAt?: Date;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const line = await db.budgetLine.findFirst({
     where: {
       id: params.lineId,
@@ -889,6 +898,8 @@ export async function createRevenueEntry(params: {
   receivedAt: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const entry = await db.revenueEntry.create({
     data: {
       organizationId: params.organizationId,
@@ -944,6 +955,8 @@ export async function updateRevenueEntry(params: {
   receivedAt: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const entry = await db.revenueEntry.findFirst({
     where: {
       id: params.entryId,
@@ -1012,6 +1025,8 @@ export async function createExpenseEntry(params: {
   paidAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const entry = await db.expenseEntry.create({
     data: {
       organizationId: params.organizationId,
@@ -1069,6 +1084,8 @@ export async function updateExpenseEntry(params: {
   paidAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const entry = await db.expenseEntry.findFirst({
     where: {
       id: params.entryId,
@@ -1130,6 +1147,8 @@ export async function createCostCenter(params: {
   code: string;
   name: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "financeWorkspace");
+
   const costCenter = await db.costCenter.create({
     data: {
       organizationId: params.organizationId,
@@ -1176,6 +1195,8 @@ export async function createPayableTitle(params: {
     amountCents: number;
   }>;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
   const costCenter = await db.costCenter.findFirst({
     where: {
       id: params.costCenterId,
@@ -1306,6 +1327,8 @@ export async function updatePayableTitle(params: {
     amountCents: number;
   }>;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
   const title = await db.payableTitle.findFirst({
     where: {
       id: params.titleId,
@@ -1438,6 +1461,8 @@ export async function createPayablePayment(params: {
   interestCents?: number;
   amountPaidCents: number;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
   const title = await db.payableTitle.findFirst({
     where: {
       id: params.titleId,
@@ -1538,6 +1563,8 @@ export async function createContract(params: {
   autoRenews?: boolean;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
+
   const contract = await db.contract.create({
     data: {
       organizationId: params.organizationId,
@@ -1601,6 +1628,8 @@ export async function updateContract(params: {
   autoRenews?: boolean;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
+
   const contract = await db.contract.findFirst({
     where: {
       id: params.contractId,
@@ -1672,6 +1701,8 @@ export async function createRoyaltyAgreement(params: {
   recoupCapCents?: number | null;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
+
   const agreement = await db.royaltyAgreement.create({
     data: {
       organizationId: params.organizationId,
@@ -1715,6 +1746,8 @@ export async function createRoyaltyStatement(params: {
   deductibleCents?: number;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
+
   const agreement = await db.royaltyAgreement.findFirst({
     where: {
       id: params.royaltyAgreementId,
@@ -1788,6 +1821,8 @@ export async function createIssuedInvoice(params: {
   paidAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
   const invoice = await db.issuedInvoice.create({
     data: {
       organizationId: params.organizationId,
@@ -1848,6 +1883,8 @@ export async function createReceivedInvoice(params: {
   paidAt?: Date;
   notes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
   const invoice = await db.receivedInvoice.create({
     data: {
       organizationId: params.organizationId,
@@ -1991,6 +2028,8 @@ export async function updateApprovalRequest(params: {
   status: ApprovalStatus;
   decisionNotes?: string;
 }) {
+  await enforceSubscriptionCapability(params.organizationId, "approvalsAudit");
+
   const request = await db.approvalRequest.findFirst({
     where: {
       id: params.approvalRequestId,

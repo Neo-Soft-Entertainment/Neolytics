@@ -130,7 +130,7 @@ export function LoginForm({
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>
-          Access your workspace, Steam commercial intelligence, automated GDDs, and studio execution boards.
+          Access your workspace, Steam intelligence, project operating system, finance layer, and company backbone.
         </CardDescription>
       </CardHeader>
       <CardContent>

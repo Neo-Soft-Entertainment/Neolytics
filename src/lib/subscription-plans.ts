@@ -25,6 +25,12 @@ export type SubscriptionCapability =
   | "communityRanking"
   | "guidedJourney"
   | "pdfExport"
+  | "financeWorkspace"
+  | "companyHub"
+  | "documentVault"
+  | "contractsRoyalties"
+  | "invoiceOps"
+  | "approvalsAudit"
   | "earlyAccess";
 
 export const subscriptionFeatureRows: Array<{
@@ -43,12 +49,19 @@ export const subscriptionFeatureRows: Array<{
   { key: "communityRanking", label: "Community Ranking" },
   { key: "guidedJourney", label: "Guided Journey" },
   { key: "pdfExport", label: "PDF Export" },
+  { key: "financeWorkspace", label: "Finance Workspace" },
+  { key: "companyHub", label: "Company Hub" },
+  { key: "documentVault", label: "Document Vault" },
+  { key: "contractsRoyalties", label: "Contracts & Royalties" },
+  { key: "invoiceOps", label: "Invoices & Payables" },
+  { key: "approvalsAudit", label: "Approvals & Audit" },
   { key: "earlyAccess", label: "Early Access to New Features" }
 ];
 
 export const subscriptionTruthNotes = [
   "Steam Radar, Market Research, Revenue Calculator, and Guided Journey are live across all plans today.",
-  "Community access, Community Ranking, PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and Steam X-Ray tiers are enforced in the product now.",
+  "Community access, Community Ranking, PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, Steam X-Ray tiers, and ERP access layers are enforced in the product now.",
+  "Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
   "Early Access currently unlocks the raw Steam snapshot stream beta on Pro."
 ];
 
@@ -79,6 +92,12 @@ export const subscriptionPlans = {
       communityRanking: "Not included",
       guidedJourney: "Included",
       pdfExport: "Not included",
+      financeWorkspace: "Not included",
+      companyHub: "Not included",
+      documentVault: "Not included",
+      contractsRoyalties: "Not included",
+      invoiceOps: "Not included",
+      approvalsAudit: "Not included",
       earlyAccess: "Not included"
     },
     limits: {
@@ -101,6 +120,7 @@ export const subscriptionPlans = {
     highlights: [
       "Community, ranking, and PDF export",
       "Advanced Steam X-Ray access",
+      "Finance workspace, company hub, and document vault",
       "5 seats and 5 workspaces",
       "20 active Game Board projects",
       "100 viability analyses per month",
@@ -119,6 +139,12 @@ export const subscriptionPlans = {
       communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Included",
+      financeWorkspace: "Included",
+      companyHub: "Included",
+      documentVault: "Included",
+      contractsRoyalties: "Not included",
+      invoiceOps: "Not included",
+      approvalsAudit: "Not included",
       earlyAccess: "Not included"
     },
     limits: {
@@ -142,6 +168,7 @@ export const subscriptionPlans = {
       "Unlimited Steam X-Ray history",
       "Unlimited viability analyses",
       "Unlimited Game Board projects",
+      "Finance, company, contracts, invoices, and approvals",
       "Unlimited GDDs",
       "PDF export and priority beta access",
       "Unlimited seats and workspaces"
@@ -159,6 +186,12 @@ export const subscriptionPlans = {
       communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Included",
+      financeWorkspace: "Included",
+      companyHub: "Included",
+      documentVault: "Included",
+      contractsRoyalties: "Included",
+      invoiceOps: "Included",
+      approvalsAudit: "Included",
       earlyAccess: "Priority beta access"
     },
     limits: {

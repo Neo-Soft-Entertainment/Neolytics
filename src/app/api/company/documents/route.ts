@@ -5,6 +5,7 @@ import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-
 import { getApiContext } from "@/lib/auth-helpers";
 import { createCompanyDocument, getCompanyModuleData } from "@/lib/company-service";
 import { uploadCompanyDocumentFile } from "@/lib/company-storage";
+import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const schema = z.object({
   title: z.string().min(2),
@@ -24,6 +25,7 @@ export async function GET() {
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "documentVault");
     const data = await getCompanyModuleData(context.organizationId);
     return ok({ documents: data.documents });
   } catch {
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceSubscriptionCapability(context.organizationId, "documentVault");
     const formData = await request.formData();
     const file = formData.get("file");
 
