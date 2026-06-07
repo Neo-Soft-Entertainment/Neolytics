@@ -47,12 +47,15 @@ export function DashboardClient() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <Badge variant="secondary">{data.planLabel} plan</Badge>
               <Button asChild>
                 <Link href="/games">Browse games</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link href="/finance">Open finance</Link>
-              </Button>
+              {data.canAccessFinanceWorkspace ? (
+                <Button asChild variant="outline">
+                  <Link href="/finance">Open finance</Link>
+                </Button>
+              ) : null}
               <Button asChild variant="outline">
                 <Link href="/opportunities">Open opportunities</Link>
               </Button>
@@ -96,12 +99,29 @@ export function DashboardClient() {
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
         <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <KpiCard label="Net cash" value={formatCurrency(data.financeSnapshot.netCashCents)} />
-        <KpiCard label="Pending receivables" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
-        <KpiCard label="Pending payables" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
-        <KpiCard label="Active budgets" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
-      </div>
+      {data.canAccessFinanceWorkspace ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          <KpiCard label="Net cash" value={formatCurrency(data.financeSnapshot.netCashCents)} />
+          <KpiCard label="Pending receivables" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
+          <KpiCard label="Pending payables" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
+          <KpiCard label="Active budgets" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
+        </div>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardContent className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="font-medium">Finance workspace unlocks on Plus</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upgrade when you are ready to run budgets, payables, invoices, and company operations inside the same ERP.
+              </p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/settings">Review plans</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {data.portfolioReadiness ? (
         <div className="grid gap-4 md:grid-cols-4">
           <KpiCard label="Portfolio opportunity" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
@@ -120,6 +140,7 @@ export function DashboardClient() {
             </p>
           </div>
           <div className="space-y-2 lg:text-right">
+            <Badge variant="secondary">{data.guidedJourney.tierLabel}</Badge>
             <p className="text-2xl font-semibold">{data.guidedJourney.progressPercent}%</p>
             {data.guidedJourney.nextStep ? (
               <Button asChild size="sm">

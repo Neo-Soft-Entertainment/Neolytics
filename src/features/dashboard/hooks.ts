@@ -8,12 +8,15 @@ export function useDashboard() {
   return useQuery({
     queryKey: ["dashboard"],
     queryFn: () => apiClient<{
+      planLabel: string;
+      canAccessFinanceWorkspace: boolean;
       marketOverview: {
         totalGames: number;
         averageReviewScore: number;
         trackedGamesCount: number;
       };
       guidedJourney: {
+        tierLabel: string;
         completedSteps: number;
         totalSteps: number;
         progressPercent: number;

@@ -16,15 +16,21 @@ export interface ReportItem {
     genre?: string;
     tag?: string;
     generatedAt?: string;
-    segment?: {
-      marketSizeLabel: string;
-      opportunityScore: number;
-      riskScore: number;
-      confidenceLabel: string;
-      confidenceScore: number;
-      revenueConcentrationPercent: number;
-    };
-  } | null;
+      segment?: {
+        marketSizeLabel: string;
+        opportunityScore: number;
+        riskScore: number;
+        confidenceLabel: string;
+        confidenceScore: number;
+        revenueConcentrationPercent: number;
+      };
+      operatingBrief?: {
+        boardDirective: string;
+        commercialDirective: string;
+        operatingDirective: string;
+      } | null;
+      planLabel?: string;
+    } | null;
 }
 
 export function useReports() {

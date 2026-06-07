@@ -1,4 +1,4 @@
-import { Prisma, ProjectStage } from "@prisma/client";
+import { Prisma, ProjectStage, SubscriptionPlan } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { env } from "@/env";
@@ -1169,6 +1169,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
 
   await enforceSubscriptionCapability(project.organizationId, "artAnalyses");
   await consumeSubscriptionUsage(project.organizationId, "artAnalysesRun");
+  const organization = await db.organization.findUniqueOrThrow({
+    where: {
+      id: project.organizationId
+    },
+    select: {
+      subscriptionPlan: true
+    }
+  });
 
   const matchingGames = await getComparableGames(project);
   const topCompetitors = matchingGames.slice(0, 6);
@@ -1281,6 +1289,25 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
   ]
     .filter((item): item is string => Boolean(item))
     .join(" ");
+  const proArtBrief = organization.subscriptionPlan === SubscriptionPlan.PRO
+    ? {
+        capsuleReadinessScore: clampScore((distinctivenessScore * 0.45) + (marketFitScore * 0.35) + ((100 - productionComplexityScore) * 0.2)),
+        shelfGapSummary:
+          competitionCount > 12
+            ? "The shelf is saturated enough that the art needs a harder first-read hook, not just better rendering polish."
+            : "The shelf still leaves room for a clearer fantasy-first presentation if the team commits to a stronger silhouette and capsule hierarchy.",
+        productionLevers: [
+          productionComplexityScore >= 70 ? "Reduce high-cost finish work outside the capsule, hero, and first gameplay surfaces." : "Keep polish concentrated on the store-facing surfaces that carry the first commercial impression.",
+          averagePriceCents >= 2499 ? "Support the target price with fewer but stronger hero environments and cleaner material definition." : "Use readability and fantasy clarity to outperform the lower price band without overbuilding assets.",
+          competitionCount > 10 ? "Build a capsule-first review lane before scaling the full asset backlog." : "Lock a distinctive visual motif early, then scale production around that motif."
+        ],
+        referenceShelf: topCompetitors.slice(0, 3).map((game) => ({
+          name: game.name,
+          reviewScore: game.reviewScore ?? 0,
+          priceCents: game.priceCurrent?.finalPriceCents ?? 0
+        }))
+      }
+    : null;
 
   await db.project.update({
     where: {
@@ -1308,8 +1335,10 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
       paletteKeywords,
       moodKeywords,
       metadata: {
+        planLabel: organization.subscriptionPlan,
         referenceGameIds: topCompetitors.map((game) => game.id),
-        referenceGameNames: topCompetitors.map((game) => game.name)
+        referenceGameNames: topCompetitors.map((game) => game.name),
+        proArtBrief
       }
     },
     create: {
@@ -1325,8 +1354,10 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
       paletteKeywords,
       moodKeywords,
       metadata: {
+        planLabel: organization.subscriptionPlan,
         referenceGameIds: topCompetitors.map((game) => game.id),
-        referenceGameNames: topCompetitors.map((game) => game.name)
+        referenceGameNames: topCompetitors.map((game) => game.name),
+        proArtBrief
       }
     }
   });

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, SubscriptionPlan } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { env } from "@/env";
@@ -127,6 +127,15 @@ export async function generateBasicMarketReport(params: {
   genre?: string;
   tag?: string;
 }) {
+  const organization = await db.organization.findUniqueOrThrow({
+    where: {
+      id: params.organizationId
+    },
+    select: {
+      subscriptionPlan: true
+    }
+  });
+  const isProPlan = organization.subscriptionPlan === SubscriptionPlan.PRO;
   const topGames = await db.steamGame.findMany({
     where: {
       ...(params.genre
@@ -192,6 +201,22 @@ export async function generateBasicMarketReport(params: {
       tags: game.tags.map((tag) => tag.steamTag.name)
     }))
   });
+  const operatingBrief = isProPlan
+    ? {
+        boardDirective:
+          segment.opportunityScore >= 70
+            ? "Treat this as a board-level growth bet, but attach tighter launch checkpoints and a stronger production readiness review."
+            : "Treat this as a controlled thesis. Push for sharper positioning before committing major production budget.",
+        commercialDirective:
+          segment.revenueConcentrationPercent >= 65
+            ? "Commercial planning should assume a winner-takes-most shelf, so messaging, capsule quality, and launch timing must be sharper than the median segment entry."
+            : "Commercial planning can support a mid-tier outcome, so the team can win through focus, clarity, and disciplined pricing rather than blockbuster scope.",
+        operatingDirective:
+          segment.executionBarScore >= 70
+            ? "Finance, approvals, and milestone governance should be in place before the production plan scales."
+            : "The operating burden is moderate enough to support a leaner studio setup while the thesis is still being proven."
+      }
+    : null;
 
   const content = [
     `# ${params.title}`,
@@ -256,6 +281,19 @@ export async function generateBasicMarketReport(params: {
           ...aiNarrative.actionItems.map((item) => `- ${item}`)
         ]
       : []),
+    ...(operatingBrief
+      ? [
+          "",
+          "## Pro Operating Brief",
+          operatingBrief.boardDirective,
+          "",
+          "### Commercial directive",
+          operatingBrief.commercialDirective,
+          "",
+          "### Operating directive",
+          operatingBrief.operatingDirective
+        ]
+      : []),
     "",
     "## Price Distribution",
     `- Under $10: ${segment.priceBandDistribution.under10}`,
@@ -278,7 +316,9 @@ export async function generateBasicMarketReport(params: {
     tag: params.tag,
     generatedAt: new Date().toISOString(),
     segment,
-    aiNarrative
+    aiNarrative,
+    operatingBrief,
+    planLabel: organization.subscriptionPlan
   } as Prisma.InputJsonObject;
 
   const report = await db.$transaction(async (tx) => {

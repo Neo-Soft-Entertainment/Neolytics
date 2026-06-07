@@ -177,6 +177,7 @@ export function ProjectDetailClient({
   );
   const latestGdd = query.data?.gdds[0] ?? null;
   const canRunArtAnalysis = hasSubscriptionCapability(subscriptionPlan, "artAnalyses");
+  const isProArtAnalysis = subscriptionPlan === SubscriptionPlan.PRO;
 
   async function saveProject() {
     setFeedback(null);
@@ -611,6 +612,18 @@ export function ProjectDetailClient({
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
   const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
+  const artMetadata = (project.artAnalysis?.metadata ?? null) as {
+    proArtBrief?: {
+      capsuleReadinessScore: number;
+      shelfGapSummary: string;
+      productionLevers: string[];
+      referenceShelf: Array<{
+        name: string;
+        reviewScore: number;
+        priceCents: number;
+      }>;
+    } | null;
+  } | null;
 
   return (
     <div className="space-y-6">
@@ -1178,8 +1191,50 @@ export function ProjectDetailClient({
                       </p>
                     </div>
                   </div>
+                  {isProArtAnalysis ? (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Capsule readiness</p>
+                        <p className="mt-2 text-2xl font-semibold">
+                          {formatNumber(artMetadata?.proArtBrief?.capsuleReadinessScore ?? null)}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {artMetadata?.proArtBrief?.shelfGapSummary ?? "Run the Pro art layer to score store-readiness and shelf gap."}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Production levers</p>
+                        <div className="mt-2 space-y-2 text-sm text-muted-foreground">
+                          {(artMetadata?.proArtBrief?.productionLevers ?? ["Run the Pro art layer to receive execution levers for scope and store-facing polish."]).map((item) => (
+                            <p key={item}>• {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
+              {isProArtAnalysis ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Pro shelf benchmark</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    {artMetadata?.proArtBrief?.referenceShelf?.length ? artMetadata.proArtBrief.referenceShelf.map((item) => (
+                      <div key={item.name} className="rounded-2xl border p-4">
+                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Review bar {formatPercent(item.reviewScore, 1)} · Price {formatCurrency(item.priceCents)}
+                          </p>
+                        </div>
+                      </div>
+                    )) : (
+                      <p className="text-sm text-muted-foreground">Run art analysis to generate the Pro benchmark shelf.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : null}
               <Card>
                 <CardHeader>
                   <CardTitle>Art reference set</CardTitle>

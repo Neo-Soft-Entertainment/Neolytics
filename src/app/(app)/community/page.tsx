@@ -9,6 +9,7 @@ export default async function CommunityPage() {
     <CommunityPageClient
       canAccessFeed={hasSubscriptionCapability(organization.subscriptionPlan, "communityFeed")}
       canAccessRanking={hasSubscriptionCapability(organization.subscriptionPlan, "communityRanking")}
+      subscriptionPlan={organization.subscriptionPlan}
     />
   );
 }

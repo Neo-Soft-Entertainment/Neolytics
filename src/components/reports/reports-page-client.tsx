@@ -1,5 +1,6 @@
 "use client";
 
+import { SubscriptionPlan } from "@prisma/client";
 import { useState } from "react";
 
 import { ExportActions } from "@/components/export/export-actions";
@@ -10,13 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCreateReport, useReports } from "@/features/reports/hooks";
 
-export function ReportsPageClient() {
+export function ReportsPageClient({
+  subscriptionPlan
+}: {
+  subscriptionPlan: SubscriptionPlan;
+}) {
   const reportsQuery = useReports();
   const createReport = useCreateReport();
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [tag, setTag] = useState("");
+  const isPro = subscriptionPlan === SubscriptionPlan.PRO;
 
   async function handleCreateReport() {
     if (!title.trim()) {
@@ -47,6 +53,18 @@ export function ReportsPageClient() {
           Generate deeper market, commercial, and operating reports with segment sizing, concentration, opportunity, risk, and strategic read from the current studio dataset.
         </p>
       </div>
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="font-medium">{isPro ? "Pro reports are live" : "Standard report scope is live"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isPro
+                ? "This plan now adds an operating brief with board, commercial, and studio execution guidance on top of the standard market report."
+                : "Your current plan includes the standard market read with segment sizing, opportunity, risk, pricing, and AI strategic narrative."}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Generate report</CardTitle>
@@ -135,6 +153,22 @@ export function ReportsPageClient() {
                           <p className="mt-2 font-semibold">
                             {report.metadata.segment.confidenceLabel} ({report.metadata.segment.confidenceScore})
                           </p>
+                        </div>
+                      </div>
+                    ) : null}
+                    {report.metadata?.operatingBrief ? (
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Board directive</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.boardDirective}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Commercial directive</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.commercialDirective}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Operating directive</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.operatingDirective}</p>
                         </div>
                       </div>
                     ) : null}

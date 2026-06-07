@@ -324,9 +324,15 @@ export async function getDashboardData(workspaceId: string) {
       id: workspaceId
     },
     select: {
-      organizationId: true
+      organizationId: true,
+      organization: {
+        select: {
+          subscriptionPlan: true
+        }
+      }
     }
   });
+  const subscriptionPlan = workspace.organization.subscriptionPlan;
 
   const [
     trackedGames,
@@ -340,7 +346,10 @@ export async function getDashboardData(workspaceId: string) {
     reportsCount,
     projectAnalyses,
     budgetsCount,
-    financeOverview
+    financeOverview,
+    communityPostsCount,
+    legalEntitiesCount,
+    companyDocumentsCount
   ] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
@@ -455,7 +464,24 @@ export async function getDashboardData(workspaceId: string) {
         organizationId: workspace.organizationId
       }
     }),
-    getFinanceOverview(workspace.organizationId)
+    getFinanceOverview(workspace.organizationId),
+    db.communityPost.count({
+      where: {
+        organizationId: workspace.organizationId
+      }
+    }),
+    db.legalEntity.count({
+      where: {
+        organizationId: workspace.organizationId
+      }
+    }),
+    db.companyDocument.count({
+      where: {
+        legalEntity: {
+          organizationId: workspace.organizationId
+        }
+      }
+    })
   ]);
   const topRevenue = topRevenueGames
     .flatMap((game) => {
@@ -522,22 +548,87 @@ export async function getDashboardData(workspaceId: string) {
       description: "Create the first automated GDD from your project data.",
       href: "/projects",
       completed: gddsCount > 0
-    },
-    {
+    }
+  ];
+
+  if (hasSubscriptionCapability(subscriptionPlan, "communityFeed")) {
+    guidedJourneySteps.push({
+      id: "community",
+      title: "Publish a community signal",
+      description: "Turn one market or project insight into shared studio memory.",
+      href: "/community",
+      completed: communityPostsCount > 0
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "financeWorkspace")) {
+    guidedJourneySteps.push({
       id: "finance",
       title: "Open the finance layer",
       description: "Create the first budget or commercial entry for the studio.",
       href: "/finance",
       completed: budgetsCount > 0 || financeOverview.revenueEntries.length > 0 || financeOverview.expenseEntries.length > 0
-    },
-    {
-      id: "report",
-      title: "Export a market report",
-      description: "Generate a report and share it with your team.",
-      href: "/reports",
-      completed: reportsCount > 0
-    }
-  ];
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "companyHub")) {
+    guidedJourneySteps.push({
+      id: "company",
+      title: "Set up your company hub",
+      description: "Register the legal entity that will own operations and reporting.",
+      href: "/company",
+      completed: legalEntitiesCount > 0
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "documentVault")) {
+    guidedJourneySteps.push({
+      id: "documents",
+      title: "Upload operating documents",
+      description: "Start the document vault with at least one corporate file.",
+      href: "/company",
+      completed: companyDocumentsCount > 0
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "contractsRoyalties")) {
+    guidedJourneySteps.push({
+      id: "contracts",
+      title: "Create a contract or royalty record",
+      description: "Move from planning into commercial operations.",
+      href: "/finance",
+      completed: financeOverview.contracts.length > 0 || financeOverview.royaltyAgreements.length > 0
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "invoiceOps")) {
+    guidedJourneySteps.push({
+      id: "payables",
+      title: "Register your first payable",
+      description: "Start the real accounts payable trail for the studio.",
+      href: "/finance",
+      completed: financeOverview.payableTitles.length > 0 || financeOverview.issuedInvoices.length > 0 || financeOverview.receivedInvoices.length > 0
+    });
+  }
+
+  if (hasSubscriptionCapability(subscriptionPlan, "approvalsAudit")) {
+    guidedJourneySteps.push({
+      id: "approvals",
+      title: "Clear the first approval flow",
+      description: "Run at least one finance approval to activate governance.",
+      href: "/finance",
+      completed: financeOverview.approvalRequests.length > 0
+    });
+  }
+
+  guidedJourneySteps.push({
+    id: "report",
+    title: "Export a market report",
+    description: "Generate a report and share it with your team.",
+    href: "/reports",
+    completed: reportsCount > 0
+  });
+
   const completedJourneySteps = guidedJourneySteps.filter((step) => step.completed).length;
   const thesisSignals = projectAnalyses.map((analysis) => {
     const metadata = (analysis.metadata ?? {}) as {
@@ -574,12 +665,25 @@ export async function getDashboardData(workspaceId: string) {
     : null;
 
   return {
+    planLabel:
+      subscriptionPlan === SubscriptionPlan.FREE
+        ? "Explorer"
+        : subscriptionPlan === SubscriptionPlan.PLUS
+          ? "Operating"
+          : "Executive",
+    canAccessFinanceWorkspace: hasSubscriptionCapability(subscriptionPlan, "financeWorkspace"),
     marketOverview: {
       totalGames: totals._count._all,
       averageReviewScore: totals._avg.reviewScore ?? 0,
       trackedGamesCount: trackedGames.length
     },
     guidedJourney: {
+      tierLabel:
+        subscriptionPlan === SubscriptionPlan.FREE
+          ? "Core validation track"
+          : subscriptionPlan === SubscriptionPlan.PLUS
+            ? "Studio operating track"
+            : "Executive operating track",
       completedSteps: completedJourneySteps,
       totalSteps: guidedJourneySteps.length,
       progressPercent: Math.round((completedJourneySteps / guidedJourneySteps.length) * 100),

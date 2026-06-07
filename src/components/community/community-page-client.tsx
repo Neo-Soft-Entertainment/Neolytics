@@ -1,7 +1,7 @@
 "use client";
 
-import { CommunityPostType } from "@prisma/client";
-import { useState } from "react";
+import { CommunityPostType, SubscriptionPlan } from "@prisma/client";
+import { useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
 import { Button } from "@/components/ui/button";
@@ -24,15 +24,20 @@ const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
 
 export function CommunityPageClient({
   canAccessFeed,
-  canAccessRanking
+  canAccessRanking,
+  subscriptionPlan
 }: {
   canAccessFeed: boolean;
   canAccessRanking: boolean;
+  subscriptionPlan: SubscriptionPlan;
 }) {
   const query = useCommunity(canAccessFeed);
   const projectsQuery = useProjects();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<CommunityPostType | "ALL">("ALL");
+  const [sortMode, setSortMode] = useState<"recent" | "liked">("recent");
   const [form, setForm] = useState<{
     title: string;
     content: string;
@@ -46,6 +51,8 @@ export function CommunityPageClient({
     projectId: "none",
     tags: ""
   });
+  const isPro = subscriptionPlan === SubscriptionPlan.PRO;
+  const feed = query.data?.feed ?? [];
 
   async function createPost() {
     setFeedback(null);
@@ -101,6 +108,68 @@ export function CommunityPageClient({
     await query.refetch();
   }
 
+  const visibleFeed = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    const filtered = feed.filter((post) => {
+      if (typeFilter !== "ALL" && post.type !== typeFilter) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const haystack = [
+        post.title,
+        post.content,
+        post.author.name,
+        post.author.email,
+        post.project?.name,
+        ...(post.tags ?? [])
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch);
+    });
+
+    if (sortMode === "liked") {
+      return [...filtered].sort((left, right) => right.likeCount - left.likeCount || Date.parse(right.createdAt) - Date.parse(left.createdAt));
+    }
+
+    return filtered;
+  }, [feed, search, sortMode, typeFilter]);
+
+  const signalBoard = useMemo(() => {
+    const typeCounts = new Map<string, number>();
+    const tagCounts = new Map<string, number>();
+    let linkedProjectPosts = 0;
+
+    for (const post of feed) {
+      typeCounts.set(post.type, (typeCounts.get(post.type) ?? 0) + 1);
+
+      if (post.project) {
+        linkedProjectPosts += 1;
+      }
+
+      for (const tag of post.tags ?? []) {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      }
+    }
+
+    const topCategory = [...typeCounts.entries()].sort((left, right) => right[1] - left[1])[0] ?? null;
+    const topTag = [...tagCounts.entries()].sort((left, right) => right[1] - left[1])[0] ?? null;
+    const hottestPost = [...feed].sort((left, right) => right.likeCount - left.likeCount)[0] ?? null;
+
+    return {
+      linkedProjectShare: feed.length > 0 ? Math.round((linkedProjectPosts / feed.length) * 100) : 0,
+      topCategory,
+      topTag,
+      hottestPost
+    };
+  }, [feed]);
+
   if (!canAccessFeed) {
     return (
       <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
@@ -154,6 +223,12 @@ export function CommunityPageClient({
               <span className="text-muted-foreground">Ranking access</span>
               <span className="font-medium">{canAccessRanking ? "Enabled" : "Locked"}</span>
             </div>
+            {isPro ? (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted-foreground">Signal board</span>
+                <span className="font-medium">Pro</span>
+              </div>
+            ) : null}
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Use this space</p>
               <p className="mt-2 font-medium">Turn scattered team insight into a searchable operating memory for the studio.</p>
@@ -163,6 +238,55 @@ export function CommunityPageClient({
       </Card>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader>
+              <CardTitle>Find signals</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="community-search">Search the feed</Label>
+                <Input
+                  id="community-search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search titles, insight, tags, authors, or linked projects"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Sort by</Label>
+                <Select value={sortMode} onValueChange={(value) => setSortMode(value as "recent" | "liked")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Most recent</SelectItem>
+                    <SelectItem value="liked">Most liked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Category filter</Label>
+                <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as CommunityPostType | "ALL")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All categories</SelectItem>
+                    {postTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 text-sm text-muted-foreground dark:bg-white/[0.03]">
+                Showing <span className="font-medium text-foreground">{visibleFeed.length}</span> of{" "}
+                <span className="font-medium text-foreground">{query.data.feed.length}</span> community posts.
+              </div>
+            </CardContent>
+          </Card>
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
@@ -235,7 +359,7 @@ export function CommunityPageClient({
               </Button>
             </CardContent>
           </Card>
-          {query.data.feed.length > 0 ? query.data.feed.map((post) => (
+          {visibleFeed.length > 0 ? visibleFeed.map((post) => (
             <Card key={post.id} className="overflow-hidden">
               <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader className="space-y-2">
@@ -325,6 +449,36 @@ export function CommunityPageClient({
               )}
             </CardContent>
           </Card>
+          {isPro ? (
+            <Card className="overflow-hidden">
+              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+              <CardHeader>
+                <CardTitle>Signal board</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                  <p className="text-sm text-muted-foreground">Most active category</p>
+                  <p className="mt-1 font-medium">
+                    {signalBoard.topCategory ? `${signalBoard.topCategory[0].replaceAll("_", " ")} · ${signalBoard.topCategory[1]} posts` : "No signal concentration yet"}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                  <p className="text-sm text-muted-foreground">Most repeated tag</p>
+                  <p className="mt-1 font-medium">
+                    {signalBoard.topTag ? `${signalBoard.topTag[0]} · ${signalBoard.topTag[1]} mentions` : "No repeated tags yet"}
+                  </p>
+                </div>
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                  <p className="text-sm text-muted-foreground">Posts tied to projects</p>
+                  <p className="mt-1 font-medium">{signalBoard.linkedProjectShare}% of feed</p>
+                </div>
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                  <p className="text-sm text-muted-foreground">Hottest post right now</p>
+                  <p className="mt-1 font-medium">{signalBoard.hottestPost?.title ?? "No standout post yet"}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>
