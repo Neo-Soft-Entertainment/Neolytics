@@ -56,6 +56,16 @@ Do not set `AUTH_URL` for normal deploys. Auth.js uses that variable as a fixed 
 
 `REDIS_URL` is optional in Vercel if you are not running BullMQ there.
 
+Optional credentials login protection:
+
+```env
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
+RECAPTCHA_MIN_SCORE=0.5
+```
+
+Set both reCAPTCHA keys to enable the server-side check on email/password login. Leave them empty for local/dev environments where reCAPTCHA is not needed. Keys are created in the [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin/create). This reduces automated login abuse; volumetric DDoS still needs edge protection such as Vercel firewall/rate limiting.
+
 ## Why the cron route exists
 
 Persistent workers do not fit Vercel Hobby well.

@@ -19,11 +19,62 @@ if (process.env.AUTH_URL) {
 
 const credentialsSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
+  recaptchaToken: z.string().min(1).optional()
 });
+
+const recaptchaAction = "login";
+const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY?.trim();
+const recaptchaMinimumScore = (() => {
+  const score = Number(process.env.RECAPTCHA_MIN_SCORE ?? "0.5");
+  return Number.isFinite(score) && score >= 0 && score <= 1 ? score : 0.5;
+})();
+const isRecaptchaEnabled = Boolean(recaptchaSecretKey && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim());
 
 class RateLimitedCredentialsError extends CredentialsSignin {
   code = "rate_limited";
+}
+
+class RecaptchaCredentialsError extends CredentialsSignin {
+  code = "recaptcha_failed";
+}
+
+async function verifyRecaptchaToken(token?: string) {
+  if (!isRecaptchaEnabled) {
+    return true;
+  }
+
+  if (!recaptchaSecretKey || !token) {
+    return false;
+  }
+
+  const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({
+      secret: recaptchaSecretKey,
+      response: token
+    })
+  });
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const payload = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    score?: number;
+    action?: string;
+  } | null;
+
+  return Boolean(
+    payload?.success &&
+      payload.action === recaptchaAction &&
+      typeof payload.score === "number" &&
+      payload.score >= recaptchaMinimumScore
+  );
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -45,7 +96,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        recaptchaToken: { label: "reCAPTCHA token", type: "text" }
       },
       async authorize(rawCredentials) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
@@ -65,6 +117,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
 
           throw error;
+        }
+
+        const isRecaptchaValid = await verifyRecaptchaToken(parsed.data.recaptchaToken);
+
+        if (!isRecaptchaValid) {
+          await recordAuthAttempt(rateLimitKey, false);
+          throw new RecaptchaCredentialsError();
         }
 
         const user = await db.user.findUnique({

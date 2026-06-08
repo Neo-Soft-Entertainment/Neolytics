@@ -16,6 +16,9 @@ export default async function LoginPage({
   }
 
   const { inviteToken } = await searchParams;
+  const recaptchaSiteKey = process.env.RECAPTCHA_SECRET_KEY?.trim()
+    ? process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim()
+    : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 p-6">
@@ -26,6 +29,7 @@ export default async function LoginPage({
           hasGoogleLogin={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
           hasDiscordLogin={Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET)}
           hasAppleLogin={Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET)}
+          recaptchaSiteKey={recaptchaSiteKey}
         />
       </div>
     </main>

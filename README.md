@@ -60,6 +60,9 @@ AUTH_SECRET="replace-with-a-long-random-string"
 APP_URL="http://localhost:3000"
 CRON_SECRET="replace-with-a-random-secret-with-at-least-16-characters"
 REDIS_URL="redis://localhost:6379"
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=""
+RECAPTCHA_SECRET_KEY=""
+RECAPTCHA_MIN_SCORE="0.5"
 STEAM_STORE_BASE_URL="https://store.steampowered.com"
 STEAM_API_BASE_URL="https://api.steampowered.com"
 STEAM_WEB_API_KEY=""
@@ -96,6 +99,16 @@ APPLE_CLIENT_SECRET=""
 ```
 
 Use `APP_URL` for absolute product links such as Stripe return URLs and Discord notifications. Do not set `AUTH_URL` for normal deploys; Auth.js treats it as a fixed authentication origin, and a mismatch with the actual domain can break CSRF cookies and send users back to `/login`.
+
+Optional reCAPTCHA v3 login protection:
+
+- Register a reCAPTCHA v3 site in the [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin/create).
+- Add the public site key to `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`.
+- Add the secret key to `RECAPTCHA_SECRET_KEY`.
+- Keep `RECAPTCHA_MIN_SCORE=0.5` as the initial threshold, then tune it from real production traffic.
+- The credentials login calls reCAPTCHA on submit with the `login` action and verifies the token server-side before checking the password.
+- This reduces automated login abuse and credential stuffing; volumetric DDoS still needs edge protection such as Vercel firewall/rate limiting.
+- Official reference: [Google reCAPTCHA v3 docs](https://developers.google.com/recaptcha/docs/v3).
 
 Google OAuth setup:
 
@@ -142,6 +155,9 @@ Optional Google Sheets publishing:
 - `DISCORD_CLIENT_SECRET`: optional Discord OAuth client secret for social login
 - `APPLE_CLIENT_ID`: optional Apple Services ID for social login
 - `APPLE_CLIENT_SECRET`: optional Apple client secret for social login
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`: optional public reCAPTCHA v3 site key for credentials login
+- `RECAPTCHA_SECRET_KEY`: optional server-side reCAPTCHA secret key for credentials login
+- `RECAPTCHA_MIN_SCORE`: optional reCAPTCHA v3 threshold between `0` and `1`. Default: `0.5`
 - `GOOGLE_SHEETS_CLIENT_EMAIL`: service account email
 - `GOOGLE_SHEETS_PRIVATE_KEY`: service account private key
 - `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed

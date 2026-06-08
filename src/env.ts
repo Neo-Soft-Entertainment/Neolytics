@@ -24,6 +24,16 @@ const envSchema = z.object({
   APP_URL: z.string().url().optional(),
   AUTH_URL: z.string().url().optional(),
   REDIS_URL: optionalString,
+  NEXT_PUBLIC_RECAPTCHA_SITE_KEY: optionalString,
+  RECAPTCHA_SECRET_KEY: optionalString,
+  RECAPTCHA_MIN_SCORE: z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }, z.coerce.number().min(0).max(1).default(0.5)),
   CRON_SECRET: z.preprocess((value) => {
     if (typeof value !== "string") {
       return value;
