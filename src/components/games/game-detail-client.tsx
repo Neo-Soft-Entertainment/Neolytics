@@ -1,16 +1,21 @@
 "use client";
 
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
 import { ChartCard } from "@/components/charts/chart-card";
 import { HistoryLineChart } from "@/components/charts/history-line-chart";
-import { useGameDetails, useGameHistory, useGameSnapshots } from "@/features/games/hooks";
+import { useGameDatabaseProfile, useGameDetails, useGameHistory, useGameSnapshots } from "@/features/games/hooks";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export function GameDetailClient({ appId }: { appId: number }) {
   const detailsQuery = useGameDetails(appId);
+  const historyQuery = useGameHistory(appId);
+  const databaseProfileQuery = useGameDatabaseProfile(appId);
+  const snapshotsQuery = useGameSnapshots(appId, Boolean(detailsQuery.data?.steamXrayAccess.rawSnapshotsBetaAvailable));
 
   if (detailsQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading game details...</p>;
@@ -21,10 +26,9 @@ export function GameDetailClient({ appId }: { appId: number }) {
   }
 
   const game: any = detailsQuery.data;
-  const historyQuery = useGameHistory(appId);
-  const snapshotsQuery = useGameSnapshots(appId, game.steamXrayAccess.rawSnapshotsBetaAvailable);
   const history: any = historyQuery.data;
   const snapshots: any[] = snapshotsQuery.data ?? [];
+  const databaseProfile = databaseProfileQuery.data;
 
   return (
     <div className="space-y-6">
@@ -80,6 +84,123 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </CardContent>
         </Card>
       </div>
+      {databaseProfile ? (
+        <Card className="overflow-hidden border-cyan-400/20 bg-gradient-to-br from-card via-card to-cyan-500/10">
+          <CardHeader className="space-y-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <CardTitle>Neolytics Steam Database</CardTitle>
+                <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                  SteamDB-style intelligence generated from official Steam data, Neolytics snapshots, and deterministic scoring. No SteamDB API or scraping is used.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">{databaseProfile.classification}</Badge>
+                <Badge variant="outline">{`${databaseProfile.confidenceLevel} confidence`}</Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Opportunity</p>
+                <p className="mt-2 text-3xl font-semibold">{databaseProfile.opportunityScore}</p>
+              </div>
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Data quality</p>
+                <p className="mt-2 text-3xl font-semibold">{databaseProfile.dataQuality.score}</p>
+              </div>
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Peer slice</p>
+                <p className="mt-2 text-3xl font-semibold">{formatNumber(databaseProfile.dataQuality.peerDatasetSize)}</p>
+              </div>
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Momentum</p>
+                <p className="mt-2 text-3xl font-semibold">{databaseProfile.trendDetection.releaseMomentum}</p>
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Weighted score factors</h3>
+                {databaseProfile.weightedFactors.map((factor) => (
+                  <div key={factor.name} className="rounded-2xl border bg-background/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-medium">{factor.name}</p>
+                      <Badge variant="outline">{`${factor.score}/100 · ${factor.weight}%`}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{factor.evidence}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <h3 className="text-sm font-semibold">Observed history</h3>
+                  <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+                    <p>{`Lowest observed price: ${formatCurrency(databaseProfile.observedHistory.price.lowestObservedPriceCents)}`}</p>
+                    <p>{`Highest observed price: ${formatCurrency(databaseProfile.observedHistory.price.highestObservedPriceCents)}`}</p>
+                    <p>{`Discount snapshots: ${formatNumber(databaseProfile.observedHistory.price.discountSnapshotCount)}`}</p>
+                    <p>{`Peak observed players: ${formatNumber(databaseProfile.observedHistory.players.peakObservedPlayers)}`}</p>
+                    <p>{`Average observed players: ${formatNumber(databaseProfile.observedHistory.players.averageObservedPlayers)}`}</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <h3 className="text-sm font-semibold">Trend detection</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{databaseProfile.trendDetection.explanation}</p>
+                  {databaseProfile.trendDetection.emergingTags.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {databaseProfile.trendDetection.emergingTags.map((tag) => (
+                        <Badge key={tag.name} variant="secondary">
+                          {`${tag.name} ${tag.recentSharePercent}% recent`}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="rounded-2xl border bg-background/70 p-4">
+                  <h3 className="text-sm font-semibold">Sources used</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{databaseProfile.sources.join(" · ")}</p>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <h3 className="text-sm font-semibold">Direct competitors</h3>
+                <div className="mt-3 space-y-2">
+                  {databaseProfile.competitiveIntelligence.directCompetitors.length > 0 ? (
+                    databaseProfile.competitiveIntelligence.directCompetitors.slice(0, 5).map((competitor) => (
+                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
+                        <span className="font-medium">{competitor.name}</span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {`${formatNumber(competitor.reviewCount)} reviews · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} score · ${formatCurrency(competitor.estimatedMedianNetRevenueCents)}`}
+                        </span>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No direct competitors identified in the current database slice.</p>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-2xl border bg-background/70 p-4">
+                <h3 className="text-sm font-semibold">Recent launches to watch</h3>
+                <div className="mt-3 space-y-2">
+                  {databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.length > 0 ? (
+                    databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.slice(0, 5).map((competitor) => (
+                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
+                        <span className="font-medium">{competitor.name}</span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {`${formatNumber(competitor.reviewCount)} reviews · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} score`}
+                        </span>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No recent breakout launch identified yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>

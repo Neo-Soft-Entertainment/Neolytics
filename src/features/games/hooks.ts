@@ -89,6 +89,86 @@ export interface EstimateResponse {
   } | null;
 }
 
+export interface SteamDatabaseProfile {
+  appId: number;
+  name: string;
+  classification: string;
+  opportunityScore: number;
+  confidenceLevel: string;
+  dataQuality: {
+    score: number;
+    priceSnapshots: number;
+    reviewSnapshots: number;
+    playerSnapshots: number;
+    peerDatasetSize: number;
+    lastIngestedAt: string | null;
+  };
+  weightedFactors: Array<{
+    name: string;
+    score: number;
+    weight: number;
+    evidence: string;
+  }>;
+  marketSignals: {
+    genreSaturation: string;
+    growthRatio: number;
+    releaseMomentum?: string;
+    reviewVelocity30: {
+      absoluteChange: number;
+      relativeChangePercent: number | null;
+    } | null;
+    playerVelocity30: {
+      absoluteChange: number;
+      relativeChangePercent: number | null;
+    } | null;
+  };
+  observedHistory: {
+    price: {
+      lowestObservedPriceCents: number | null;
+      highestObservedPriceCents: number | null;
+      discountSnapshotCount: number;
+    };
+    players: {
+      peakObservedPlayers: number | null;
+      averageObservedPlayers: number | null;
+    };
+  };
+  competitiveIntelligence: {
+    directCompetitors: Array<{
+      appId: number;
+      name: string;
+      reviewCount: number | null;
+      reviewScore: number | null;
+      estimatedMedianNetRevenueCents: number | null;
+    }>;
+    recentSuccessfulLaunches: Array<{
+      appId: number;
+      name: string;
+      releaseDate: string | null;
+      reviewCount: number | null;
+      reviewScore: number | null;
+    }>;
+    weakSimilarLaunches: Array<{
+      appId: number;
+      name: string;
+      releaseDate: string | null;
+      reviewCount: number | null;
+      reviewScore: number | null;
+    }>;
+  };
+  trendDetection: {
+    releaseMomentum: string;
+    explanation: string;
+    emergingTags: Array<{
+      name: string;
+      recentSharePercent: number;
+      datasetSharePercent: number;
+    }>;
+  };
+  sources: string[];
+  evidenceTrail: string[];
+}
+
 export function useGameSearch(queryString: string) {
   return useQuery({
     queryKey: ["games", "search", queryString],
@@ -130,6 +210,13 @@ export function useGameSnapshots(appId: number, enabled: boolean) {
     queryKey: ["games", appId, "snapshots"],
     queryFn: () => apiClient<SnapshotPoint[]>(`/api/games/${appId}/snapshots`),
     enabled
+  });
+}
+
+export function useGameDatabaseProfile(appId: number) {
+  return useQuery({
+    queryKey: ["games", appId, "database-profile"],
+    queryFn: () => apiClient<SteamDatabaseProfile>(`/api/games/${appId}/database-profile`)
   });
 }
 
