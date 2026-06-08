@@ -101,6 +101,80 @@ export interface ProjectDetailResponse extends ProjectListItem {
         positioningClarityScore: number;
         overallFitScore: number;
       };
+      hybridMarketIntelligence?: {
+        sourceModel: string;
+        aiDependency: string;
+        sourcesUsed: string[];
+        dataQuality: {
+          score: number;
+          label: string;
+          coverage: Record<string, number>;
+          limitations: string[];
+        };
+        probabilisticAssessment: {
+          classification: string;
+          confidenceLevel: string;
+          confidenceScore: number;
+          probabilities: {
+            commercialOpportunity: number;
+            nicheDemand: number;
+            oversaturation: number;
+            executionRisk: number;
+            growthPotential: number;
+            discoverabilityDifficulty: number;
+          };
+          conclusion: string;
+        };
+        opportunityScoring: {
+          score: number;
+          label: string;
+          commercialOpportunityScore: number;
+          riskScore: number;
+          factors: Array<{
+            name: string;
+            score: number;
+            weight: number;
+            justification: string;
+            metrics: Record<string, string | number>;
+          }>;
+        };
+        demandModel: {
+          demandScore: number;
+          audienceSizeScore: number;
+          marketMomentumScore: number;
+          revenuePotentialRange: {
+            lowCents: number;
+            medianCents: number;
+            highCents: number;
+          };
+          wishlistProxy: {
+            score: number;
+            basis: string;
+          };
+          reasoning: string;
+        };
+        competitiveIntelligence: {
+          directCompetitors: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+          adjacentCompetitors: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+          marketLeaders: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+          fastGrowingGames: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+          recentlySuccessfulLaunches: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+          failedLaunches: Array<{ name: string; appId: number; similarityScore: number; reviewScore: number | null; reviewCount: number | null; medianRevenueCents: number }>;
+        };
+        trendDetection: {
+          risingGenres: Array<{ trend: string; strengthScore: number; explanation: string }>;
+          emergingTags: Array<{ tag: string; strengthScore: number; explanation: string }>;
+          decliningSignals: Array<{ signal: string; score: number; explanation: string }>;
+          seasonalOpportunities: Array<{ window: string; confidence: string; explanation: string }>;
+          underservedNiches: Array<{ niche: string; confidence: string; explanation: string }>;
+          marketShiftExplanation: string;
+        };
+        evidenceTrail: Array<{
+          claim: string;
+          support: string;
+          sources: string[];
+        }>;
+      };
       aiLayer?: {
         marketSummary: string;
         opportunitySummary: string;

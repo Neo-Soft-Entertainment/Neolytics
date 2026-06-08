@@ -4,6 +4,7 @@ import { appUrl } from "@/env";
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
+import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
 import { slugify } from "@/lib/slugify";
 import {
   consumeSubscriptionUsage,
@@ -980,6 +981,20 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     positioningClarityScore,
     overallFitScore
   };
+  const hybridMarketIntelligence = buildHybridMarketIntelligence({
+    project,
+    rankedComparables,
+    directComparables,
+    adjacentComparables,
+    reviewSnapshots,
+    playerSnapshots,
+    medianPriceCents,
+    averageReviewScore,
+    revenueConcentrationPercent,
+    premiumSharePercent: competitionLayer.premiumSharePercent,
+    confidenceScore,
+    confidenceLabel: marketDepth.confidenceLabel
+  });
   const keyMismatches = [
     priceFitScore < 55 && medianPriceCents > 0
       ? `Your target price is misaligned with the segment median of ${formatMoney(medianPriceCents)}.`
@@ -1012,19 +1027,30 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     riskScore,
     executionBarScore,
     practicalRecommendations,
-    keyMismatches
+    keyMismatches,
+    probabilisticClassification: hybridMarketIntelligence.probabilisticAssessment.classification,
+    quantitativeOpportunityScore: hybridMarketIntelligence.opportunityScoring.score,
+    discoverabilityDifficulty: hybridMarketIntelligence.probabilisticAssessment.probabilities.discoverabilityDifficulty
   };
-  const opportunitySummary = opportunityScore >= 70
-    ? `This looks like a commercially active segment with enough room for a sharply positioned entrant. The biggest upside comes from ${revenuePotentialScore >= 70 ? "meaningful revenue headroom" : "healthy niche demand"} without fully runaway saturation.`
-    : `The niche can still work, but the opportunity is conditional on stronger positioning. Right now the upside is being compressed by ${crowdednessScore >= 65 ? "competition density" : "uneven demand coverage"}.`;
-  const riskSummary = riskScore >= 65
-    ? `Risk is elevated because ${revenueConcentrationPercent >= 65 ? "a few winners dominate revenue capture" : "the niche still shows weak or unstable momentum"}, and the execution bar is ${executionBarScore >= 70 ? "high" : "non-trivial"}.`
-    : `Risk is manageable for a disciplined team. The main challenge is outperforming the current quality bar rather than entering a structurally broken segment.`;
+  const opportunitySummary = [
+    hybridMarketIntelligence.probabilisticAssessment.conclusion,
+    `The weighted model rates demand at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.nicheDemand}/100, growth potential at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.growthPotential}/100, and oversaturation at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.oversaturation}/100.`,
+    opportunityScore >= 70
+      ? `This looks like a commercially active segment with enough room for a sharply positioned entrant.`
+      : `The opportunity is conditional on stronger positioning and better evidence before scaling budget.`
+  ].join(" ");
+  const riskSummary = [
+    `Execution risk is ${hybridMarketIntelligence.probabilisticAssessment.probabilities.executionRisk}/100 and discoverability difficulty is ${hybridMarketIntelligence.probabilisticAssessment.probabilities.discoverabilityDifficulty}/100.`,
+    riskScore >= 65
+      ? `Risk is elevated because ${revenueConcentrationPercent >= 65 ? "a few winners dominate revenue capture" : "the niche still shows weak or unstable momentum"}, and the execution bar is ${executionBarScore >= 70 ? "high" : "non-trivial"}.`
+      : `Risk is manageable for a disciplined team. The main challenge is outperforming the current quality bar rather than entering a structurally broken segment.`
+  ].join(" ");
   const marketSummary = [
     `${directComparables.length} direct comparables and ${adjacentComparables.length} adjacent comps were identified from the current Steam dataset.`,
     totalRevenueCents > 0 ? `The tracked market depth looks ${marketDepth.marketSizeLabel.toLowerCase()}, with roughly ${formatMoney(totalRevenueCents)} in cumulative estimated net revenue across the matched set and a median of ${formatMoney(medianRevenueCents)}.` : "Revenue coverage is still thin, so the market sizing layer should be treated cautiously.",
     reviewVelocity.reviewVelocity90 > 0 ? `Review velocity added ${reviewVelocity.reviewVelocity90.toLocaleString("en-US")} reviews in the last 90 days versus ${reviewVelocity.previousReviewVelocity90.toLocaleString("en-US")} in the prior window.` : "Temporal review coverage is still limited, so momentum should be treated as directional rather than conclusive.",
-    launches365 > 0 ? `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.` : "Recent launch activity is quiet in this segment."
+    launches365 > 0 ? `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.` : "Recent launch activity is quiet in this segment.",
+    `The non-AI model classifies this as: ${hybridMarketIntelligence.probabilisticAssessment.classification}.`
   ].join(" ");
   const suggestedGenres = Array.from(
     new Set(topCompetitors.flatMap((game) => game.genres.map((genre) => genre.steamGenre.name)))
@@ -1103,9 +1129,15 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       }))
     }
   });
-  const finalMarketSummary = aiLayer?.marketSummary || marketSummary;
-  const finalOpportunitySummary = aiLayer?.opportunitySummary || opportunitySummary;
-  const finalRiskSummary = aiLayer?.riskSummary || riskSummary;
+  const finalMarketSummary = aiLayer?.marketSummary
+    ? `${marketSummary} AI strategy layer: ${aiLayer.marketSummary}`
+    : marketSummary;
+  const finalOpportunitySummary = aiLayer?.opportunitySummary
+    ? `${opportunitySummary} AI strategy layer: ${aiLayer.opportunitySummary}`
+    : opportunitySummary;
+  const finalRiskSummary = aiLayer?.riskSummary
+    ? `${riskSummary} AI strategy layer: ${aiLayer.riskSummary}`
+    : riskSummary;
   const finalAudienceAutofill = aiLayer?.audienceAutofill || audienceAutofill;
   const finalCoreLoopAutofill = aiLayer?.coreLoopAutofill || coreLoopAutofill;
   const analysisMetadata = {
@@ -1115,6 +1147,7 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     competitionLayer,
     opportunityLayer,
     projectFitLayer,
+    hybridMarketIntelligence,
     aiLayer
   } as unknown as Prisma.InputJsonObject;
 

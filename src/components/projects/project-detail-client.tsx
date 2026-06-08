@@ -610,6 +610,7 @@ export function ProjectDetailClient({
   const competitionLayer = project.analysis?.metadata?.competitionLayer ?? null;
   const opportunityLayer = project.analysis?.metadata?.opportunityLayer ?? null;
   const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
+  const hybridMarketIntelligence = project.analysis?.metadata?.hybridMarketIntelligence ?? null;
   const aiLayer = project.analysis?.metadata?.aiLayer ?? null;
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
@@ -927,6 +928,148 @@ export function ProjectDetailClient({
                 ) : null}
               </CardContent>
             </Card>
+            {hybridMarketIntelligence ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quantitative market intelligence</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-5 text-sm">
+                  <div className="grid gap-4 lg:grid-cols-4">
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Opportunity score</p>
+                      <p className="mt-2 text-3xl font-semibold">{hybridMarketIntelligence.opportunityScoring.score}</p>
+                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring.label}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Classification</p>
+                      <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment.classification}</p>
+                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment.confidenceLevel} confidence</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Demand</p>
+                      <p className="mt-2 text-2xl font-semibold">{hybridMarketIntelligence.demandModel.demandScore}</p>
+                      <p className="mt-1 text-muted-foreground">Wishlist proxy {hybridMarketIntelligence.demandModel.wishlistProxy.score}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Revenue range</p>
+                      <p className="mt-2 font-medium">
+                        {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.lowCents)} - {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.highCents)}
+                      </p>
+                      <p className="mt-1 text-muted-foreground">Median {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.medianCents)}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Probabilistic conclusion</p>
+                    <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment.conclusion}</p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      {Object.entries(hybridMarketIntelligence.probabilisticAssessment.probabilities).map(([key, value]) => (
+                        <div key={key} className="rounded-xl border bg-muted/30 p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/([A-Z])/g, " $1")}</p>
+                          <p className="mt-1 text-lg font-semibold">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Weighted scoring factors</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridMarketIntelligence.opportunityScoring.factors.map((factor) => (
+                          <div key={factor.name} className="rounded-xl border bg-muted/30 p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="font-medium">{factor.name}</p>
+                              <p className="text-sm text-muted-foreground">{factor.score}/100 · weight {factor.weight}</p>
+                            </div>
+                            <p className="mt-2 text-muted-foreground">{factor.justification}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Trend detection</p>
+                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection.marketShiftExplanation}</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridMarketIntelligence.trendDetection.emergingTags.slice(0, 4).map((trend) => (
+                          <div key={trend.tag} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{trend.tag} · {trend.strengthScore}</p>
+                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
+                          </div>
+                        ))}
+                        {hybridMarketIntelligence.trendDetection.decliningSignals.slice(0, 3).map((trend) => (
+                          <div key={trend.signal} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{trend.signal} · {trend.score}</p>
+                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-3">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Market leaders</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {hybridMarketIntelligence.competitiveIntelligence.marketLeaders.slice(0, 5).map((game) => (
+                          <li key={game.appId}>{game.name} · {formatCurrency(game.medianRevenueCents)} · {formatNumber(game.reviewScore)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Recently successful launches</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.length
+                          ? hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.slice(0, 5).map((game) => (
+                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
+                            ))
+                          : <li>No high-confidence recent successful launch in this comp set.</li>}
+                      </ul>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Weak/failed similar launches</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {hybridMarketIntelligence.competitiveIntelligence.failedLaunches.length
+                          ? hybridMarketIntelligence.competitiveIntelligence.failedLaunches.slice(0, 5).map((game) => (
+                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
+                            ))
+                          : <li>No obvious weak recent launch in this comp set.</li>}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Evidence trail</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridMarketIntelligence.evidenceTrail.map((item) => (
+                          <div key={item.claim} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{item.claim}</p>
+                            <p className="mt-1 text-muted-foreground">{item.support}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Sources: {item.sources.join(", ")}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Data quality</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {hybridMarketIntelligence.dataQuality.label} confidence ({hybridMarketIntelligence.dataQuality.score}/100). AI dependency: {hybridMarketIntelligence.aiDependency.replaceAll("_", " ")}.
+                      </p>
+                      <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Sources used</p>
+                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.sourcesUsed.join(", ")}</p>
+                      {hybridMarketIntelligence.dataQuality.limitations.length ? (
+                        <ul className="mt-3 space-y-2 text-muted-foreground">
+                          {hybridMarketIntelligence.dataQuality.limitations.map((item) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
             <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
