@@ -12,6 +12,11 @@ import { AuthRateLimitError, assertAuthRateLimit, getLoginRateLimitKey, recordAu
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
+if (process.env.AUTH_URL) {
+  process.env.APP_URL ??= process.env.AUTH_URL;
+  delete process.env.AUTH_URL;
+}
+
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8)
@@ -23,6 +28,7 @@ class RateLimitedCredentialsError extends CredentialsSignin {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 24 * 30,

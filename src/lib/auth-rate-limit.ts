@@ -51,11 +51,11 @@ export async function assertAuthRateLimit(key: string) {
 
 export async function recordAuthAttempt(key: string, succeeded: boolean) {
   if (succeeded) {
-    await db.authRateLimit.delete({
+    await db.authRateLimit.deleteMany({
       where: {
         key
       }
-    }).catch(() => null);
+    });
     return;
   }
 

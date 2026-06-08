@@ -21,7 +21,8 @@ const optionalEmail = z.preprocess((value) => {
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   AUTH_SECRET: z.string().min(1),
-  AUTH_URL: z.string().url(),
+  APP_URL: z.string().url().optional(),
+  AUTH_URL: z.string().url().optional(),
   REDIS_URL: optionalString,
   CRON_SECRET: z.preprocess((value) => {
     if (typeof value !== "string") {
@@ -80,3 +81,5 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+export const appUrl =
+  env.APP_URL ?? env.AUTH_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");

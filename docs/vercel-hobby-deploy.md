@@ -32,7 +32,7 @@ Set these in the Vercel project:
 DATABASE_URL=
 DIRECT_URL=
 AUTH_SECRET=
-AUTH_URL=
+APP_URL=
 CRON_SECRET=
 STEAM_STORE_BASE_URL=https://store.steampowered.com
 STEAM_API_BASE_URL=https://api.steampowered.com
@@ -48,9 +48,11 @@ ADMIN_PASSWORD=ChangeMe123!
 
 Recommended values:
 
-- `AUTH_URL=https://your-project-name.vercel.app`
+- `APP_URL=https://your-project-name.vercel.app`
 - `CRON_SECRET` should be random and long
 - `STEAM_CRON_BATCH_SIZE=25` for Hobby
+
+Do not set `AUTH_URL` for normal deploys. Auth.js uses that variable as a fixed authentication origin, and a mismatch with the actual Vercel/custom domain can break the CSRF cookie and make login reload back to `/login`.
 
 `REDIS_URL` is optional in Vercel if you are not running BullMQ there.
 

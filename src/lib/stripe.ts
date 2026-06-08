@@ -1,7 +1,7 @@
 import { SubscriptionPlan } from "@prisma/client";
 import Stripe from "stripe";
 
-import { env } from "@/env";
+import { appUrl, env } from "@/env";
 import { db } from "@/lib/db";
 import { syncOrganizationSubscriptionFromStripe } from "@/lib/subscription-service";
 
@@ -70,8 +70,8 @@ export async function createStripeCheckoutSession(params: {
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     client_reference_id: params.organizationId,
-    success_url: `${env.AUTH_URL}/signup/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${env.AUTH_URL}/settings`,
+    success_url: `${appUrl}/signup/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/settings`,
     customer: organization.stripeCustomerId ?? undefined,
     customer_email: organization.stripeCustomerId ? undefined : params.userEmail,
     line_items: [
@@ -119,7 +119,7 @@ export async function createStripeBillingPortalSession(params: {
 
   const session = await stripe.billingPortal.sessions.create({
     customer: organization.stripeCustomerId,
-    return_url: `${env.AUTH_URL}/settings`
+    return_url: `${appUrl}/settings`
   });
 
   if (!session.url) {

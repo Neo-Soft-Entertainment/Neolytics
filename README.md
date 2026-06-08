@@ -57,7 +57,7 @@ Copy `.env.example` to `.env` and fill in the values.
 DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
 DIRECT_URL="postgresql://postgres:[YOUR-PROJECT-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres?sslmode=require"
 AUTH_SECRET="replace-with-a-long-random-string"
-AUTH_URL="http://localhost:3000"
+APP_URL="http://localhost:3000"
 CRON_SECRET="replace-with-a-random-secret-with-at-least-16-characters"
 REDIS_URL="redis://localhost:6379"
 STEAM_STORE_BASE_URL="https://store.steampowered.com"
@@ -94,6 +94,8 @@ DISCORD_CLIENT_SECRET=""
 APPLE_CLIENT_ID=""
 APPLE_CLIENT_SECRET=""
 ```
+
+Use `APP_URL` for absolute product links such as Stripe return URLs and Discord notifications. Do not set `AUTH_URL` for normal deploys; Auth.js treats it as a fixed authentication origin, and a mismatch with the actual domain can break CSRF cookies and send users back to `/login`.
 
 Google OAuth setup:
 

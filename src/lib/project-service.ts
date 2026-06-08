@@ -1,7 +1,7 @@
 import { Prisma, ProjectStage, SubscriptionPlan } from "@prisma/client";
 
+import { appUrl } from "@/env";
 import { db } from "@/lib/db";
-import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { slugify } from "@/lib/slugify";
@@ -1702,7 +1702,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
     embeds: [
       {
         title: "GDD generated",
-        description: `Version ${gdd.version} was created. Review it in ${env.AUTH_URL}/projects/${project.id}.`,
+        description: `Version ${gdd.version} was created. Review it in ${appUrl}/projects/${project.id}.`,
         color: 5763719,
         timestamp: new Date().toISOString()
       }

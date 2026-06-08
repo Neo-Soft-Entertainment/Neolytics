@@ -1,7 +1,7 @@
 import { Prisma, SubscriptionPlan } from "@prisma/client";
 
+import { appUrl } from "@/env";
 import { db } from "@/lib/db";
-import { env } from "@/env";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { generateAiSegmentReportLayer } from "@/lib/market-analysis-ai";
 import { buildSegmentIntelligence } from "@/lib/market-intelligence";
@@ -344,7 +344,7 @@ export async function generateBasicMarketReport(params: {
     embeds: [
       {
         title: "Market report generated",
-        description: `Open ${env.AUTH_URL}/reports to review **${report.title}**.`,
+        description: `Open ${appUrl}/reports to review **${report.title}**.`,
         color: 10181046,
         timestamp: new Date().toISOString()
       }

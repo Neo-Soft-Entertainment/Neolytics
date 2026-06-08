@@ -43,7 +43,7 @@ Set these values in `.env`:
 DATABASE_URL=""
 DIRECT_URL=""
 AUTH_SECRET=""
-AUTH_URL="http://localhost:3000"
+APP_URL="http://localhost:3000"
 REDIS_URL="redis://localhost:6379"
 ```
 
