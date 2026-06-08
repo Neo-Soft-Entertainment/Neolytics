@@ -10,6 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+function canCopyInvitationToken(token: string) {
+  return !/^[a-f0-9]{64}$/i.test(token);
+}
+
 export function OrganizationMembersPanel({
   canManage,
   members,
@@ -135,16 +139,22 @@ export function OrganizationMembersPanel({
                 Role: {invitation.role} · Expires {new Date(invitation.expiresAt).toLocaleDateString()}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    const inviteUrl = `${window.location.origin}/invite/${invitation.token}`;
-                    await navigator.clipboard.writeText(inviteUrl).catch(() => {});
-                    setMessage("Invitation link copied.");
-                  }}
-                >
-                  Copy link
-                </Button>
+                {canCopyInvitationToken(invitation.token) ? (
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const inviteUrl = `${window.location.origin}/invite/${invitation.token}`;
+                      await navigator.clipboard.writeText(inviteUrl).catch(() => {});
+                      setMessage("Invitation link copied.");
+                    }}
+                  >
+                    Copy link
+                  </Button>
+                ) : (
+                  <p className="rounded-full border border-white/10 px-3 py-2 text-xs text-muted-foreground">
+                    Link is hidden. Revoke and recreate to copy a new invite.
+                  </p>
+                )}
                 {canManage ? (
                   <Button variant="outline" onClick={() => revokeInvite(invitation.id)}>
                     Revoke

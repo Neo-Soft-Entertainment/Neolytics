@@ -1,8 +1,9 @@
 import { CommunityPostType } from "@prisma/client";
 import { z } from "zod";
 
-import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canWriteOrganization } from "@/lib/authorization";
 import { createCommunityPost, getCommunityRanking, listCommunityFeed } from "@/lib/community-service";
 import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
@@ -20,6 +21,10 @@ export async function GET() {
 
   if (!context) {
     return unauthorized();
+  }
+
+  if (!canWriteOrganization(context.organizationRole)) {
+    return forbidden("Viewers cannot create community posts.");
   }
 
   try {

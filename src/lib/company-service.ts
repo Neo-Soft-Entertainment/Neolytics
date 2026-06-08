@@ -450,6 +450,7 @@ export async function createCompanyDocument(params: {
   originalName: string;
   mimeType: string;
   sizeBytes?: number;
+  checksum?: string;
 }) {
   await enforceSubscriptionCapability(params.organizationId, "documentVault");
 
@@ -471,6 +472,7 @@ export async function createCompanyDocument(params: {
           originalName: params.originalName.trim(),
           mimeType: params.mimeType.trim(),
           sizeBytes: params.sizeBytes,
+          checksum: params.checksum,
           uploadedById: params.userId
         }
       }
@@ -503,6 +505,7 @@ export async function addCompanyDocumentVersion(params: {
   originalName: string;
   mimeType: string;
   sizeBytes?: number;
+  checksum?: string;
 }) {
   await enforceSubscriptionCapability(params.organizationId, "documentVault");
 
@@ -534,6 +537,7 @@ export async function addCompanyDocumentVersion(params: {
       originalName: params.originalName.trim(),
       mimeType: params.mimeType.trim(),
       sizeBytes: params.sizeBytes,
+      checksum: params.checksum,
       uploadedById: params.userId
     }
   });

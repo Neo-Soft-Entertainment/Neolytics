@@ -1,5 +1,5 @@
 import { OrganizationRole } from "@prisma/client";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
@@ -16,6 +16,18 @@ function getInvitationExpiryDate() {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
   return expiresAt;
+}
+
+function createInvitationToken() {
+  return randomBytes(32).toString("base64url");
+}
+
+function hashInvitationToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function isHashedInvitationToken(token: string) {
+  return /^[a-f0-9]{64}$/i.test(token);
 }
 
 export async function createOrganizationInvitation(params: {
@@ -54,18 +66,23 @@ export async function createOrganizationInvitation(params: {
   });
 
   if (existingInvitation) {
+    if (isHashedInvitationToken(existingInvitation.token)) {
+      throw new OrganizationInvitationError("This email already has a pending invite. Revoke it and create a new link.");
+    }
+
     return existingInvitation;
   }
 
   await enforceSubscriptionCapacity(params.organizationId, "seats");
 
+  const token = createInvitationToken();
   const invitation = await db.organizationInvitation.create({
     data: {
       organizationId: params.organizationId,
       invitedById: params.invitedById,
       email: normalizedEmail,
       role: params.role,
-      token: randomBytes(24).toString("hex"),
+      token: hashInvitationToken(token),
       expiresAt: getInvitationExpiryDate()
     }
   });
@@ -82,7 +99,10 @@ export async function createOrganizationInvitation(params: {
     ]
   });
 
-  return invitation;
+  return {
+    ...invitation,
+    token
+  };
 }
 
 export async function revokeOrganizationInvitation(params: {
@@ -133,9 +153,16 @@ export async function revokeOrganizationInvitation(params: {
 }
 
 export async function getOrganizationInvitationByToken(token: string) {
-  return db.organizationInvitation.findUnique({
+  const invitation = await db.organizationInvitation.findFirst({
     where: {
-      token
+      OR: [
+        {
+          token
+        },
+        {
+          token: hashInvitationToken(token)
+        }
+      ]
     },
     include: {
       organization: true,
@@ -147,6 +174,19 @@ export async function getOrganizationInvitationByToken(token: string) {
       }
     }
   });
+
+  if (invitation && invitation.token === token) {
+    await db.organizationInvitation.update({
+      where: {
+        id: invitation.id
+      },
+      data: {
+        token: hashInvitationToken(token)
+      }
+    });
+  }
+
+  return invitation;
 }
 
 export async function acceptOrganizationInvitation(params: {
@@ -154,9 +194,16 @@ export async function acceptOrganizationInvitation(params: {
   userId: string;
   userEmail: string;
 }) {
-  const invitation = await db.organizationInvitation.findUnique({
+  const invitation = await db.organizationInvitation.findFirst({
     where: {
-      token: params.token
+      OR: [
+        {
+          token: params.token
+        },
+        {
+          token: hashInvitationToken(params.token)
+        }
+      ]
     }
   });
 

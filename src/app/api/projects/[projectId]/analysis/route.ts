@@ -1,5 +1,6 @@
-import { badRequest, notFound, ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, forbidden, notFound, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canWriteOrganization } from "@/lib/authorization";
 import { analyzeProject } from "@/lib/project-service";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
@@ -12,6 +13,10 @@ export async function POST(
 
   if (!context) {
     return unauthorized();
+  }
+
+  if (!canWriteOrganization(context.organizationRole)) {
+    return forbidden("Viewers cannot run project analyses.");
   }
 
   try {

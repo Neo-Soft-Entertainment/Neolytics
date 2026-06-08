@@ -18,6 +18,10 @@ async function main() {
     return;
   }
 
+  if (env.ADMIN_PASSWORD === "ChangeMe123!") {
+    throw new Error("ADMIN_PASSWORD must not use the documented placeholder value.");
+  }
+
   const passwordHash = await hash(env.ADMIN_PASSWORD, 12);
   const period = getCurrentSubscriptionPeriodRange();
 

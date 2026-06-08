@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { badRequest, ok, serverError } from "@/lib/api-response";
+import { badRequest, ok, serverError, tooManyRequests } from "@/lib/api-response";
+import { AuthRateLimitError, assertPublicApiRateLimit, getPublicApiRateLimitKey } from "@/lib/auth-rate-limit";
 import { searchGames } from "@/lib/game-service";
 import { parseSearchParams } from "@/lib/request";
 
@@ -19,6 +20,8 @@ const schema = z.object({
 
 export async function GET(request: Request) {
   try {
+    await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "games-search"));
+
     const parsed = parseSearchParams(new URL(request.url), schema);
     const result = await searchGames({
       ...parsed,
@@ -30,6 +33,10 @@ export async function GET(request: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid search parameters.");
+    }
+
+    if (error instanceof AuthRateLimitError) {
+      return tooManyRequests(error.message);
     }
 
     return serverError();

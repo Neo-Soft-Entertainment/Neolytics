@@ -16,7 +16,21 @@ type DiscordWebhookPayload = {
   }>;
 };
 
+export function isAllowedDiscordWebhookUrl(webhookUrl: string) {
+  try {
+    const url = new URL(webhookUrl);
+    const allowedHost = url.hostname === "discord.com" || url.hostname === "discordapp.com";
+    return url.protocol === "https:" && allowedHost && url.pathname.startsWith("/api/webhooks/");
+  } catch {
+    return false;
+  }
+}
+
 export async function sendDiscordWebhook(webhookUrl: string, payload: DiscordWebhookPayload) {
+  if (!isAllowedDiscordWebhookUrl(webhookUrl)) {
+    throw new Error("Discord webhook URL is not allowed.");
+  }
+
   const response = await fetch(webhookUrl, {
     method: "POST",
     headers: {

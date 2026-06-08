@@ -1,8 +1,9 @@
 import { ProjectStage } from "@prisma/client";
 import { z } from "zod";
 
-import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canWriteOrganization } from "@/lib/authorization";
 import { createProject, listProjects } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
 
   if (!context) {
     return unauthorized();
+  }
+
+  if (!canWriteOrganization(context.organizationRole)) {
+    return forbidden("Viewers cannot create projects.");
   }
 
   try {

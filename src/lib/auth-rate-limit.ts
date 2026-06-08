@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 const windowMs = 15 * 60 * 1000;
 const blockMs = 30 * 60 * 1000;
 const maxAttempts = 5;
+const publicApiWindowMs = 60 * 1000;
+const publicApiMaxAttempts = 120;
 
 export class AuthRateLimitError extends Error {
   constructor(message = "Too many authentication attempts. Try again later.") {
@@ -33,6 +35,10 @@ export function getLoginRateLimitKey(email: string) {
 
 export function getSignupRateLimitKey(request: Request) {
   return `signup:${hashIdentifier(getIp(request))}`;
+}
+
+export function getPublicApiRateLimitKey(request: Request, scope: string) {
+  return `api:${scope}:${hashIdentifier(getIp(request))}`;
 }
 
 export async function assertAuthRateLimit(key: string) {
@@ -82,6 +88,50 @@ export async function recordAuthAttempt(key: string, succeeded: boolean) {
     update: {
       attempts,
       blockedUntil,
+      lastAttemptAt: now
+    }
+  });
+}
+
+export async function assertPublicApiRateLimit(key: string) {
+  const now = new Date();
+  const existing = await db.authRateLimit.findUnique({
+    where: {
+      key
+    }
+  });
+
+  if (existing && now.getTime() - existing.lastAttemptAt.getTime() <= publicApiWindowMs) {
+    if (existing.attempts >= publicApiMaxAttempts) {
+      throw new AuthRateLimitError("Too many requests. Try again later.");
+    }
+
+    await db.authRateLimit.update({
+      where: {
+        key
+      },
+      data: {
+        attempts: {
+          increment: 1
+        },
+        lastAttemptAt: now
+      }
+    });
+    return;
+  }
+
+  await db.authRateLimit.upsert({
+    where: {
+      key
+    },
+    create: {
+      key,
+      attempts: 1,
+      lastAttemptAt: now
+    },
+    update: {
+      attempts: 1,
+      blockedUntil: null,
       lastAttemptAt: now
     }
   });

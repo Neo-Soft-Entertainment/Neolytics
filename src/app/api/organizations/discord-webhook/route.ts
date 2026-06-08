@@ -1,20 +1,16 @@
-import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageOrganization } from "@/lib/authorization";
 import { db } from "@/lib/db";
-import { sendDiscordWebhook } from "@/lib/discord";
+import { isAllowedDiscordWebhookUrl, sendDiscordWebhook } from "@/lib/discord";
 import { parseJsonBody } from "@/lib/request";
 
 const schema = z.object({
   webhookUrl: z.union([z.string().url(), z.literal("")]).transform((value) => value.trim()),
   enabled: z.boolean()
 });
-
-function canManageOrganization(role: OrganizationRole) {
-  return role === OrganizationRole.OWNER || role === OrganizationRole.ADMIN;
-}
 
 export async function PATCH(request: Request) {
   const context = await getApiContext();
@@ -32,6 +28,10 @@ export async function PATCH(request: Request) {
 
     if (body.enabled && !body.webhookUrl) {
       return badRequest("Provide a Discord webhook URL before enabling notifications.");
+    }
+
+    if (body.webhookUrl && !isAllowedDiscordWebhookUrl(body.webhookUrl)) {
+      return badRequest("Use a valid Discord webhook URL.");
     }
 
     const organization = await db.organization.update({

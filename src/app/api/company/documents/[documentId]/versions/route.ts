@@ -40,7 +40,8 @@ export async function POST(
       storagePath: upload.storagePath,
       originalName: upload.originalName,
       mimeType: upload.mimeType,
-      sizeBytes: upload.sizeBytes
+      sizeBytes: upload.sizeBytes,
+      checksum: upload.checksum
     });
 
     return ok(version, { status: 201 });

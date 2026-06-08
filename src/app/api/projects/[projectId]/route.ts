@@ -1,8 +1,9 @@
 import { ProjectStage } from "@prisma/client";
 import { z } from "zod";
 
-import { badRequest, notFound, ok, serverError, unauthorized } from "@/lib/api-response";
+import { badRequest, forbidden, notFound, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canWriteOrganization } from "@/lib/authorization";
 import { getProjectById, updateProject } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
 
@@ -51,6 +52,10 @@ export async function PATCH(
 
   if (!context) {
     return unauthorized();
+  }
+
+  if (!canWriteOrganization(context.organizationRole)) {
+    return forbidden("Viewers cannot edit projects.");
   }
 
   try {

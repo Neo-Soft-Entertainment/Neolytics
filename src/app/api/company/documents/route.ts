@@ -80,7 +80,8 @@ export async function POST(request: Request) {
       storagePath: upload.storagePath,
       originalName: upload.originalName,
       mimeType: upload.mimeType,
-      sizeBytes: upload.sizeBytes
+      sizeBytes: upload.sizeBytes,
+      checksum: upload.checksum
     });
 
     return ok(document, { status: 201 });
