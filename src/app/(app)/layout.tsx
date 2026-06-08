@@ -1,8 +1,10 @@
 import { AppHeader } from "@/components/app-shell/app-header";
 import { AppSidebar } from "@/components/app-shell/app-sidebar";
 import { auth } from "@/auth";
+import { languageOptions } from "@/lib/company-localization";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { uiLanguages } from "@/lib/i18n";
 
 export default async function AppLayout({
   children
@@ -10,6 +12,19 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
+  const currentUser = session?.user?.id
+    ? await db.user.findUnique({
+        where: {
+          id: session.user.id
+        },
+        select: {
+          name: true,
+          email: true,
+          image: true,
+          preferredLanguage: true
+        }
+      })
+    : null;
   const organizations = session?.user?.id
     ? await db.organizationMember.findMany({
         where: {
@@ -41,6 +56,15 @@ export default async function AppLayout({
               role: membership.role,
               subscriptionPlan: membership.organization.subscriptionPlan
             }))}
+            user={{
+              name: currentUser?.name ?? session?.user?.name ?? null,
+              email: currentUser?.email ?? session?.user?.email ?? null,
+              image: currentUser?.image ?? session?.user?.image ?? null,
+              preferredLanguage: currentUser?.preferredLanguage ?? session?.user?.preferredLanguage ?? "en"
+            }}
+            languageOptions={languageOptions.filter((option) =>
+              uiLanguages.includes(option.value as (typeof uiLanguages)[number])
+            )}
             subscriptionPlan={organization.subscriptionPlan}
             workspaces={organization.workspaces}
           />

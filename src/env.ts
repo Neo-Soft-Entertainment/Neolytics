@@ -73,6 +73,7 @@ const envSchema = z.object({
   }, z.string().url().optional()),
   SUPABASE_SERVICE_ROLE_KEY: optionalString,
   COMPANY_DOCUMENTS_BUCKET: optionalString,
+  USER_AVATARS_BUCKET: optionalString,
   GOOGLE_SHEETS_CLIENT_EMAIL: optionalEmail,
   GOOGLE_SHEETS_PRIVATE_KEY: optionalString,
   GOOGLE_SHEETS_FOLDER_ID: optionalString

@@ -76,6 +76,7 @@ ADMIN_PASSWORD="ChangeMe123!"
 SUPABASE_URL=""
 SUPABASE_SERVICE_ROLE_KEY=""
 COMPANY_DOCUMENTS_BUCKET="company-documents"
+USER_AVATARS_BUCKET="user-avatars"
 GOOGLE_SHEETS_CLIENT_EMAIL=""
 GOOGLE_SHEETS_PRIVATE_KEY=""
 GOOGLE_SHEETS_FOLDER_ID=""
@@ -130,6 +131,7 @@ Optional Google Sheets publishing:
 - `SUPABASE_URL`: Supabase project URL used by the company document upload flow
 - `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
 - `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
+- `USER_AVATARS_BUCKET`: optional public bucket name for account avatars
 - `OPENAI_API_KEY`: optional OpenAI API key used to enrich project market analysis and segment reports with strategic AI reads
 - `OPENAI_MARKET_ANALYSIS_MODEL`: optional model override for the AI marketing layer. Default: `gpt-5.4-mini`
 - `GOOGLE_CLIENT_ID`: optional Google OAuth client id for social login

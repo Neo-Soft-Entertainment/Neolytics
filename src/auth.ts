@@ -135,12 +135,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: userId
           },
           select: {
+            name: true,
+            email: true,
+            image: true,
             preferredLanguage: true
           }
         })
       ]);
 
       session.user.id = userId;
+      session.user.name = dbUser?.name ?? session.user.name;
+      session.user.email = dbUser?.email ?? session.user.email;
+      session.user.image = dbUser?.image ?? session.user.image;
       session.user.preferredLanguage = dbUser?.preferredLanguage ?? "en";
       session.user.organizations = memberships.map((membership) => ({
         id: membership.organization.id,

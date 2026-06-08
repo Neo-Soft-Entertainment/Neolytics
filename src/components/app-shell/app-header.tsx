@@ -4,9 +4,9 @@ import { useI18n } from "@/components/i18n-provider";
 import { OrganizationSwitcher } from "@/components/app-shell/organization-switcher";
 import { WorkspaceSwitcher } from "@/components/app-shell/workspace-switcher";
 import { MobileNav } from "@/components/app-shell/mobile-nav";
-import { SignOutButton } from "@/components/auth/signout-button";
 import { NeolyticsBrand } from "@/components/brand/neolytics-brand";
 import { ThemeToggle } from "@/components/app-shell/theme-toggle";
+import { UserAccountMenu } from "@/components/app-shell/user-account-menu";
 import { Badge } from "@/components/ui/badge";
 import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 
@@ -27,6 +27,16 @@ interface AppHeaderProps {
     role: OrganizationRole;
     subscriptionPlan: SubscriptionPlan;
   }>;
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    preferredLanguage: string;
+  };
+  languageOptions: Array<{
+    value: string;
+    label: string;
+  }>;
   subscriptionPlan: SubscriptionPlan;
 }
 
@@ -37,6 +47,8 @@ export function AppHeader({
   currentWorkspaceName,
   workspaces,
   organizations,
+  user,
+  languageOptions,
   subscriptionPlan
 }: AppHeaderProps) {
   const t = useI18n();
@@ -52,6 +64,13 @@ export function AppHeader({
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <UserAccountMenu
+              email={user.email}
+              image={user.image}
+              languageOptions={languageOptions}
+              name={user.name}
+              preferredLanguage={user.preferredLanguage}
+            />
             <MobileNav
               currentOrganizationName={currentOrganization?.name ?? organizationName}
               currentOrganizationRole={currentOrganization?.role}
@@ -116,7 +135,13 @@ export function AppHeader({
 
         <div className="flex items-center justify-end gap-2 pt-6">
           <ThemeToggle />
-          <SignOutButton />
+          <UserAccountMenu
+            email={user.email}
+            image={user.image}
+            languageOptions={languageOptions}
+            name={user.name}
+            preferredLanguage={user.preferredLanguage}
+          />
         </div>
       </div>
     </header>

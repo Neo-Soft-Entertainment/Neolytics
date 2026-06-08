@@ -3,11 +3,11 @@ import { z } from "zod";
 import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { createAuditEvent } from "@/lib/audit-service";
 import { getApiContext } from "@/lib/auth-helpers";
-import { languageOptions } from "@/lib/company-localization";
 import { db } from "@/lib/db";
+import { uiLanguages } from "@/lib/i18n";
 import { parseJsonBody } from "@/lib/request";
 
-const languageValues = languageOptions.map((option) => option.value);
+const languageValues = [...uiLanguages];
 
 const schema = z.object({
   preferredLanguage: z.string().refine((value) => languageValues.some((language) => language === value), {
