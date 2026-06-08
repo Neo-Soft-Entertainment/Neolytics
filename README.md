@@ -74,6 +74,7 @@ STEAM_APP_SYNC_LIMIT="500"
 STEAM_CRON_BATCH_SIZE="25"
 OPENAI_API_KEY=""
 OPENAI_MARKET_ANALYSIS_MODEL="gpt-5.4-mini"
+ENABLE_AI_MARKET_ANALYSIS="false"
 ADMIN_EMAIL="admin@neolytics.local"
 ADMIN_PASSWORD=""
 SUPABASE_URL=""
@@ -147,8 +148,9 @@ Optional Google Sheets publishing:
 - `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
 - `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
 - `USER_AVATARS_BUCKET`: optional public bucket name for account avatars
-- `OPENAI_API_KEY`: optional OpenAI API key used to enrich project market analysis and segment reports with strategic AI reads
+- `OPENAI_API_KEY`: optional OpenAI API key. It is not used by market analysis unless `ENABLE_AI_MARKET_ANALYSIS=true`
 - `OPENAI_MARKET_ANALYSIS_MODEL`: optional model override for the AI marketing layer. Default: `gpt-5.4-mini`
+- `ENABLE_AI_MARKET_ANALYSIS`: keep `false` to run market analysis fully from Steam data and deterministic models without token cost
 - `GOOGLE_CLIENT_ID`: optional Google OAuth client id for social login
 - `GOOGLE_CLIENT_SECRET`: optional Google OAuth client secret for social login
 - `DISCORD_CLIENT_ID`: optional Discord OAuth client id for social login

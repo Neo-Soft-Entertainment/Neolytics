@@ -108,6 +108,45 @@ export async function fetchSteamCatalogAppIds(offset: number, count: number) {
   return [...appIds];
 }
 
+export async function fetchSteamSearchAppIds(query: string, count = 12) {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    term: trimmedQuery,
+    start: "0",
+    count: String(Math.min(Math.max(count, 1), 25)),
+    dynamic_data: "",
+    sort_by: "_ASC",
+    supportedlang: env.STEAM_DEFAULT_LANGUAGE === "en" ? "english" : env.STEAM_DEFAULT_LANGUAGE,
+    snr: "1_7_7_230_7",
+    infinite: "1"
+  });
+  const url = `${env.STEAM_STORE_BASE_URL}/search/results/?${params.toString()}`;
+  const response = await fetchWithRetry<SteamPublicSearchResponse>(url, {
+    headers: {
+      "User-Agent": "NeolyticsBot/1.0"
+    }
+  });
+  const matches = [...(response.results_html ?? "").matchAll(/data-ds-appid="([^"]+)"/g)];
+  const appIds = new Set<number>();
+
+  for (const match of matches) {
+    for (const value of match[1].split(",")) {
+      const appId = Number.parseInt(value.trim(), 10);
+
+      if (Number.isFinite(appId) && appId > 0) {
+        appIds.add(appId);
+      }
+    }
+  }
+
+  return [...appIds].slice(0, count);
+}
+
 export async function fetchSteamAppDetails(appId: number) {
   const params = new URLSearchParams({
     appids: String(appId),

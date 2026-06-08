@@ -6,6 +6,8 @@ import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
 import { slugify } from "@/lib/slugify";
+import { fetchSteamSearchAppIds } from "@/lib/steam/client";
+import { syncSteamApp } from "@/lib/steam/ingest";
 import {
   consumeSubscriptionUsage,
   enforceSubscriptionCapacity,
@@ -31,6 +33,66 @@ function parseCsv(value?: string | null) {
     .map((item) => item.trim())
     .filter(Boolean);
 }
+
+const projectSearchStopWords = new Set([
+  "about",
+  "across",
+  "action",
+  "advanced",
+  "against",
+  "around",
+  "battle",
+  "battles",
+  "built",
+  "chaotic",
+  "city",
+  "close",
+  "combat",
+  "combines",
+  "connected",
+  "consumed",
+  "deliver",
+  "different",
+  "dimensional",
+  "each",
+  "energy",
+  "engineered",
+  "every",
+  "fight",
+  "fps",
+  "first",
+  "first-person",
+  "from",
+  "game",
+  "games",
+  "high",
+  "instead",
+  "length",
+  "master",
+  "multiplayer",
+  "player",
+  "players",
+  "project",
+  "shooter",
+  "singleplayer",
+  "speed",
+  "takes",
+  "tactical",
+  "that",
+  "their",
+  "through",
+  "unique",
+  "using",
+  "where",
+  "with",
+  "jogo",
+  "jogador",
+  "jogadores",
+  "para",
+  "como",
+  "uma",
+  "que"
+]);
 
 function revenueToNumber(value: bigint | number | null | undefined) {
   if (value === null || value === undefined) {
@@ -263,6 +325,183 @@ function getDominantMonetization(project: {
   };
 }
 
+function getProjectKeywords(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
+}) {
+  const text = [
+    project.name,
+    project.elevatorPitch,
+    project.description,
+    project.differentiator,
+    project.playerFantasy,
+    project.targetAudience,
+    project.coreLoop,
+    project.genreInput,
+    project.tagInput
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const keywords = text
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim().replace(/^-+|-+$/g, ""))
+    .filter((word) => word.length >= 3 && !projectSearchStopWords.has(word));
+
+  return [...new Set(keywords)].slice(0, 40);
+}
+
+function getProjectSearchPhrases(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
+}) {
+  const phrases: string[] = [];
+  const keywords = getProjectKeywords(project);
+
+  for (let index = 0; index < keywords.length - 2; index += 1) {
+    phrases.push(`${keywords[index]} ${keywords[index + 1]} ${keywords[index + 2]}`);
+  }
+
+  for (let index = 0; index < keywords.length - 1; index += 1) {
+    phrases.push(`${keywords[index]} ${keywords[index + 1]}`);
+  }
+
+  phrases.push(
+    project.playerFantasy ?? "",
+    project.differentiator ?? "",
+    project.coreLoop ?? "",
+    ...parseCsv(project.genreInput),
+    ...parseCsv(project.tagInput)
+  );
+
+  const cleanedPhrases = phrases
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 4 && value.length <= 80);
+
+  if (project.name.trim().length >= 4) {
+    cleanedPhrases.push(project.name.trim());
+  }
+
+  return [...new Set(cleanedPhrases)]
+    .filter((phrase) => phrase.split(/\s+/).some((word) => !projectSearchStopWords.has(word.toLowerCase())))
+    .slice(0, 8);
+}
+
+function getGameTextSimilarity(projectKeywords: string[], game: {
+  name: string;
+  shortDescription: string | null;
+  genres: Array<{ steamGenre: { name: string; slug: string } }>;
+  tags: Array<{ steamTag: { name: string; slug: string } }>;
+}) {
+  if (projectKeywords.length === 0) {
+    return 0;
+  }
+
+  const text = [
+    game.name,
+    game.shortDescription,
+    ...game.genres.map((genre) => genre.steamGenre.name),
+    ...game.tags.map((tag) => tag.steamTag.name)
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const matches = projectKeywords.filter((keyword) => text.includes(keyword)).length;
+  const coverage = matches / Math.min(projectKeywords.length, 12);
+
+  return clampScore(coverage * 100);
+}
+
+async function ensureProjectSteamCoverage(project: {
+  name: string;
+  genreInput: string | null;
+  tagInput: string | null;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  differentiator?: string | null;
+  playerFantasy?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
+}) {
+  const phrases = getProjectSearchPhrases(project);
+
+  if (phrases.length === 0) {
+    return {
+      phrases,
+      discoveredAppIds: [] as number[],
+      syncedAppIds: [] as number[]
+    };
+  }
+
+  const discoveredAppIds = new Set<number>();
+
+  for (const phrase of phrases) {
+    const appIds = await fetchSteamSearchAppIds(phrase, 8).catch(() => []);
+
+    for (const appId of appIds) {
+      discoveredAppIds.add(appId);
+    }
+  }
+
+  const selectedAppIds = [...discoveredAppIds].slice(0, 18);
+  const existingGames = selectedAppIds.length > 0
+    ? await db.steamGame.findMany({
+        where: {
+          appId: {
+            in: selectedAppIds
+          }
+        },
+        select: {
+          appId: true,
+          lastIngestedAt: true
+        }
+      })
+    : [];
+  const existingByAppId = new Map(existingGames.map((game) => [game.appId, game]));
+  const staleThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const appIdsToSync = selectedAppIds
+    .filter((appId) => {
+      const existing = existingByAppId.get(appId);
+      return !existing || !existing.lastIngestedAt || existing.lastIngestedAt < staleThreshold;
+    })
+    .slice(0, 10);
+  const syncedAppIds: number[] = [];
+
+  for (const appId of appIdsToSync) {
+    try {
+      const result = await syncSteamApp(appId);
+
+      if (result === "SUCCESS") {
+        syncedAppIds.push(appId);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return {
+    phrases,
+    discoveredAppIds: selectedAppIds,
+    syncedAppIds
+  };
+}
+
 async function getProjectSignalSlugs(project: {
   name: string;
   genreInput: string | null;
@@ -348,6 +587,7 @@ async function buildProjectMatchingRules(project: {
   coreLoop?: string | null;
 }) {
   const { genreTokens, tagTokens } = await getProjectSignalSlugs(project);
+  const projectKeywords = getProjectKeywords(project).slice(0, 12);
   const matchingRules: Prisma.SteamGameWhereInput[] = [];
 
   if (genreTokens.length > 0) {
@@ -384,6 +624,25 @@ async function buildProjectMatchingRules(project: {
         contains: project.name.trim(),
         mode: "insensitive"
       }
+    });
+  }
+
+  for (const keyword of projectKeywords) {
+    matchingRules.push({
+      OR: [
+        {
+          name: {
+            contains: keyword,
+            mode: "insensitive"
+          }
+        },
+        {
+          shortDescription: {
+            contains: keyword,
+            mode: "insensitive"
+          }
+        }
+      ]
     });
   }
 
@@ -429,7 +688,7 @@ async function getComparableGames(project: {
         reviewCount: "desc"
       }
     ],
-    take: 40
+    take: 120
   });
 }
 
@@ -761,8 +1020,10 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
   });
 
   await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
+  const steamCoverage = await ensureProjectSteamCoverage(project);
   const matchingGames = await getComparableGames(project);
   const { genreTokens: projectGenres, tagTokens: projectTags } = await getProjectSignalSlugs(project);
+  const projectKeywords = getProjectKeywords(project);
   const now = Date.now();
   const enrichedGames = matchingGames.map((game) => {
     const gameGenres = game.genres.map((genre) => genre.steamGenre.slug);
@@ -771,10 +1032,17 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     const tagMatches = gameTags.filter((tag) => projectTags.includes(tag)).length;
     const genreCoverage = projectGenres.length > 0 ? genreMatches / projectGenres.length : 0;
     const tagCoverage = projectTags.length > 0 ? tagMatches / projectTags.length : 0;
+    const textSimilarityScore = getGameTextSimilarity(projectKeywords, game);
+    const projectNameTokens = slugify(project.name).split("-").filter((token) => token.length >= 3);
+    const nameMatches = projectNameTokens.filter((token) => game.name.toLowerCase().includes(token)).length;
     const similarityScore = clampScore(
-      genreCoverage * 60
-      + tagCoverage * 40
-      + (project.name.trim() && game.name.toLowerCase().includes(project.name.trim().toLowerCase()) ? 10 : 0)
+      genreCoverage * 28
+      + tagCoverage * 34
+      + textSimilarityScore * 0.34
+      + Math.min(12, nameMatches * 4)
+      + (project.pricePointCents && game.priceCurrent?.finalPriceCents
+        ? Math.max(0, 8 - (Math.abs(project.pricePointCents - game.priceCurrent.finalPriceCents) / Math.max(project.pricePointCents, 1)) * 8)
+        : 0)
     );
 
     return {
@@ -782,14 +1050,19 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
       similarityScore,
       genreMatches,
       tagMatches,
-      isDirectComparable: similarityScore >= 45 || (genreMatches > 0 && tagMatches > 0)
+      textSimilarityScore,
+      isDirectComparable: similarityScore >= 48 || (textSimilarityScore >= 45 && (genreMatches > 0 || tagMatches > 0))
     };
   });
-  const directComparables = enrichedGames
+  const relevantGames = enrichedGames
+    .filter((game) => game.similarityScore >= 14 || game.genreMatches > 0 || game.tagMatches > 0)
+    .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0))
+    .slice(0, 60);
+  const directComparables = relevantGames
     .filter((game) => game.isDirectComparable)
     .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
-  const adjacentComparables = enrichedGames
-    .filter((game) => !game.isDirectComparable)
+  const adjacentComparables = relevantGames
+    .filter((game) => !game.isDirectComparable && game.similarityScore >= 20)
     .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
   const rankedComparables = [...directComparables, ...adjacentComparables];
   const competitionCount = rankedComparables.length;
@@ -1047,6 +1320,7 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
   ].join(" ");
   const marketSummary = [
     `${directComparables.length} direct comparables and ${adjacentComparables.length} adjacent comps were identified from the current Steam dataset.`,
+    steamCoverage.discoveredAppIds.length > 0 ? `Steam Store search added ${steamCoverage.discoveredAppIds.length} candidate app ids from project-specific queries before ranking.` : "No extra Steam Store search candidates were found for the project-specific queries.",
     totalRevenueCents > 0 ? `The tracked market depth looks ${marketDepth.marketSizeLabel.toLowerCase()}, with roughly ${formatMoney(totalRevenueCents)} in cumulative estimated net revenue across the matched set and a median of ${formatMoney(medianRevenueCents)}.` : "Revenue coverage is still thin, so the market sizing layer should be treated cautiously.",
     reviewVelocity.reviewVelocity90 > 0 ? `Review velocity added ${reviewVelocity.reviewVelocity90.toLocaleString("en-US")} reviews in the last 90 days versus ${reviewVelocity.previousReviewVelocity90.toLocaleString("en-US")} in the prior window.` : "Temporal review coverage is still limited, so momentum should be treated as directional rather than conclusive.",
     launches365 > 0 ? `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.` : "Recent launch activity is quiet in this segment.",
@@ -1143,6 +1417,12 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
   const analysisMetadata = {
     topCompetitorIds: topCompetitors.map((game) => game.id),
     topCompetitorNames: topCompetitors.map((game) => game.name),
+    steamCoverage,
+    projectSignals: {
+      keywords: projectKeywords,
+      genreSlugs: projectGenres,
+      tagSlugs: projectTags
+    },
     marketDepth,
     competitionLayer,
     opportunityLayer,

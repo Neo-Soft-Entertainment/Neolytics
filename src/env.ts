@@ -53,6 +53,13 @@ const envSchema = z.object({
   STEAM_CRON_BATCH_SIZE: z.coerce.number().int().positive().max(100).default(25),
   OPENAI_API_KEY: optionalString,
   OPENAI_MARKET_ANALYSIS_MODEL: optionalString,
+  ENABLE_AI_MARKET_ANALYSIS: z.preprocess((value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    return value.trim().toLowerCase() === "true";
+  }, z.boolean().default(false)),
   ADMIN_EMAIL: optionalEmail,
   ADMIN_PASSWORD: z.preprocess((value) => {
     if (typeof value !== "string") {

@@ -64,6 +64,10 @@ function formatPrice(valueCents: number | null | undefined) {
 }
 
 async function requestStructuredOutput<T>(schemaName: string, schema: Record<string, unknown>, prompt: string) {
+  if (!env.ENABLE_AI_MARKET_ANALYSIS) {
+    return null;
+  }
+
   if (!env.OPENAI_API_KEY) {
     return null;
   }
