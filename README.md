@@ -59,6 +59,9 @@ DIRECT_URL="postgresql://postgres:[YOUR-PROJECT-PASSWORD]@db.[YOUR-PROJECT-REF].
 AUTH_SECRET="replace-with-a-long-random-string"
 APP_URL="http://localhost:3000"
 CRON_SECRET="replace-with-a-random-secret-with-at-least-16-characters"
+ENCRYPTION_KEYS=""
+ACTIVE_ENCRYPTION_KEY_VERSION=""
+CORS_ALLOWED_ORIGINS=""
 REDIS_URL="redis://localhost:6379"
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=""
 RECAPTCHA_SECRET_KEY=""
@@ -148,6 +151,9 @@ Optional Google Sheets publishing:
 - `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
 - `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
 - `USER_AVATARS_BUCKET`: optional public bucket name for account avatars
+- `ENCRYPTION_KEYS`: comma-separated server-only encryption keys in `keyVersion:base64-32-byte-key` format. Example generation: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+- `ACTIVE_ENCRYPTION_KEY_VERSION`: active key version from `ENCRYPTION_KEYS`, for example `v1`
+- `CORS_ALLOWED_ORIGINS`: comma-separated trusted origins for credentialed API requests in production
 - `OPENAI_API_KEY`: optional OpenAI API key. It is not used by market analysis unless `ENABLE_AI_MARKET_ANALYSIS=true`
 - `OPENAI_MARKET_ANALYSIS_MODEL`: optional model override for the AI marketing layer. Default: `gpt-5.4-mini`
 - `ENABLE_AI_MARKET_ANALYSIS`: keep `false` to run market analysis fully from Steam data and deterministic models without token cost
@@ -165,6 +171,12 @@ Optional Google Sheets publishing:
 - `GOOGLE_SHEETS_FOLDER_ID`: optional Drive folder where exported spreadsheets should be placed
 
 When the Google Sheets variables are present, export menus can push workbooks directly into Google Sheets and share them with the current signed-in user. The current integration status is also visible in `Settings > User > Google integrations`.
+
+Security migration:
+
+- Run `npm run security:migrate-secrets` to detect legacy plaintext OAuth tokens and Discord webhook URLs.
+- Run `npm run security:migrate-secrets -- --apply` after `ENCRYPTION_KEYS` and `ACTIVE_ENCRYPTION_KEY_VERSION` are configured.
+- Applied runs write encrypted rollback material under `security-backups/`; do not commit that folder.
 
 ## Installation
 

@@ -6,15 +6,27 @@ export const logger = pino({
     paths: [
       "*.authorization",
       "*.Authorization",
+      "*.headers.authorization",
+      "*.headers.Authorization",
       "*.access_token",
       "*.refresh_token",
       "*.id_token",
+      "*.apiKey",
+      "*.api_key",
+      "*.clientSecret",
+      "*.client_secret",
       "*.webhookUrl",
       "*.discordWebhookUrl",
       "*.password",
       "*.passwordHash",
       "*.secret",
-      "*.token"
+      "*.token",
+      "*.cookie",
+      "*.cookies",
+      "*.body.password",
+      "*.body.token",
+      "*.body.secret",
+      "*.body.webhookUrl"
     ],
     censor: "[redacted]"
   },

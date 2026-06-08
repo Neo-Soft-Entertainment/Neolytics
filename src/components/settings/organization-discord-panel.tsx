@@ -10,16 +10,17 @@ import { Label } from "@/components/ui/label";
 
 export function OrganizationDiscordPanel({
   canManage,
-  initialWebhookUrl,
+  initialConfigured,
   initialEnabled
 }: {
   canManage: boolean;
-  initialWebhookUrl: string | null;
+  initialConfigured: boolean;
   initialEnabled: boolean;
 }) {
   const router = useRouter();
-  const [webhookUrl, setWebhookUrl] = useState(initialWebhookUrl ?? "");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [enabled, setEnabled] = useState(initialEnabled);
+  const [configured, setConfigured] = useState(initialConfigured);
   const [message, setMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -41,13 +42,20 @@ export function OrganizationDiscordPanel({
 
     setIsSaving(false);
 
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string;
+      discordWebhookConfigured?: boolean;
+      discordWebhookEnabled?: boolean;
+    } | null;
 
     if (!response.ok) {
       setMessage(payload?.message ?? "Unable to save Discord settings.");
       return;
     }
 
+    setConfigured(Boolean(payload?.discordWebhookConfigured));
+    setEnabled(Boolean(payload?.discordWebhookEnabled));
+    setWebhookUrl("");
     setMessage("Discord webhook settings saved.");
     router.refresh();
   }
@@ -85,11 +93,14 @@ export function OrganizationDiscordPanel({
           <Label htmlFor="discord-webhook-url">Webhook URL</Label>
           <Input
             id="discord-webhook-url"
-            placeholder="https://discord.com/api/webhooks/..."
+            placeholder={configured ? "Webhook configured. Paste a new URL to replace it." : "https://discord.com/api/webhooks/..."}
             value={webhookUrl}
             onChange={(event) => setWebhookUrl(event.target.value)}
             readOnly={!canManage}
           />
+          {configured ? (
+            <p className="text-xs text-muted-foreground">The saved webhook is encrypted and hidden. Paste a new webhook URL only if you want to replace it.</p>
+          ) : null}
         </div>
         <label className="flex items-center gap-3 text-sm">
           <input
@@ -106,7 +117,7 @@ export function OrganizationDiscordPanel({
             {isSaving ? "Saving..." : "Save webhook"}
           </Button>
           <Button
-            disabled={!canManage || !webhookUrl.trim() || !enabled || isTesting}
+            disabled={!canManage || (!configured && !webhookUrl.trim()) || !enabled || isTesting}
             onClick={sendTestWebhook}
             type="button"
             variant="outline"

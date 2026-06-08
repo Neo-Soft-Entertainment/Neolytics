@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
+import { decryptNullableString } from "@/lib/security/encryption";
 
 type DiscordWebhookPayload = {
   content?: string;
@@ -61,12 +62,14 @@ export async function notifyOrganizationDiscordWebhook(
     }
   });
 
-  if (!organization?.discordWebhookEnabled || !organization.discordWebhookUrl) {
+  const webhookUrl = decryptNullableString(organization?.discordWebhookUrl, `organization:${organizationId}:discordWebhookUrl`);
+
+  if (!organization?.discordWebhookEnabled || !webhookUrl) {
     return;
   }
 
   try {
-    await sendDiscordWebhook(organization.discordWebhookUrl, payload);
+    await sendDiscordWebhook(webhookUrl, payload);
   } catch (error) {
     logger.error({ error, organizationId }, "Discord webhook delivery failed");
   }

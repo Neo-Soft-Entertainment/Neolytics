@@ -206,7 +206,7 @@ export async function SettingsPage() {
           <OrganizationDiscordPanel
             canManage={canManageSubscription}
             initialEnabled={organization.discordWebhookEnabled}
-            initialWebhookUrl={organization.discordWebhookUrl}
+            initialConfigured={Boolean(organization.discordWebhookUrl)}
           />
 
           <OrganizationMembersPanel

@@ -42,6 +42,9 @@ const envSchema = z.object({
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }, z.string().min(16).optional()),
+  ENCRYPTION_KEYS: optionalString,
+  ACTIVE_ENCRYPTION_KEY_VERSION: optionalString,
+  CORS_ALLOWED_ORIGINS: optionalString,
   STEAM_STORE_BASE_URL: z.string().url(),
   STEAM_API_BASE_URL: z.string().url(),
   STEAM_WEB_API_KEY: optionalString,

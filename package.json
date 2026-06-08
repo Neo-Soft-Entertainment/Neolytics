@@ -13,7 +13,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "jobs:steam:enqueue": "tsx src/jobs/steam/enqueue-steam-sync.ts",
     "jobs:steam:worker": "tsx src/jobs/steam/steam-worker.ts",
-    "jobs:steam:once": "tsx src/jobs/steam/run-steam-sync-once.ts"
+    "jobs:steam:once": "tsx src/jobs/steam/run-steam-sync-once.ts",
+    "security:migrate-secrets": "tsx scripts/migrate-encrypted-secrets.ts",
+    "security:test": "tsx scripts/security-self-test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

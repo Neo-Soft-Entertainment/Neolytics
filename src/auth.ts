@@ -1,4 +1,3 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Apple from "next-auth/providers/apple";
@@ -9,6 +8,7 @@ import GitHub from "next-auth/providers/github";
 import { z } from "zod";
 
 import { AuthRateLimitError, assertAuthRateLimit, getLoginRateLimitKey, recordAuthAttempt } from "@/lib/auth-rate-limit";
+import { createSecureAuthAdapter } from "@/lib/auth-adapter";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
@@ -78,7 +78,7 @@ async function verifyRecaptchaToken(token?: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  adapter: createSecureAuthAdapter(),
   trustHost: true,
   session: {
     strategy: "jwt",
