@@ -1,4 +1,6 @@
-import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+"use client";
+
+import type { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 
 import { useI18n } from "@/components/i18n-provider";
 import { OrganizationSwitcher } from "@/components/app-shell/organization-switcher";

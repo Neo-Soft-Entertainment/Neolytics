@@ -1,7 +1,7 @@
 "use client";
 
 import { CommunityPostType, SubscriptionPlan } from "@prisma/client";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ export function CommunityPageClient({
   });
   const isPro = subscriptionPlan === SubscriptionPlan.PRO;
   const feed = query.data?.feed ?? [];
+  const deferredSearch = useDeferredValue(search);
 
   async function createPost() {
     setFeedback(null);
@@ -109,7 +110,7 @@ export function CommunityPageClient({
   }
 
   const visibleFeed = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
     const filtered = feed.filter((post) => {
       if (typeFilter !== "ALL" && post.type !== typeFilter) {
         return false;
@@ -139,7 +140,7 @@ export function CommunityPageClient({
     }
 
     return filtered;
-  }, [feed, search, sortMode, typeFilter]);
+  }, [deferredSearch, feed, sortMode, typeFilter]);
 
   const signalBoard = useMemo(() => {
     const typeCounts = new Map<string, number>();

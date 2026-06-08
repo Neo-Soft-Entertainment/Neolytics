@@ -1,6 +1,6 @@
 "use client";
 
-import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+import type { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

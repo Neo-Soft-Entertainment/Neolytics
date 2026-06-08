@@ -1,7 +1,7 @@
 "use client";
 
 import { PayablePaymentType, PayableTitleStatus } from "@prisma/client";
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { useI18n, useUiLanguage } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
@@ -114,64 +114,72 @@ export function AccountsPayableSection({
     }
   ]);
 
-  const documentTypes = Array.from(new Set(payableTitles.map((title) => title.documentType))).sort((left, right) =>
-    left.localeCompare(right)
+  const deferredSearch = useDeferredValue(search);
+  const documentTypes = useMemo(
+    () => Array.from(new Set(payableTitles.map((title) => title.documentType))).sort((left, right) => left.localeCompare(right)),
+    [payableTitles]
   );
+  const openPayablesCount = useMemo(
+    () => payableTitles.filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED).length,
+    [payableTitles]
+  );
+  const filteredTitles = useMemo(() => {
+    const today = new Date();
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
 
-  const today = new Date();
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredTitles = payableTitles
-    .filter((title) => {
-      if (normalizedSearch) {
-        const haystack = [
-          title.titleNumber,
-          title.supplierIdentifier,
-          title.supplierName,
-          title.natureDescription
-        ].join(" ").toLowerCase();
+    return payableTitles
+      .filter((title) => {
+        if (normalizedSearch) {
+          const haystack = [
+            title.titleNumber,
+            title.supplierIdentifier,
+            title.supplierName,
+            title.natureDescription
+          ].join(" ").toLowerCase();
 
-        if (!haystack.includes(normalizedSearch)) {
+          if (!haystack.includes(normalizedSearch)) {
+            return false;
+          }
+        }
+
+        if (statusFilter !== "ALL" && title.status !== statusFilter) {
           return false;
         }
-      }
 
-      if (statusFilter !== "ALL" && title.status !== statusFilter) {
-        return false;
-      }
+        if (documentTypeFilter !== "ALL" && title.documentType !== documentTypeFilter) {
+          return false;
+        }
 
-      if (documentTypeFilter !== "ALL" && title.documentType !== documentTypeFilter) {
-        return false;
-      }
+        if (costCenterFilter !== "ALL" && title.costCenterId !== costCenterFilter) {
+          return false;
+        }
 
-      if (costCenterFilter !== "ALL" && title.costCenterId !== costCenterFilter) {
-        return false;
-      }
+        if (!onlyOverdue) {
+          return true;
+        }
 
-      if (!onlyOverdue) {
-        return true;
-      }
+        if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
+          return false;
+        }
 
-      if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
-        return false;
-      }
+        return new Date(title.actualDueDate) < today;
+      })
+      .sort((left, right) => {
+        if (sortBy === "supplierName") {
+          return left.supplierName.localeCompare(right.supplierName);
+        }
 
-      return new Date(title.actualDueDate) < today;
-    })
-    .sort((left, right) => {
-      if (sortBy === "supplierName") {
-        return left.supplierName.localeCompare(right.supplierName);
-      }
+        if (sortBy === "totalAmountCents") {
+          return right.totalAmountCents - left.totalAmountCents;
+        }
 
-      if (sortBy === "totalAmountCents") {
-        return right.totalAmountCents - left.totalAmountCents;
-      }
+        if (sortBy === "titleNumber") {
+          return left.titleNumber.localeCompare(right.titleNumber);
+        }
 
-      if (sortBy === "titleNumber") {
-        return left.titleNumber.localeCompare(right.titleNumber);
-      }
-
-      return new Date(left.actualDueDate).getTime() - new Date(right.actualDueDate).getTime();
-    });
+        return new Date(left.actualDueDate).getTime() - new Date(right.actualDueDate).getTime();
+      });
+  }, [costCenterFilter, deferredSearch, documentTypeFilter, onlyOverdue, payableTitles, sortBy, statusFilter]);
 
   const formatDate = (value: string) => new Date(value).toLocaleDateString(language);
 
@@ -186,7 +194,7 @@ export function AccountsPayableSection({
             <p className="text-2xl font-semibold">{formatCurrency(summary.payableOpenCents)}</p>
             <p className="mt-2 text-sm text-muted-foreground">
               {t("finance.awaitingSettlement", {
-                count: formatNumber(payableTitles.filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED).length)
+                count: formatNumber(openPayablesCount)
               })}
             </p>
           </CardContent>

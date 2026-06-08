@@ -44,7 +44,11 @@ function AvatarPreview({
       <img
         alt={name || email || "User avatar"}
         className={cn("h-10 w-10 rounded-full border border-white/10 object-cover", className)}
+        decoding="async"
+        height={40}
+        loading="lazy"
         src={image}
+        width={40}
       />
     );
   }

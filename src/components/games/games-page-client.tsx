@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
@@ -51,7 +51,8 @@ export function GamesPageClient() {
     minReviewScore: "any"
   });
 
-  const queryString = useMemo(() => buildQueryString(filters), [filters]);
+  const deferredFilters = useDeferredValue(filters);
+  const queryString = useMemo(() => buildQueryString(deferredFilters), [deferredFilters]);
   const query = useGameSearch(queryString);
 
   return (

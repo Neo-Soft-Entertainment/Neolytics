@@ -1,6 +1,6 @@
 "use client";
 
-import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+import type { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";

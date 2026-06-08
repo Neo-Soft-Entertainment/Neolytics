@@ -11,9 +11,9 @@ export default async function HomePage() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0 hero-grid opacity-50" />
-      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl animate-float-slow" />
-      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-sky-500/15 blur-3xl animate-float-slow" />
-      <div className="pointer-events-none absolute bottom-10 right-20 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl animate-float-slow" />
+      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-sky-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-20 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
       <div className="container relative space-y-12 py-12 lg:py-20">
         <header className="glass-surface animate-rise-in flex flex-col gap-4 rounded-[2rem] px-5 py-4 md:flex-row md:items-center md:justify-between">
           <NeolyticsBrand />

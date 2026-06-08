@@ -8,6 +8,7 @@ import { resolveUiLanguage } from "@/lib/i18n";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-sans"
 });
 

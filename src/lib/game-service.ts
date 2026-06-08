@@ -338,18 +338,7 @@ export async function getDashboardData(workspaceId: string) {
     trackedGames,
     recentLaunches,
     topRevenueGames,
-    fastestGrowing,
-    competitorSetsCount,
-    projectsCount,
-    analyzedProjectsCount,
-    gddsCount,
-    reportsCount,
-    projectAnalyses,
-    budgetsCount,
-    financeOverview,
-    communityPostsCount,
-    legalEntitiesCount,
-    companyDocumentsCount
+    fastestGrowing
   ] = await Promise.all([
     db.savedGame.findMany({
       where: { workspaceId },
@@ -409,7 +398,17 @@ export async function getDashboardData(workspaceId: string) {
       include: {
         priceCurrent: true
       }
-    }),
+    })
+  ]);
+
+  const [
+    competitorSetsCount,
+    projectsCount,
+    analyzedProjectsCount,
+    gddsCount,
+    reportsCount,
+    projectAnalyses
+  ] = await Promise.all([
     db.competitorSet.count({
       where: {
         workspaceId
@@ -458,13 +457,20 @@ export async function getDashboardData(workspaceId: string) {
         analyzedAt: "desc"
       },
       take: 12
-    }),
+    })
+  ]);
+
+  const [
+    budgetsCount,
+    communityPostsCount,
+    legalEntitiesCount,
+    companyDocumentsCount
+  ] = await Promise.all([
     db.budget.count({
       where: {
         organizationId: workspace.organizationId
       }
     }),
-    getFinanceOverview(workspace.organizationId),
     db.communityPost.count({
       where: {
         organizationId: workspace.organizationId
@@ -483,6 +489,7 @@ export async function getDashboardData(workspaceId: string) {
       }
     })
   ]);
+  const financeOverview = await getFinanceOverview(workspace.organizationId);
   const topRevenue = topRevenueGames
     .flatMap((game) => {
       const estimate = game.revenueEstimates[0];

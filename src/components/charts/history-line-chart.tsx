@@ -38,7 +38,7 @@ export function HistoryLineChart({
               borderColor: "hsl(var(--border))"
             }}
           />
-          <Line type="monotone" dataKey={yKey} stroke={color} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey={yKey} stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>

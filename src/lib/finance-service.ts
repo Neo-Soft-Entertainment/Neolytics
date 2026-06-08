@@ -180,7 +180,7 @@ async function ensureApprovalRequest(params: {
 }
 
 export async function getFinanceOverview(organizationId: string) {
-  const [projects, costCenters, budgets, revenueEntries, expenseEntries, payableTitles, contracts, royaltyAgreements, royaltyStatements, issuedInvoices, receivedInvoices, approvalRequests] = await Promise.all([
+  const [projects, costCenters] = await Promise.all([
     db.project.findMany({
       where: {
         organizationId
@@ -202,7 +202,10 @@ export async function getFinanceOverview(organizationId: string) {
         { active: "desc" },
         { code: "asc" }
       ]
-    }),
+    })
+  ]);
+
+  const [budgets, revenueEntries, expenseEntries, payableTitles] = await Promise.all([
     db.budget.findMany({
       where: {
         organizationId
@@ -299,7 +302,10 @@ export async function getFinanceOverview(organizationId: string) {
         { actualDueDate: "asc" },
         { createdAt: "desc" }
       ]
-    }),
+    })
+  ]);
+
+  const [contracts, royaltyAgreements, royaltyStatements, issuedInvoices] = await Promise.all([
     db.contract.findMany({
       where: {
         organizationId
@@ -382,7 +388,10 @@ export async function getFinanceOverview(organizationId: string) {
       orderBy: {
         createdAt: "desc"
       }
-    }),
+    })
+  ]);
+
+  const [receivedInvoices, approvalRequests] = await Promise.all([
     db.receivedInvoice.findMany({
       where: {
         organizationId

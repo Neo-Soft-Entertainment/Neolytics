@@ -52,19 +52,19 @@ export function AppSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition-all duration-300",
+                "group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition-[background-color,color,transform] duration-200",
                 isActive
                   ? "bg-gradient-to-r from-cyan-500/26 via-sky-500/20 to-transparent text-white shadow-[0_14px_30px_rgba(14,165,233,0.1),inset_0_1px_0_rgba(255,255,255,0.08)]"
                   : "text-slate-400 hover:bg-white/6 hover:text-white hover:translate-x-1"
               )}
             >
               <span className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl border border-transparent bg-white/[0.03] transition-all duration-300",
+                "flex h-9 w-9 items-center justify-center rounded-xl border border-transparent bg-white/[0.03] transition-colors duration-200",
                 isActive
                   ? "border-cyan-300/20 bg-cyan-400/10"
                   : "group-hover:border-white/10 group-hover:bg-white/[0.06]"
               )}>
-                <Icon className={cn("h-4 w-4 transition-transform duration-300 group-hover:scale-110", isActive && "text-cyan-300")} />
+                <Icon className={cn("h-4 w-4 transition-transform duration-200 group-hover:scale-110", isActive && "text-cyan-300")} />
               </span>
               <span>{t(item.labelKey)}</span>
             </Link>
