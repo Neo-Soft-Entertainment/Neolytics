@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { badRequest, ok, serverError } from "@/lib/api-response";
 import { setActiveOrganizationCookie } from "@/lib/active-organization";
+import { AuthRateLimitError, assertAuthRateLimit, getSignupRateLimitKey, recordAuthAttempt } from "@/lib/auth-rate-limit";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { acceptOrganizationInvitation, getOrganizationInvitationByToken, OrganizationInvitationError } from "@/lib/organization-invitation-service";
@@ -31,7 +32,11 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const rateLimitKey = getSignupRateLimitKey(request);
+
   try {
+    await assertAuthRateLimit(rateLimitKey);
+
     const body = await parseJsonBody(request, schema);
     const email = body.email.trim().toLowerCase();
     const invitation = body.inviteToken
@@ -63,6 +68,7 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
+      await recordAuthAttempt(rateLimitKey, false);
       return badRequest("An account with this email already exists.");
     }
 
@@ -97,6 +103,7 @@ export async function POST(request: Request) {
         workspaceId: workspace?.id ?? null
       }, { status: 201 });
       setActiveOrganizationCookie(response, invitation!.organizationId);
+      await recordAuthAttempt(rateLimitKey, true);
       return response;
     }
 
@@ -113,9 +120,14 @@ export async function POST(request: Request) {
       requiresCheckout: canUseStripeCheckout(body.plan ?? SubscriptionPlan.FREE)
     }, { status: 201 });
     setActiveOrganizationCookie(response, organizationContext.organization.id);
+    await recordAuthAttempt(rateLimitKey, true);
     return response;
   } catch (error) {
     logger.error({ error }, "Signup failed");
+
+    if (error instanceof AuthRateLimitError) {
+      return badRequest(error.message);
+    }
 
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid signup payload.");

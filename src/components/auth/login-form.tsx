@@ -83,6 +83,11 @@ export function LoginForm({
       }
 
       if (result.error) {
+        if (result.code === "rate_limited") {
+          setError(t("auth.tooManyAttempts"));
+          return;
+        }
+
         setError(result.error === "CredentialsSignin" ? t("auth.invalidCredentials") : t("auth.authFailed"));
         return;
       }

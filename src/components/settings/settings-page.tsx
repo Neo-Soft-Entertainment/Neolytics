@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
 import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
+import { AccountSecurityPanel } from "@/components/settings/account-security-panel";
 import { OrganizationMembershipsPanel } from "@/components/settings/organization-memberships-panel";
 import { OrganizationDangerZone } from "@/components/settings/organization-danger-zone";
 import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
@@ -251,6 +252,8 @@ export async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="user" className="space-y-4">
+          <AccountSecurityPanel />
+
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
