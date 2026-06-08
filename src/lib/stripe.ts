@@ -5,6 +5,8 @@ import { appUrl, env } from "@/env";
 import { db } from "@/lib/db";
 import { syncOrganizationSubscriptionFromStripe } from "@/lib/subscription-service";
 
+export const STRIPE_CHECKOUT_TRIAL_DAYS = 7;
+
 function getStripe() {
   if (!env.STRIPE_SECRET_KEY) {
     throw new Error("Stripe is not configured.");
@@ -69,6 +71,7 @@ export async function createStripeCheckoutSession(params: {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    payment_method_collection: "always",
     client_reference_id: params.organizationId,
     success_url: `${appUrl}/signup/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/settings`,
@@ -85,6 +88,7 @@ export async function createStripeCheckoutSession(params: {
       plan: params.plan
     },
     subscription_data: {
+      trial_period_days: STRIPE_CHECKOUT_TRIAL_DAYS,
       metadata: {
         organizationId: params.organizationId,
         plan: params.plan,

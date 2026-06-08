@@ -59,9 +59,10 @@ export const subscriptionFeatureRows: Array<{
 ];
 
 export const subscriptionTruthNotes = [
-  "Steam Radar, Market Research, Revenue Calculator, Steam X-Ray, and Guided Journey are live across all plans today.",
-  "Community access, Community Ranking, PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and ERP access layers are enforced in the product now.",
+  "Steam Radar, Market Research, Revenue Calculator, Community, Steam X-Ray, and Guided Journey are live across all plans today.",
+  "PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and ERP access layers are enforced in the product now.",
   "Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
+  "Paid plans start with a 7-day free Stripe trial.",
   "Early Access currently unlocks the raw Steam snapshot stream beta on Pro."
 ];
 
@@ -72,6 +73,7 @@ export const subscriptionPlans = {
     description: "For solo exploration and early validation.",
     highlights: [
       "Steam Radar, market research, and revenue calculator",
+      "Community feed and ranking",
       "Steam X-Ray included",
       "1 seat and 1 workspace",
       "3 active Game Board projects",
@@ -83,13 +85,13 @@ export const subscriptionPlans = {
       steamRadar: "Included",
       marketResearch: "Included",
       revenueCalculator: "Included",
-      communityFeed: "Not included",
+      communityFeed: "Included",
       steamXray: "Included",
       viabilityAnalyses: "10 / month",
       artAnalyses: "Not included",
       gameBoardProjects: "3 active",
       gdds: "10 / month",
-      communityRanking: "Not included",
+      communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Not included",
       financeWorkspace: "Not included",
@@ -116,8 +118,9 @@ export const subscriptionPlans = {
   [SubscriptionPlan.PLUS]: {
     label: "Plus",
     priceLabel: "$20",
-    description: "For serious studios building a steady research workflow.",
+    description: "For serious studios building a steady research workflow. Includes a 7-day free trial.",
     highlights: [
+      "7-day free trial",
       "Community, ranking, and PDF export",
       "Steam X-Ray included",
       "Finance workspace, company hub, and document vault",
@@ -163,8 +166,9 @@ export const subscriptionPlans = {
   [SubscriptionPlan.PRO]: {
     label: "Pro",
     priceLabel: "$200",
-    description: "For power users who want essentially unrestricted research velocity.",
+    description: "For power users who want essentially unrestricted research velocity. Includes a 7-day free trial.",
     highlights: [
+      "7-day free trial",
       "Steam X-Ray included",
       "Unlimited viability analyses",
       "Unlimited Game Board projects",

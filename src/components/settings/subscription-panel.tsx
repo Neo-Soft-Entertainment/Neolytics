@@ -201,7 +201,7 @@ export function SubscriptionPanel({
                       : isSubmitting === planId
                         ? "Loading..."
                         : canCheckout
-                          ? `Checkout ${plan.label}`
+                          ? `Start ${plan.label} trial`
                           : canManageInStripe
                             ? isOpeningPortal
                               ? "Opening billing..."
@@ -219,7 +219,7 @@ export function SubscriptionPanel({
         })}
       </div>
       <p className="text-sm text-muted-foreground">
-        Free-to-paid upgrades start in Stripe Checkout. Once a paid subscription is active, billing changes are managed through Stripe Billing Portal.
+        Free-to-paid upgrades start with a 7-day trial in Stripe Checkout. Once a paid subscription is active, billing changes are managed through Stripe Billing Portal.
       </p>
       <Card>
         <CardHeader>

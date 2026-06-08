@@ -175,12 +175,12 @@ export function CommunityPageClient({
     return (
       <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
         <CardHeader>
-          <CardTitle>Community is locked on your current plan</CardTitle>
+          <CardTitle>Community is unavailable right now</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            Upgrade to Plus or Pro to publish market notes, discuss projects with your team, and access the community
-            ranking.
+            Community access is included in every plan. If this message appears, the organization subscription or
+            session needs to be refreshed.
           </p>
         </CardContent>
       </Card>

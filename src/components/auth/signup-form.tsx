@@ -300,7 +300,7 @@ export function SignupForm({
                           <p className="text-sm font-semibold">{plan.priceLabel}</p>
                         </div>
                         <p className="mt-3 text-xs text-muted-foreground">
-                          {planId === SubscriptionPlan.FREE ? "Starts immediately." : "Activated after Stripe checkout."}
+                          {planId === SubscriptionPlan.FREE ? "Starts immediately." : "Starts with a 7-day free trial in Stripe Checkout."}
                         </p>
                       </button>
                     );
