@@ -17,6 +17,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import { AccountsPayableSection } from "@/components/finance/accounts-payable-section";
 import { ExportActions } from "@/components/export/export-actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -288,6 +289,7 @@ export function FinancePage({
   } | null;
 }) {
   const router = useRouter();
+  const t = useI18n();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -298,14 +300,14 @@ export function FinancePage({
           <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
             <div className="space-y-4">
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Finance</h1>
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("finance.pageTitle")}</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Run budgets, revenue, expenses, contracts, invoices, payables, and approvals as one studio finance workspace.
+                  {t("finance.pageDescription", { organizationName })}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
-                  ERP finance layer
+                  {t("finance.erpLayer")}
                 </Badge>
                 <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
                   Current plan: {planLabel}
@@ -420,39 +422,39 @@ export function FinancePage({
           </div>
           <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Net cash position</span>
-              <span className="font-medium">{formatCurrency(data.summary.netCashCents)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Pending receivables</span>
-              <span className="font-medium">{formatCurrency(data.summary.pendingRevenueCents)}</span>
-            </div>
-            {canAccessInvoiceOps ? (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Pending payables</span>
-                <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
+                <span className="text-muted-foreground">{t("finance.netCashPosition")}</span>
+                <span className="font-medium">{formatCurrency(data.summary.netCashCents)}</span>
               </div>
-            ) : (
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Invoice ops</span>
-                <span className="font-medium">Pro</span>
+                <span className="text-muted-foreground">{t("finance.pendingReceivables")}</span>
+                <span className="font-medium">{formatCurrency(data.summary.pendingRevenueCents)}</span>
               </div>
-            )}
-            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Live operating view</p>
-              <p className="mt-2 font-medium">Keep project economics, contracts, royalties, invoices, and approvals in one operating ledger.</p>
+              {canAccessInvoiceOps ? (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">{t("finance.pendingPayables")}</span>
+                  <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">{t("finance.invoiceOps")}</span>
+                  <span className="font-medium">Pro</span>
+                </div>
+              )}
+              <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("finance.liveOperatingView")}</p>
+                <p className="mt-2 font-medium">{t("finance.liveOperatingCopy")}</p>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <KpiCard label="Active budgets" value={formatNumber(data.summary.activeBudgetsCount)} />
-        <KpiCard label="Planned budget" value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
-        <KpiCard label="Revenue received" value={formatCurrency(data.summary.totalRevenueNetCents)} />
-        <KpiCard label="Expenses paid" value={formatCurrency(data.summary.totalExpensesPaidCents)} />
-        {canAccessInvoiceOps ? <KpiCard label="Payables open" value={formatCurrency(data.summary.payableOpenCents)} /> : null}
-        {canAccessInvoiceOps ? <KpiCard label="Titles overdue" value={formatNumber(data.summary.overduePayablesCount)} /> : null}
+        <KpiCard label={t("finance.activeBudgets")} value={formatNumber(data.summary.activeBudgetsCount)} />
+        <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
+        <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(data.summary.totalRevenueNetCents)} />
+        <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(data.summary.totalExpensesPaidCents)} />
+        {canAccessInvoiceOps ? <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(data.summary.payableOpenCents)} /> : null}
+        {canAccessInvoiceOps ? <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(data.summary.overduePayablesCount)} /> : null}
       </div>
 
       {canAccessInvoiceOps ? (

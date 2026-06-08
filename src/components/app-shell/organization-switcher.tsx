@@ -5,6 +5,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ export function OrganizationSwitcher({
   fallbackOrganizationName?: string;
 }) {
   const router = useRouter();
+  const t = useI18n();
   const [selectedOrganizationId, setSelectedOrganizationId] = useState(currentOrganizationId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +43,8 @@ export function OrganizationSwitcher({
   }, [currentOrganizationId]);
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
-  const activeOrganizationName = currentOrganization?.name ?? fallbackOrganizationName ?? "Organization";
-  const activeRoleLabel = currentOrganization ? `${currentOrganization.role} access` : "Active organization";
+  const activeOrganizationName = currentOrganization?.name ?? fallbackOrganizationName ?? t("shell.organization");
+  const activeRoleLabel = currentOrganization ? `${currentOrganization.role} access` : t("shell.activeOrganization");
 
   async function onOrganizationSelect(organizationId: string) {
     if (organizationId === selectedOrganizationId) {
@@ -64,7 +66,7 @@ export function OrganizationSwitcher({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to switch organization.");
+      setError(payload?.message ?? t("shell.organizationSwitchError"));
       return;
     }
 
@@ -96,14 +98,14 @@ export function OrganizationSwitcher({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{activeOrganizationName}</p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {isSubmitting ? "Switching organization..." : activeRoleLabel}
+                {isSubmitting ? t("shell.switchingOrganization") : activeRoleLabel}
               </p>
             </div>
             <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-2 w-[320px] rounded-2xl border-white/10 bg-background/95 p-2 shadow-[0_24px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl" sideOffset={10}>
-          <DropdownMenuLabel>Switch organization</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("shell.switchOrganization")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {organizations.map((organization) => {
             const isCurrent = organization.id === selectedOrganizationId;

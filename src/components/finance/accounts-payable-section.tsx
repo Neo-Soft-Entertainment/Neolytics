@@ -3,6 +3,7 @@
 import { PayablePaymentType, PayableTitleStatus } from "@prisma/client";
 import { useState } from "react";
 
+import { useI18n, useUiLanguage } from "@/components/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,6 +98,8 @@ export function AccountsPayableSection({
   };
   submitJson: (url: string, body: Record<string, unknown>, successMessage: string) => Promise<void>;
 }) {
+  const t = useI18n();
+  const language = useUiLanguage();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("ALL");
@@ -170,39 +173,43 @@ export function AccountsPayableSection({
       return new Date(left.actualDueDate).getTime() - new Date(right.actualDueDate).getTime();
     });
 
+  const formatDate = (value: string) => new Date(value).toLocaleDateString(language);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-base">Contas a pagar em aberto</CardTitle>
+            <CardTitle className="text-base">{t("finance.openPayables")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{formatCurrency(summary.payableOpenCents)}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              {formatNumber(payableTitles.filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED).length)} títulos aguardando baixa.
+              {t("finance.awaitingSettlement", {
+                count: formatNumber(payableTitles.filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED).length)
+              })}
             </p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-base">Títulos vencidos</CardTitle>
+            <CardTitle className="text-base">{t("finance.overdueTitles")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{formatNumber(summary.overduePayablesCount)}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              O vencimento real já considera finais de semana e feriados nacionais.
+              {t("finance.actualDueDateHint")}
             </p>
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-base">Centros de custo</CardTitle>
+            <CardTitle className="text-base">{t("finance.costCenters")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{formatNumber(costCenters.length)}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Cadastre centros para controlar despesa, rateio e baixa por unidade financeira.
+              {t("finance.costCentersHint")}
             </p>
           </CardContent>
         </Card>
@@ -211,7 +218,7 @@ export function AccountsPayableSection({
       <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Novo centro de custo</CardTitle>
+            <CardTitle>{t("finance.newCostCenter")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -222,26 +229,26 @@ export function AccountsPayableSection({
                 void submitJson("/api/finance/cost-centers", {
                   code: formData.get("code"),
                   name: formData.get("name")
-                }, "Centro de custo criado.");
+                }, t("finance.costCenterCreated"));
                 event.currentTarget.reset();
               }}
             >
               <div className="space-y-2">
-                <Label>Código</Label>
+                <Label>{t("finance.code")}</Label>
                 <Input disabled={!canManage} maxLength={12} name="code" placeholder="ADM" />
               </div>
               <div className="space-y-2">
-                <Label>Nome</Label>
+                <Label>{t("finance.name")}</Label>
                 <Input disabled={!canManage} name="name" placeholder="Administrativo" />
               </div>
-              <Button disabled={!canManage} type="submit">Criar centro de custo</Button>
+              <Button disabled={!canManage} type="submit">{t("finance.createCostCenter")}</Button>
             </form>
           </CardContent>
         </Card>
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Cadastro de títulos</CardTitle>
+            <CardTitle>{t("finance.titleRegistration")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -278,7 +285,7 @@ export function AccountsPayableSection({
                     natureDescription: String(formData.get("natureDescription") || ""),
                     amountCents: titleAmountCents + additionalAmountCents
                   }]
-                }, "Título cadastrado.");
+                }, t("finance.titleRegistered"));
                 event.currentTarget.reset();
                 setAllocations([
                   {
@@ -291,19 +298,19 @@ export function AccountsPayableSection({
             >
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div className="space-y-2">
-                  <Label>Prefixo</Label>
+                  <Label>{t("finance.prefix")}</Label>
                   <Input disabled={!canManage} name="prefix" placeholder="FIN" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nº do título</Label>
+                  <Label>{t("finance.titleNumber")}</Label>
                   <Input disabled={!canManage} maxLength={8} name="titleNumber" placeholder="00012345" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Tipo de documento</Label>
+                  <Label>{t("finance.documentType")}</Label>
                   <Input disabled={!canManage} name="documentType" placeholder="Nota Fiscal" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Centro de custo</Label>
+                  <Label>{t("finance.costCenter")}</Label>
                   <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={costCenters[0]?.id ?? ""} disabled={!canManage || costCenters.length === 0} name="costCenterId">
                     {costCenters.length === 0 ? <option value="">Crie um centro de custo</option> : null}
                     {costCenters.map((costCenter) => (
@@ -314,9 +321,9 @@ export function AccountsPayableSection({
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Projeto</Label>
+                  <Label>{t("finance.project")}</Label>
                   <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue="" disabled={!canManage} name="projectId">
-                    <option value="">Sem vínculo</option>
+                    <option value="">{t("finance.noLink")}</option>
                     {projects.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
@@ -328,34 +335,34 @@ export function AccountsPayableSection({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className="space-y-2 xl:col-span-2">
-                  <Label>Natureza</Label>
+                  <Label>{t("finance.nature")}</Label>
                   <Input disabled={!canManage} name="natureDescription" placeholder="Serviços de Terceiros" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Fornecedor</Label>
+                  <Label>{t("finance.supplier")}</Label>
                   <Input disabled={!canManage} name="supplierIdentifier" placeholder="CNPJ ou código" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nome do fornecedor</Label>
+                  <Label>{t("finance.supplierName")}</Label>
                   <Input disabled={!canManage} name="supplierName" placeholder="Nome fantasia" />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className="space-y-2">
-                  <Label>Data de emissão</Label>
+                  <Label>{t("finance.issueDate")}</Label>
                   <Input disabled={!canManage} name="issueDate" type="date" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Data de vencimento</Label>
+                  <Label>{t("finance.dueDate")}</Label>
                   <Input disabled={!canManage} name="dueDate" type="date" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Valor do título</Label>
+                  <Label>{t("finance.titleAmount")}</Label>
                   <Input defaultValue={0} disabled={!canManage} name="titleAmountCents" type="number" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Acréscimos</Label>
+                  <Label>{t("finance.additions")}</Label>
                   <Input defaultValue={0} disabled={!canManage} name="additionalAmountCents" type="number" />
                 </div>
               </div>
@@ -363,9 +370,9 @@ export function AccountsPayableSection({
               <div className="rounded-2xl border p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium">Rateio por natureza e centro de custo</p>
+                    <p className="font-medium">{t("finance.allocationTitle")}</p>
                     <p className="text-sm text-muted-foreground">
-                      Se não preencher, o sistema lança 100% no centro de custo e natureza principais.
+                      {t("finance.allocationHelp")}
                     </p>
                   </div>
                   <Button
@@ -384,7 +391,7 @@ export function AccountsPayableSection({
                       ]);
                     }}
                   >
-                    Adicionar rateio
+                    {t("finance.addAllocation")}
                   </Button>
                 </div>
 
@@ -414,7 +421,7 @@ export function AccountsPayableSection({
                       </select>
                       <Input
                         disabled={!canManage}
-                        placeholder="Natureza do rateio"
+                        placeholder={t("finance.allocationNaturePlaceholder")}
                         value={allocation.natureDescription}
                         onChange={(event) => {
                           setAllocations((current) =>
@@ -450,7 +457,7 @@ export function AccountsPayableSection({
                           setAllocations((current) => current.filter((_, itemIndex) => itemIndex !== index));
                         }}
                       >
-                        Remover
+                        {t("finance.remove")}
                       </Button>
                     </div>
                   ))}
@@ -458,11 +465,11 @@ export function AccountsPayableSection({
               </div>
 
               <div className="space-y-2">
-                <Label>Observações</Label>
-                <Textarea disabled={!canManage} name="notes" placeholder="Histórico interno, observações da NF, RC ou aprovação..." />
+                <Label>{t("finance.notes")}</Label>
+                <Textarea disabled={!canManage} name="notes" placeholder="Internal notes, invoice remarks, RC notes, or approval context..." />
               </div>
 
-              <Button disabled={!canManage || costCenters.length === 0} type="submit">Cadastrar título</Button>
+              <Button disabled={!canManage || costCenters.length === 0} type="submit">{t("finance.registerTitle")}</Button>
             </form>
           </CardContent>
         </Card>
@@ -470,20 +477,20 @@ export function AccountsPayableSection({
 
       <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Tela inicial de contas a pagar</CardTitle>
+          <CardTitle>{t("finance.payablesHome")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             <div className="space-y-2 xl:col-span-2">
-              <Label>Pesquisar</Label>
+              <Label>{t("finance.search")}</Label>
               <Input
-                placeholder="Nº do título, fornecedor, nome ou natureza"
+                placeholder={t("finance.searchPlaceholder")}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t("finance.status")}</Label>
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="ALL">Todos</option>
                 {payableStatuses.map((status) => (
@@ -492,7 +499,7 @@ export function AccountsPayableSection({
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Documento</Label>
+              <Label>{t("finance.document")}</Label>
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={documentTypeFilter} onChange={(event) => setDocumentTypeFilter(event.target.value)}>
                 <option value="ALL">Todos</option>
                 {documentTypes.map((documentType) => (
@@ -501,7 +508,7 @@ export function AccountsPayableSection({
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Centro de custo</Label>
+              <Label>{t("finance.costCenter")}</Label>
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={costCenterFilter} onChange={(event) => setCostCenterFilter(event.target.value)}>
                 <option value="ALL">Todos</option>
                 {costCenters.map((costCenter) => (
@@ -512,12 +519,12 @@ export function AccountsPayableSection({
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Ordenar por</Label>
+              <Label>{t("finance.sortBy")}</Label>
               <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-                <option value="actualDueDate">Vencimento real</option>
-                <option value="supplierName">Fornecedor</option>
-                <option value="totalAmountCents">Maior valor</option>
-                <option value="titleNumber">Nº do título</option>
+                <option value="actualDueDate">{t("finance.actualDueDate")}</option>
+                <option value="supplierName">{t("finance.supplier")}</option>
+                <option value="totalAmountCents">{t("finance.highestValue")}</option>
+                <option value="titleNumber">{t("finance.titleNumber")}</option>
               </select>
             </div>
           </div>
@@ -529,26 +536,26 @@ export function AccountsPayableSection({
               type="checkbox"
               onChange={(event) => setOnlyOverdue(event.target.checked)}
             />
-            Mostrar apenas títulos vencidos
+            {t("finance.showOnlyOverdue")}
           </label>
 
           {filteredTitles.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum título encontrado com os filtros atuais.</p>
+            <p className="text-sm text-muted-foreground">{t("finance.noTitlesFound")}</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Título</TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead>Natureza</TableHead>
-                    <TableHead>Centro de custo</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Vencimento real</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Aberto</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Baixa</TableHead>
+                    <TableHead>{t("finance.title")}</TableHead>
+                    <TableHead>{t("finance.supplier")}</TableHead>
+                    <TableHead>{t("finance.nature")}</TableHead>
+                    <TableHead>{t("finance.costCenter")}</TableHead>
+                    <TableHead>{t("finance.dueDate")}</TableHead>
+                    <TableHead>{t("finance.actualDueDate")}</TableHead>
+                    <TableHead>{t("finance.value")}</TableHead>
+                    <TableHead>{t("finance.open")}</TableHead>
+                    <TableHead>{t("finance.status")}</TableHead>
+                    <TableHead>{t("finance.settlement")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -572,13 +579,13 @@ export function AccountsPayableSection({
                         </TableCell>
                         <TableCell>{title.natureDescription}</TableCell>
                         <TableCell>{title.costCenter.code} · {title.costCenter.name}</TableCell>
-                        <TableCell>{new Date(title.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(title.actualDueDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{formatDate(title.dueDate)}</TableCell>
+                        <TableCell>{formatDate(title.actualDueDate)}</TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             <p>{formatCurrency(title.totalAmountCents)}</p>
                             {title.additionalAmountCents > 0 ? (
-                              <p className="text-xs text-muted-foreground">Acréscimo: {formatCurrency(title.additionalAmountCents)}</p>
+                              <p className="text-xs text-muted-foreground">{t("finance.addition")}: {formatCurrency(title.additionalAmountCents)}</p>
                             ) : null}
                           </div>
                         </TableCell>
@@ -589,11 +596,11 @@ export function AccountsPayableSection({
                         <TableCell className="min-w-[320px]">
                           <details className="group">
                             <summary className="cursor-pointer text-sm font-medium text-sky-600 marker:hidden">
-                              Ver rateio e baixar
+                              {t("finance.viewAllocationAndSettle")}
                             </summary>
                             <div className="mt-3 space-y-4 rounded-2xl border p-3">
                               <div className="space-y-2">
-                                <p className="text-sm font-medium">Rateio</p>
+                                <p className="text-sm font-medium">{t("finance.allocations")}</p>
                                 <div className="space-y-2">
                                   {title.allocations.map((allocation) => (
                                     <div key={allocation.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm">
@@ -606,9 +613,9 @@ export function AccountsPayableSection({
                               </div>
 
                               <div className="space-y-2">
-                                <p className="text-sm font-medium">Baixas registradas</p>
+                                <p className="text-sm font-medium">{t("finance.recordedPayments")}</p>
                                 {title.payments.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground">Nenhuma baixa registrada.</p>
+                                  <p className="text-sm text-muted-foreground">{t("finance.noPaymentsRecorded")}</p>
                                 ) : (
                                   <div className="space-y-2">
                                     {title.payments.map((payment) => (
@@ -618,7 +625,7 @@ export function AccountsPayableSection({
                                           <span className="font-medium">{formatCurrency(payment.amountPaidCents)}</span>
                                         </div>
                                         <p className="mt-1 text-muted-foreground">
-                                          {new Date(payment.paymentDate).toLocaleDateString()} · Multa {formatCurrency(payment.fineCents)} · Juros {formatCurrency(payment.interestCents)}
+                                          {formatDate(payment.paymentDate)} · {t("finance.fine")} {formatCurrency(payment.fineCents)} · {t("finance.interest")} {formatCurrency(payment.interestCents)}
                                         </p>
                                       </div>
                                     ))}
@@ -641,13 +648,13 @@ export function AccountsPayableSection({
                                     fineCents: Number(formData.get("fineCents") || 0),
                                     interestCents: Number(formData.get("interestCents") || 0),
                                     amountPaidCents: Number(formData.get("amountPaidCents") || 0)
-                                  }, "Baixa registrada.");
+                                  }, t("finance.paymentRegistered"));
                                   event.currentTarget.reset();
                                 }}
                               >
                                 <div className="grid gap-3 md:grid-cols-2">
                                   <div className="space-y-2">
-                                    <Label>Tipo de pagamento</Label>
+                                    <Label>{t("finance.paymentType")}</Label>
                                     <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={PayablePaymentType.TRANSFER} disabled={!canManage} name="paymentType">
                                       {paymentTypes.map((paymentType) => (
                                         <option key={paymentType} value={paymentType}>{formatTokenLabel(paymentType)}</option>
@@ -655,44 +662,44 @@ export function AccountsPayableSection({
                                     </select>
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Data do pagamento</Label>
+                                    <Label>{t("finance.paymentDate")}</Label>
                                     <Input disabled={!canManage} name="paymentDate" type="date" />
                                   </div>
                                 </div>
                                 <div className="grid gap-3 md:grid-cols-3">
                                   <div className="space-y-2">
-                                    <Label>Banco</Label>
-                                    <Input disabled={!canManage} name="bank" placeholder="Banco" />
+                                    <Label>{t("finance.bank")}</Label>
+                                    <Input disabled={!canManage} name="bank" placeholder={t("finance.bank")} />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Agência</Label>
-                                    <Input disabled={!canManage} name="branch" placeholder="Agência" />
+                                    <Label>{t("finance.branch")}</Label>
+                                    <Input disabled={!canManage} name="branch" placeholder={t("finance.branch")} />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Conta</Label>
-                                    <Input disabled={!canManage} name="account" placeholder="Conta" />
+                                    <Label>{t("finance.account")}</Label>
+                                    <Input disabled={!canManage} name="account" placeholder={t("finance.account")} />
                                   </div>
                                 </div>
                                 <div className="grid gap-3 md:grid-cols-3">
                                   <div className="space-y-2">
-                                    <Label>Multa</Label>
+                                    <Label>{t("finance.fine")}</Label>
                                     <Input defaultValue={0} disabled={!canManage} name="fineCents" type="number" />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Juros</Label>
+                                    <Label>{t("finance.interest")}</Label>
                                     <Input defaultValue={0} disabled={!canManage} name="interestCents" type="number" />
                                   </div>
                                   <div className="space-y-2">
-                                    <Label>Valor baixado</Label>
+                                    <Label>{t("finance.amountPaid")}</Label>
                                     <Input defaultValue={openAmountCents} disabled={!canManage} name="amountPaidCents" type="number" />
                                   </div>
                                 </div>
                                 <div className="space-y-2">
-                                  <Label>Histórico</Label>
-                                  <Textarea disabled={!canManage} name="history" placeholder="Histórico da baixa" />
+                                  <Label>{t("finance.history")}</Label>
+                                  <Textarea disabled={!canManage} name="history" placeholder={t("finance.paymentHistoryPlaceholder")} />
                                 </div>
                                 <Button disabled={!canManage || title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED} size="sm" type="submit">
-                                  Registrar baixa
+                                  {t("finance.registerPayment")}
                                 </Button>
                               </form>
                             </div>

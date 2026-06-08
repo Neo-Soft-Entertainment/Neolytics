@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ export function UserLanguagePanel({
   }>;
 }) {
   const router = useRouter();
+  const t = useI18n();
   const [preferredLanguage, setPreferredLanguage] = useState(currentLanguage);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,11 +43,11 @@ export function UserLanguagePanel({
     setIsSaving(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to update language.");
+      setError(payload?.message ?? t("settings.languageUpdateError"));
       return;
     }
 
-    setMessage("Language preference updated.");
+    setMessage(t("settings.languageUpdated"));
     router.refresh();
   }
 
@@ -53,11 +55,11 @@ export function UserLanguagePanel({
     <Card className="overflow-hidden">
       <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
       <CardHeader>
-        <CardTitle>Language preference</CardTitle>
+        <CardTitle>{t("settings.languagePreference")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="preferred-language">Account language</Label>
+          <Label htmlFor="preferred-language">{t("settings.accountLanguage")}</Label>
           <select
             id="preferred-language"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -71,13 +73,13 @@ export function UserLanguagePanel({
             ))}
           </select>
           <p className="text-sm text-muted-foreground">
-            This saves your preferred account language. It is separate from the organization default language used in company operations.
+            {t("settings.languageHelp")}
           </p>
         </div>
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Button disabled={isSaving} type="button" onClick={saveLanguage}>
-          {isSaving ? "Saving..." : "Save language"}
+          {isSaving ? t("settings.savingLanguage") : t("settings.saveLanguage")}
         </Button>
       </CardContent>
     </Card>

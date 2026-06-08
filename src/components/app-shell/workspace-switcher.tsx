@@ -4,6 +4,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,7 @@ export function WorkspaceSwitcher({
   fallbackWorkspaceName?: string | null;
 }) {
   const router = useRouter();
+  const t = useI18n();
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(currentWorkspaceId ?? workspaces[0]?.id ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export function WorkspaceSwitcher({
   }, [currentWorkspaceId, workspaces]);
 
   const currentWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId);
-  const activeWorkspaceName = currentWorkspace?.name ?? fallbackWorkspaceName ?? "Workspace";
+  const activeWorkspaceName = currentWorkspace?.name ?? fallbackWorkspaceName ?? t("shell.workspace");
 
   async function onWorkspaceSelect(workspaceId: string) {
     if (workspaceId === selectedWorkspaceId) {
@@ -61,7 +63,7 @@ export function WorkspaceSwitcher({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to switch workspace.");
+      setError(payload?.message ?? t("shell.workspaceSwitchError"));
       return;
     }
 
@@ -75,7 +77,7 @@ export function WorkspaceSwitcher({
         <div className="flex min-h-11 items-center rounded-xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
           <span className="truncate">{activeWorkspaceName}</span>
         </div>
-        <p className="truncate text-xs text-muted-foreground">Current workspace</p>
+        <p className="truncate text-xs text-muted-foreground">{t("shell.currentWorkspace")}</p>
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
       </div>
     );
@@ -93,14 +95,14 @@ export function WorkspaceSwitcher({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{activeWorkspaceName}</p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {isSubmitting ? "Switching workspace..." : "Current workspace"}
+                {isSubmitting ? t("shell.switchingWorkspace") : t("shell.currentWorkspace")}
               </p>
             </div>
             <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="mt-2 w-[320px] rounded-2xl border-white/10 bg-background/95 p-2 shadow-[0_24px_80px_rgba(15,23,42,0.45)] backdrop-blur-xl" sideOffset={10}>
-          <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
+          <DropdownMenuLabel>{t("shell.switchWorkspace")}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {workspaces.map((workspace) => {
             const isCurrent = workspace.id === selectedWorkspaceId;
@@ -127,7 +129,7 @@ export function WorkspaceSwitcher({
           })}
         </DropdownMenuContent>
       </DropdownMenu>
-      <p className="truncate text-xs text-muted-foreground">Current workspace</p>
+      <p className="truncate text-xs text-muted-foreground">{t("shell.currentWorkspace")}</p>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );

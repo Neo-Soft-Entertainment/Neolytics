@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export function SignupForm({
   invitedEmail?: string;
 }) {
   const router = useRouter();
+  const t = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | "apple" | null>(null);
   const schema = z.object({
@@ -155,11 +157,11 @@ export function SignupForm({
   return (
     <Card className="w-full max-w-xl">
       <CardHeader>
-        <CardTitle>{inviteToken ? "Join organization" : "Create your workspace"}</CardTitle>
+        <CardTitle>{inviteToken ? t("auth.joinOrganization") : t("auth.createWorkspace")}</CardTitle>
         <CardDescription>
           {inviteToken
             ? `Create your account and join ${invitedOrganizationName ?? "this organization"} in one step.`
-            : "Create the account, launch the first organization, and activate the plan you want right after signup."}
+            : t("auth.signupDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -173,7 +175,7 @@ export function SignupForm({
                 variant="outline"
                 onClick={onGoogleSignIn}
               >
-                {isSocialLoading === "google" ? "Redirecting to Google..." : "Continue with Google"}
+                {isSocialLoading === "google" ? t("auth.redirectGoogle") : t("auth.continueGoogle")}
               </Button>
             ) : null}
             {hasDiscordLogin ? (
@@ -184,7 +186,7 @@ export function SignupForm({
                 variant="outline"
                 onClick={onDiscordSignIn}
               >
-                {isSocialLoading === "discord" ? "Redirecting to Discord..." : "Continue with Discord"}
+                {isSocialLoading === "discord" ? t("auth.redirectDiscord") : t("auth.continueDiscord")}
               </Button>
             ) : null}
             {hasAppleLogin ? (
@@ -195,12 +197,12 @@ export function SignupForm({
                 variant="outline"
                 onClick={onAppleSignIn}
               >
-                {isSocialLoading === "apple" ? "Redirecting to Apple..." : "Continue with Apple"}
+                {isSocialLoading === "apple" ? t("auth.redirectApple") : t("auth.continueApple")}
               </Button>
             ) : null}
             {!inviteToken ? (
               <p className="text-sm text-muted-foreground">
-                Social signup continues into setup, where you can create the organization and manage billing.
+                {t("auth.socialSignupHint")}
               </p>
             ) : null}
             <div className="relative">
@@ -208,21 +210,21 @@ export function SignupForm({
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or use email</span>
+                <span className="bg-card px-2 text-muted-foreground">{t("auth.orUseEmail")}</span>
               </div>
             </div>
           </div>
         ) : null}
         <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="name">Your name</Label>
+            <Label htmlFor="name">{t("auth.yourName")}</Label>
             <Input id="name" autoComplete="name" {...form.register("name")} />
             {form.formState.errors.name ? (
               <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
@@ -235,7 +237,7 @@ export function SignupForm({
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
             {form.formState.errors.password ? (
               <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
@@ -258,21 +260,21 @@ export function SignupForm({
           ) : (
             <>
               <div className="space-y-2">
-                <Label htmlFor="organizationName">Organization</Label>
+                <Label htmlFor="organizationName">{t("auth.organization")}</Label>
                 <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
                 {form.formState.errors.organizationName ? (
                   <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="workspaceName">First workspace</Label>
+                <Label htmlFor="workspaceName">{t("auth.firstWorkspace")}</Label>
                 <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
                 {form.formState.errors.workspaceName ? (
                   <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
                 ) : null}
               </div>
               <div className="space-y-3 md:col-span-2">
-                <Label>Plan</Label>
+                <Label>{t("auth.plan")}</Label>
                 <p className="text-sm text-muted-foreground">
                   These plan details reflect the official live product scope today, not a speculative roadmap.
                 </p>
@@ -305,7 +307,7 @@ export function SignupForm({
                   })}
                 </div>
                 <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">Official live scope</p>
+                  <p className="font-medium text-foreground">{t("auth.officialScope")}</p>
                   <div className="mt-3 space-y-2">
                     {subscriptionTruthNotes.map((note) => (
                       <p key={note}>{note}</p>
@@ -321,16 +323,16 @@ export function SignupForm({
           {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
           <div className="flex items-center justify-between gap-3 md:col-span-2">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t("auth.alreadyHaveAccount")}{" "}
               <Link
                 className="underline underline-offset-4"
                 href={inviteToken ? `/login?inviteToken=${inviteToken}` : "/login"}
               >
-                Sign in
+                {t("auth.signIn")}
               </Link>
             </p>
             <Button disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
-              {form.formState.isSubmitting ? "Creating..." : inviteToken ? "Create account and join" : "Create account"}
+              {form.formState.isSubmitting ? t("auth.creating") : inviteToken ? t("auth.createAndJoin") : t("auth.createAccountAction")}
             </Button>
           </div>
         </form>

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 
 import "@/app/globals.css";
+import { auth } from "@/auth";
 import { Providers } from "@/app/providers";
+import { resolveUiLanguage } from "@/lib/i18n";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -24,15 +26,18 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  const language = resolveUiLanguage(session?.user?.preferredLanguage);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={language} suppressHydrationWarning>
       <body className={spaceGrotesk.variable}>
-        <Providers>{children}</Providers>
+        <Providers language={language}>{children}</Providers>
       </body>
     </html>
   );

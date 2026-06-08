@@ -1,5 +1,6 @@
 import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
 
+import { useI18n } from "@/components/i18n-provider";
 import { OrganizationSwitcher } from "@/components/app-shell/organization-switcher";
 import { WorkspaceSwitcher } from "@/components/app-shell/workspace-switcher";
 import { MobileNav } from "@/components/app-shell/mobile-nav";
@@ -38,6 +39,7 @@ export function AppHeader({
   organizations,
   subscriptionPlan
 }: AppHeaderProps) {
+  const t = useI18n();
   const currentOrganization = organizations.find((organization) => organization.id === currentOrganizationId);
 
   return (
@@ -53,7 +55,7 @@ export function AppHeader({
             <MobileNav
               currentOrganizationName={currentOrganization?.name ?? organizationName}
               currentOrganizationRole={currentOrganization?.role}
-              currentWorkspaceName={currentWorkspaceName ?? workspaces[0]?.name ?? "Workspace"}
+              currentWorkspaceName={currentWorkspaceName ?? workspaces[0]?.name ?? t("shell.workspace")}
               subscriptionPlan={subscriptionPlan}
             />
           </div>
@@ -61,7 +63,7 @@ export function AppHeader({
         <div className="grid gap-2">
           <div className="px-1">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-              Organization
+              {t("shell.organization")}
             </p>
             <OrganizationSwitcher
               currentOrganizationId={currentOrganizationId}
@@ -71,7 +73,7 @@ export function AppHeader({
           </div>
           <div className="px-1">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-              Workspace
+              {t("shell.workspace")}
             </p>
             <WorkspaceSwitcher
               currentWorkspaceId={currentWorkspaceId}
@@ -89,7 +91,7 @@ export function AppHeader({
         <div className="flex min-w-0 max-w-4xl flex-1 items-start gap-3">
           <div className="min-w-0 min-w-[260px] max-w-[360px] px-1">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-              Organization
+              {t("shell.organization")}
             </p>
             <OrganizationSwitcher
               currentOrganizationId={currentOrganizationId}
@@ -99,7 +101,7 @@ export function AppHeader({
           </div>
           <div className="min-w-0 min-w-[240px] max-w-[320px] px-1">
             <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-              Workspace
+              {t("shell.workspace")}
             </p>
             <WorkspaceSwitcher
               currentWorkspaceId={currentWorkspaceId}

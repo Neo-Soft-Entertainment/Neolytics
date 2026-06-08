@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ export function LoginForm({
   hasDiscordLogin: boolean;
   hasAppleLogin: boolean;
 }) {
+  const t = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | "apple" | null>(null);
   const form = useForm<FormValues>({
@@ -53,7 +55,7 @@ export function LoginForm({
     }
 
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    setError(payload?.message ?? "Authentication servers are temporarily unavailable. Try again later.");
+    setError(payload?.message ?? t("auth.authUnavailable"));
     return false;
   }
 
@@ -76,24 +78,24 @@ export function LoginForm({
       });
 
       if (!result) {
-        setError("We could not reach the authentication service. Try again.");
+        setError(t("auth.authUnavailable"));
         return;
       }
 
       if (result.error) {
-        setError(result.error === "CredentialsSignin" ? "Invalid email or password." : "Authentication failed. Try again later.");
+        setError(result.error === "CredentialsSignin" ? t("auth.invalidCredentials") : t("auth.authFailed"));
         return;
       }
 
       if (!result.ok || !result.url) {
-        setError("The sign-in completed, but we could not finish the redirect. Try again.");
+        setError(t("auth.redirectFailed"));
         return;
       }
 
       window.location.assign(result.url);
       return;
     } catch {
-      setError("Authentication servers are temporarily unavailable. Try again later.");
+      setError(t("auth.authUnavailable"));
     }
   }
 
@@ -145,9 +147,9 @@ export function LoginForm({
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
+        <CardTitle>{t("auth.signInTitle")}</CardTitle>
         <CardDescription>
-          Access your workspace, Steam intelligence, project operating system, finance layer, and company backbone.
+          {t("auth.signInDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -161,7 +163,7 @@ export function LoginForm({
                 variant="outline"
                 onClick={onGoogleSignIn}
               >
-                {isSocialLoading === "google" ? "Redirecting to Google..." : "Continue with Google"}
+                {isSocialLoading === "google" ? t("auth.redirectGoogle") : t("auth.continueGoogle")}
               </Button>
             ) : null}
             {hasDiscordLogin ? (
@@ -172,7 +174,7 @@ export function LoginForm({
                 variant="outline"
                 onClick={onDiscordSignIn}
               >
-                {isSocialLoading === "discord" ? "Redirecting to Discord..." : "Continue with Discord"}
+                {isSocialLoading === "discord" ? t("auth.redirectDiscord") : t("auth.continueDiscord")}
               </Button>
             ) : null}
             {hasAppleLogin ? (
@@ -183,7 +185,7 @@ export function LoginForm({
                 variant="outline"
                 onClick={onAppleSignIn}
               >
-                {isSocialLoading === "apple" ? "Redirecting to Apple..." : "Continue with Apple"}
+                {isSocialLoading === "apple" ? t("auth.redirectApple") : t("auth.continueApple")}
               </Button>
             ) : null}
             <div className="relative">
@@ -191,21 +193,21 @@ export function LoginForm({
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or use email</span>
+                <span className="bg-card px-2 text-muted-foreground">{t("auth.orUseEmail")}</span>
               </div>
             </div>
           </div>
         ) : null}
         <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
             {form.formState.errors.email ? (
               <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -218,20 +220,20 @@ export function LoginForm({
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button className="w-full" disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
-            {form.formState.isSubmitting ? "Signing in..." : "Sign in"}
+            {form.formState.isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
           </Button>
           {inviteToken ? (
             <p className="text-center text-sm text-muted-foreground">
-              Sign in to accept your organization invitation.
+              {t("auth.inviteHint")}
             </p>
           ) : null}
           <p className="text-center text-sm text-muted-foreground">
-            New here?{" "}
+            {t("auth.newHere")}{" "}
             <Link
               className="underline underline-offset-4"
               href={inviteToken ? `/signup?inviteToken=${inviteToken}` : "/signup"}
             >
-              Create your account
+              {t("auth.createAccount")}
             </Link>
           </p>
         </form>

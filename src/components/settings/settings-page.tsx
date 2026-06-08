@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { languageOptions } from "@/lib/company-localization";
 import { db } from "@/lib/db";
+import { translate } from "@/lib/i18n";
 import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 export async function SettingsPage() {
@@ -81,6 +82,9 @@ export async function SettingsPage() {
         }
       })
     : [];
+  const language = currentUser?.preferredLanguage ?? session?.user?.preferredLanguage ?? "en";
+  const t = (key: Parameters<typeof translate>[1], values?: Record<string, string | number>) =>
+    translate(language, key, values);
   const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
   const canDeleteOrganization = currentMembership?.role === "OWNER";
@@ -285,46 +289,46 @@ export async function SettingsPage() {
             <Card className="overflow-hidden">
               <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
-                <CardTitle>Authentication providers</CardTitle>
+                <CardTitle>{t("settings.authProviders")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">Google login</p>
+                    <p className="font-medium">{t("settings.googleLogin")}</p>
                     <Badge variant={hasGoogleLogin ? "default" : "secondary"}>
-                      {hasGoogleLogin ? "Enabled" : "Disabled"}
+                      {hasGoogleLogin ? t("settings.enabled") : t("settings.disabled")}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {hasGoogleLogin
-                      ? "The login and signup pages now show Continue with Google."
-                      : "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the environment."}
+                      ? t("settings.googleEnabledCopy")
+                      : t("settings.googleDisabledCopy")}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">Discord login</p>
+                    <p className="font-medium">{t("settings.discordLogin")}</p>
                     <Badge variant={hasDiscordLogin ? "default" : "secondary"}>
-                      {hasDiscordLogin ? "Enabled" : "Disabled"}
+                      {hasDiscordLogin ? t("settings.enabled") : t("settings.disabled")}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {hasDiscordLogin
-                      ? "The login and signup pages now show Continue with Discord."
-                      : "Set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET in the environment."}
+                      ? t("settings.discordEnabledCopy")
+                      : t("settings.discordDisabledCopy")}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">Apple login</p>
+                    <p className="font-medium">{t("settings.appleLogin")}</p>
                     <Badge variant={hasAppleLogin ? "default" : "secondary"}>
-                      {hasAppleLogin ? "Enabled" : "Disabled"}
+                      {hasAppleLogin ? t("settings.enabled") : t("settings.disabled")}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {hasAppleLogin
-                      ? "The login and signup pages now show Continue with Apple."
-                      : "Set APPLE_CLIENT_ID and APPLE_CLIENT_SECRET in the environment."}
+                      ? t("settings.appleEnabledCopy")
+                      : t("settings.appleDisabledCopy")}
                   </p>
                 </div>
               </CardContent>
@@ -333,20 +337,20 @@ export async function SettingsPage() {
             <Card className="overflow-hidden">
               <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
-                <CardTitle>Google Sheets export</CardTitle>
+                <CardTitle>{t("settings.googleSheetsExport")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">Google Sheets export</p>
+                    <p className="font-medium">{t("settings.googleSheetsExport")}</p>
                     <Badge variant={hasGoogleSheets ? "default" : "secondary"}>
-                      {hasGoogleSheets ? "Enabled" : "Disabled"}
+                      {hasGoogleSheets ? t("settings.enabled") : t("settings.disabled")}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {hasGoogleSheets
-                      ? "Export menus can publish workbooks directly to Google Sheets."
-                      : "Set GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY to enable it."}
+                      ? t("settings.googleSheetsEnabledCopy")
+                      : t("settings.googleSheetsDisabledCopy")}
                   </p>
                 </div>
               </CardContent>
