@@ -281,7 +281,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
           <p>{`Current tier: ${game.steamXrayAccess.label}.`}</p>
           <p>{`History window: ${game.steamXrayAccess.historyLimit} days for chart data.`}</p>
           <p>{game.steamXrayAccess.playerHistoryAvailable ? "Player history is available on this plan." : "Player history unlocks on Plus and Pro."}</p>
-          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Raw snapshot stream beta is enabled on this plan." : "Raw snapshot stream beta is available on Pro."}</p>
+          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Raw snapshot stream beta is enabled on this access level." : "Raw snapshot stream beta requires early access."}</p>
         </CardContent>
       </Card>
       {game.steamXrayAccess.rawSnapshotsBetaAvailable ? (

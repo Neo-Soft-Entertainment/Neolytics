@@ -1,5 +1,34 @@
 import { SubscriptionPlan } from "@prisma/client";
 
+export type FeatureKey =
+  | "radarSteam"
+  | "marketResearch"
+  | "revenueCalculator"
+  | "communityFeed"
+  | "communityRanking"
+  | "guidedJourney"
+  | "pdfExport"
+  | "earlyAccess"
+  | "steamXray"
+  | "viabilityAnalysis"
+  | "artAnalysis"
+  | "gameBoard"
+  | "gdd";
+
+export type LimitKey =
+  | "steamXrayPerMonth"
+  | "viabilityAnalysesPerMonth"
+  | "artAnalysesPerMonth"
+  | "gameBoardProjects"
+  | "gdds";
+
+export type LimitValue = number | "unlimited";
+
+export type EntitlementPolicy = {
+  features: Record<FeatureKey, boolean>;
+  limits: Record<LimitKey, LimitValue>;
+};
+
 export type SubscriptionMetric =
   | "seats"
   | "workspaces"
@@ -248,4 +277,78 @@ export function getSteamXrayHistoryLimit(plan: SubscriptionPlan) {
 
 export function canAccessSteamXrayPlayerHistory(plan: SubscriptionPlan) {
   return plan !== SubscriptionPlan.FREE;
+}
+
+const featureCapabilityMap: Record<FeatureKey, SubscriptionCapability> = {
+  radarSteam: "steamRadar",
+  marketResearch: "marketResearch",
+  revenueCalculator: "revenueCalculator",
+  communityFeed: "communityFeed",
+  communityRanking: "communityRanking",
+  guidedJourney: "guidedJourney",
+  pdfExport: "pdfExport",
+  earlyAccess: "earlyAccess",
+  steamXray: "steamXray",
+  viabilityAnalysis: "viabilityAnalyses",
+  artAnalysis: "artAnalyses",
+  gameBoard: "gameBoardProjects",
+  gdd: "gdds"
+};
+
+export const limitLabels: Record<LimitKey, string> = {
+  steamXrayPerMonth: "Steam X-Ray monthly usage",
+  viabilityAnalysesPerMonth: "viability analysis monthly usage",
+  artAnalysesPerMonth: "art analysis monthly usage",
+  gameBoardProjects: "Game Board project usage",
+  gdds: "GDD usage"
+};
+
+export function getEntitlementPolicyForPlan(plan: SubscriptionPlan): EntitlementPolicy {
+  const config = getSubscriptionPlanConfig(plan);
+  const limitValue = (value: number | null): LimitValue => value === null ? "unlimited" : value;
+
+  return {
+    features: {
+      radarSteam: hasSubscriptionCapability(plan, featureCapabilityMap.radarSteam),
+      marketResearch: hasSubscriptionCapability(plan, featureCapabilityMap.marketResearch),
+      revenueCalculator: hasSubscriptionCapability(plan, featureCapabilityMap.revenueCalculator),
+      communityFeed: hasSubscriptionCapability(plan, featureCapabilityMap.communityFeed),
+      communityRanking: hasSubscriptionCapability(plan, featureCapabilityMap.communityRanking),
+      guidedJourney: hasSubscriptionCapability(plan, featureCapabilityMap.guidedJourney),
+      pdfExport: hasSubscriptionCapability(plan, featureCapabilityMap.pdfExport),
+      earlyAccess: hasSubscriptionCapability(plan, featureCapabilityMap.earlyAccess),
+      steamXray: hasSubscriptionCapability(plan, featureCapabilityMap.steamXray),
+      viabilityAnalysis: hasSubscriptionCapability(plan, featureCapabilityMap.viabilityAnalysis),
+      artAnalysis: hasSubscriptionCapability(plan, featureCapabilityMap.artAnalysis),
+      gameBoard: hasSubscriptionCapability(plan, featureCapabilityMap.gameBoard),
+      gdd: hasSubscriptionCapability(plan, featureCapabilityMap.gdd)
+    },
+    limits: {
+      steamXrayPerMonth: plan === SubscriptionPlan.PRO ? "unlimited" : plan === SubscriptionPlan.PLUS ? 100 : 10,
+      viabilityAnalysesPerMonth: limitValue(config.limits.projectAnalysesRun),
+      artAnalysesPerMonth: limitValue(config.limits.artAnalysesRun),
+      gameBoardProjects: limitValue(config.limits.projects),
+      gdds: limitValue(config.limits.gddsGenerated)
+    }
+  };
+}
+
+export function canPlanUseFeature(plan: SubscriptionPlan, featureKey: FeatureKey) {
+  return getEntitlementPolicyForPlan(plan).features[featureKey];
+}
+
+export function getPlanLimit(plan: SubscriptionPlan, limitKey: LimitKey) {
+  return getEntitlementPolicyForPlan(plan).limits[limitKey];
+}
+
+export function getLimitLabel(limit: LimitValue) {
+  return limit === "unlimited" ? "Ilimitado" : String(limit);
+}
+
+export function hasReachedLimit(currentUsage: number, limit: LimitValue) {
+  if (limit === "unlimited") {
+    return false;
+  }
+
+  return currentUsage >= limit;
 }

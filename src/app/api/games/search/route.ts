@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-import { badRequest, ok, serverError, tooManyRequests } from "@/lib/api-response";
+import { badRequest, ok, serverError, tooManyRequests, unauthorized } from "@/lib/api-response";
 import { AuthRateLimitError, assertPublicApiRateLimit, getPublicApiRateLimitKey } from "@/lib/auth-rate-limit";
+import { getApiContext } from "@/lib/auth-helpers";
+import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { searchGames } from "@/lib/game-service";
 import { parseSearchParams } from "@/lib/request";
 
@@ -21,6 +23,17 @@ const schema = z.object({
 export async function GET(request: Request) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "games-search"));
+    const context = await getApiContext();
+
+    if (!context) {
+      return unauthorized();
+    }
+
+    await assertCanUseFeature({
+      userId: context.userId,
+      workspaceId: context.workspace.id,
+      organizationId: context.organizationId
+    }, "radarSteam");
 
     const parsed = parseSearchParams(new URL(request.url), schema);
     const result = await searchGames({
@@ -37,6 +50,10 @@ export async function GET(request: Request) {
 
     if (error instanceof AuthRateLimitError) {
       return tooManyRequests(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError();

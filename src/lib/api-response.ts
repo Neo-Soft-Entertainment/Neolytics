@@ -10,8 +10,8 @@ export function ok<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(serializeResponseData(data), init);
 }
 
-export function badRequest(message: string) {
-  return NextResponse.json({ message }, { status: 400 });
+export function badRequest(message: string, extra?: Record<string, unknown>) {
+  return NextResponse.json({ message, ...extra }, { status: 400 });
 }
 
 export function unauthorized(message = "Unauthorized") {

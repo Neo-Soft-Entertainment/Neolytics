@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-import { badRequest, ok, serverError, tooManyRequests } from "@/lib/api-response";
+import { badRequest, ok, serverError, tooManyRequests, unauthorized } from "@/lib/api-response";
 import { AuthRateLimitError, assertPublicApiRateLimit, getPublicApiRateLimitKey } from "@/lib/auth-rate-limit";
+import { getApiContext } from "@/lib/auth-helpers";
+import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { getLatestEstimates } from "@/lib/game-service";
 
 const schema = z.coerce.number().int().positive();
@@ -9,6 +11,17 @@ const schema = z.coerce.number().int().positive();
 export async function GET(request: Request, { params }: { params: Promise<{ appId: string }> }) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "game-estimates"));
+    const context = await getApiContext();
+
+    if (!context) {
+      return unauthorized();
+    }
+
+    await assertCanUseFeature({
+      userId: context.userId,
+      workspaceId: context.workspace.id,
+      organizationId: context.organizationId
+    }, "revenueCalculator");
 
     const { appId } = await params;
     return ok(await getLatestEstimates(schema.parse(appId)));
@@ -19,6 +32,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ appI
 
     if (error instanceof AuthRateLimitError) {
       return tooManyRequests(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError();

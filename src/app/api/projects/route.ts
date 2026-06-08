@@ -4,6 +4,7 @@ import { z } from "zod";
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
+import { EntitlementError, entitlementErrorResponse } from "@/lib/entitlements";
 import { createProject, listProjects } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
@@ -63,6 +64,10 @@ export async function POST(request: Request) {
 
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError("Unable to create project.");

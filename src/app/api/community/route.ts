@@ -5,6 +5,7 @@ import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-
 import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { createCommunityPost, getCommunityRanking, listCommunityFeed } from "@/lib/community-service";
+import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
@@ -28,6 +29,15 @@ export async function GET() {
   }
 
   try {
+    const entitlementContext = {
+      userId: context.userId,
+      workspaceId: context.workspace.id,
+      organizationId: context.organizationId
+    };
+
+    await assertCanUseFeature(entitlementContext, "communityFeed");
+    await assertCanUseFeature(entitlementContext, "communityRanking");
+
     const [feed, ranking] = await Promise.all([
       listCommunityFeed(context.organizationId, context.userId),
       getCommunityRanking(context.organizationId)
@@ -37,6 +47,10 @@ export async function GET() {
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError("Unable to load community.");
@@ -51,6 +65,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    await assertCanUseFeature({
+      userId: context.userId,
+      workspaceId: context.workspace.id,
+      organizationId: context.organizationId
+    }, "communityFeed");
+
     const body = await parseJsonBody(request, schema);
     const post = await createCommunityPost({
       organizationId: context.organizationId,
@@ -71,6 +91,10 @@ export async function POST(request: Request) {
 
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError("Unable to create community post.");

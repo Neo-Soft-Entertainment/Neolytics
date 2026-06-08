@@ -342,6 +342,16 @@ Export formats:
 - CSV (`csv`)
 - PDF (`pdf`) for plans with PDF export enabled
 
+## Entitlements
+
+Feature access is centralized in `src/lib/entitlements.ts` and the plan-to-policy mapping lives in `src/lib/subscription-plans.ts`.
+
+- Backend code should call `assertCanUseFeature` before paid or gated operations.
+- Backend code should call `assertCurrentUsageWithinLimit` before limited operations.
+- Successful monthly executions are recorded as `AuditEvent` usage entries.
+- Client components can use `useEntitlements`, `useUsage`, `FeatureGate`, and `LimitGate`.
+- Add new product features by adding a `FeatureKey`, a `LimitKey` when needed, and one policy mapping. Do not duplicate access rules in components.
+
 ## Estimation model
 
 Sales estimate:

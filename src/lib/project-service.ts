@@ -3,15 +3,19 @@ import { Prisma, ProjectStage, SubscriptionPlan } from "@prisma/client";
 import { appUrl } from "@/env";
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import {
+  assertCanUseFeature,
+  assertCurrentUsageWithinLimit,
+  recordUsage
+} from "@/lib/entitlements";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
 import { slugify } from "@/lib/slugify";
 import { fetchSteamSearchAppIds } from "@/lib/steam/client";
 import { syncSteamApp } from "@/lib/steam/ingest";
 import {
-  consumeSubscriptionUsage,
   enforceSubscriptionCapacity,
-  enforceSubscriptionCapability
+  recordSubscriptionUsage
 } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
 
@@ -799,6 +803,16 @@ export async function createProject(params: {
   playerFantasy?: string;
   pricePointCents?: number | null;
 }) {
+  await assertCanUseFeature({
+    userId: params.createdById,
+    workspaceId: params.workspaceId,
+    organizationId: params.organizationId
+  }, "gameBoard");
+  await assertCurrentUsageWithinLimit({
+    userId: params.createdById,
+    workspaceId: params.workspaceId,
+    organizationId: params.organizationId
+  }, "gameBoardProjects");
   await enforceSubscriptionCapacity(params.organizationId, "projects");
 
   const projectSlug = await buildUniqueSlug(slugify(params.name), async (slug) => {
@@ -1011,7 +1025,7 @@ export async function updateProject(params: {
   });
 }
 
-export async function analyzeProject(projectId: string, workspaceId: string) {
+export async function analyzeProject(projectId: string, workspaceId: string, userId: string) {
   const project = await db.project.findFirstOrThrow({
     where: {
       id: projectId,
@@ -1019,7 +1033,14 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     }
   });
 
-  await consumeSubscriptionUsage(project.organizationId, "projectAnalysesRun");
+  const entitlementContext = {
+    userId,
+    workspaceId,
+    organizationId: project.organizationId
+  };
+
+  await assertCanUseFeature(entitlementContext, "viabilityAnalysis");
+  await assertCurrentUsageWithinLimit(entitlementContext, "viabilityAnalysesPerMonth");
   const steamCoverage = await ensureProjectSteamCoverage(project);
   const matchingGames = await getComparableGames(project);
   const { genreTokens: projectGenres, tagTokens: projectTags } = await getProjectSignalSlugs(project);
@@ -1552,10 +1573,19 @@ export async function analyzeProject(projectId: string, workspaceId: string) {
     ]
   });
 
+  await recordSubscriptionUsage(project.organizationId, "projectAnalysesRun");
+  await recordUsage(entitlementContext, {
+    featureKey: "viabilityAnalysis",
+    limitKey: "viabilityAnalysesPerMonth",
+    metadata: {
+      projectId: project.id
+    }
+  });
+
   return result;
 }
 
-export async function analyzeProjectArt(projectId: string, workspaceId: string) {
+export async function analyzeProjectArt(projectId: string, workspaceId: string, userId: string) {
   const project = await db.project.findFirstOrThrow({
     where: {
       id: projectId,
@@ -1563,8 +1593,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
     }
   });
 
-  await enforceSubscriptionCapability(project.organizationId, "artAnalyses");
-  await consumeSubscriptionUsage(project.organizationId, "artAnalysesRun");
+  const entitlementContext = {
+    userId,
+    workspaceId,
+    organizationId: project.organizationId
+  };
+
+  await assertCanUseFeature(entitlementContext, "artAnalysis");
+  await assertCurrentUsageWithinLimit(entitlementContext, "artAnalysesPerMonth");
   const organization = await db.organization.findUniqueOrThrow({
     where: {
       id: project.organizationId
@@ -1794,10 +1830,19 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string) 
     ]
   });
 
+  await recordSubscriptionUsage(project.organizationId, "artAnalysesRun");
+  await recordUsage(entitlementContext, {
+    featureKey: "artAnalysis",
+    limitKey: "artAnalysesPerMonth",
+    metadata: {
+      projectId: project.id
+    }
+  });
+
   return result;
 }
 
-export async function generateProjectGdd(projectId: string, workspaceId: string) {
+export async function generateProjectGdd(projectId: string, workspaceId: string, userId: string) {
   const project = await db.project.findFirstOrThrow({
     where: {
       id: projectId,
@@ -1829,7 +1874,15 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
       }
     }
   });
-  await consumeSubscriptionUsage(project.organizationId, "gddsGenerated");
+
+  const entitlementContext = {
+    userId,
+    workspaceId,
+    organizationId: project.organizationId
+  };
+
+  await assertCanUseFeature(entitlementContext, "gdd");
+  await assertCurrentUsageWithinLimit(entitlementContext, "gdds");
 
   const nextVersion = (project.gdds[0]?.version ?? 0) + 1;
   const analysis = project.analysis;
@@ -2021,6 +2074,8 @@ export async function generateProjectGdd(projectId: string, workspaceId: string)
       }
     ]
   });
+
+  await recordSubscriptionUsage(project.organizationId, "gddsGenerated");
 
   return result;
 }

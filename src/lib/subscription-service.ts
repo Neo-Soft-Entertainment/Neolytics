@@ -202,6 +202,44 @@ export async function consumeSubscriptionUsage(
   });
 }
 
+export async function recordSubscriptionUsage(
+  organizationId: string,
+  metric: Extract<SubscriptionMetric, "reportsGenerated" | "exportsGenerated" | "projectAnalysesRun" | "gddsGenerated" | "artAnalysesRun">,
+  client: DbClient = db
+) {
+  const periodKey = getCurrentSubscriptionPeriodKey();
+  const usage = await client.organizationSubscriptionUsage.upsert({
+    where: {
+      organizationId_periodKey: {
+        organizationId,
+        periodKey
+      }
+    },
+    update: {},
+    create: {
+      organizationId,
+      periodKey
+    }
+  });
+  const data: Prisma.OrganizationSubscriptionUsageUpdateInput =
+    metric === "reportsGenerated"
+      ? { reportsGenerated: { increment: 1 } }
+      : metric === "exportsGenerated"
+        ? { exportsGenerated: { increment: 1 } }
+        : metric === "projectAnalysesRun"
+          ? { projectAnalysesRun: { increment: 1 } }
+          : metric === "gddsGenerated"
+            ? { gddsGenerated: { increment: 1 } }
+            : { artAnalysesRun: { increment: 1 } };
+
+  await client.organizationSubscriptionUsage.update({
+    where: {
+      id: usage.id
+    },
+    data
+  });
+}
+
 export async function enforceSubscriptionCapability(
   organizationId: string,
   capability: SubscriptionCapability,

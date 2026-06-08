@@ -7,9 +7,14 @@ import {
 } from "@/lib/export-service";
 import {
   consumeSubscriptionUsage,
-  enforceSubscriptionCapability,
   SubscriptionLimitError
 } from "@/lib/subscription-service";
+import { getApiContext } from "@/lib/auth-helpers";
+import {
+  EntitlementError,
+  assertCanUseFeature,
+  entitlementErrorResponse
+} from "@/lib/entitlements";
 
 export function getExportFormat(url: URL) {
   const format = url.searchParams.get("format") ?? "xlsx";
@@ -34,7 +39,17 @@ export async function createWorkbookDownloadResponse(
     }
 
     if (format === "pdf") {
-      await enforceSubscriptionCapability(organizationId, "pdfExport");
+      const context = await getApiContext();
+
+      if (!context) {
+        return badRequest("A valid session is required for PDF export.");
+      }
+
+      await assertCanUseFeature({
+        userId: context.userId,
+        workspaceId: context.workspace.id,
+        organizationId
+      }, "pdfExport");
     }
 
     const workbook = await buildWorkbook();
@@ -43,6 +58,10 @@ export async function createWorkbookDownloadResponse(
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
+    }
+
+    if (error instanceof EntitlementError) {
+      return entitlementErrorResponse(error);
     }
 
     return serverError(error instanceof Error ? error.message : "Unable to export workbook.");

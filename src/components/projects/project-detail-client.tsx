@@ -13,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
 import { useProject } from "@/features/projects/hooks";
-import { hasSubscriptionCapability } from "@/lib/subscription-plans";
+import { getLimitLabel } from "@/lib/subscription-plans";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 const stageOptions = [
@@ -34,6 +35,8 @@ export function ProjectDetailClient({
 }) {
   const t = useI18n();
   const query = useProject(projectId);
+  const entitlements = useEntitlements();
+  const usage = useUsage();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -178,8 +181,13 @@ export function ProjectDetailClient({
     [board]
   );
   const latestGdd = query.data?.gdds[0] ?? null;
-  const canRunArtAnalysis = hasSubscriptionCapability(subscriptionPlan, "artAnalyses");
-  const isProArtAnalysis = subscriptionPlan === SubscriptionPlan.PRO;
+  const canRunViabilityAnalysis = entitlements.canUse("viabilityAnalysis");
+  const canRunArtAnalysis = entitlements.canUse("artAnalysis");
+  const canGenerateGdd = entitlements.canUse("gdd");
+  const isProArtAnalysis = entitlements.canUse("earlyAccess");
+  const viabilityLimit = entitlements.getLimit("viabilityAnalysesPerMonth");
+  const artLimit = entitlements.getLimit("artAnalysesPerMonth");
+  const gddLimit = entitlements.getLimit("gdds");
 
   async function saveProject() {
     setFeedback(null);
@@ -640,13 +648,13 @@ export function ProjectDetailClient({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button disabled={isAnalyzing} onClick={runAnalysis}>
+              <Button disabled={isAnalyzing || !canRunViabilityAnalysis} onClick={runAnalysis}>
                 {isAnalyzing ? t("projectDetail.analyzing") : t("projectDetail.runMarketAnalysis")}
               </Button>
               <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
                 {isAnalyzingArt ? t("projectDetail.analyzingArt") : t("projectDetail.runArtAnalysis")}
               </Button>
-              <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
+              <Button disabled={isGeneratingGdd || !canGenerateGdd} variant="outline" onClick={generateGdd}>
                 {isGeneratingGdd ? t("projectDetail.generating") : t("projectDetail.generateGdd")}
               </Button>
               <ExportActions
@@ -677,6 +685,11 @@ export function ProjectDetailClient({
           </div>
         </CardContent>
       </Card>
+      <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
+        <p>Uso atual: {usage.usage?.viabilityAnalysesPerMonth ?? 0} de {viabilityLimit ? getLimitLabel(viabilityLimit) : "..."}</p>
+        <p>Uso atual: {usage.usage?.artAnalysesPerMonth ?? 0} de {artLimit ? getLimitLabel(artLimit) : "..."}</p>
+        <p>Uso atual: {usage.usage?.gdds ?? 0} de {gddLimit ? getLimitLabel(gddLimit) : "..."}</p>
+      </div>
       {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur dark:bg-white/[0.04]">
@@ -1247,8 +1260,8 @@ export function ProjectDetailClient({
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Upgrade to Plus or Pro to benchmark visual positioning, production complexity, and art-market fit
-                  directly inside each project.
+                  Seu acesso atual não inclui análise de artes. Faça upgrade para benchmark de posicionamento visual,
+                  complexidade de produção e encaixe arte-mercado dentro de cada projeto.
                 </p>
               </CardContent>
             </Card>

@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useEntitlements } from "@/features/entitlements/hooks";
 
 export function ExportActions({
   csvHref,
@@ -26,6 +27,8 @@ export function ExportActions({
 }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const entitlements = useEntitlements();
+  const canExportPdf = entitlements.canUse("pdfExport");
   const resolvedPdfHref = pdfHref
     ?? (xlsxHref.includes("format=xlsx")
       ? xlsxHref.replace("format=xlsx", "format=pdf")
@@ -74,8 +77,16 @@ export function ExportActions({
               Download CSV
             </a>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href={resolvedPdfHref}>
+          <DropdownMenuItem
+            disabled={!canExportPdf}
+            onSelect={(event) => {
+              if (!canExportPdf) {
+                event.preventDefault();
+                setMessage("Seu acesso atual não inclui este recurso. Faça upgrade para continuar usando este recurso.");
+              }
+            }}
+          >
+            <a href={canExportPdf ? resolvedPdfHref : undefined} className="flex items-center">
               <FileText className="mr-2 h-4 w-4" />
               Download PDF
             </a>
