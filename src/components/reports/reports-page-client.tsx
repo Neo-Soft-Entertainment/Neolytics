@@ -3,6 +3,7 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ export function ReportsPageClient({
 }: {
   subscriptionPlan: SubscriptionPlan;
 }) {
+  const t = useI18n();
   const reportsQuery = useReports();
   const createReport = useCreateReport();
   const [error, setError] = useState<string | null>(null);
@@ -41,50 +43,50 @@ export function ReportsPageClient({
       setGenre("");
       setTag("");
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : "Unable to generate report.");
+      setError(submissionError instanceof Error ? submissionError.message : t("reports.generateError"));
     }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Reports</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t("reports.pageTitle")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate deeper market, commercial, and operating reports with segment sizing, concentration, opportunity, risk, and strategic read from the current studio dataset.
+          {t("reports.pageDescription")}
         </p>
       </div>
       <Card>
         <CardContent className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="font-medium">{isPro ? "Pro reports are live" : "Standard report scope is live"}</p>
+            <p className="font-medium">{isPro ? t("reports.proLive") : t("reports.standardLive")}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {isPro
-                ? "This plan now adds an operating brief with board, commercial, and studio execution guidance on top of the standard market report."
-                : "Your current plan includes the standard market read with segment sizing, opportunity, risk, pricing, and AI strategic narrative."}
+                ? t("reports.proLiveCopy")
+                : t("reports.standardLiveCopy")}
             </p>
           </div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Generate report</CardTitle>
+          <CardTitle>{t("reports.generateReport")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">{t("reports.title")}</Label>
             <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="genre">Genre slug</Label>
+            <Label htmlFor="genre">{t("reports.genreSlug")}</Label>
             <Input id="genre" value={genre} onChange={(event) => setGenre(event.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tag">Tag slug</Label>
+            <Label htmlFor="tag">{t("reports.tagSlug")}</Label>
             <Input id="tag" value={tag} onChange={(event) => setTag(event.target.value)} />
           </div>
           <div className="md:col-span-3">
             <Button onClick={handleCreateReport} disabled={createReport.isPending}>
-              {createReport.isPending ? "Generating..." : "Generate report"}
+              {createReport.isPending ? t("reports.generating") : t("reports.generateReport")}
             </Button>
           </div>
           {error ? <p className="text-sm text-destructive md:col-span-3">{error}</p> : null}
@@ -92,21 +94,21 @@ export function ReportsPageClient({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Generated reports</CardTitle>
+          <CardTitle>{t("reports.generatedReports")}</CardTitle>
         </CardHeader>
         <CardContent>
           {reportsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading reports...</p>
+            <p className="text-sm text-muted-foreground">{t("reports.loading")}</p>
           ) : (
             <div className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Export</TableHead>
+                    <TableHead>{t("reports.title")}</TableHead>
+                    <TableHead>{t("reports.type")}</TableHead>
+                    <TableHead>{t("finance.status")}</TableHead>
+                    <TableHead>{t("reports.created")}</TableHead>
+                    <TableHead>{t("reports.export")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -118,7 +120,7 @@ export function ReportsPageClient({
                       <TableCell>{new Date(report.createdAt).toLocaleString()}</TableCell>
                       <TableCell>
                         <ExportActions
-                          label="Export"
+                          label={t("common.export")}
                           xlsxHref={`/api/exports/reports/${report.id}?format=xlsx`}
                           csvHref={`/api/exports/reports/${report.id}?format=csv`}
                           googleSheetsEndpoint={`/api/exports/reports/${report.id}`}
@@ -137,19 +139,19 @@ export function ReportsPageClient({
                     {report.metadata?.segment ? (
                       <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Market size</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.marketSize")}</p>
                           <p className="mt-2 font-semibold">{report.metadata.segment.marketSizeLabel}</p>
                         </div>
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Opportunity</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.opportunity")}</p>
                           <p className="mt-2 font-semibold">{report.metadata.segment.opportunityScore}</p>
                         </div>
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Risk</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.risk")}</p>
                           <p className="mt-2 font-semibold">{report.metadata.segment.riskScore}</p>
                         </div>
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Confidence</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.confidence")}</p>
                           <p className="mt-2 font-semibold">
                             {report.metadata.segment.confidenceLabel} ({report.metadata.segment.confidenceScore})
                           </p>
@@ -159,15 +161,15 @@ export function ReportsPageClient({
                     {report.metadata?.operatingBrief ? (
                       <div className="grid gap-3 md:grid-cols-3">
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Board directive</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.boardDirective")}</p>
                           <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.boardDirective}</p>
                         </div>
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Commercial directive</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.commercialDirective")}</p>
                           <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.commercialDirective}</p>
                         </div>
                         <div className="rounded-2xl border p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Operating directive</p>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.operatingDirective")}</p>
                           <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.operatingDirective}</p>
                         </div>
                       </div>

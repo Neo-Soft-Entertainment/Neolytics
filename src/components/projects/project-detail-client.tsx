@@ -3,6 +3,7 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { useEffect, useMemo, useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export function ProjectDetailClient({
   projectId: string;
   subscriptionPlan: SubscriptionPlan;
 }) {
+  const t = useI18n();
   const query = useProject(projectId);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -198,11 +200,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to save project.");
+      setFeedback(payload?.message ?? t("projectDetail.saveProjectError"));
       return;
     }
 
-    setFeedback("Project saved.");
+    setFeedback(t("projectDetail.projectSaved"));
     await query.refetch();
   }
 
@@ -218,11 +220,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to analyze project.");
+      setFeedback(payload?.message ?? t("projectDetail.analyzeProjectError"));
       return;
     }
 
-    setFeedback("Market analysis updated.");
+    setFeedback(t("projectDetail.marketAnalysisUpdated"));
     await query.refetch();
   }
 
@@ -238,11 +240,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to generate GDD.");
+      setFeedback(payload?.message ?? t("projectDetail.generateGddError"));
       return;
     }
 
-    setFeedback("GDD generated.");
+    setFeedback(t("projectDetail.gddGenerated"));
     await query.refetch();
   }
 
@@ -258,11 +260,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to analyze art direction.");
+      setFeedback(payload?.message ?? t("projectDetail.artAnalysisError"));
       return;
     }
 
-    setFeedback("Art analysis updated.");
+    setFeedback(t("projectDetail.artAnalysisUpdated"));
     await query.refetch();
   }
 
@@ -287,7 +289,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to create milestone.");
+      setFeedback(payload?.message ?? t("projectDetail.createMilestoneError"));
       return;
     }
 
@@ -300,7 +302,7 @@ export function ProjectDetailClient({
       budgetedCostCents: "",
       expectedRevenueCents: ""
     });
-    setFeedback("Milestone created.");
+    setFeedback(t("projectDetail.milestoneCreated"));
     await query.refetch();
   }
 
@@ -308,7 +310,7 @@ export function ProjectDetailClient({
     const milestone = milestoneEdits[milestoneId];
 
     if (!milestone?.title.trim()) {
-      setFeedback("Milestone title is required.");
+      setFeedback(t("projectDetail.milestoneTitleRequired"));
       return;
     }
 
@@ -330,11 +332,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to save milestone.");
+      setFeedback(payload?.message ?? t("projectDetail.saveMilestoneError"));
       return;
     }
 
-    setFeedback("Milestone updated.");
+    setFeedback(t("projectDetail.milestoneUpdated"));
     await query.refetch();
   }
 
@@ -355,12 +357,12 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to create column.");
+      setFeedback(payload?.message ?? t("projectDetail.createColumnError"));
       return;
     }
 
     setNewColumn({ name: "", color: "" });
-    setFeedback("Column created.");
+    setFeedback(t("projectDetail.columnCreated"));
     await query.refetch();
   }
 
@@ -381,11 +383,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to update column.");
+      setFeedback(payload?.message ?? t("projectDetail.updateColumnError"));
       return;
     }
 
-    setFeedback("Column updated.");
+    setFeedback(t("projectDetail.columnUpdated"));
     await query.refetch();
   }
 
@@ -393,7 +395,7 @@ export function ProjectDetailClient({
     const cardState = newCards[columnId];
 
     if (!cardState?.title?.trim()) {
-      setFeedback("Card title is required.");
+      setFeedback(t("projectDetail.cardTitleRequired"));
       return;
     }
 
@@ -418,7 +420,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to create card.");
+      setFeedback(payload?.message ?? t("projectDetail.createCardError"));
       return;
     }
 
@@ -432,7 +434,7 @@ export function ProjectDetailClient({
         labels: ""
       }
     }));
-    setFeedback("Card created.");
+    setFeedback(t("projectDetail.cardCreated"));
     await query.refetch();
   }
 
@@ -440,7 +442,7 @@ export function ProjectDetailClient({
     const cardState = cardEdits[cardId];
 
     if (!cardState?.title.trim()) {
-      setFeedback("Card title is required.");
+      setFeedback(t("projectDetail.cardTitleRequired"));
       return;
     }
 
@@ -465,11 +467,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to save card.");
+      setFeedback(payload?.message ?? t("projectDetail.saveCardError"));
       return;
     }
 
-    setFeedback("Card updated.");
+    setFeedback(t("projectDetail.cardUpdated"));
     await query.refetch();
   }
 
@@ -488,7 +490,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to move card.");
+      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
@@ -510,7 +512,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to move card.");
+      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
@@ -518,7 +520,7 @@ export function ProjectDetailClient({
   }
 
   async function deleteCard(cardId: string) {
-    const confirmed = window.confirm("Delete this card permanently?");
+    const confirmed = window.confirm(t("projectDetail.deleteCardConfirm"));
 
     if (!confirmed) {
       return;
@@ -537,11 +539,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to delete card.");
+      setFeedback(payload?.message ?? t("projectDetail.deleteCardError"));
       return;
     }
 
-    setFeedback("Card deleted.");
+    setFeedback(t("common.delete"));
     await query.refetch();
   }
 
@@ -560,7 +562,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to move column.");
+      setFeedback(payload?.message ?? t("projectDetail.moveColumnError"));
       return;
     }
 
@@ -568,7 +570,7 @@ export function ProjectDetailClient({
   }
 
   async function deleteColumn(columnId: string) {
-    const confirmed = window.confirm("Delete this column and all cards inside it?");
+    const confirmed = window.confirm(t("projectDetail.deleteColumnConfirm"));
 
     if (!confirmed) {
       return;
@@ -587,20 +589,20 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to delete column.");
+      setFeedback(payload?.message ?? t("projectDetail.deleteColumnError"));
       return;
     }
 
-    setFeedback("Column deleted.");
+    setFeedback(t("common.delete"));
     await query.refetch();
   }
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading project...</p>;
+    return <p className="text-sm text-muted-foreground">{t("projectDetail.loading")}</p>;
   }
 
   if (query.isError || !query.data) {
-    return <ErrorState title="Project unavailable" description="We could not load this project." />;
+    return <ErrorState title={t("projectDetail.unavailable")} description={t("projectDetail.unavailableDescription")} />;
   }
 
   const project = query.data;
@@ -633,21 +635,21 @@ export function ProjectDetailClient({
             <div>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{project.name}</h1>
               <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                {project.elevatorPitch || "Build the thesis, connect it to the market, and turn it into execution."}
+                {project.elevatorPitch || t("projectDetail.defaultPitch")}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button disabled={isAnalyzing} onClick={runAnalysis}>
-                {isAnalyzing ? "Analyzing..." : "Run market analysis"}
+                {isAnalyzing ? t("projectDetail.analyzing") : t("projectDetail.runMarketAnalysis")}
               </Button>
               <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
-                {isAnalyzingArt ? "Analyzing art..." : "Run art analysis"}
+                {isAnalyzingArt ? t("projectDetail.analyzingArt") : t("projectDetail.runArtAnalysis")}
               </Button>
               <Button disabled={isGeneratingGdd} variant="outline" onClick={generateGdd}>
-                {isGeneratingGdd ? "Generating..." : "Generate GDD"}
+                {isGeneratingGdd ? t("projectDetail.generating") : t("projectDetail.generateGdd")}
               </Button>
               <ExportActions
-                label="Export project"
+                label={t("common.exportProject")}
                 xlsxHref={`/api/exports/projects/${projectId}?format=xlsx`}
                 csvHref={`/api/exports/projects/${projectId}?format=csv`}
                 googleSheetsEndpoint={`/api/exports/projects/${projectId}`}
@@ -668,7 +670,7 @@ export function ProjectDetailClient({
               <span className="font-medium">{formatNumber(pendingApprovalsCount)}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Project operating mode</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("projectDetail.operatingMode")}</p>
               <p className="mt-2 font-medium">Use analysis, milestones, GDD, and board management as one connected execution loop.</p>
             </div>
           </div>
@@ -677,12 +679,12 @@ export function ProjectDetailClient({
       {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur dark:bg-white/[0.04]">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="market">Market analysis</TabsTrigger>
-          <TabsTrigger value="art">Art analysis</TabsTrigger>
-          <TabsTrigger value="milestones">Milestones</TabsTrigger>
-          <TabsTrigger value="gdd">GDD</TabsTrigger>
-          <TabsTrigger value="kanban">Kanban</TabsTrigger>
+          <TabsTrigger value="overview">{t("projectDetail.overviewTab")}</TabsTrigger>
+          <TabsTrigger value="market">{t("projectDetail.marketTab")}</TabsTrigger>
+          <TabsTrigger value="art">{t("projectDetail.artTab")}</TabsTrigger>
+          <TabsTrigger value="milestones">{t("projectDetail.milestonesTab")}</TabsTrigger>
+          <TabsTrigger value="gdd">{t("projectDetail.gddTab")}</TabsTrigger>
+          <TabsTrigger value="kanban">{t("projectDetail.kanbanTab")}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
           <Card className="overflow-hidden">
@@ -700,7 +702,7 @@ export function ProjectDetailClient({
                 <Textarea id="detail-pitch" value={projectForm.elevatorPitch} onChange={(event) => setProjectForm((current) => ({ ...current, elevatorPitch: event.target.value }))} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-description">Description</Label>
+                <Label htmlFor="detail-description">{t("common.description")}</Label>
                 <Textarea id="detail-description" value={projectForm.description} onChange={(event) => setProjectForm((current) => ({ ...current, description: event.target.value }))} />
               </div>
               <div className="space-y-2">
@@ -756,7 +758,7 @@ export function ProjectDetailClient({
               </div>
               <div className="md:col-span-2">
                 <Button disabled={isSaving} onClick={saveProject}>
-                  {isSaving ? "Saving..." : "Save project"}
+                  {isSaving ? t("projectDetail.saving") : t("projectDetail.saveProject")}
                 </Button>
               </div>
             </CardContent>
@@ -1063,7 +1065,7 @@ export function ProjectDetailClient({
                     <ul className="mt-2 space-y-2 text-muted-foreground">
                       {opportunityLayer?.keyMismatches?.length ? opportunityLayer.keyMismatches.map((item) => (
                         <li key={item}>- {item}</li>
-                      )) : <li>No critical mismatches surfaced in the current read.</li>}
+                      )) : <li>{t("projectDetail.noMismatches")}</li>}
                     </ul>
                   </div>
                 </CardContent>
@@ -1089,7 +1091,7 @@ export function ProjectDetailClient({
                   </div>
                 </div>
               )) : (
-                <p className="text-sm text-muted-foreground">No comparable set attached yet.</p>
+                <p className="text-sm text-muted-foreground">{t("projectDetail.noComparableSet")}</p>
               )}
             </CardContent>
           </Card>
@@ -1098,7 +1100,7 @@ export function ProjectDetailClient({
           {!canRunArtAnalysis ? (
             <Card>
               <CardHeader>
-                <CardTitle>Art analysis is not included on your plan</CardTitle>
+                <CardTitle>{t("projectDetail.artNotIncluded")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
@@ -1147,7 +1149,7 @@ export function ProjectDetailClient({
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Integrated art direction analysis</CardTitle>
                   <Button disabled={isAnalyzingArt} onClick={runArtAnalysis}>
-                    {isAnalyzingArt ? "Analyzing art..." : project.artAnalysis ? "Refresh art analysis" : "Run art analysis"}
+                    {isAnalyzingArt ? t("projectDetail.analyzingArt") : project.artAnalysis ? t("projectDetail.refreshArtAnalysis") : t("projectDetail.runArtAnalysis")}
                   </Button>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm">
@@ -1155,25 +1157,25 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Style position</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.styleSummary ?? "Run art analysis to map the current visual shelf."}
+                        {project.artAnalysis?.styleSummary ?? t("projectDetail.artStyleFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Market fit</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.fitSummary ?? "Run art analysis to benchmark fit against the current niche."}
+                        {project.artAnalysis?.fitSummary ?? t("projectDetail.artFitFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Production risk</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.productionSummary ?? "Run art analysis to estimate production complexity."}
+                        {project.artAnalysis?.productionSummary ?? t("projectDetail.artProductionFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Recommendation</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.recommendationSummary ?? "Run art analysis to generate a sharper visual recommendation."}
+                        {project.artAnalysis?.recommendationSummary ?? t("projectDetail.artRecommendationFallback")}
                       </p>
                     </div>
                   </div>
@@ -1230,7 +1232,7 @@ export function ProjectDetailClient({
                         </div>
                       </div>
                     )) : (
-                      <p className="text-sm text-muted-foreground">Run art analysis to generate the Pro benchmark shelf.</p>
+                      <p className="text-sm text-muted-foreground">{t("projectDetail.proBenchmarkFallback")}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -1246,9 +1248,9 @@ export function ProjectDetailClient({
                         <div>
                           <p className="font-medium">{item.steamGame.name}</p>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {(item.steamGame.genres.map((genre) => genre.steamGenre.name).slice(0, 2).join(", ")) || "No genre coverage"}
+                            {(item.steamGame.genres.map((genre) => genre.steamGenre.name).slice(0, 2).join(", ")) || t("projectDetail.noGenreCoverage")}
                             {" · "}
-                            {(item.steamGame.tags.map((tag) => tag.steamTag.name).slice(0, 3).join(", ")) || "No tag coverage"}
+                            {(item.steamGame.tags.map((tag) => tag.steamTag.name).slice(0, 3).join(", ")) || t("projectDetail.noTagCoverage")}
                           </p>
                         </div>
                         <p className="text-sm font-medium">
@@ -1306,7 +1308,7 @@ export function ProjectDetailClient({
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
-              <Input value={newMilestone.ownerLabel} onChange={(event) => setNewMilestone((current) => ({ ...current, ownerLabel: event.target.value }))} placeholder="Owner" />
+              <Input value={newMilestone.ownerLabel} onChange={(event) => setNewMilestone((current) => ({ ...current, ownerLabel: event.target.value }))} placeholder={t("common.owner")} />
               <Select value={newMilestone.status} onValueChange={(value) => setNewMilestone((current) => ({ ...current, status: value }))}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1331,7 +1333,7 @@ export function ProjectDetailClient({
             </CardHeader>
             <CardContent className="space-y-4">
               {project.milestones.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No milestones yet. Create the first delivery checkpoint and attach cost/revenue expectations to it.</p>
+                <p className="text-sm text-muted-foreground">{t("projectDetail.noMilestones")}</p>
               ) : (
                 project.milestones.map((milestone) => (
                   <div key={milestone.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
@@ -1459,7 +1461,7 @@ export function ProjectDetailClient({
                       <div className="text-sm text-muted-foreground">
                         Budget {formatCurrency(milestone.budgetedCostCents)} · Revenue {formatCurrency(milestone.expectedRevenueCents)}
                       </div>
-                      <Button type="button" onClick={() => saveMilestone(milestone.id)}>Save milestone</Button>
+                      <Button type="button" onClick={() => saveMilestone(milestone.id)}>{t("projectDetail.saveMilestone")}</Button>
                     </div>
                   </div>
                 ))
@@ -1511,20 +1513,20 @@ export function ProjectDetailClient({
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
-              <CardTitle>Customize board</CardTitle>
+              <CardTitle>{t("projectDetail.customizeBoard")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_140px_120px]">
               <Input
                 value={newColumn.name}
                 onChange={(event) => setNewColumn((current) => ({ ...current, name: event.target.value }))}
-                placeholder="New column name"
+                placeholder={t("projectDetail.newColumnName")}
               />
               <Input
                 value={newColumn.color}
                 onChange={(event) => setNewColumn((current) => ({ ...current, color: event.target.value }))}
                 placeholder="#0ea5e9"
               />
-              <Button onClick={createColumn}>Add column</Button>
+              <Button onClick={createColumn}>{t("projectDetail.addColumn")}</Button>
             </CardContent>
           </Card>
           <div className="grid gap-4 xl:grid-cols-4">
@@ -1566,7 +1568,7 @@ export function ProjectDetailClient({
                         index
                       )}
                     >
-                      Save
+                      {t("common.save")}
                     </Button>
                     <Button size="sm" type="button" variant="outline" onClick={() => moveColumn(column.id, "left")}>
                       ←
@@ -1575,7 +1577,7 @@ export function ProjectDetailClient({
                       →
                     </Button>
                     <Button size="sm" type="button" variant="destructive" onClick={() => deleteColumn(column.id)}>
-                      Delete
+                      {t("common.delete")}
                     </Button>
                   </div>
                 </CardHeader>
@@ -1608,7 +1610,7 @@ export function ProjectDetailClient({
                               labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
                             }
                           }))}
-                          placeholder="Description"
+                          placeholder={t("common.description")}
                         />
                         <Input
                           value={cardEdits[card.id]?.assigneeLabel ?? card.assigneeLabel ?? ""}
@@ -1622,7 +1624,7 @@ export function ProjectDetailClient({
                               labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
                             }
                           }))}
-                          placeholder="Owner"
+                          placeholder={t("common.owner")}
                         />
                         <Input
                           type="date"
@@ -1650,7 +1652,7 @@ export function ProjectDetailClient({
                               labels: event.target.value
                             }
                           }))}
-                          placeholder="labels, comma, separated"
+                          placeholder={t("projectDetail.labelsPlaceholder")}
                         />
                         <Select value={column.id} onValueChange={(value) => moveCard(card.id, value)}>
                           <SelectTrigger>
@@ -1672,10 +1674,10 @@ export function ProjectDetailClient({
                             ↓
                           </Button>
                           <Button size="sm" type="button" variant="outline" onClick={() => saveCard(card.id)}>
-                            Save card
+                            {t("projectDetail.saveCard")}
                           </Button>
                           <Button size="sm" type="button" variant="destructive" onClick={() => deleteCard(card.id)}>
-                            Delete
+                            {t("common.delete")}
                           </Button>
                         </div>
                       </div>
@@ -1695,7 +1697,7 @@ export function ProjectDetailClient({
                             labels: current[column.id]?.labels ?? ""
                           }
                         }))}
-                        placeholder="New card title"
+                        placeholder={t("projectDetail.newCardTitle")}
                       />
                       <Textarea
                         value={newCards[column.id]?.description ?? ""}
@@ -1709,7 +1711,7 @@ export function ProjectDetailClient({
                             labels: current[column.id]?.labels ?? ""
                           }
                         }))}
-                        placeholder="Card description"
+                        placeholder={t("projectDetail.cardDescription")}
                       />
                       <Input
                         value={newCards[column.id]?.assigneeLabel ?? ""}
@@ -1723,7 +1725,7 @@ export function ProjectDetailClient({
                             labels: current[column.id]?.labels ?? ""
                           }
                         }))}
-                        placeholder="Owner"
+                        placeholder={t("common.owner")}
                       />
                       <Input
                         type="date"
@@ -1751,10 +1753,10 @@ export function ProjectDetailClient({
                             labels: event.target.value
                           }
                         }))}
-                        placeholder="labels, comma, separated"
+                        placeholder={t("projectDetail.labelsPlaceholder")}
                       />
                       <Button variant="outline" onClick={() => createCard(column.id)}>
-                        Add card
+                        {t("projectDetail.addCard")}
                       </Button>
                     </div>
                   </div>
