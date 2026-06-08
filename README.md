@@ -148,7 +148,7 @@ Optional Discord webhook notifications:
 Optional Google Sheets publishing:
 
 - `SUPABASE_URL`: Supabase project URL used by the company document upload flow
-- `SUPABASE_SERVICE_ROLE_KEY`: service role key used server-side for private uploads and signed URLs
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only Supabase `service_role` API key from Project Settings > API. Do not use the database password, anon key, JWT secret, or project ref.
 - `COMPANY_DOCUMENTS_BUCKET`: optional private bucket name for corporate documents
 - `USER_AVATARS_BUCKET`: optional public bucket name for account avatars
 - `ENCRYPTION_KEYS`: comma-separated server-only encryption keys in `keyVersion:base64-32-byte-key` format. Example generation: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`

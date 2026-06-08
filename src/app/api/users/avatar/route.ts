@@ -11,7 +11,11 @@ const DEFAULT_BUCKET = "user-avatars";
 
 function getStorageClient() {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Avatar storage is not configured.");
+    throw new Error("Avatar storage is not configured. Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+  }
+
+  if (env.SUPABASE_SERVICE_ROLE_KEY.split(".").length !== 3) {
+    throw new Error("Avatar storage key is invalid. Use the Supabase service_role API key, not the database password or project ref.");
   }
 
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
