@@ -138,4 +138,4 @@ Supports `.xlsx` (ExcelJS), `.csv`, and `.pdf` output for financial and market d
 
 ## Commit Convention
 
-Follows [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`. See `AGENTS.md` for details.
+Follows [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`. Do not include `Co-Authored-By` trailers in commit messages. See `AGENTS.md` for details.

@@ -4,6 +4,7 @@
 
 - Use Conventional Commits for commit messages.
 - Reference: https://www.conventionalcommits.org/
+- Do not include `Co-Authored-By` trailers in commit messages.
 
 ## Delivery Workflow
 
