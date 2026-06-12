@@ -8,16 +8,16 @@ import { searchGames } from "@/lib/game-service";
 import { parseSearchParams } from "@/lib/request";
 
 const schema = z.object({
-  query: z.string().optional(),
-  genre: z.string().optional(),
-  tag: z.string().optional(),
-  minPrice: z.coerce.number().optional(),
-  maxPrice: z.coerce.number().optional(),
-  minReviewScore: z.coerce.number().optional(),
-  fromReleaseDate: z.string().optional(),
-  toReleaseDate: z.string().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  pageSize: z.coerce.number().int().positive().max(100).optional()
+  query: z.string().trim().min(1).max(120).optional(),
+  genre: z.string().trim().min(1).max(64).regex(/^[a-z0-9-]+$/).optional(),
+  tag: z.string().trim().min(1).max(64).regex(/^[a-z0-9-]+$/).optional(),
+  minPrice: z.coerce.number().int().min(0).max(1_000_000).optional(),
+  maxPrice: z.coerce.number().int().min(0).max(1_000_000).optional(),
+  minReviewScore: z.coerce.number().min(0).max(100).optional(),
+  fromReleaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  toReleaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  page: z.coerce.number().int().positive().max(1_000).optional(),
+  pageSize: z.coerce.number().int().positive().max(50).optional()
 });
 
 export async function GET(request: Request) {

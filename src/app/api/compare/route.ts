@@ -6,7 +6,7 @@ import { compareGames } from "@/lib/game-service";
 import { parseSearchParams } from "@/lib/request";
 
 const schema = z.object({
-  appIds: z.string().min(1)
+  appIds: z.string().trim().min(1).max(120).regex(/^\d+(?:\s*,\s*\d+){0,9}$/)
 });
 
 export async function GET(request: Request) {
@@ -18,6 +18,10 @@ export async function GET(request: Request) {
       .split(",")
       .map((value: string) => Number(value.trim()))
       .filter((value: number) => Number.isInteger(value) && value > 0);
+
+    if (appIds.length < 2) {
+      return badRequest("Compare at least 2 games.");
+    }
 
     if (appIds.length > 10) {
       return badRequest("Compare up to 10 games at a time.");

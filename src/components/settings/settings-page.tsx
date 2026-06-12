@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { PageHero } from "@/components/app-shell/page-hero";
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
 import { CreateWorkspaceForm } from "@/components/organization/create-workspace-form";
 import { OrganizationMembersPanel } from "@/components/organization/organization-members-panel";
@@ -87,27 +88,23 @@ export async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Settings</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Manage account access, organizations, workspace structure, and the integrations behind your market and ERP workflows.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
-                {subscriptionSnapshot.planLabel}
-              </Badge>
-              <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
-                {organization.name}
-              </Badge>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title="Settings"
+        description="Manage account access, workspace structure, billing, and integrations."
+        actions={(
+          <>
+            <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
+              {subscriptionSnapshot.planLabel}
+            </Badge>
+            <Badge variant="secondary" className="border-white/10 bg-white/55 px-3 py-1 backdrop-blur dark:bg-white/[0.04]">
+              {organization.name}
+            </Badge>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Seat usage</span>
+              <span className="text-muted-foreground">Seats</span>
               <span className="font-medium">{seatLimitLabel}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
@@ -116,13 +113,13 @@ export async function SettingsPage() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Ops control</p>
-              <p className="mt-2 font-medium">Use this area to control access, ownership, seats, workspace structure, and account-linked integrations.</p>
+              <p className="mt-2 font-medium">Access, ownership, billing, and org setup.</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader className="pb-2">
@@ -166,7 +163,7 @@ export async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="organization" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur md:grid-cols-3 dark:bg-white/[0.04]">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur md:grid-cols-3 dark:bg-white/[0.04]">
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="user">Account</TabsTrigger>
@@ -257,10 +254,10 @@ export async function SettingsPage() {
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
-              <CardTitle>Account controls moved to the header</CardTitle>
+              <CardTitle>Quick account access</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>Open the user avatar in the top-right corner to upload a profile image, change your account language, open settings, or sign out.</p>
+              <p>Use the top-right user menu to update your profile image, language, settings, or sign out.</p>
               <p>Current account: {session?.user?.email ?? "N/A"}</p>
             </CardContent>
           </Card>

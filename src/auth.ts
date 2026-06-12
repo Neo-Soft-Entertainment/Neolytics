@@ -1,4 +1,3 @@
-import { compare } from "bcryptjs";
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
@@ -11,6 +10,7 @@ import { AuthRateLimitError, assertAuthRateLimit, getLoginRateLimitKey, recordAu
 import { createSecureAuthAdapter } from "@/lib/auth-adapter";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { hashPassword, verifyPassword } from "@/lib/password";
 
 if (process.env.AUTH_URL) {
   process.env.APP_URL ??= process.env.AUTH_URL;
@@ -18,8 +18,8 @@ if (process.env.AUTH_URL) {
 }
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
   recaptchaToken: z.string().min(1).optional()
 });
 
@@ -106,7 +106,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const email = parsed.data.email.trim().toLowerCase();
+        const email = parsed.data.email.toLowerCase();
         const rateLimitKey = getLoginRateLimitKey(email);
 
         try {
@@ -137,11 +137,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const isValid = await compare(parsed.data.password, user.passwordHash);
+        const passwordResult = await verifyPassword(parsed.data.password, user.passwordHash);
 
-        if (!isValid) {
+        if (!passwordResult.isValid) {
           await recordAuthAttempt(rateLimitKey, false);
           return null;
+        }
+
+        if (passwordResult.needsRehash) {
+          await db.user.update({
+            where: {
+              id: user.id
+            },
+            data: {
+              passwordHash: await hashPassword(parsed.data.password)
+            }
+          });
         }
 
         await recordAuthAttempt(rateLimitKey, true);

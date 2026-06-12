@@ -1,15 +1,15 @@
-import { compare, hash } from "bcryptjs";
 import { z } from "zod";
 
 import { requireApiUser } from "@/lib/auth-helpers";
 import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { parseJsonBody } from "@/lib/request";
 
 const schema = z.object({
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(8)
+  currentPassword: z.string().min(1).max(128).optional(),
+  newPassword: z.string().min(8).max(128)
 });
 
 export async function PATCH(request: Request) {
@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
 
     if (user.passwordHash) {
       const isCurrentPasswordValid = body.currentPassword
-        ? await compare(body.currentPassword, user.passwordHash)
+        ? (await verifyPassword(body.currentPassword, user.passwordHash)).isValid
         : false;
 
       if (!isCurrentPasswordValid) {
@@ -49,7 +49,7 @@ export async function PATCH(request: Request) {
         id: session.user.id
       },
       data: {
-        passwordHash: await hash(body.newPassword, 12),
+        passwordHash: await hashPassword(body.newPassword),
         passwordChangedAt: new Date()
       }
     });

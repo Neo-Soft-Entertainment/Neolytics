@@ -203,16 +203,14 @@ export function LoginForm({
           strategy="afterInteractive"
         />
       ) : null}
-      <Card className="w-full max-w-md">
-        <CardHeader>
+      <Card className="w-full max-w-sm border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardHeader className="space-y-1 pb-4">
           <CardTitle>{t("auth.signInTitle")}</CardTitle>
-          <CardDescription>
-            {t("auth.signInDescription")}
-          </CardDescription>
+          <CardDescription>{t("auth.signInDescription")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {hasSocialLogin ? (
-            <div className="mb-4 space-y-3">
+            <div className="space-y-2.5">
               {hasGoogleLogin ? (
                 <Button
                   className="w-full"
@@ -256,7 +254,7 @@ export function LoginForm({
               </div>
             </div>
           ) : null}
-          <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="space-y-3.5" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
               <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
@@ -281,7 +279,7 @@ export function LoginForm({
               {form.formState.isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
             {inviteToken ? (
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-xs text-muted-foreground">
                 {t("auth.inviteHint")}
               </p>
             ) : null}

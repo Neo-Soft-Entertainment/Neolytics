@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
+import { PageHero } from "@/components/app-shell/page-hero";
 import { ErrorState } from "@/components/error-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,25 +61,21 @@ export function ProjectsPageClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("projects.pageTitle")}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {t("projects.pageDescription")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("projects.marketOs")}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("projects.gddBoardAnalysis")}
-              </span>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title={t("projects.pageTitle")}
+        description={t("projects.pageDescription")}
+        actions={(
+          <>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("projects.marketOs")}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("projects.gddBoardAnalysis")}
+            </span>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("projects.portfolioSize")}</span>
               <span className="font-medium">{query.data?.length ?? 0} {t("projects.pageTitle").toLowerCase()}</span>
@@ -92,9 +89,9 @@ export function ProjectsPageClient() {
               <p className="mt-2 font-medium">{t("projects.bestUseCopy")}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+        )}
+      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-4">
           {query.isLoading ? (
             <p className="text-sm text-muted-foreground">{t("projects.loading")}</p>
@@ -106,7 +103,7 @@ export function ProjectsPageClient() {
                 <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                   <div className="space-y-1">
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-lg">
                       <Link className="hover:underline" href={`/projects/${project.id}`}>
                         {project.name}
                       </Link>
@@ -117,18 +114,18 @@ export function ProjectsPageClient() {
                     {project.stage.replaceAll("_", " ")}
                   </span>
                 </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+                <CardContent className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.competition")}</p>
                     <p className="mt-1 text-lg font-semibold">{project.analysis?.competitionCount ?? t("common.na")}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.avgReview")}</p>
                     <p className="mt-1 text-lg font-semibold">
                       {project.analysis?.averageReviewScore ? formatPercent(project.analysis.averageReviewScore, 1) : t("common.na")}
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.medianRevenue")}</p>
                     <p className="mt-1 text-lg font-semibold">
                       {project.analysis?.medianRevenueCents ? formatCurrency(project.analysis.medianRevenueCents) : t("common.na")}
@@ -153,7 +150,7 @@ export function ProjectsPageClient() {
           <CardHeader>
             <CardTitle>{t("projects.createProject")}</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          <CardContent className="grid gap-3.5">
             <div className="space-y-2">
               <Label htmlFor="project-name">{t("projects.projectName")}</Label>
               <Input

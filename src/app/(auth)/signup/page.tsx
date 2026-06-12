@@ -27,7 +27,7 @@ export default async function SignupPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_30%)] p-6">
-      <div className="flex w-full max-w-xl flex-col items-center gap-6">
+      <div className="flex w-full max-w-lg flex-col items-center gap-5">
         <NeolyticsBrand />
         {invalidInvitation ? (
           <Card className="w-full">

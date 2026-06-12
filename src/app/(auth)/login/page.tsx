@@ -22,7 +22,7 @@ export default async function LoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 p-6">
-      <div className="flex w-full max-w-xl flex-col items-center gap-6">
+      <div className="flex w-full max-w-sm flex-col items-center gap-5">
         <NeolyticsBrand />
         <LoginForm
           inviteToken={inviteToken}

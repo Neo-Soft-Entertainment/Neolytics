@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
@@ -57,25 +58,21 @@ export function GamesPageClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("games.pageTitle")}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {t("games.pageDescription")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("games.catalogExploration")}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("games.searchToCompSet")}
-              </span>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title={t("games.pageTitle")}
+        description={t("games.pageDescription")}
+        actions={(
+          <>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("games.catalogExploration")}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("games.searchToCompSet")}
+            </span>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("games.matches")}</span>
               <span className="font-medium">{query.data?.total ? formatNumber(query.data.total) : "0"}</span>
@@ -89,14 +86,14 @@ export function GamesPageClient() {
               <p className="mt-2 font-medium">{t("games.bestUseCopy")}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      />
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
           <CardTitle>{t("games.searchFilters")}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4">
+        <CardContent className="grid gap-3 md:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="query">{t("games.search")}</Label>
             <Input
