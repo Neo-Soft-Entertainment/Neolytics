@@ -1,5 +1,4 @@
 import { SubscriptionPlan } from "@prisma/client";
-import { hash } from "bcryptjs";
 import { z } from "zod";
 
 import { badRequest, ok, serverError } from "@/lib/api-response";
@@ -8,6 +7,7 @@ import { AuthRateLimitError, assertAuthRateLimit, getSignupRateLimitKey, recordA
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { acceptOrganizationInvitation, getOrganizationInvitationByToken, OrganizationInvitationError } from "@/lib/organization-invitation-service";
+import { hashPassword } from "@/lib/password";
 import { createOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
 import { canUseStripeCheckout } from "@/lib/stripe";
@@ -19,16 +19,16 @@ const optionalNonEmptyString = z.preprocess((value) => {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
-}, z.string().min(2).optional());
+}, z.string().trim().min(2).max(80).optional());
 
 const schema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
   organizationName: optionalNonEmptyString,
   workspaceName: optionalNonEmptyString,
   plan: z.nativeEnum(SubscriptionPlan).optional(),
-  inviteToken: z.string().optional()
+  inviteToken: z.string().trim().min(20).max(255).optional()
 });
 
 export async function POST(request: Request) {
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     await assertAuthRateLimit(rateLimitKey);
 
     const body = await parseJsonBody(request, schema);
-    const email = body.email.trim().toLowerCase();
+    const email = body.email.toLowerCase();
     const invitation = body.inviteToken
       ? await getOrganizationInvitationByToken(body.inviteToken)
       : null;
@@ -72,10 +72,10 @@ export async function POST(request: Request) {
       return badRequest("An account with this email already exists.");
     }
 
-    const passwordHash = await hash(body.password, 12);
+    const passwordHash = await hashPassword(body.password);
     const user = await db.user.create({
       data: {
-        name: body.name.trim(),
+        name: body.name,
         email,
         passwordHash
       }

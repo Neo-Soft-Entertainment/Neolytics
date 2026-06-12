@@ -56,8 +56,7 @@ export function MobileNav({
       <DropdownMenuContent align="end" className="w-72 border-white/10 bg-background/95 p-2 backdrop-blur-xl">
         <div className="rounded-2xl border border-white/10 bg-white/45 px-3 py-3 dark:bg-white/[0.04]">
           <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Neolytics</p>
-          <p className="mt-2 text-sm font-medium">{t("shell.sidebarTagline")}</p>
-          <p className="mt-3 truncate text-sm text-muted-foreground">{currentOrganizationName}</p>
+          <p className="mt-2 text-sm font-medium">{currentOrganizationName}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {currentOrganizationRole ? `${currentOrganizationRole} access` : t("shell.activeOrganization")} · {getSubscriptionPlanLabel(subscriptionPlan)}
           </p>

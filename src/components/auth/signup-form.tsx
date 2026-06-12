@@ -101,12 +101,16 @@ export function SignupForm({
         "Content-Type": "application/json"
       },
       body: JSON.stringify(inviteToken ? {
-        name: values.name,
-        email: values.email,
+        name: values.name.trim(),
+        email: values.email.trim().toLowerCase(),
         password: values.password,
         inviteToken
       } : {
         ...values,
+        name: values.name.trim(),
+        email: values.email.trim().toLowerCase(),
+        organizationName: values.organizationName?.trim(),
+        workspaceName: values.workspaceName?.trim(),
         inviteToken
       })
     });
@@ -119,7 +123,7 @@ export function SignupForm({
 
     const signupPayload = (await response.json().catch(() => null)) as { requiresCheckout?: boolean } | null;
     const result = await signIn("credentials", {
-      email: values.email,
+      email: values.email.trim().toLowerCase(),
       password: values.password,
       redirect: false
     });
@@ -155,18 +159,18 @@ export function SignupForm({
   }
 
   return (
-    <Card className="w-full max-w-xl">
-      <CardHeader>
+    <Card className="w-full max-w-lg border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader className="space-y-1 pb-4">
         <CardTitle>{inviteToken ? t("auth.joinOrganization") : t("auth.createWorkspace")}</CardTitle>
         <CardDescription>
           {inviteToken
-            ? `Create your account and join ${invitedOrganizationName ?? "this organization"} in one step.`
+            ? `Create your account and join ${invitedOrganizationName ?? "this organization"}.`
             : t("auth.signupDescription")}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {hasGoogleLogin || hasDiscordLogin || hasAppleLogin ? (
-          <div className="mb-4 space-y-3">
+          <div className="space-y-2.5">
             {hasGoogleLogin ? (
               <Button
                 className="w-full"
@@ -201,7 +205,7 @@ export function SignupForm({
               </Button>
             ) : null}
             {!inviteToken ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("auth.socialSignupHint")}
               </p>
             ) : null}
@@ -215,7 +219,7 @@ export function SignupForm({
             </div>
           </div>
         ) : null}
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="grid gap-3.5 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="name">{t("auth.yourName")}</Label>
             <Input id="name" autoComplete="name" {...form.register("name")} />
@@ -244,8 +248,8 @@ export function SignupForm({
             ) : null}
           </div>
           {inviteToken ? (
-            <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground md:col-span-2">
-              You are joining
+            <div className="rounded-2xl border bg-muted/30 p-3 text-sm text-muted-foreground md:col-span-2">
+              Joining
               {" "}
               <span className="font-medium text-foreground">{invitedOrganizationName ?? "this organization"}</span>
               {invitedEmail ? (
@@ -275,9 +279,6 @@ export function SignupForm({
               </div>
               <div className="space-y-3 md:col-span-2">
                 <Label>{t("auth.plan")}</Label>
-                <p className="text-sm text-muted-foreground">
-                  These plan details reflect the official live product scope today, not a speculative roadmap.
-                </p>
                 <div className="grid gap-3 md:grid-cols-3">
                   {Object.entries(subscriptionPlans).map(([planKey, plan]) => {
                     const planId = planKey as SubscriptionPlan;
@@ -286,7 +287,7 @@ export function SignupForm({
                     return (
                       <button
                         key={planId}
-                        className={`rounded-2xl border p-4 text-left transition ${
+                        className={`rounded-2xl border p-3 text-left transition ${
                           isSelected ? "border-primary bg-primary/5" : "hover:border-foreground/30"
                         }`}
                         onClick={() => form.setValue("plan", planId, { shouldValidate: true })}
@@ -295,7 +296,7 @@ export function SignupForm({
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-medium">{plan.label}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{plan.description}</p>
                           </div>
                           <p className="text-sm font-semibold">{plan.priceLabel}</p>
                         </div>
@@ -306,14 +307,14 @@ export function SignupForm({
                     );
                   })}
                 </div>
-                <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground">{t("auth.officialScope")}</p>
+                <details className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
+                  <summary className="cursor-pointer font-medium text-foreground">{t("auth.officialScope")}</summary>
                   <div className="mt-3 space-y-2">
                     {subscriptionTruthNotes.map((note) => (
                       <p key={note}>{note}</p>
                     ))}
                   </div>
-                </div>
+                </details>
                 {form.formState.errors.plan ? (
                   <p className="text-sm text-destructive">{form.formState.errors.plan.message}</p>
                 ) : null}
@@ -321,7 +322,7 @@ export function SignupForm({
             </>
           )}
           {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
-          <div className="flex items-center justify-between gap-3 md:col-span-2">
+          <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-muted-foreground">
               {t("auth.alreadyHaveAccount")}{" "}
               <Link

@@ -10,8 +10,8 @@ import { parseJsonBody, parseSearchParams } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional()
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().max(500).optional()
 });
 
 export async function POST(request: Request) {
@@ -64,7 +64,7 @@ export async function DELETE(request: Request) {
   try {
     const url = new URL(request.url);
     const query = parseSearchParams(url, z.object({
-      workspaceId: z.string().min(1)
+      workspaceId: z.string().uuid()
     }));
     const nextWorkspace = await db.workspace.findFirst({
       where: {

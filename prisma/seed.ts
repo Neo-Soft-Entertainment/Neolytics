@@ -1,8 +1,7 @@
-import { hash } from "bcryptjs";
-
 import { PrismaClient, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
 import { env } from "@/env";
+import { hashPassword } from "@/lib/password";
 
 function getCurrentSubscriptionPeriodRange(date = new Date()) {
   const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
@@ -22,7 +21,7 @@ async function main() {
     throw new Error("ADMIN_PASSWORD must not use the documented placeholder value.");
   }
 
-  const passwordHash = await hash(env.ADMIN_PASSWORD, 12);
+  const passwordHash = await hashPassword(env.ADMIN_PASSWORD);
   const period = getCurrentSubscriptionPeriodRange();
 
   const user = await prisma.user.upsert({

@@ -1,4 +1,4 @@
-import { createCipheriv, randomBytes } from "crypto";
+import { createCipheriv, createHash, randomBytes } from "crypto";
 
 const keyV1 = randomBytes(32).toString("base64");
 const keyV2 = randomBytes(32).toString("base64");
@@ -22,6 +22,11 @@ async function main() {
     encryptString,
     isEncryptedString
   } = await import("../src/lib/security/encryption");
+  const {
+    getPasswordHashAlgorithm,
+    hashPassword,
+    verifyPassword
+  } = await import("../src/lib/password");
 
   const encrypted = encryptString("super-secret-token", "test-context");
   assert(isEncryptedString(encrypted), "Encrypted payload should have the encrypted prefix.");
@@ -56,6 +61,17 @@ async function main() {
   }), "utf8").toString("base64url")}`;
 
   assert(decryptString(legacyPayload, "legacy-context") === "legacy-secret", "Historical key payload should decrypt.");
+
+  const passwordHash = await hashPassword("Sup3rSecret!");
+  assert(passwordHash !== "Sup3rSecret!", "Password hash must not store plaintext.");
+  assert(getPasswordHashAlgorithm(passwordHash) === "scrypt", "Password hash should use scrypt.");
+  assert((await verifyPassword("Sup3rSecret!", passwordHash)).isValid, "Correct password should validate.");
+  assert(!(await verifyPassword("wrong-password", passwordHash)).isValid, "Incorrect password should fail.");
+
+  const legacySha256 = createHash("sha256").update("LegacySecret!").digest("hex");
+  const legacyResult = await verifyPassword("LegacySecret!", legacySha256);
+  assert(legacyResult.isValid, "Legacy SHA-256 password should still validate during migration.");
+  assert(legacyResult.needsRehash, "Legacy SHA-256 password should request rehash.");
 
   console.log("Security self-test passed.");
 }
