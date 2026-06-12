@@ -15,6 +15,7 @@
     "jobs:steam:worker": "tsx src/jobs/steam/steam-worker.ts",
     "jobs:steam:once": "tsx src/jobs/steam/run-steam-sync-once.ts",
     "security:migrate-secrets": "tsx scripts/migrate-encrypted-secrets.ts",
+    "security:migrate-business-data": "tsx scripts/migrate-sensitive-business-data.ts",
     "security:test": "tsx scripts/security-self-test.ts",
     "entitlements:test": "tsx scripts/entitlements-self-test.ts",
     "privacy:test": "tsx scripts/privacy-self-test.ts",

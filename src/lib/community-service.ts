@@ -2,6 +2,7 @@ import { CommunityPostType, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const communityPostInclude = {
@@ -21,6 +22,14 @@ const communityPostInclude = {
     }
   }
 } satisfies Prisma.CommunityPostInclude;
+
+function decryptCommunityPost<T extends { organizationId: string; title: string; content: string }>(post: T) {
+  return {
+    ...post,
+    title: decryptNullableString(post.title, `communityPost:${post.organizationId}:title`) ?? post.title,
+    content: decryptNullableString(post.content, `communityPost:${post.organizationId}:content`) ?? post.content
+  };
+}
 
 export async function listCommunityFeed(organizationId: string, userId: string) {
   await enforceSubscriptionCapability(organizationId, "communityFeed");
@@ -47,7 +56,7 @@ export async function listCommunityFeed(organizationId: string, userId: string) 
   });
 
   return posts.map((post) => ({
-    ...post,
+    ...decryptCommunityPost(post),
     viewerHasLiked: post.likes.length > 0,
     likes: undefined
   }));
@@ -119,7 +128,7 @@ export async function getCommunityRanking(organizationId: string) {
         score: postsCount * 3 + likesReceived * 5
       };
     }),
-    topPosts
+    topPosts: topPosts.map(decryptCommunityPost)
   };
 }
 
@@ -149,8 +158,8 @@ export async function createCommunityPost(params: {
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
       authorId: params.authorId,
-      title: params.title.trim(),
-      content: params.content.trim(),
+      title: encryptNullableString(params.title.trim(), `communityPost:${params.organizationId}:title`) ?? "",
+      content: encryptNullableString(params.content.trim(), `communityPost:${params.organizationId}:content`) ?? "",
       type: params.type ?? CommunityPostType.GENERAL,
       projectId: params.projectId ?? null,
       tags: params.tags ?? []
@@ -159,11 +168,11 @@ export async function createCommunityPost(params: {
   });
 
   await notifyOrganizationDiscordWebhook(params.organizationId, {
-    content: `A new community post was published: **${post.title}**.`,
+    content: "A new community post was published in Neolytics.",
     embeds: [
       {
         title: "Community update",
-        description: post.content.slice(0, 200),
+        description: "Open Neolytics to review the internal post.",
         color: 3978097,
         fields: [
           {
@@ -183,6 +192,34 @@ export async function createCommunityPost(params: {
   });
 
   return post;
+}
+
+export async function deleteCommunityPost(params: {
+  organizationId: string;
+  userId: string;
+  postId: string;
+  canManage: boolean;
+}) {
+  await enforceSubscriptionCapability(params.organizationId, "communityFeed");
+
+  const post = await db.communityPost.findFirstOrThrow({
+    where: {
+      id: params.postId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (post.authorId !== params.userId && !params.canManage) {
+    throw new Error("You can only delete your own community posts.");
+  }
+
+  await db.communityPost.delete({
+    where: {
+      id: post.id
+    }
+  });
+
+  return { id: post.id };
 }
 
 export async function toggleCommunityPostLike(params: {

@@ -2,9 +2,92 @@ import { CompanyDocumentStatus, CompanyDocumentType, ComplianceStatus, Complianc
 
 import { createAuditEvent } from "@/lib/audit-service";
 import { db } from "@/lib/db";
+import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
 import { slugify } from "@/lib/slugify";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 import { buildUniqueSlug } from "@/lib/unique-slug";
+
+function encryptCompanyField(value: string | null | undefined, organizationId: string, field: string) {
+  return encryptNullableString(value?.trim() || null, `company:${organizationId}:${field}`);
+}
+
+function decryptCompanyField(value: string | null | undefined, organizationId: string, field: string) {
+  return decryptNullableString(value, `company:${organizationId}:${field}`);
+}
+
+function decryptLegalEntity<T extends {
+  organizationId: string;
+  tradeName?: string | null;
+  cnpj?: string | null;
+  legalNature?: string | null;
+  cnaePrimary?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  district?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  notes?: string | null;
+  branches?: Array<{
+    cnpj?: string | null;
+    stateRegistration?: string | null;
+    municipalRegistration?: string | null;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    district?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+  }>;
+  shareholders?: Array<{ name: string; documentNumber: string; role?: string | null; notes?: string | null }>;
+  officers?: Array<{ name: string; email?: string | null; phone?: string | null; documentNumber?: string | null; powers?: string | null }>;
+}>(entity: T) {
+  return {
+    ...entity,
+    tradeName: decryptCompanyField(entity.tradeName, entity.organizationId, "legalEntity.tradeName"),
+    cnpj: decryptCompanyField(entity.cnpj, entity.organizationId, "legalEntity.cnpj"),
+    legalNature: decryptCompanyField(entity.legalNature, entity.organizationId, "legalEntity.legalNature"),
+    cnaePrimary: decryptCompanyField(entity.cnaePrimary, entity.organizationId, "legalEntity.cnaePrimary"),
+    email: decryptCompanyField(entity.email, entity.organizationId, "legalEntity.email"),
+    phone: decryptCompanyField(entity.phone, entity.organizationId, "legalEntity.phone"),
+    addressLine1: decryptCompanyField(entity.addressLine1, entity.organizationId, "legalEntity.addressLine1"),
+    addressLine2: decryptCompanyField(entity.addressLine2, entity.organizationId, "legalEntity.addressLine2"),
+    district: decryptCompanyField(entity.district, entity.organizationId, "legalEntity.district"),
+    city: decryptCompanyField(entity.city, entity.organizationId, "legalEntity.city"),
+    state: decryptCompanyField(entity.state, entity.organizationId, "legalEntity.state"),
+    postalCode: decryptCompanyField(entity.postalCode, entity.organizationId, "legalEntity.postalCode"),
+    notes: decryptCompanyField(entity.notes, entity.organizationId, "legalEntity.notes"),
+    branches: entity.branches?.map((branch) => ({
+      ...branch,
+      cnpj: decryptCompanyField(branch.cnpj, entity.organizationId, "legalEntityBranch.cnpj"),
+      stateRegistration: decryptCompanyField(branch.stateRegistration, entity.organizationId, "legalEntityBranch.stateRegistration"),
+      municipalRegistration: decryptCompanyField(branch.municipalRegistration, entity.organizationId, "legalEntityBranch.municipalRegistration"),
+      addressLine1: decryptCompanyField(branch.addressLine1, entity.organizationId, "legalEntityBranch.addressLine1"),
+      addressLine2: decryptCompanyField(branch.addressLine2, entity.organizationId, "legalEntityBranch.addressLine2"),
+      district: decryptCompanyField(branch.district, entity.organizationId, "legalEntityBranch.district"),
+      city: decryptCompanyField(branch.city, entity.organizationId, "legalEntityBranch.city"),
+      state: decryptCompanyField(branch.state, entity.organizationId, "legalEntityBranch.state"),
+      postalCode: decryptCompanyField(branch.postalCode, entity.organizationId, "legalEntityBranch.postalCode")
+    })),
+    shareholders: entity.shareholders?.map((shareholder) => ({
+      ...shareholder,
+      name: decryptCompanyField(shareholder.name, entity.organizationId, "legalEntityShareholder.name") ?? shareholder.name,
+      documentNumber: decryptCompanyField(shareholder.documentNumber, entity.organizationId, "legalEntityShareholder.documentNumber") ?? shareholder.documentNumber,
+      role: decryptCompanyField(shareholder.role, entity.organizationId, "legalEntityShareholder.role"),
+      notes: decryptCompanyField(shareholder.notes, entity.organizationId, "legalEntityShareholder.notes")
+    })),
+    officers: entity.officers?.map((officer) => ({
+      ...officer,
+      name: decryptCompanyField(officer.name, entity.organizationId, "legalEntityOfficer.name") ?? officer.name,
+      email: decryptCompanyField(officer.email, entity.organizationId, "legalEntityOfficer.email"),
+      phone: decryptCompanyField(officer.phone, entity.organizationId, "legalEntityOfficer.phone"),
+      documentNumber: decryptCompanyField(officer.documentNumber, entity.organizationId, "legalEntityOfficer.documentNumber"),
+      powers: decryptCompanyField(officer.powers, entity.organizationId, "legalEntityOfficer.powers")
+    }))
+  } as T;
+}
 
 export async function getCompanyModuleData(organizationId: string) {
   const [legalEntities, documents, complianceItems, projects, members, auditEvents] = await Promise.all([
@@ -150,7 +233,7 @@ export async function getCompanyModuleData(organizationId: string) {
   ]);
 
   return {
-    legalEntities,
+    legalEntities: legalEntities.map(decryptLegalEntity),
     documents,
     complianceItems,
     projects,
@@ -193,17 +276,17 @@ export async function createLegalEntity(params: {
       organizationId: params.organizationId,
       name: params.name.trim(),
       slug,
-      tradeName: params.tradeName?.trim() || null,
-      cnpj: params.cnpj?.trim() || null,
+      tradeName: encryptCompanyField(params.tradeName, params.organizationId, "legalEntity.tradeName"),
+      cnpj: encryptCompanyField(params.cnpj, params.organizationId, "legalEntity.cnpj"),
       countryCode: params.countryCode?.trim().toUpperCase() || "US",
-      legalNature: params.legalNature?.trim() || null,
+      legalNature: encryptCompanyField(params.legalNature, params.organizationId, "legalEntity.legalNature"),
       taxRegime: params.taxRegime ?? TaxRegime.OTHER,
-      cnaePrimary: params.cnaePrimary?.trim() || null,
-      email: params.email?.trim() || null,
-      phone: params.phone?.trim() || null,
+      cnaePrimary: encryptCompanyField(params.cnaePrimary, params.organizationId, "legalEntity.cnaePrimary"),
+      email: encryptCompanyField(params.email, params.organizationId, "legalEntity.email"),
+      phone: encryptCompanyField(params.phone, params.organizationId, "legalEntity.phone"),
       websiteUrl: params.websiteUrl?.trim() || null,
-      city: params.city?.trim() || null,
-      state: params.state?.trim() || null,
+      city: encryptCompanyField(params.city, params.organizationId, "legalEntity.city"),
+      state: encryptCompanyField(params.state, params.organizationId, "legalEntity.state"),
       status: "ACTIVE"
     }
   });
@@ -215,12 +298,11 @@ export async function createLegalEntity(params: {
     entityId: entity.id,
     action: "legal_entity.created",
     metadata: {
-      name: entity.name,
-      registrationNumber: entity.cnpj
+      protectedFields: ["cnpj", "tradeName", "email", "phone"]
     }
   });
 
-  return entity;
+  return decryptLegalEntity(entity);
 }
 
 export async function updateLegalEntity(params: {
@@ -263,21 +345,21 @@ export async function updateLegalEntity(params: {
     },
     data: {
       name: params.name.trim(),
-      tradeName: params.tradeName?.trim() || null,
-      cnpj: params.cnpj?.trim() || null,
+      tradeName: encryptCompanyField(params.tradeName, params.organizationId, "legalEntity.tradeName"),
+      cnpj: encryptCompanyField(params.cnpj, params.organizationId, "legalEntity.cnpj"),
       countryCode: params.countryCode?.trim().toUpperCase() || entity.countryCode,
-      legalNature: params.legalNature?.trim() || null,
+      legalNature: encryptCompanyField(params.legalNature, params.organizationId, "legalEntity.legalNature"),
       taxRegime: params.taxRegime ?? entity.taxRegime,
-      cnaePrimary: params.cnaePrimary?.trim() || null,
-      email: params.email?.trim() || null,
-      phone: params.phone?.trim() || null,
+      cnaePrimary: encryptCompanyField(params.cnaePrimary, params.organizationId, "legalEntity.cnaePrimary"),
+      email: encryptCompanyField(params.email, params.organizationId, "legalEntity.email"),
+      phone: encryptCompanyField(params.phone, params.organizationId, "legalEntity.phone"),
       websiteUrl: params.websiteUrl?.trim() || null,
-      city: params.city?.trim() || null,
-      state: params.state?.trim() || null,
-      addressLine1: params.addressLine1?.trim() || null,
-      district: params.district?.trim() || null,
-      postalCode: params.postalCode?.trim() || null,
-      notes: params.notes?.trim() || null
+      city: encryptCompanyField(params.city, params.organizationId, "legalEntity.city"),
+      state: encryptCompanyField(params.state, params.organizationId, "legalEntity.state"),
+      addressLine1: encryptCompanyField(params.addressLine1, params.organizationId, "legalEntity.addressLine1"),
+      district: encryptCompanyField(params.district, params.organizationId, "legalEntity.district"),
+      postalCode: encryptCompanyField(params.postalCode, params.organizationId, "legalEntity.postalCode"),
+      notes: encryptCompanyField(params.notes, params.organizationId, "legalEntity.notes")
     }
   });
 
@@ -288,11 +370,11 @@ export async function updateLegalEntity(params: {
     entityId: updated.id,
     action: "legal_entity.updated",
     metadata: {
-      name: updated.name
+      protectedFields: ["cnpj", "tradeName", "email", "phone", "address"]
     }
   });
 
-  return updated;
+  return decryptLegalEntity(updated);
 }
 
 export async function createLegalEntityBranch(params: {
@@ -323,9 +405,9 @@ export async function createLegalEntityBranch(params: {
       legalEntityId: entity.id,
       name: params.name.trim(),
       code: params.code?.trim() || null,
-      city: params.city?.trim() || null,
-      state: params.state?.trim() || null,
-      cnpj: params.cnpj?.trim() || null
+      city: encryptCompanyField(params.city, params.organizationId, "legalEntityBranch.city"),
+      state: encryptCompanyField(params.state, params.organizationId, "legalEntityBranch.state"),
+      cnpj: encryptCompanyField(params.cnpj, params.organizationId, "legalEntityBranch.cnpj")
     }
   });
 
@@ -337,7 +419,7 @@ export async function createLegalEntityBranch(params: {
     action: "legal_entity_branch.created",
     metadata: {
       legalEntityId: entity.id,
-      name: branch.name
+      protectedFields: ["cnpj", "city", "state"]
     }
   });
 
@@ -369,9 +451,9 @@ export async function createLegalEntityShareholder(params: {
   const shareholder = await db.legalEntityShareholder.create({
     data: {
       legalEntityId: entity.id,
-      name: params.name.trim(),
-      documentNumber: params.documentNumber.trim(),
-      role: params.role?.trim() || null,
+      name: encryptCompanyField(params.name, params.organizationId, "legalEntityShareholder.name") ?? params.name.trim(),
+      documentNumber: encryptCompanyField(params.documentNumber, params.organizationId, "legalEntityShareholder.documentNumber") ?? params.documentNumber.trim(),
+      role: encryptCompanyField(params.role, params.organizationId, "legalEntityShareholder.role"),
       ownershipPercent: typeof params.ownershipPercent === "number" ? params.ownershipPercent : null
     }
   });
@@ -384,7 +466,7 @@ export async function createLegalEntityShareholder(params: {
     action: "legal_entity_shareholder.created",
     metadata: {
       legalEntityId: entity.id,
-      name: shareholder.name
+      protectedFields: ["name", "documentNumber"]
     }
   });
 
@@ -415,9 +497,9 @@ export async function createLegalEntityOfficer(params: {
   const officer = await db.legalEntityOfficer.create({
     data: {
       legalEntityId: entity.id,
-      name: params.name.trim(),
+      name: encryptCompanyField(params.name, params.organizationId, "legalEntityOfficer.name") ?? params.name.trim(),
       title: params.title.trim(),
-      email: params.email?.trim() || null
+      email: encryptCompanyField(params.email, params.organizationId, "legalEntityOfficer.email")
     }
   });
 
@@ -429,7 +511,7 @@ export async function createLegalEntityOfficer(params: {
     action: "legal_entity_officer.created",
     metadata: {
       legalEntityId: entity.id,
-      name: officer.name
+      protectedFields: ["name", "email"]
     }
   });
 

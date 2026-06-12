@@ -15,9 +15,86 @@ import {
 
 import { createAuditEvent } from "@/lib/audit-service";
 import { db } from "@/lib/db";
+import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const approvalThresholdCents = 100_000;
+
+function encryptFinanceField(value: string | null | undefined, organizationId: string, field: string) {
+  return encryptNullableString(value?.trim() || null, `finance:${organizationId}:${field}`);
+}
+
+function decryptFinanceField(value: string | null | undefined, organizationId: string, field: string) {
+  return decryptNullableString(value, `finance:${organizationId}:${field}`);
+}
+
+function decryptPayableTitle<T extends {
+  organizationId: string;
+  natureDescription: string;
+  supplierIdentifier: string;
+  supplierName: string;
+  notes?: string | null;
+  allocations?: Array<{ natureDescription: string }>;
+  payments?: Array<{ bank?: string | null; branch?: string | null; account?: string | null; history?: string | null }>;
+}>(title: T) {
+  return {
+    ...title,
+    natureDescription: decryptFinanceField(title.natureDescription, title.organizationId, "payableTitle.natureDescription") ?? title.natureDescription,
+    supplierIdentifier: decryptFinanceField(title.supplierIdentifier, title.organizationId, "payableTitle.supplierIdentifier") ?? title.supplierIdentifier,
+    supplierName: decryptFinanceField(title.supplierName, title.organizationId, "payableTitle.supplierName") ?? title.supplierName,
+    notes: decryptFinanceField(title.notes, title.organizationId, "payableTitle.notes"),
+    allocations: title.allocations?.map((allocation) => ({
+      ...allocation,
+      natureDescription: decryptFinanceField(allocation.natureDescription, title.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription
+    })),
+    payments: title.payments?.map((payment) => ({
+      ...payment,
+      bank: decryptFinanceField(payment.bank, title.organizationId, "payablePayment.bank"),
+      branch: decryptFinanceField(payment.branch, title.organizationId, "payablePayment.branch"),
+      account: decryptFinanceField(payment.account, title.organizationId, "payablePayment.account"),
+      history: decryptFinanceField(payment.history, title.organizationId, "payablePayment.history")
+    }))
+  } as T;
+}
+
+function decryptContract<T extends { organizationId: string; counterpartyName: string; notes?: string | null }>(contract: T) {
+  return {
+    ...contract,
+    counterpartyName: decryptFinanceField(contract.counterpartyName, contract.organizationId, "contract.counterpartyName") ?? contract.counterpartyName,
+    notes: decryptFinanceField(contract.notes, contract.organizationId, "contract.notes")
+  };
+}
+
+function decryptRoyaltyAgreement<T extends { organizationId: string; partnerName: string; notes?: string | null }>(agreement: T) {
+  return {
+    ...agreement,
+    partnerName: decryptFinanceField(agreement.partnerName, agreement.organizationId, "royaltyAgreement.partnerName") ?? agreement.partnerName,
+    notes: decryptFinanceField(agreement.notes, agreement.organizationId, "royaltyAgreement.notes")
+  };
+}
+
+function decryptRoyaltyStatement<T extends { organizationId: string; notes?: string | null }>(statement: T) {
+  return {
+    ...statement,
+    notes: decryptFinanceField(statement.notes, statement.organizationId, "royaltyStatement.notes")
+  };
+}
+
+function decryptIssuedInvoice<T extends { organizationId: string; customerName: string; notes?: string | null }>(invoice: T) {
+  return {
+    ...invoice,
+    customerName: decryptFinanceField(invoice.customerName, invoice.organizationId, "issuedInvoice.customerName") ?? invoice.customerName,
+    notes: decryptFinanceField(invoice.notes, invoice.organizationId, "issuedInvoice.notes")
+  };
+}
+
+function decryptReceivedInvoice<T extends { organizationId: string; vendorName: string; notes?: string | null }>(invoice: T) {
+  return {
+    ...invoice,
+    vendorName: decryptFinanceField(invoice.vendorName, invoice.organizationId, "receivedInvoice.vendorName") ?? invoice.vendorName,
+    notes: decryptFinanceField(invoice.notes, invoice.organizationId, "receivedInvoice.notes")
+  };
+}
 
 function toNumber(value: bigint | number | null | undefined) {
   if (value === null || value === undefined) {
@@ -595,12 +672,12 @@ export async function getFinanceOverview(organizationId: string) {
     budgets,
     revenueEntries,
     expenseEntries,
-    payableTitles,
-    contracts,
-    royaltyAgreements,
-    royaltyStatements,
-    issuedInvoices,
-    receivedInvoices,
+    payableTitles: payableTitles.map(decryptPayableTitle),
+    contracts: contracts.map(decryptContract),
+    royaltyAgreements: royaltyAgreements.map(decryptRoyaltyAgreement),
+    royaltyStatements: royaltyStatements.map(decryptRoyaltyStatement),
+    issuedInvoices: issuedInvoices.map(decryptIssuedInvoice),
+    receivedInvoices: receivedInvoices.map(decryptReceivedInvoice),
     approvalRequests,
     summary: {
       activeBudgetsCount: budgets.filter((budget) => budget.status === BudgetStatus.ACTIVE).length,
@@ -1257,9 +1334,9 @@ export async function createPayableTitle(params: {
         prefix: params.prefix.trim().toUpperCase(),
         titleNumber: params.titleNumber.trim(),
         documentType: params.documentType.trim(),
-        natureDescription: params.natureDescription.trim(),
-        supplierIdentifier: params.supplierIdentifier.trim(),
-        supplierName: params.supplierName.trim(),
+        natureDescription: encryptFinanceField(params.natureDescription, params.organizationId, "payableTitle.natureDescription") ?? params.natureDescription.trim(),
+        supplierIdentifier: encryptFinanceField(params.supplierIdentifier, params.organizationId, "payableTitle.supplierIdentifier") ?? params.supplierIdentifier.trim(),
+        supplierName: encryptFinanceField(params.supplierName, params.organizationId, "payableTitle.supplierName") ?? params.supplierName.trim(),
         issueDate: params.issueDate,
         dueDate: params.dueDate,
         actualDueDate,
@@ -1267,7 +1344,7 @@ export async function createPayableTitle(params: {
         additionalAmountCents: BigInt(additionalAmountCents),
         totalAmountCents: BigInt(totalAmountCents),
         currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
-        notes: params.notes?.trim() || null
+        notes: encryptFinanceField(params.notes, params.organizationId, "payableTitle.notes")
       }
     });
 
@@ -1275,7 +1352,7 @@ export async function createPayableTitle(params: {
       data: allocations.map((allocation) => ({
         payableTitleId: created.id,
         costCenterId: allocation.costCenterId,
-        natureDescription: allocation.natureDescription.trim(),
+        natureDescription: encryptFinanceField(allocation.natureDescription, params.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription.trim(),
         amountCents: BigInt(allocation.amountCents)
       }))
     });
@@ -1292,8 +1369,7 @@ export async function createPayableTitle(params: {
     metadata: {
       prefix: title.prefix,
       titleNumber: title.titleNumber,
-      supplierIdentifier: title.supplierIdentifier,
-      supplierName: title.supplierName
+      protectedFields: ["supplierIdentifier", "supplierName"]
     }
   });
 
@@ -1397,9 +1473,9 @@ export async function updatePayableTitle(params: {
         prefix: params.prefix.trim().toUpperCase(),
         titleNumber: params.titleNumber.trim(),
         documentType: params.documentType.trim(),
-        natureDescription: params.natureDescription.trim(),
-        supplierIdentifier: params.supplierIdentifier.trim(),
-        supplierName: params.supplierName.trim(),
+        natureDescription: encryptFinanceField(params.natureDescription, params.organizationId, "payableTitle.natureDescription") ?? params.natureDescription.trim(),
+        supplierIdentifier: encryptFinanceField(params.supplierIdentifier, params.organizationId, "payableTitle.supplierIdentifier") ?? params.supplierIdentifier.trim(),
+        supplierName: encryptFinanceField(params.supplierName, params.organizationId, "payableTitle.supplierName") ?? params.supplierName.trim(),
         issueDate: params.issueDate,
         dueDate: params.dueDate,
         actualDueDate,
@@ -1407,7 +1483,7 @@ export async function updatePayableTitle(params: {
         additionalAmountCents: BigInt(additionalAmountCents),
         totalAmountCents: BigInt(totalAmountCents),
         currencyCode: params.currencyCode?.trim().toUpperCase() || title.currencyCode,
-        notes: params.notes?.trim() || null,
+        notes: encryptFinanceField(params.notes, params.organizationId, "payableTitle.notes"),
         status: nextStatus
       }
     });
@@ -1422,7 +1498,7 @@ export async function updatePayableTitle(params: {
       data: allocations.map((allocation) => ({
         payableTitleId: title.id,
         costCenterId: allocation.costCenterId,
-        natureDescription: allocation.natureDescription.trim(),
+        natureDescription: encryptFinanceField(allocation.natureDescription, params.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription.trim(),
         amountCents: BigInt(allocation.amountCents)
       }))
     });
@@ -1438,7 +1514,7 @@ export async function updatePayableTitle(params: {
     action: "payable_title.updated",
     metadata: {
       status: updated.status,
-      supplierIdentifier: updated.supplierIdentifier
+      protectedFields: ["supplierIdentifier"]
     }
   });
 
@@ -1489,11 +1565,11 @@ export async function createPayablePayment(params: {
         organizationId: params.organizationId,
         payableTitleId: title.id,
         paymentType: params.paymentType,
-        bank: params.bank?.trim() || null,
-        branch: params.branch?.trim() || null,
-        account: params.account?.trim() || null,
+        bank: encryptFinanceField(params.bank, params.organizationId, "payablePayment.bank"),
+        branch: encryptFinanceField(params.branch, params.organizationId, "payablePayment.branch"),
+        account: encryptFinanceField(params.account, params.organizationId, "payablePayment.account"),
         paymentDate: params.paymentDate,
-        history: params.history?.trim() || null,
+        history: encryptFinanceField(params.history, params.organizationId, "payablePayment.history"),
         fineCents: BigInt(params.fineCents ?? 0),
         interestCents: BigInt(params.interestCents ?? 0),
         amountPaidCents: BigInt(params.amountPaidCents)
@@ -1579,7 +1655,7 @@ export async function createContract(params: {
       organizationId: params.organizationId,
       projectId: params.projectId || null,
       title: params.title.trim(),
-      counterpartyName: params.counterpartyName.trim(),
+      counterpartyName: encryptFinanceField(params.counterpartyName, params.organizationId, "contract.counterpartyName") ?? params.counterpartyName.trim(),
       counterpartyType: params.counterpartyType,
       status: params.status,
       currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
@@ -1588,7 +1664,7 @@ export async function createContract(params: {
       endsAt: params.endsAt,
       signedAt: params.signedAt,
       autoRenews: Boolean(params.autoRenews),
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "contract.notes")
     }
   });
 
@@ -1657,7 +1733,7 @@ export async function updateContract(params: {
     data: {
       projectId: params.projectId || null,
       title: params.title.trim(),
-      counterpartyName: params.counterpartyName.trim(),
+      counterpartyName: encryptFinanceField(params.counterpartyName, params.organizationId, "contract.counterpartyName") ?? params.counterpartyName.trim(),
       counterpartyType: params.counterpartyType,
       status: params.status,
       currencyCode: params.currencyCode?.trim().toUpperCase() || contract.currencyCode,
@@ -1666,7 +1742,7 @@ export async function updateContract(params: {
       endsAt: params.endsAt ?? null,
       signedAt: params.signedAt ?? null,
       autoRenews: Boolean(params.autoRenews),
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "contract.notes")
     }
   });
 
@@ -1718,12 +1794,12 @@ export async function createRoyaltyAgreement(params: {
       projectId: params.projectId || null,
       contractId: params.contractId || null,
       name: params.name.trim(),
-      partnerName: params.partnerName.trim(),
+      partnerName: encryptFinanceField(params.partnerName, params.organizationId, "royaltyAgreement.partnerName") ?? params.partnerName.trim(),
       status: params.status,
       basisPoints: params.basisPoints,
       recoupable: Boolean(params.recoupable),
       recoupCapCents: params.recoupCapCents === null || params.recoupCapCents === undefined ? null : BigInt(params.recoupCapCents),
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "royaltyAgreement.notes")
     }
   });
 
@@ -1785,7 +1861,7 @@ export async function createRoyaltyStatement(params: {
       deductibleCents,
       netRevenueCents,
       royaltyDueCents,
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "royaltyStatement.notes")
     }
   });
 
@@ -1838,14 +1914,14 @@ export async function createIssuedInvoice(params: {
       projectId: params.projectId || null,
       contractId: params.contractId || null,
       invoiceNumber: params.invoiceNumber.trim(),
-      customerName: params.customerName.trim(),
+      customerName: encryptFinanceField(params.customerName, params.organizationId, "issuedInvoice.customerName") ?? params.customerName.trim(),
       status: params.status,
       amountCents: BigInt(params.amountCents),
       currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
       issuedAt: params.issuedAt,
       dueAt: params.dueAt,
       paidAt: params.paidAt,
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "issuedInvoice.notes")
     }
   });
 
@@ -1900,14 +1976,14 @@ export async function createReceivedInvoice(params: {
       projectId: params.projectId || null,
       contractId: params.contractId || null,
       invoiceNumber: params.invoiceNumber.trim(),
-      vendorName: params.vendorName.trim(),
+      vendorName: encryptFinanceField(params.vendorName, params.organizationId, "receivedInvoice.vendorName") ?? params.vendorName.trim(),
       status: params.status,
       amountCents: BigInt(params.amountCents),
       currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
       issuedAt: params.issuedAt,
       dueAt: params.dueAt,
       paidAt: params.paidAt,
-      notes: params.notes?.trim() || null
+      notes: encryptFinanceField(params.notes, params.organizationId, "receivedInvoice.notes")
     }
   });
 

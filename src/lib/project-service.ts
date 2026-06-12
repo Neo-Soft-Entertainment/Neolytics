@@ -10,6 +10,7 @@ import {
 } from "@/lib/entitlements";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
+import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
 import { slugify } from "@/lib/slugify";
 import { fetchSteamSearchAppIds } from "@/lib/steam/client";
 import { syncSteamApp } from "@/lib/steam/ingest";
@@ -26,6 +27,52 @@ const defaultKanbanColumns = [
   { name: "Blocked", color: "#ef4444" },
   { name: "Done", color: "#10b981" }
 ];
+
+function encryptProjectField(value: string | null | undefined, organizationId: string, workspaceId: string, field: string) {
+  return encryptNullableString(value?.trim() || null, `project:${organizationId}:${workspaceId}:${field}`);
+}
+
+function decryptProjectField(value: string | null | undefined, organizationId: string, workspaceId: string, field: string) {
+  return decryptNullableString(value, `project:${organizationId}:${workspaceId}:${field}`);
+}
+
+function decryptGdd<T extends { projectId: string; content: string }>(gdd: T) {
+  return {
+    ...gdd,
+    content: decryptNullableString(gdd.content, `projectGdd:${gdd.projectId}:content`) ?? gdd.content
+  };
+}
+
+function decryptProject<T extends {
+  organizationId: string;
+  workspaceId: string;
+  elevatorPitch?: string | null;
+  description?: string | null;
+  genreInput?: string | null;
+  tagInput?: string | null;
+  targetAudience?: string | null;
+  coreLoop?: string | null;
+  differentiator?: string | null;
+  monetizationModel?: string | null;
+  artDirection?: string | null;
+  playerFantasy?: string | null;
+  gdds?: Array<{ projectId: string; content: string }>;
+}>(project: T) {
+  return {
+    ...project,
+    elevatorPitch: decryptProjectField(project.elevatorPitch, project.organizationId, project.workspaceId, "elevatorPitch"),
+    description: decryptProjectField(project.description, project.organizationId, project.workspaceId, "description"),
+    genreInput: decryptProjectField(project.genreInput, project.organizationId, project.workspaceId, "genreInput"),
+    tagInput: decryptProjectField(project.tagInput, project.organizationId, project.workspaceId, "tagInput"),
+    targetAudience: decryptProjectField(project.targetAudience, project.organizationId, project.workspaceId, "targetAudience"),
+    coreLoop: decryptProjectField(project.coreLoop, project.organizationId, project.workspaceId, "coreLoop"),
+    differentiator: decryptProjectField(project.differentiator, project.organizationId, project.workspaceId, "differentiator"),
+    monetizationModel: decryptProjectField(project.monetizationModel, project.organizationId, project.workspaceId, "monetizationModel"),
+    artDirection: decryptProjectField(project.artDirection, project.organizationId, project.workspaceId, "artDirection"),
+    playerFantasy: decryptProjectField(project.playerFantasy, project.organizationId, project.workspaceId, "playerFantasy"),
+    gdds: project.gdds?.map(decryptGdd)
+  } as T;
+}
 
 function parseCsv(value?: string | null) {
   if (!value) {
@@ -833,16 +880,16 @@ export async function createProject(params: {
       createdById: params.createdById,
       name: params.name.trim(),
       slug: projectSlug,
-      elevatorPitch: params.elevatorPitch?.trim() || null,
-      description: params.description?.trim() || null,
-      genreInput: params.genreInput?.trim() || null,
-      tagInput: params.tagInput?.trim() || null,
-      targetAudience: params.targetAudience?.trim() || null,
-      coreLoop: params.coreLoop?.trim() || null,
-      differentiator: params.differentiator?.trim() || null,
-      monetizationModel: params.monetizationModel?.trim() || null,
-      artDirection: params.artDirection?.trim() || null,
-      playerFantasy: params.playerFantasy?.trim() || null,
+      elevatorPitch: encryptProjectField(params.elevatorPitch, params.organizationId, params.workspaceId, "elevatorPitch"),
+      description: encryptProjectField(params.description, params.organizationId, params.workspaceId, "description"),
+      genreInput: encryptProjectField(params.genreInput, params.organizationId, params.workspaceId, "genreInput"),
+      tagInput: encryptProjectField(params.tagInput, params.organizationId, params.workspaceId, "tagInput"),
+      targetAudience: encryptProjectField(params.targetAudience, params.organizationId, params.workspaceId, "targetAudience"),
+      coreLoop: encryptProjectField(params.coreLoop, params.organizationId, params.workspaceId, "coreLoop"),
+      differentiator: encryptProjectField(params.differentiator, params.organizationId, params.workspaceId, "differentiator"),
+      monetizationModel: encryptProjectField(params.monetizationModel, params.organizationId, params.workspaceId, "monetizationModel"),
+      artDirection: encryptProjectField(params.artDirection, params.organizationId, params.workspaceId, "artDirection"),
+      playerFantasy: encryptProjectField(params.playerFantasy, params.organizationId, params.workspaceId, "playerFantasy"),
       pricePointCents: params.pricePointCents ?? null,
       stage: params.stage ?? ProjectStage.DISCOVERY,
       kanbanBoards: {
@@ -885,11 +932,11 @@ export async function createProject(params: {
     ]
   });
 
-  return project;
+  return decryptProject(project);
 }
 
 export async function listProjects(workspaceId: string) {
-  return db.project.findMany({
+  const projects = await db.project.findMany({
     where: {
       workspaceId
     },
@@ -906,16 +953,20 @@ export async function listProjects(workspaceId: string) {
       createdAt: "desc"
     }
   });
+
+  return projects.map(decryptProject);
 }
 
 export async function getProjectById(projectId: string, workspaceId: string) {
-  return db.project.findFirst({
+  const project = await db.project.findFirst({
     where: {
       id: projectId,
       workspaceId
     },
     include: projectInclude
   });
+
+  return project ? decryptProject(project) : null;
 }
 
 export async function updateProject(params: {
@@ -969,43 +1020,43 @@ export async function updateProject(params: {
   }
 
   if (params.elevatorPitch !== undefined) {
-    data.elevatorPitch = params.elevatorPitch?.trim() || null;
+    data.elevatorPitch = encryptProjectField(params.elevatorPitch, existing.organizationId, existing.workspaceId, "elevatorPitch");
   }
 
   if (params.description !== undefined) {
-    data.description = params.description?.trim() || null;
+    data.description = encryptProjectField(params.description, existing.organizationId, existing.workspaceId, "description");
   }
 
   if (params.genreInput !== undefined) {
-    data.genreInput = params.genreInput?.trim() || null;
+    data.genreInput = encryptProjectField(params.genreInput, existing.organizationId, existing.workspaceId, "genreInput");
   }
 
   if (params.tagInput !== undefined) {
-    data.tagInput = params.tagInput?.trim() || null;
+    data.tagInput = encryptProjectField(params.tagInput, existing.organizationId, existing.workspaceId, "tagInput");
   }
 
   if (params.targetAudience !== undefined) {
-    data.targetAudience = params.targetAudience?.trim() || null;
+    data.targetAudience = encryptProjectField(params.targetAudience, existing.organizationId, existing.workspaceId, "targetAudience");
   }
 
   if (params.coreLoop !== undefined) {
-    data.coreLoop = params.coreLoop?.trim() || null;
+    data.coreLoop = encryptProjectField(params.coreLoop, existing.organizationId, existing.workspaceId, "coreLoop");
   }
 
   if (params.differentiator !== undefined) {
-    data.differentiator = params.differentiator?.trim() || null;
+    data.differentiator = encryptProjectField(params.differentiator, existing.organizationId, existing.workspaceId, "differentiator");
   }
 
   if (params.monetizationModel !== undefined) {
-    data.monetizationModel = params.monetizationModel?.trim() || null;
+    data.monetizationModel = encryptProjectField(params.monetizationModel, existing.organizationId, existing.workspaceId, "monetizationModel");
   }
 
   if (params.artDirection !== undefined) {
-    data.artDirection = params.artDirection?.trim() || null;
+    data.artDirection = encryptProjectField(params.artDirection, existing.organizationId, existing.workspaceId, "artDirection");
   }
 
   if (params.playerFantasy !== undefined) {
-    data.playerFantasy = params.playerFantasy?.trim() || null;
+    data.playerFantasy = encryptProjectField(params.playerFantasy, existing.organizationId, existing.workspaceId, "playerFantasy");
   }
 
   if (params.pricePointCents !== undefined) {
@@ -1016,22 +1067,24 @@ export async function updateProject(params: {
     data.stage = params.stage;
   }
 
-  return db.project.update({
+  const project = await db.project.update({
     where: {
       id: params.projectId
     },
     data,
     include: projectInclude
   });
+
+  return decryptProject(project);
 }
 
 export async function analyzeProject(projectId: string, workspaceId: string, userId: string) {
-  const project = await db.project.findFirstOrThrow({
+  const project = decryptProject(await db.project.findFirstOrThrow({
     where: {
       id: projectId,
       workspaceId
     }
-  });
+  }));
 
   const entitlementContext = {
     userId,
@@ -1582,16 +1635,16 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     }
   });
 
-  return result;
+  return decryptProject(result);
 }
 
 export async function analyzeProjectArt(projectId: string, workspaceId: string, userId: string) {
-  const project = await db.project.findFirstOrThrow({
+  const project = decryptProject(await db.project.findFirstOrThrow({
     where: {
       id: projectId,
       workspaceId
     }
-  });
+  }));
 
   const entitlementContext = {
     userId,
@@ -1746,7 +1799,12 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       id: project.id
     },
     data: {
-      artDirection: project.artDirection?.trim() || `Target a ${moodKeywords.slice(0, 2).join(" / ") || "market-readable"} visual profile with ${paletteKeywords.slice(0, 2).join(" and ") || "clear contrast"} as the strongest shelf signal.`
+      artDirection: encryptProjectField(
+        project.artDirection || `Target a ${moodKeywords.slice(0, 2).join(" / ") || "market-readable"} visual profile with ${paletteKeywords.slice(0, 2).join(" and ") || "clear contrast"} as the strongest shelf signal.`,
+        project.organizationId,
+        project.workspaceId,
+        "artDirection"
+      )
     }
   });
 
@@ -1839,11 +1897,11 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     }
   });
 
-  return result;
+  return decryptProject(result);
 }
 
 export async function generateProjectGdd(projectId: string, workspaceId: string, userId: string) {
-  const project = await db.project.findFirstOrThrow({
+  const project = decryptProject(await db.project.findFirstOrThrow({
     where: {
       id: projectId,
       workspaceId
@@ -1873,7 +1931,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
         take: 1
       }
     }
-  });
+  }));
 
   const entitlementContext = {
     userId,
@@ -2052,7 +2110,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
       projectId: project.id,
       version: nextVersion,
       title: `${project.name} GDD v${nextVersion}`,
-      content
+      content: encryptNullableString(content, `projectGdd:${project.id}:content`) ?? content
     }
   });
 
@@ -2077,7 +2135,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
 
   await recordSubscriptionUsage(project.organizationId, "gddsGenerated");
 
-  return result;
+  return decryptProject(result);
 }
 
 export async function createKanbanColumn(params: {

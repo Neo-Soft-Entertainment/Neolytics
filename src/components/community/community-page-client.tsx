@@ -111,6 +111,21 @@ export function CommunityPageClient({
     await query.refetch();
   }
 
+  async function deletePost(postId: string) {
+    const response = await fetch(`/api/community/${postId}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to delete post.");
+      return;
+    }
+
+    setFeedback("Post deleted.");
+    await query.refetch();
+  }
+
   const visibleFeed = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
     const filtered = feed.filter((post) => {
@@ -365,9 +380,16 @@ export function CommunityPageClient({
                       {post.author.name || post.author.email} · {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
-                    {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {post.canDelete ? (
+                      <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
+                        Delete
+                      </Button>
+                    ) : null}
+                    <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
+                      {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">

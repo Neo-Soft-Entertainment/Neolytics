@@ -13,6 +13,7 @@ export interface CommunityPostItem {
   tags: string[] | null;
   likeCount: number;
   viewerHasLiked: boolean;
+  canDelete?: boolean;
   createdAt: string;
   author: {
     id: string;
