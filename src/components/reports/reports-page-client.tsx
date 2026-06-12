@@ -3,6 +3,7 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { useState } from "react";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { useI18n } from "@/components/i18n-provider";
 import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
@@ -49,29 +50,31 @@ export function ReportsPageClient({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t("reports.pageTitle")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("reports.pageDescription")}
-        </p>
-      </div>
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="font-medium">{isPro ? t("reports.proLive") : t("reports.standardLive")}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {isPro
-                ? t("reports.proLiveCopy")
-                : t("reports.standardLiveCopy")}
-            </p>
+      <PageHero
+        title={t("reports.pageTitle")}
+        description={t("reports.pageDescription")}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">{t("reports.generatedReports")}</span>
+              <span className="font-medium">{reportsQuery.data?.length ?? 0}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+                {isPro ? t("reports.proLive") : t("reports.standardLive")}
+              </p>
+              <p className="mt-2 font-medium">
+                {isPro ? t("reports.proLiveCopy") : t("reports.standardLiveCopy")}
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      />
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.generateReport")}</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
+        <CardContent className="grid gap-3 md:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="title">{t("reports.title")}</Label>
             <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -84,12 +87,12 @@ export function ReportsPageClient({
             <Label htmlFor="tag">{t("reports.tagSlug")}</Label>
             <Input id="tag" value={tag} onChange={(event) => setTag(event.target.value)} />
           </div>
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <Button onClick={handleCreateReport} disabled={createReport.isPending}>
               {createReport.isPending ? t("reports.generating") : t("reports.generateReport")}
             </Button>
           </div>
-          {error ? <p className="text-sm text-destructive md:col-span-3">{error}</p> : null}
+          {error ? <p className="text-sm text-destructive md:col-span-4">{error}</p> : null}
         </CardContent>
       </Card>
       <Card>
@@ -131,11 +134,11 @@ export function ReportsPageClient({
                 </TableBody>
               </Table>
               {reportsQuery.data?.slice(0, 3).map((report) => (
-                <Card key={`summary-${report.id}`} className="border-dashed">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{report.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
+                <details key={`summary-${report.id}`} className="rounded-[1rem] border border-dashed p-4">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    {report.title}
+                  </summary>
+                  <div className="mt-3 space-y-3 text-sm">
                     {report.metadata?.segment ? (
                       <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-2xl border p-3">
@@ -174,11 +177,11 @@ export function ReportsPageClient({
                         </div>
                       </div>
                     ) : null}
-                    <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-4 text-xs">
-                      {(report.content ?? "").split("\n").slice(0, 18).join("\n")}
+                    <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-3 text-xs">
+                      {(report.content ?? "").split("\n").slice(0, 14).join("\n")}
                     </pre>
-                  </CardContent>
-                </Card>
+                  </div>
+                </details>
               ))}
             </div>
           )}

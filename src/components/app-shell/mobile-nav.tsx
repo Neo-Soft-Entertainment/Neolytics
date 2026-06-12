@@ -14,23 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { getCurrentNavItem, navItems, navSections } from "@/components/app-shell/navigation";
 import { Button } from "@/components/ui/button";
-import { type TranslationKey } from "@/lib/i18n";
 import { getSubscriptionPlanLabel } from "@/lib/subscription-plans";
 import { cn } from "@/lib/utils";
-
-const items: Array<{ href: string; labelKey: TranslationKey }> = [
-  { href: "/dashboard", labelKey: "shell.dashboard" },
-  { href: "/projects", labelKey: "shell.projects" },
-  { href: "/finance", labelKey: "shell.finance" },
-  { href: "/company", labelKey: "shell.company" },
-  { href: "/community", labelKey: "shell.community" },
-  { href: "/games", labelKey: "shell.games" },
-  { href: "/compare", labelKey: "shell.compare" },
-  { href: "/opportunities", labelKey: "shell.opportunities" },
-  { href: "/reports", labelKey: "shell.reports" },
-  { href: "/settings", labelKey: "shell.settings" }
-];
 
 export function MobileNav({
   currentOrganizationName,
@@ -45,6 +32,7 @@ export function MobileNav({
 }) {
   const pathname = usePathname();
   const t = useI18n();
+  const currentItem = getCurrentNavItem(pathname);
 
   return (
     <DropdownMenu>
@@ -60,15 +48,24 @@ export function MobileNav({
           <p className="mt-1 text-xs text-muted-foreground">
             {currentOrganizationRole ? `${currentOrganizationRole} access` : t("shell.activeOrganization")} · {getSubscriptionPlanLabel(subscriptionPlan)}
           </p>
-          <p className="mt-2 truncate text-xs text-muted-foreground">{t("shell.workspace")}: {currentWorkspaceName}</p>
+          <p className="mt-2 truncate text-xs text-muted-foreground">
+            {currentItem ? t(currentItem.labelKey) : t("shell.workspace")} · {currentWorkspaceName}
+          </p>
         </div>
-        <DropdownMenuSeparator />
-        {items.map((item) => (
-          <DropdownMenuItem key={item.href} asChild>
-            <Link className={cn("min-h-11 rounded-xl px-3", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
-              {t(item.labelKey)}
-            </Link>
-          </DropdownMenuItem>
+        {navSections.map((section) => (
+          <div key={section.key}>
+            <DropdownMenuSeparator />
+            <p className="px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+              {t(section.labelKey)}
+            </p>
+            {navItems.filter((item) => item.section === section.key).map((item) => (
+              <DropdownMenuItem key={item.href} asChild>
+                <Link className={cn("min-h-10 rounded-xl px-3", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
+                  {t(item.labelKey)}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </div>
         ))}
         <DropdownMenuSeparator />
         <div className="p-2">

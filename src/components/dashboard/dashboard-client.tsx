@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { EmptyState } from "@/components/empty-state";
 import { ErrorState } from "@/components/error-state";
 import { ExportActions } from "@/components/export/export-actions";
@@ -37,58 +38,56 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.12)]">
-        <CardContent className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
-          <div className="animate-rise-in space-y-3">
-            <div>
-              <h1 className="text-3xl font-bold tracking-[-0.05em] sm:text-4xl">Dashboard</h1>
-              <p className="mt-2 max-w-xl text-sm text-muted-foreground">Market coverage, saved games, launches, and studio signals in one view.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="secondary">{data.planLabel} plan</Badge>
-              <Button asChild>
-                <Link href="/games">Browse games</Link>
-              </Button>
-              {data.canAccessFinanceWorkspace ? (
-                <Button asChild variant="outline">
-                  <Link href="/finance">Open finance</Link>
-                </Button>
-              ) : null}
+      <PageHero
+        title="Dashboard"
+        description="Monitor market coverage, launches, portfolio signals, and finance in one view."
+        actions={(
+          <>
+            <Badge variant="secondary">{data.planLabel} plan</Badge>
+            <Button asChild>
+              <Link href="/games">Browse games</Link>
+            </Button>
+            {data.canAccessFinanceWorkspace ? (
               <Button asChild variant="outline">
-                <Link href="/opportunities">Open opportunities</Link>
+                <Link href="/finance">Open finance</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link href="/compare">Compare games</Link>
-              </Button>
-              <ExportActions
-                label="Export report"
-                xlsxHref="/api/exports/dashboard?format=xlsx"
-                csvHref="/api/exports/dashboard?format=csv"
-                googleSheetsEndpoint="/api/exports/dashboard"
-              />
-            </div>
-          </div>
-          <div className="animate-rise-in-delay grid gap-2.5 rounded-[1.25rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+            ) : null}
+            <Button asChild variant="outline">
+              <Link href="/opportunities">Open opportunities</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/compare">Compare games</Link>
+            </Button>
+            <ExportActions
+              label="Export"
+              xlsxHref="/api/exports/dashboard?format=xlsx"
+              csvHref="/api/exports/dashboard?format=csv"
+              googleSheetsEndpoint="/api/exports/dashboard"
+            />
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Catalog coverage</span>
+              <span className="text-muted-foreground">Catalog</span>
               <span className="font-medium">{formatNumber(data.marketOverview.totalGames)} games</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Tracked in workspace</span>
+              <span className="text-muted-foreground">Tracked</span>
               <span className="font-medium">{formatNumber(data.marketOverview.trackedGamesCount)}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Recent launches surfaced</span>
+              <span className="text-muted-foreground">Recent launches</span>
               <span className="font-medium">{formatNumber(data.recentLaunches.length)}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Mode</p>
-              <p className="mt-2 font-medium">From market thesis to execution.</p>
+              <p className="mt-2 font-medium">From thesis to execution.</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-4">
+        )}
+      />
+      <div className="grid gap-3 md:grid-cols-4">
         <KpiCard label="Catalog games" value={formatNumber(data.marketOverview.totalGames)} />
         <KpiCard
           label="Average review score"
@@ -107,10 +106,10 @@ export function DashboardClient() {
       ) : (
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-          <CardContent className="flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="font-medium">Finance workspace unlocks on Plus</p>
-              <p className="mt-1 text-sm text-muted-foreground">Upgrade to run budgets, payables, invoices, and company ops here.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Upgrade to run budgets, invoices, and company ops here.</p>
             </div>
             <Button asChild variant="outline">
               <Link href="/settings">Review plans</Link>
@@ -126,16 +125,16 @@ export function DashboardClient() {
           <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignals.length)} />
         </div>
       ) : null}
-      <Card className="overflow-hidden">
-        <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
-        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-2">
-            <CardTitle>Guided journey</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {data.guidedJourney.completedSteps} of {data.guidedJourney.totalSteps} product milestones completed.
-            </p>
-          </div>
-          <div className="space-y-2 lg:text-right">
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
+          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <CardTitle>Guided journey</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {data.guidedJourney.completedSteps} of {data.guidedJourney.totalSteps} milestones complete.
+              </p>
+            </div>
+            <div className="space-y-2 lg:text-right">
             <Badge variant="secondary">{data.guidedJourney.tierLabel}</Badge>
             <p className="text-2xl font-semibold">{data.guidedJourney.progressPercent}%</p>
             {data.guidedJourney.nextStep ? (
@@ -176,7 +175,7 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Project intelligence board</CardTitle>
+            <CardTitle>Project board</CardTitle>
           </CardHeader>
           <CardContent>
             {data.projectSignals.length === 0 ? (
@@ -305,7 +304,7 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Top estimated revenue</CardTitle>
+            <CardTitle>Top revenue</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -333,7 +332,7 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Fastest growing by reviews</CardTitle>
+            <CardTitle>Fastest review growth</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>

@@ -3,7 +3,9 @@
 import { CommunityPostType, SubscriptionPlan } from "@prisma/client";
 import { useDeferredValue, useMemo, useState } from "react";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { ErrorState } from "@/components/error-state";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -197,31 +199,23 @@ export function CommunityPageClient({
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Community</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Share market findings, project updates, art direction thinking, and the operating lessons your team should not lose.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                Internal feed
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                Market notes + project context
-              </span>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title="Community"
+        description="Share market notes, project updates, and team signals in one searchable feed."
+        actions={(
+          <>
+            <Badge variant="secondary">Internal feed</Badge>
+            <Badge variant="secondary">Market + project context</Badge>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Posts in feed</span>
+              <span className="text-muted-foreground">Posts</span>
               <span className="font-medium">{query.data.feed.length}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Ranking access</span>
+              <span className="text-muted-foreground">Ranking</span>
               <span className="font-medium">{canAccessRanking ? "Enabled" : "Locked"}</span>
             </div>
             {isPro ? (
@@ -232,26 +226,26 @@ export function CommunityPageClient({
             ) : null}
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Use this space</p>
-              <p className="mt-2 font-medium">Turn scattered team insight into a searchable operating memory for the studio.</p>
+              <p className="mt-2 font-medium">Turn team insight into searchable operating memory.</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        )}
+      />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-4">
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Find signals</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
+            <CardContent className="grid gap-3 md:grid-cols-3">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="community-search">Search the feed</Label>
                 <Input
                   id="community-search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search titles, insight, tags, authors, or linked projects"
+                  placeholder="Search titles, tags, authors, or projects"
                 />
               </div>
               <div className="space-y-2">
@@ -293,17 +287,17 @@ export function CommunityPageClient({
             <CardHeader>
               <CardTitle>Publish an update</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4">
+            <CardContent className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="community-title">Title</Label>
                 <Input
                   id="community-title"
                   value={form.title}
                   onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  placeholder="What changed in the niche this week?"
+                  placeholder="What changed this week?"
                 />
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select value={form.type} onValueChange={(value) => setForm((current) => ({ ...current, type: value as CommunityPostType }))}>
@@ -342,7 +336,7 @@ export function CommunityPageClient({
                   id="community-content"
                   value={form.content}
                   onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
-                  placeholder="Share the market signal, the interpretation, and what the team should do next."
+                  placeholder="Share the signal, context, and next action."
                 />
               </div>
               <div className="space-y-2">
@@ -366,12 +360,12 @@ export function CommunityPageClient({
               <CardHeader className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <CardTitle className="text-xl">{post.title}</CardTitle>
+                    <CardTitle className="text-lg">{post.title}</CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {post.author.name || post.author.email} · {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
                     </p>
                   </div>
-                  <Button variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
+                  <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
                     {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
                   </Button>
                 </div>
@@ -412,9 +406,9 @@ export function CommunityPageClient({
             <CardHeader>
               <CardTitle>Community ranking</CardTitle>
             </CardHeader>
-              <CardContent className="space-y-3">
+            <CardContent className="space-y-3">
               {canAccessRanking ? query.data.ranking.contributors.length > 0 ? query.data.ranking.contributors.map((entry) => (
-                <div key={entry.authorId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div key={entry.authorId} className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium">#{entry.rank} {entry.authorName}</p>
@@ -439,7 +433,7 @@ export function CommunityPageClient({
             </CardHeader>
             <CardContent className="space-y-3">
               {query.data.ranking.topPosts.length > 0 ? query.data.ranking.topPosts.map((post) => (
-                <div key={post.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div key={post.id} className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="font-medium">{post.title}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {post.likeCount} likes · {post.author.name || post.author.email}
@@ -457,23 +451,23 @@ export function CommunityPageClient({
                 <CardTitle>Signal board</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="text-sm text-muted-foreground">Most active category</p>
                   <p className="mt-1 font-medium">
                     {signalBoard.topCategory ? `${signalBoard.topCategory[0].replaceAll("_", " ")} · ${signalBoard.topCategory[1]} posts` : "No signal concentration yet"}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="text-sm text-muted-foreground">Most repeated tag</p>
                   <p className="mt-1 font-medium">
                     {signalBoard.topTag ? `${signalBoard.topTag[0]} · ${signalBoard.topTag[1]} mentions` : "No repeated tags yet"}
                   </p>
                 </div>
-                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="text-sm text-muted-foreground">Posts tied to projects</p>
                   <p className="mt-1 font-medium">{signalBoard.linkedProjectShare}% of feed</p>
                 </div>
-                <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="text-sm text-muted-foreground">Hottest post right now</p>
                   <p className="mt-1 font-medium">{signalBoard.hottestPost?.title ?? "No standout post yet"}</p>
                 </div>

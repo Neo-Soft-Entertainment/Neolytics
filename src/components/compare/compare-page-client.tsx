@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,25 +31,21 @@ export function ComparePageClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("compare.pageTitle")}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {t("compare.pageDescription")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("compare.sideBySideBenchmark")}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("compare.compSetAnalysis")}
-              </span>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title={t("compare.pageTitle")}
+        description={t("compare.pageDescription")}
+        actions={(
+          <>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("compare.sideBySideBenchmark")}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("compare.compSetAnalysis")}
+            </span>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("compare.selectedTitles")}</span>
               <span className="font-medium">{appIds.length}</span>
@@ -62,8 +59,8 @@ export function ComparePageClient() {
               <p className="mt-2 font-medium">{t("compare.tipCopy")}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      />
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>

@@ -1,8 +1,10 @@
 "use client";
 
 import type { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+import { usePathname } from "next/navigation";
 
 import { useI18n } from "@/components/i18n-provider";
+import { getCurrentNavItem, getNavSection } from "@/components/app-shell/navigation";
 import { OrganizationSwitcher } from "@/components/app-shell/organization-switcher";
 import { WorkspaceSwitcher } from "@/components/app-shell/workspace-switcher";
 import { MobileNav } from "@/components/app-shell/mobile-nav";
@@ -54,7 +56,10 @@ export function AppHeader({
   subscriptionPlan
 }: AppHeaderProps) {
   const t = useI18n();
+  const pathname = usePathname();
   const currentOrganization = organizations.find((organization) => organization.id === currentOrganizationId);
+  const currentItem = getCurrentNavItem(pathname);
+  const currentSection = getNavSection(currentItem?.section);
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-background/65 px-4 backdrop-blur-2xl lg:px-8 relative">
@@ -104,6 +109,14 @@ export function AppHeader({
 
       <div className="hidden items-center justify-between gap-4 py-3 lg:flex">
         <div className="flex min-w-0 max-w-4xl flex-1 items-center gap-3">
+          <div className="min-w-[132px] px-1">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+              {currentSection ? t(currentSection.labelKey) : t("shell.navOverview")}
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold">
+              {currentItem ? t(currentItem.labelKey) : "Neolytics"}
+            </p>
+          </div>
           <div className="min-w-0 min-w-[240px] max-w-[320px] px-1">
             <OrganizationSwitcher
               currentOrganizationId={currentOrganizationId}

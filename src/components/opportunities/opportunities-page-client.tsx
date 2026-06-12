@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { PageHero } from "@/components/app-shell/page-hero";
 import { useI18n } from "@/components/i18n-provider";
 import { ExportActions } from "@/components/export/export-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,25 +16,21 @@ export function OpportunitiesPageClient() {
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("opportunities.pageTitle")}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                {t("opportunities.pageDescription")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("opportunities.rankedMarketScan")}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/55 px-3 py-1 text-xs uppercase tracking-[0.24em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                {t("opportunities.revenueRiskConfidence")}
-              </span>
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
+      <PageHero
+        title={t("opportunities.pageTitle")}
+        description={t("opportunities.pageDescription")}
+        actions={(
+          <>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("opportunities.rankedMarketScan")}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+              {t("opportunities.revenueRiskConfidence")}
+            </span>
+          </>
+        )}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("opportunities.candidates")}</span>
               <span className="font-medium">{query.data?.length ?? 0}</span>
@@ -47,8 +44,8 @@ export function OpportunitiesPageClient() {
               <p className="mt-2 font-medium">{t("opportunities.readingModeCopy")}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      />
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader className="flex flex-row items-center justify-between gap-3">
@@ -62,20 +59,20 @@ export function OpportunitiesPageClient() {
         </CardHeader>
         <CardContent>
           {query.data && query.data.length > 0 ? (
-            <div className="mb-4 grid gap-4 md:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+            <div className="mb-4 grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topOpportunity")}</p>
                 <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.score ?? null)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topConfidence")}</p>
                 <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.confidenceScore ?? null)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.medianRisk")}</p>
                 <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[Math.floor(query.data.length / 2)]?.riskScore ?? null)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.bestMarketSize")}</p>
                 <p className="mt-2 text-2xl font-semibold">{query.data[0]?.marketSizeLabel ?? t("common.na")}</p>
               </div>
