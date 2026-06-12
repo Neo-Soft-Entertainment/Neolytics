@@ -17,15 +17,41 @@ const schema = z.object({
   tags: z.array(z.string().min(1)).max(8).optional()
 });
 
+async function parseCommunityPostRequest(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("multipart/form-data")) {
+    return {
+      body: await parseJsonBody(request, schema),
+      mediaFiles: [] as File[]
+    };
+  }
+
+  const formData = await request.formData();
+  const tags = String(formData.get("tags") ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const body = schema.parse({
+    title: String(formData.get("title") ?? ""),
+    content: String(formData.get("content") ?? ""),
+    type: formData.get("type") || undefined,
+    projectId: formData.get("projectId") === "none" ? null : formData.get("projectId") || null,
+    tags
+  });
+  const mediaFiles = formData.getAll("media").filter((item): item is File => item instanceof File);
+
+  return {
+    body,
+    mediaFiles
+  };
+}
+
 export async function GET() {
   const context = await getApiContext();
 
   if (!context) {
     return unauthorized();
-  }
-
-  if (!canWriteOrganization(context.organizationRole)) {
-    return forbidden("Viewers cannot create community posts.");
   }
 
   try {
@@ -71,13 +97,17 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!canWriteOrganization(context.organizationRole)) {
+      return forbidden("Viewers cannot create community posts.");
+    }
+
     await assertCanUseFeature({
       userId: context.userId,
       workspaceId: context.workspace.id,
       organizationId: context.organizationId
     }, "communityFeed");
 
-    const body = await parseJsonBody(request, schema);
+    const { body, mediaFiles } = await parseCommunityPostRequest(request);
     const post = await createCommunityPost({
       organizationId: context.organizationId,
       workspaceId: context.workspace.id,
@@ -86,7 +116,8 @@ export async function POST(request: Request) {
       content: body.content,
       type: body.type,
       projectId: body.projectId ?? null,
-      tags: body.tags
+      tags: body.tags,
+      mediaFiles
     });
 
     return ok(post, { status: 201 });

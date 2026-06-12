@@ -15,6 +15,13 @@ export interface CommunityPostItem {
   viewerHasLiked: boolean;
   canDelete?: boolean;
   createdAt: string;
+  media: Array<{
+    storagePath: string;
+    originalName: string;
+    mimeType: string;
+    sizeBytes: number;
+    signedUrl?: string;
+  }>;
   author: {
     id: string;
     name: string | null;

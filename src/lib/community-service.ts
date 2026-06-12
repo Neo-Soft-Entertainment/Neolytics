@@ -3,6 +3,12 @@ import { CommunityPostType, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
 import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
+import {
+  CommunityMediaItem,
+  createCommunityImageSignedUrls,
+  deleteCommunityImages,
+  uploadCommunityImages
+} from "@/lib/community-storage";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
 
 const communityPostInclude = {
@@ -23,11 +29,31 @@ const communityPostInclude = {
   }
 } satisfies Prisma.CommunityPostInclude;
 
-function decryptCommunityPost<T extends { organizationId: string; title: string; content: string }>(post: T) {
+function getPostMedia(value: Prisma.JsonValue | null | undefined) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is CommunityMediaItem => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return false;
+    }
+
+    return typeof item.storagePath === "string"
+      && typeof item.originalName === "string"
+      && typeof item.mimeType === "string"
+      && typeof item.sizeBytes === "number";
+  });
+}
+
+async function hydrateCommunityPost<T extends { organizationId: string; title: string; content: string; media?: Prisma.JsonValue | null }>(post: T) {
+  const media = await createCommunityImageSignedUrls(getPostMedia(post.media));
+
   return {
     ...post,
     title: decryptNullableString(post.title, `communityPost:${post.organizationId}:title`) ?? post.title,
-    content: decryptNullableString(post.content, `communityPost:${post.organizationId}:content`) ?? post.content
+    content: decryptNullableString(post.content, `communityPost:${post.organizationId}:content`) ?? post.content,
+    media
   };
 }
 
@@ -55,11 +81,11 @@ export async function listCommunityFeed(organizationId: string, userId: string) 
     take: 50
   });
 
-  return posts.map((post) => ({
-    ...decryptCommunityPost(post),
+  return Promise.all(posts.map(async (post) => ({
+    ...await hydrateCommunityPost(post),
     viewerHasLiked: post.likes.length > 0,
     likes: undefined
-  }));
+  })));
 }
 
 export async function getCommunityRanking(organizationId: string) {
@@ -128,7 +154,7 @@ export async function getCommunityRanking(organizationId: string) {
         score: postsCount * 3 + likesReceived * 5
       };
     }),
-    topPosts: topPosts.map(decryptCommunityPost)
+    topPosts: await Promise.all(topPosts.map(hydrateCommunityPost))
   };
 }
 
@@ -141,6 +167,7 @@ export async function createCommunityPost(params: {
   type?: CommunityPostType;
   projectId?: string | null;
   tags?: string[];
+  mediaFiles?: File[];
 }) {
   await enforceSubscriptionCapability(params.organizationId, "communityFeed");
 
@@ -153,7 +180,7 @@ export async function createCommunityPost(params: {
     });
   }
 
-  const post = await db.communityPost.create({
+  let post = await db.communityPost.create({
     data: {
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
@@ -162,10 +189,39 @@ export async function createCommunityPost(params: {
       content: encryptNullableString(params.content.trim(), `communityPost:${params.organizationId}:content`) ?? "",
       type: params.type ?? CommunityPostType.GENERAL,
       projectId: params.projectId ?? null,
-      tags: params.tags ?? []
+      tags: params.tags ?? [],
+      media: []
     },
     include: communityPostInclude
   });
+
+  if (params.mediaFiles?.length) {
+    try {
+      const media = await uploadCommunityImages({
+        organizationId: params.organizationId,
+        postId: post.id,
+        files: params.mediaFiles
+      });
+
+      post = await db.communityPost.update({
+        where: {
+          id: post.id
+        },
+        data: {
+          media
+        },
+        include: communityPostInclude
+      });
+    } catch (error) {
+      await db.communityPost.delete({
+        where: {
+          id: post.id
+        }
+      });
+
+      throw error;
+    }
+  }
 
   await notifyOrganizationDiscordWebhook(params.organizationId, {
     content: "A new community post was published in Neolytics.",
@@ -191,7 +247,7 @@ export async function createCommunityPost(params: {
     ]
   });
 
-  return post;
+  return hydrateCommunityPost(post);
 }
 
 export async function deleteCommunityPost(params: {
@@ -218,6 +274,7 @@ export async function deleteCommunityPost(params: {
       id: post.id
     }
   });
+  await deleteCommunityImages(getPostMedia(post.media));
 
   return { id: post.id };
 }

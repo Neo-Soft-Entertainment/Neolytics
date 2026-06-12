@@ -40,6 +40,7 @@ export function CommunityPageClient({
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<CommunityPostType | "ALL">("ALL");
   const [sortMode, setSortMode] = useState<"recent" | "liked">("recent");
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState<{
     title: string;
     content: string;
@@ -60,22 +61,20 @@ export function CommunityPageClient({
   async function createPost() {
     setFeedback(null);
     setIsSubmitting(true);
+    const payload = new FormData();
+    payload.append("title", form.title);
+    payload.append("content", form.content);
+    payload.append("type", form.type);
+    payload.append("projectId", form.projectId);
+    payload.append("tags", form.tags);
+
+    for (const file of mediaFiles) {
+      payload.append("media", file);
+    }
 
     const response = await fetch("/api/community", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: form.title,
-        content: form.content,
-        type: form.type,
-        projectId: form.projectId === "none" ? null : form.projectId,
-        tags: form.tags
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      })
+      body: payload
     });
 
     setIsSubmitting(false);
@@ -93,8 +92,28 @@ export function CommunityPageClient({
       projectId: "none",
       tags: ""
     });
+    setMediaFiles([]);
     setFeedback("Post published.");
     await query.refetch();
+  }
+
+  function updateMediaFiles(files: FileList | null) {
+    setFeedback(null);
+
+    if (!files) {
+      setMediaFiles([]);
+      return;
+    }
+
+    const selected = Array.from(files).slice(0, 4);
+    const invalidFile = selected.find((file) => !file.type.startsWith("image/") || file.size > 8 * 1024 * 1024);
+
+    if (invalidFile) {
+      setFeedback("Use only images up to 8 MB.");
+      return;
+    }
+
+    setMediaFiles(selected);
   }
 
   async function toggleLike(postId: string) {
@@ -297,10 +316,10 @@ export function CommunityPageClient({
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/20 shadow-[0_28px_90px_rgba(8,145,178,0.12)]">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
-              <CardTitle>Publish an update</CardTitle>
+              <CardTitle>Create a studio post</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               <div className="space-y-2">
@@ -354,6 +373,26 @@ export function CommunityPageClient({
                   placeholder="Share the signal, context, and next action."
                 />
               </div>
+              <div className="space-y-2 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4">
+                <Label htmlFor="community-media">Photos</Label>
+                <Input
+                  id="community-media"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  onChange={(event) => updateMediaFiles(event.target.files)}
+                />
+                <p className="text-xs text-muted-foreground">Add up to 4 images. Each image must be 8 MB or smaller.</p>
+                {mediaFiles.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {mediaFiles.map((file) => (
+                      <span key={`${file.name}-${file.size}`} className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                        {file.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="community-tags">Tags</Label>
                 <Input
@@ -370,15 +409,24 @@ export function CommunityPageClient({
             </CardContent>
           </Card>
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
-            <Card key={post.id} className="overflow-hidden">
+            <Card key={post.id} className="overflow-hidden border-white/10 bg-gradient-to-br from-card via-card to-cyan-950/10 shadow-[0_20px_70px_rgba(15,23,42,0.16)]">
               <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-lg">{post.title}</CardTitle>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {post.author.name || post.author.email} · {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    {post.author.image ? (
+                      <img src={post.author.image} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" />
+                    ) : (
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10 text-sm font-semibold text-cyan-200">
+                        {(post.author.name || post.author.email).slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <CardTitle className="truncate text-lg">{post.title}</CardTitle>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {post.author.name || post.author.email} · {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {post.canDelete ? (
@@ -386,13 +434,22 @@ export function CommunityPageClient({
                         Delete
                       </Button>
                     ) : null}
-                    <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
-                      {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                {post.media.length > 0 ? (
+                  <div className={post.media.length === 1 ? "overflow-hidden rounded-[1.5rem] border border-white/10" : "grid gap-2 overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-2 sm:grid-cols-2"}>
+                    {post.media.map((item) => item.signedUrl ? (
+                      <img
+                        key={item.storagePath}
+                        src={item.signedUrl}
+                        alt={item.originalName}
+                        className={post.media.length === 1 ? "max-h-[560px] w-full object-cover" : "h-64 w-full rounded-2xl object-cover"}
+                      />
+                    ) : null)}
+                  </div>
+                ) : null}
                 <p className="whitespace-pre-wrap text-muted-foreground">{post.content}</p>
                 {post.project ? (
                   <div className="rounded-2xl border border-white/10 bg-white/45 p-3 text-muted-foreground dark:bg-white/[0.03]">
@@ -408,6 +465,14 @@ export function CommunityPageClient({
                     ))}
                   </div>
                 ) : null}
+                <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+                  <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
+                    {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSearch(post.author.name || post.author.email)}>
+                    More from author
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )) : (

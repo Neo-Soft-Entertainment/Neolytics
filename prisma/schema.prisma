@@ -1978,6 +1978,7 @@ model CommunityPost {
   title          String
   content        String
   tags           Json?
+  media          Json?
   likeCount      Int                 @default(0)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
