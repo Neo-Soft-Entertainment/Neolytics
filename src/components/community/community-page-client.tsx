@@ -429,7 +429,7 @@ export function CommunityPageClient({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {post.canDelete ? (
+                    {post.canDelete === true ? (
                       <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
                         Delete
                       </Button>
