@@ -3,45 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --background: 210 20% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
+  --background: 206 48% 97%;
+  --foreground: 222 58% 9%;
+  --card: 206 60% 99%;
   --card-foreground: 222 47% 11%;
-  --primary: 193 89% 35%;
+  --primary: 198 94% 43%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 16% 93%;
+  --secondary: 205 36% 92%;
   --secondary-foreground: 222 47% 11%;
-  --muted: 210 16% 93%;
-  --muted-foreground: 215 16% 38%;
-  --accent: 193 60% 92%;
-  --accent-foreground: 193 89% 22%;
+  --muted: 205 34% 92%;
+  --muted-foreground: 214 19% 36%;
+  --accent: 194 88% 90%;
+  --accent-foreground: 201 95% 22%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214 20% 88%;
-  --input: 214 20% 88%;
-  --ring: 193 89% 35%;
+  --border: 207 32% 86%;
+  --input: 207 32% 86%;
+  --ring: 198 94% 43%;
   --radius: 0.75rem;
-  --panel-highlight: 193 89% 35%;
+  --panel-highlight: 198 94% 43%;
 }
 
 .dark {
-  --background: 221 39% 8%;
+  --background: 222 61% 6%;
   --foreground: 210 40% 98%;
-  --card: 221 29% 12%;
+  --card: 220 47% 10%;
   --card-foreground: 210 40% 98%;
-  --primary: 193 74% 49%;
+  --primary: 194 96% 52%;
   --primary-foreground: 222 47% 11%;
-  --secondary: 222 25% 18%;
+  --secondary: 222 39% 16%;
   --secondary-foreground: 210 40% 98%;
-  --muted: 222 25% 18%;
-  --muted-foreground: 215 20% 71%;
-  --accent: 193 39% 18%;
-  --accent-foreground: 191 100% 88%;
+  --muted: 222 39% 16%;
+  --muted-foreground: 213 27% 72%;
+  --accent: 205 77% 19%;
+  --accent-foreground: 190 100% 86%;
   --destructive: 0 63% 43%;
   --destructive-foreground: 210 40% 98%;
-  --border: 222 22% 24%;
-  --input: 222 22% 24%;
-  --ring: 193 74% 49%;
+  --border: 219 34% 20%;
+  --input: 219 34% 20%;
+  --ring: 194 96% 52%;
 }
 
 * {
@@ -59,7 +59,7 @@ body {
   position: relative;
   isolation: isolate;
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(226, 246, 255, 0.18), rgba(255, 255, 255, 0));
 }
 
 body::before {
@@ -69,9 +69,9 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.15), transparent 24%),
-    radial-gradient(circle at 85% 15%, rgba(34, 211, 238, 0.12), transparent 20%),
-    radial-gradient(circle at 70% 75%, rgba(16, 185, 129, 0.08), transparent 24%);
+    radial-gradient(circle at 12% 18%, rgba(34, 211, 238, 0.22), transparent 25%),
+    radial-gradient(circle at 88% 12%, rgba(37, 99, 235, 0.16), transparent 22%),
+    radial-gradient(circle at 72% 78%, rgba(99, 102, 241, 0.1), transparent 24%);
   background-repeat: no-repeat;
   transform: translateZ(0);
 }
@@ -82,14 +82,14 @@ a {
 
 .dark body {
   background-image:
-    linear-gradient(180deg, rgba(2, 8, 23, 0.25), rgba(2, 8, 23, 0));
+    linear-gradient(180deg, rgba(8, 20, 45, 0.76), rgba(2, 8, 23, 0.96));
 }
 
 .dark body::before {
   background-image:
-    radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.18), transparent 24%),
-    radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.15), transparent 20%),
-    radial-gradient(circle at 70% 75%, rgba(34, 211, 238, 0.08), transparent 24%);
+    radial-gradient(circle at 14% 18%, rgba(34, 211, 238, 0.24), transparent 26%),
+    radial-gradient(circle at 86% 12%, rgba(37, 99, 235, 0.2), transparent 22%),
+    radial-gradient(circle at 66% 78%, rgba(79, 70, 229, 0.18), transparent 25%);
 }
 
 ::selection {
@@ -118,16 +118,16 @@ a {
 
   .aurora-panel {
     background-image:
-      linear-gradient(120deg, rgba(59, 130, 246, 0.16), rgba(14, 165, 233, 0.06), rgba(16, 185, 129, 0.12)),
-      radial-gradient(circle at top right, rgba(255, 255, 255, 0.2), transparent 35%);
+      linear-gradient(125deg, rgba(20, 184, 166, 0.14), rgba(14, 165, 233, 0.08), rgba(37, 99, 235, 0.16)),
+      radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 36%);
     background-size: 180% 180%;
     background-position: 0% 50%;
   }
 
   .glass-surface {
     backdrop-filter: blur(10px);
-    background-color: hsl(var(--card) / 0.72);
-    border-color: hsl(var(--border) / 0.75);
+    background-color: hsl(var(--card) / 0.78);
+    border-color: hsl(var(--border) / 0.82);
   }
 
   .backdrop-blur-2xl {

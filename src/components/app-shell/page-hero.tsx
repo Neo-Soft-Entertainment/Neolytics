@@ -14,7 +14,7 @@ export function PageHero({
   summary?: ReactNode;
 }) {
   return (
-    <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_24px_60px_rgba(14,165,233,0.08)]">
+    <Card className="aurora-panel overflow-hidden border-cyan-300/15 shadow-[0_28px_70px_rgba(8,47,73,0.12)] dark:shadow-[0_28px_70px_rgba(14,165,233,0.08)]">
       <CardContent className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
         <div className="space-y-3">
           <div>

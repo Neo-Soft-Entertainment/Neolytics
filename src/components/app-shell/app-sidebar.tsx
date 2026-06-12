@@ -30,12 +30,12 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "hidden flex-col border-r border-white/10 bg-[radial-gradient(circle_at_top,#164e63_0%,#0f172a_24%,#020617_82%)] text-slate-100 transition-[width] duration-300 lg:flex",
+        "hidden flex-col border-r border-cyan-300/10 bg-[radial-gradient(circle_at_18%_0%,#155e75_0%,#0b2a4a_28%,#020617_82%)] text-slate-100 shadow-[18px_0_60px_rgba(2,8,23,0.24)] transition-[width] duration-300 lg:flex",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       <div className={cn("relative overflow-hidden border-b border-white/10 py-5", isCollapsed ? "px-3" : "px-5")}>
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-cyan-400/12 via-sky-400/8 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-cyan-300/18 via-sky-500/10 to-transparent" />
         <NeolyticsBrand
           href="/dashboard"
           showWordmark={!isCollapsed}
@@ -67,16 +67,16 @@ export function AppSidebar() {
                     "group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition-[background-color,color,transform] duration-200",
                     isCollapsed && "justify-center px-2",
                     isActive
-                      ? "bg-gradient-to-r from-cyan-500/26 via-sky-500/20 to-transparent text-white shadow-[0_14px_30px_rgba(14,165,233,0.1),inset_0_1px_0_rgba(255,255,255,0.08)]"
-                      : "text-slate-400 hover:bg-white/6 hover:text-white hover:translate-x-1"
+                      ? "bg-gradient-to-r from-cyan-400/28 via-sky-500/20 to-transparent text-white shadow-[0_14px_34px_rgba(14,165,233,0.16),inset_0_1px_0_rgba(255,255,255,0.1)]"
+                      : "text-slate-400 hover:bg-cyan-300/8 hover:text-white hover:translate-x-1"
                   )}
                   title={t(item.labelKey)}
                 >
                   <span className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-xl border border-transparent bg-white/[0.03] transition-colors duration-200",
                     isActive
-                      ? "border-cyan-300/20 bg-cyan-400/10"
-                      : "group-hover:border-white/10 group-hover:bg-white/[0.06]"
+                      ? "border-cyan-200/30 bg-cyan-300/14"
+                      : "group-hover:border-cyan-200/12 group-hover:bg-white/[0.06]"
                   )}>
                     <Icon className={cn("h-4 w-4 transition-transform duration-200 group-hover:scale-110", isActive && "text-cyan-300")} />
                   </span>
