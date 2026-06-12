@@ -8,6 +8,8 @@ import { getLatestEstimates } from "@/lib/game-service";
 
 const schema = z.coerce.number().int().positive();
 
+export const maxDuration = 60;
+
 export async function GET(request: Request, { params }: { params: Promise<{ appId: string }> }) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "game-estimates"));

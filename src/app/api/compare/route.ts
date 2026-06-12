@@ -9,6 +9,8 @@ const schema = z.object({
   appIds: z.string().trim().min(1).max(120).regex(/^\d+(?:\s*,\s*\d+){0,9}$/)
 });
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "compare"));

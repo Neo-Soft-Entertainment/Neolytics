@@ -25,6 +25,15 @@ export interface GameSearchResponse {
   total: number;
   page: number;
   pageSize: number;
+  steamSync: {
+    source: string;
+    query: string;
+    requested: number;
+    synced: number;
+    skipped: number;
+    failed: number;
+    appIds: number[];
+  } | null;
 }
 
 export interface GameDetailResponse extends GameListItem {

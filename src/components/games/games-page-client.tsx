@@ -151,6 +151,11 @@ export function GamesPageClient() {
             <p className="text-sm text-muted-foreground">
               {query.data?.total ? t("games.resultsMatched", { count: formatNumber(query.data.total) }) : t("games.resultsHint")}
             </p>
+            {query.data?.steamSync ? (
+              <p className="text-xs text-muted-foreground">
+                Live Steam sync: {query.data.steamSync.synced} updated, {query.data.steamSync.skipped} skipped, {query.data.steamSync.failed} failed.
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setFilters({ query: "", genre: "", tag: "", minReviewScore: "any" })}>

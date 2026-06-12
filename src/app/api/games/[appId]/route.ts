@@ -14,6 +14,8 @@ import { getGameByAppId, getSteamXrayAccess } from "@/lib/game-service";
 
 const schema = z.coerce.number().int().positive();
 
+export const maxDuration = 60;
+
 export async function GET(_: Request, { params }: { params: Promise<{ appId: string }> }) {
   try {
     const context = await getApiContext();

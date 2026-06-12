@@ -12,3 +12,5 @@ prisma/dev.db
 /.agents
 skills-lock.json
 /.idea
+steamcmd.zip
+steamcmd.exe

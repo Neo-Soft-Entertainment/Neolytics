@@ -3,6 +3,8 @@ import { Prisma, SubscriptionPlan } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getFinanceOverview } from "@/lib/finance-service";
 import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
+import { fetchSteamSearchAppIds } from "@/lib/steam/client";
+import { syncSteamApp } from "@/lib/steam/ingest";
 import {
   canAccessSteamXrayPlayerHistory,
   getSteamXrayHistoryLimit,
@@ -42,6 +44,89 @@ function daysAgo(days: number) {
   const date = new Date();
   date.setDate(date.getDate() - days);
   return date;
+}
+
+function isSteamGameStale(lastIngestedAt: Date | null | undefined) {
+  if (!lastIngestedAt) {
+    return true;
+  }
+
+  return lastIngestedAt < daysAgo(7);
+}
+
+async function syncSteamAppIds(appIds: number[], limit = 6) {
+  const selectedAppIds = [...new Set(appIds)].filter((appId) => Number.isInteger(appId) && appId > 0).slice(0, limit);
+
+  if (selectedAppIds.length === 0) {
+    return {
+      requested: 0,
+      synced: 0,
+      skipped: 0,
+      failed: 0,
+      appIds: [] as number[]
+    };
+  }
+
+  const existingGames = await db.steamGame.findMany({
+    where: {
+      appId: {
+        in: selectedAppIds
+      }
+    },
+    select: {
+      appId: true,
+      lastIngestedAt: true
+    }
+  });
+  const existingByAppId = new Map(existingGames.map((game) => [game.appId, game]));
+  const appIdsToSync = selectedAppIds.filter((appId) => isSteamGameStale(existingByAppId.get(appId)?.lastIngestedAt));
+  let synced = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const appId of appIdsToSync) {
+    try {
+      const result = await syncSteamApp(appId);
+
+      if (result === "SUCCESS") {
+        synced += 1;
+        continue;
+      }
+
+      skipped += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return {
+    requested: selectedAppIds.length,
+    synced,
+    skipped,
+    failed,
+    appIds: selectedAppIds
+  };
+}
+
+async function syncSteamSearchQuery(query?: string) {
+  const trimmedQuery = query?.trim();
+
+  if (!trimmedQuery) {
+    return null;
+  }
+
+  const directAppId = /^\d+$/.test(trimmedQuery) ? Number(trimmedQuery) : null;
+  const searchAppIds = directAppId ? [] : await fetchSteamSearchAppIds(trimmedQuery, 8).catch(() => []);
+  const sync = await syncSteamAppIds([
+    ...(directAppId ? [directAppId] : []),
+    ...searchAppIds
+  ], directAppId ? 1 : 6);
+
+  return {
+    source: "steam-live-search",
+    query: trimmedQuery,
+    ...sync
+  };
 }
 
 function getObservedVelocity<T extends { snapshotDate: Date }>(
@@ -107,6 +192,7 @@ export async function searchGames(input: {
 }) {
   const page = input.page ?? 1;
   const pageSize = input.pageSize ?? 25;
+  const steamSync = page === 1 ? await syncSteamSearchQuery(input.query) : null;
 
   const where: Prisma.SteamGameWhereInput = {
     ...(input.query
@@ -193,11 +279,14 @@ export async function searchGames(input: {
     items,
     total,
     page,
-    pageSize
+    pageSize,
+    steamSync
   };
 }
 
 export async function getGameByAppId(appId: number) {
+  await syncSteamAppIds([appId], 1);
+
   return db.steamGame.findUnique({
     where: {
       appId
@@ -319,6 +408,8 @@ export async function getPlayerHistory(appId: number, limit = 180) {
 }
 
 export async function getLatestEstimates(appId: number) {
+  await syncSteamAppIds([appId], 1);
+
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -346,6 +437,8 @@ export async function getLatestEstimates(appId: number) {
 }
 
 export async function getSteamDatabaseProfile(appId: number) {
+  await syncSteamAppIds([appId], 1);
+
   const game = await db.steamGame.findUniqueOrThrow({
     where: {
       appId
@@ -649,6 +742,8 @@ export async function getSteamDatabaseProfile(appId: number) {
 }
 
 export async function compareGames(appIds: number[]) {
+  await syncSteamAppIds(appIds, 10);
+
   return db.steamGame.findMany({
     where: {
       appId: {

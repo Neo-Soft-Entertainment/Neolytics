@@ -20,6 +20,8 @@ const schema = z.object({
   pageSize: z.coerce.number().int().positive().max(50).optional()
 });
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "games-search"));
