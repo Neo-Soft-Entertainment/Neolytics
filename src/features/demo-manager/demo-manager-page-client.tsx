@@ -217,17 +217,32 @@ const bugStatusLabels: Record<DemoBugStatus, string> = {
   DEFERRED: "Adiado"
 };
 
-export function DemoManagerPageClient() {
+export function DemoManagerPageClient({
+  projectId: fixedProjectId,
+  sections: visibleSections = sections,
+  showHeader = true
+}: {
+  projectId?: string;
+  sections?: readonly (typeof sections)[number][];
+  showHeader?: boolean;
+}) {
   const projects = useProjects();
-  const [projectId, setProjectId] = useState("");
-  const [section, setSection] = useState<(typeof sections)[number]>("Overview");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [section, setSection] = useState<(typeof sections)[number]>(visibleSections[0] ?? "Overview");
   const queryClient = useQueryClient();
+  const projectId = fixedProjectId ?? selectedProjectId;
 
   useEffect(() => {
-    if (!projectId && projects.data?.[0]?.id) {
-      setProjectId(projects.data[0].id);
+    if (!fixedProjectId && !selectedProjectId && projects.data?.[0]?.id) {
+      setSelectedProjectId(projects.data[0].id);
     }
-  }, [projectId, projects.data]);
+  }, [fixedProjectId, selectedProjectId, projects.data]);
+
+  useEffect(() => {
+    if (!visibleSections.includes(section)) {
+      setSection(visibleSections[0] ?? "Overview");
+    }
+  }, [section, visibleSections]);
 
   const dataQuery = useQuery({
     queryKey: ["demo-manager", projectId],
@@ -248,43 +263,48 @@ export function DemoManagerPageClient() {
 
   const data = dataQuery.data;
 
-  if (projects.isLoading) {
+  if (!fixedProjectId && projects.isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Carregando projetos...</div>;
   }
 
-  if (!projects.data?.length) {
+  if (!fixedProjectId && !projects.data?.length) {
     return <div className="p-6 text-sm text-muted-foreground">Crie um projeto antes de usar o Demo Manager.</div>;
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 sm:p-6">
-      <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-card/80 p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-cyan-500">Demo Manager</p>
-          <h1 className="mt-2 text-2xl font-semibold text-foreground">Transforme a ideia em demo jogável</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            Organize escopo essencial, linha jogável, emoções, dependências, bugs e bloqueios do projeto ativo.
-          </p>
+    <div className={cn("flex w-full flex-col gap-6", showHeader && "mx-auto max-w-7xl p-4 sm:p-6")}>
+      {showHeader && (
+        <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-card/80 p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-cyan-500">Demo Manager</p>
+            <h1 className="mt-2 text-2xl font-semibold text-foreground">Transforme a ideia em demo jogável</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Organize escopo essencial, linha jogável, emoções, dependências, bugs e bloqueios do projeto ativo.
+            </p>
+          </div>
+          {!fixedProjectId && (
+            <label className="grid gap-2 text-sm font-medium">
+              Projeto
+              <select
+                className="h-10 min-w-64 rounded-xl border border-border bg-background px-3 text-sm"
+                value={projectId}
+                onChange={(event) => setSelectedProjectId(event.target.value)}
+              >
+                {projects.data?.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
-        <label className="grid gap-2 text-sm font-medium">
-          Projeto
-          <select
-            className="h-10 min-w-64 rounded-xl border border-border bg-background px-3 text-sm"
-            value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
-          >
-            {projects.data.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      )}
 
-      <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
-        <nav className="flex gap-2 overflow-x-auto rounded-3xl border border-white/10 bg-card/60 p-3 lg:block lg:space-y-2 lg:overflow-visible">
-          {sections.map((item) => (
+      <div className={cn("grid gap-5", visibleSections.length > 1 && "lg:grid-cols-[220px_1fr]")}>
+        {visibleSections.length > 1 && (
+          <nav className="flex gap-2 overflow-x-auto rounded-3xl border border-white/10 bg-card/60 p-3 lg:block lg:space-y-2 lg:overflow-visible">
+            {visibleSections.map((item) => (
             <button
               key={item}
               className={cn(
@@ -296,8 +316,9 @@ export function DemoManagerPageClient() {
             >
               {item}
             </button>
-          ))}
-        </nav>
+            ))}
+          </nav>
+        )}
 
         <main className="min-w-0">
           {dataQuery.isLoading && <div className="rounded-3xl border border-white/10 bg-card/60 p-6 text-sm text-muted-foreground">Carregando Demo Manager...</div>}

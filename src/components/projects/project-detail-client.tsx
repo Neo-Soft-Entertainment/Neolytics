@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { DemoManagerPageClient } from "@/features/demo-manager/demo-manager-page-client";
 import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
 import { useProject } from "@/features/projects/hooks";
 import { getLimitLabel } from "@/lib/subscription-plans";
@@ -777,6 +778,11 @@ export function ProjectDetailClient({
               </div>
             </CardContent>
           </Card>
+          <DemoManagerPageClient
+            projectId={projectId}
+            sections={["Overview", "Etapa Atual", "Prioridades", "Exportar / Importar"]}
+            showHeader={false}
+          />
         </TabsContent>
         <TabsContent value="market" className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
@@ -1423,6 +1429,11 @@ export function ProjectDetailClient({
           )}
         </TabsContent>
         <TabsContent value="milestones" className="space-y-6">
+          <DemoManagerPageClient
+            projectId={projectId}
+            sections={["Dependências", "Bugs e Bloqueios"]}
+            showHeader={false}
+          />
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader>
@@ -1664,8 +1675,18 @@ export function ProjectDetailClient({
               )}
             </CardContent>
           </Card>
+          <DemoManagerPageClient
+            projectId={projectId}
+            sections={["Personagens", "Itens", "Locais", "Diálogos", "Missões"]}
+            showHeader={false}
+          />
         </TabsContent>
         <TabsContent value="kanban" className="space-y-6">
+          <DemoManagerPageClient
+            projectId={projectId}
+            sections={["Linha Jogável", "Linha Emocional", "Mecânicas"]}
+            showHeader={false}
+          />
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
