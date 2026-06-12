@@ -1692,7 +1692,7 @@ export function ProjectDetailClient({
             <CardHeader>
               <CardTitle>{t("projectDetail.customizeBoard")}</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_140px_120px]">
+            <CardContent className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_160px_140px]">
               <Input
                 value={newColumn.name}
                 onChange={(event) => setNewColumn((current) => ({ ...current, name: event.target.value }))}
@@ -1706,9 +1706,10 @@ export function ProjectDetailClient({
               <Button onClick={createColumn}>{t("projectDetail.addColumn")}</Button>
             </CardContent>
           </Card>
-          <div className="grid gap-4 xl:grid-cols-4">
-            {board?.columns.map((column, index) => (
-              <Card key={column.id} className="h-fit overflow-hidden">
+          <div className="-mx-4 overflow-x-auto px-4 pb-4">
+            <div className="flex min-w-max gap-4">
+              {board?.columns.map((column, index) => (
+                <Card key={column.id} className="h-fit w-[320px] shrink-0 overflow-hidden sm:w-[360px] 2xl:w-[390px]">
                 <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -1724,8 +1725,9 @@ export function ProjectDetailClient({
                       }))}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Input
+                      className="min-w-[120px] flex-1"
                       value={columnEdits[column.id]?.color ?? column.color ?? ""}
                       onChange={(event) => setColumnEdits((current) => ({
                         ...current,
@@ -1938,8 +1940,9 @@ export function ProjectDetailClient({
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
+                </Card>
+              ))}
+            </div>
           </div>
         </TabsContent>
       </Tabs>
