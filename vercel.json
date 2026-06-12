@@ -5,6 +5,10 @@
     {
       "path": "/api/internal/steam-sync?mode=refresh",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/internal/steam-sync?mode=catalog&limit=25",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

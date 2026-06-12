@@ -4,6 +4,8 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { getOpportunityFinderData } from "@/lib/game-service";
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   try {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "opportunities"));

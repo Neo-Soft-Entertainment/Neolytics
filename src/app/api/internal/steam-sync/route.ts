@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     const result = await syncSteamBatch({
       mode: query.mode,
       limit: query.limit,
-      offset: query.offset ?? 0
+      offset: query.offset
     });
 
     return ok({

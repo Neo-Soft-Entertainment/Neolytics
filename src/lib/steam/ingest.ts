@@ -408,17 +408,18 @@ export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
 export async function syncSteamBatch({
   limit = env.STEAM_CRON_BATCH_SIZE,
   mode = "refresh",
-  offset = 0
+  offset
 }: {
   limit?: number;
   mode?: SteamBatchSyncMode;
   offset?: number;
 }) {
   const cappedLimit = Math.min(limit, env.STEAM_APP_SYNC_LIMIT, 100);
+  const catalogOffset = offset ?? (mode === "catalog" ? (Math.floor(Date.now() / (1000 * 60 * 60)) * cappedLimit) % 50_000 : 0);
   let appIds: number[] = [];
 
   if (mode === "catalog") {
-    appIds = await getCatalogAppIds(cappedLimit, offset);
+    appIds = await getCatalogAppIds(cappedLimit, catalogOffset);
   }
 
   if (mode === "refresh") {
@@ -435,7 +436,7 @@ export async function syncSteamBatch({
     }
 
     if (existingGames.length === 0) {
-      appIds = await getCatalogAppIds(cappedLimit, offset);
+      appIds = await getCatalogAppIds(cappedLimit, catalogOffset);
       mode = "catalog";
     }
   }
@@ -463,7 +464,7 @@ export async function syncSteamBatch({
   return {
     mode,
     limit: cappedLimit,
-    offset,
+    offset: catalogOffset,
     selected: appIds.length,
     succeeded,
     skipped,

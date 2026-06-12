@@ -27,7 +27,8 @@ export interface GameSearchResponse {
   pageSize: number;
   steamSync: {
     source: string;
-    query: string;
+    query: string | null;
+    offset?: number;
     requested: number;
     synced: number;
     skipped: number;

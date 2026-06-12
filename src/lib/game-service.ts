@@ -3,7 +3,7 @@ import { Prisma, SubscriptionPlan } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getFinanceOverview } from "@/lib/finance-service";
 import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
-import { fetchSteamSearchAppIds } from "@/lib/steam/client";
+import { fetchSteamCatalogAppIds, fetchSteamSearchAppIds } from "@/lib/steam/client";
 import { syncSteamApp } from "@/lib/steam/ingest";
 import {
   canAccessSteamXrayPlayerHistory,
@@ -108,6 +108,23 @@ async function syncSteamAppIds(appIds: number[], limit = 6) {
   };
 }
 
+function getRotatingSteamCatalogOffset(limit: number) {
+  const hourBucket = Math.floor(Date.now() / (1000 * 60 * 60));
+  return (hourBucket * limit) % 50_000;
+}
+
+async function syncSteamCatalogPage(limit: number, offset: number) {
+  const appIds = await fetchSteamCatalogAppIds(offset, limit * 3).catch(() => []);
+  const sync = await syncSteamAppIds(appIds, limit);
+
+  return {
+    source: "steam-official-app-list",
+    query: null,
+    offset,
+    ...sync
+  };
+}
+
 async function syncSteamSearchQuery(query?: string) {
   const trimmedQuery = query?.trim();
 
@@ -192,7 +209,12 @@ export async function searchGames(input: {
 }) {
   const page = input.page ?? 1;
   const pageSize = input.pageSize ?? 25;
-  const steamSync = page === 1 ? await syncSteamSearchQuery(input.query) : null;
+  const hasFilters = Boolean(input.query || input.genre || input.tag || input.minPrice !== undefined || input.maxPrice !== undefined || input.minReviewScore !== undefined || input.fromReleaseDate || input.toReleaseDate);
+  const steamSync = page === 1 && input.query
+    ? await syncSteamSearchQuery(input.query)
+    : !hasFilters && page <= 5
+      ? await syncSteamCatalogPage(Math.min(pageSize, 10), (page - 1) * pageSize)
+      : null;
 
   const where: Prisma.SteamGameWhereInput = {
     ...(input.query
@@ -268,7 +290,9 @@ export async function searchGames(input: {
     db.steamGame.findMany({
       where,
       include: gameInclude,
-      orderBy: [{ reviewCount: "desc" }, { appId: "asc" }],
+      orderBy: hasFilters
+        ? [{ reviewCount: "desc" }, { appId: "asc" }]
+        : [{ lastIngestedAt: "desc" }, { reviewCount: "desc" }, { appId: "asc" }],
       skip: (page - 1) * pageSize,
       take: pageSize
     }),
@@ -1163,6 +1187,8 @@ export async function getDashboardData(workspaceId: string) {
 }
 
 export async function getOpportunityFinderData() {
+  await syncSteamCatalogPage(10, getRotatingSteamCatalogOffset(10));
+
   const games = await db.steamGame.findMany({
     include: {
       priceCurrent: true,
@@ -1184,11 +1210,22 @@ export async function getOpportunityFinderData() {
       }
     },
     where: {
+      reviewCount: {
+        gt: 0
+      },
       reviewScore: {
         not: null
       }
     },
-    take: 100
+    orderBy: [
+      {
+        lastIngestedAt: "desc"
+      },
+      {
+        reviewCount: "desc"
+      }
+    ],
+    take: 250
   });
 
   const items = games.map((game) => {
