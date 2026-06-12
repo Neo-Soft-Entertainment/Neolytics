@@ -1729,12 +1729,41 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     const ratio = (asset.width ?? 1) / (asset.height ?? 1);
     return ratio >= 0.85 && ratio <= 1.15;
   });
+  const assetsWithVisualMetrics = artAssets
+    .map((asset) => asset.visualMetrics)
+    .filter((metrics): metrics is {
+      brightness: number;
+      contrast: number;
+      saturation: number;
+      colorfulness: number;
+      edgeDensity: number;
+      dominantColor: string;
+      readabilityScore: number;
+      legibilityRisk: "low" | "medium" | "high";
+      analysisSource: string;
+    } => {
+      if (!metrics || typeof metrics !== "object" || Array.isArray(metrics)) {
+        return false;
+      }
+
+      return typeof metrics.readabilityScore === "number"
+        && typeof metrics.contrast === "number"
+        && typeof metrics.saturation === "number";
+    });
+  const averageReadabilityScore = average(assetsWithVisualMetrics.map((metrics) => metrics.readabilityScore));
+  const averageContrast = average(assetsWithVisualMetrics.map((metrics) => metrics.contrast));
+  const averageSaturation = average(assetsWithVisualMetrics.map((metrics) => metrics.saturation));
+  const averageEdgeDensity = average(assetsWithVisualMetrics.map((metrics) => metrics.edgeDensity));
+  const highLegibilityRiskAssets = assetsWithVisualMetrics.filter((metrics) => metrics.legibilityRisk === "high").length;
+  const dominantColors = [...new Set(assetsWithVisualMetrics.map((metrics) => metrics.dominantColor))].slice(0, 6);
   const artAssetEvidenceScore = clampScore(
     artAssets.length * 9
     + measuredAssets.length * 8
     + highResolutionAssets.length * 7
     + capsuleRatioAssets.length * 8
     + squareAssets.length * 5
+    + assetsWithVisualMetrics.length * 10
+    + (averageReadabilityScore * 0.15)
   );
   const artText = [
     project.artDirection,
@@ -1755,7 +1784,11 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
         artText.includes("cozy") ? "warm pastel" : null,
         artText.includes("pixel") ? "high-contrast sprite palette" : null,
         competitionCount > 12 ? "store capsule contrast" : null,
-        averageReviewScore >= 85 ? "premium finish" : "readability-first palette"
+        averageReviewScore >= 85 ? "premium finish" : "readability-first palette",
+        averageContrast >= 58 ? "strong value contrast" : null,
+        averageSaturation >= 55 ? "high-saturation colorway" : null,
+        averageSaturation > 0 && averageSaturation < 28 ? "muted colorway" : null,
+        dominantColors[0] ? `dominant ${dominantColors[0]}` : null
       ].filter((item): item is string => Boolean(item))
     )
   ).slice(0, 4);
@@ -1768,7 +1801,9 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
         artText.includes("fantasy") ? "mythic" : null,
         artText.includes("pixel") ? "retro" : null,
         releaseMomentum > 8 ? "commercially active" : "niche-focused",
-        competitionCount > 10 ? "crowded shelf" : "open shelf"
+        competitionCount > 10 ? "crowded shelf" : "open shelf",
+        averageReadabilityScore >= 72 ? "clear first read" : null,
+        highLegibilityRiskAssets > 0 ? "readability risk" : null
       ].filter((item): item is string => Boolean(item))
     )
   ).slice(0, 5);
@@ -1786,7 +1821,9 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     + (project.differentiator?.trim() ? 8 : 0)
     + (project.playerFantasy?.trim() ? 6 : 0)
     + (artAssetEvidenceScore * 0.12)
+    + (averageReadabilityScore > 0 ? (averageReadabilityScore - 55) * 0.18 : 0)
     - (artAssets.length === 0 ? 12 : 0)
+    - highLegibilityRiskAssets * 5
     - Math.min(competitionCount, 18) * 1.5,
     18,
     96
@@ -1795,6 +1832,7 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     45
     + realismComplexity
     + Math.min(highResolutionAssets.length * 3, 9)
+    + Math.min(averageEdgeDensity * 0.25, 10)
     + (project.pricePointCents && project.pricePointCents >= 2999 ? 8 : 0)
     + (competitionCount > 15 ? 8 : 0)
   );
@@ -1805,11 +1843,12 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     averageReviewScore * 0.55
     + priceFitScore * 0.25
     + (competitionCount > 0 ? (releaseMomentum / competitionCount) * 20 : 0)
+    + (averageReadabilityScore > 0 ? (averageReadabilityScore - 60) * 0.12 : 0)
   );
   const visualTrendScore = clampScore(competitionCount > 0 ? (releaseMomentum / competitionCount) * 100 : 25);
   const styleSummary =
     artAssets.length > 0
-      ? `${artAssets.length} uploaded art asset${artAssets.length === 1 ? "" : "s"} were reviewed. ${measuredAssets.length} have readable dimensions, ${capsuleRatioAssets.length} are close to Steam capsule/header ratios, and ${highResolutionAssets.length} meet a basic high-resolution threshold. Comparable Steam games currently suggest ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"} as the shelf baseline.`
+      ? `${artAssets.length} uploaded art asset${artAssets.length === 1 ? "" : "s"} were reviewed. ${measuredAssets.length} have readable dimensions, ${capsuleRatioAssets.length} are close to Steam capsule/header ratios, and ${assetsWithVisualMetrics.length} were pixel-analyzed for contrast, saturation, visual density, and first-read clarity. Average readability is ${Math.round(averageReadabilityScore || 0)}/100, with ${highLegibilityRiskAssets} high-risk asset${highLegibilityRiskAssets === 1 ? "" : "s"}. Comparable Steam games currently suggest ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"} as the shelf baseline.`
       : topCompetitors.length > 0
       ? `Comparable Steam games currently cluster around ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"}, with ${paletteKeywords.slice(0, 2).join(" plus ") || "readable capsule contrast"} showing up as the strongest shelf signal.`
       : "The current dataset does not have enough comparable art references yet, so the visual brief should be treated as exploratory.";
@@ -1827,6 +1866,8 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     distinctivenessScore < 55 ? "Push a more ownable silhouette or color story before production lock." : "Keep the current visual hook and reinforce it in the capsule and hero scenes.",
     artAssets.length === 0 ? "Upload capsule art, key art, screenshots, or mood targets before treating this as a real art review." : null,
     artAssets.length > 0 && capsuleRatioAssets.length === 0 ? "Add at least one wide store-facing image so the analysis can judge Steam capsule/header readability." : null,
+    highLegibilityRiskAssets > 0 ? "At least one uploaded asset has weak first-read clarity; increase value contrast, simplify noisy areas, or strengthen the focal silhouette." : null,
+    averageSaturation > 72 ? "The uploaded palette is highly saturated; reserve the strongest color for the focal point so the capsule does not become visually flat." : null,
     priceFitScore < 55 ? `Your target price is drifting away from the niche median of ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}; align the finish bar or pricing.` : null,
     competitionCount > 12 ? "The shelf is crowded, so capsule readability and instant fantasy communication matter more than detail density." : "There is room to claim a stronger identity if the art direction lands cleanly."
   ]
@@ -1892,7 +1933,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
           highResolution: highResolutionAssets.length,
           capsuleRatio: capsuleRatioAssets.length,
           square: squareAssets.length,
-          evidenceScore: artAssetEvidenceScore
+          evidenceScore: artAssetEvidenceScore,
+          pixelAnalyzed: assetsWithVisualMetrics.length,
+          averageReadabilityScore: Math.round(averageReadabilityScore || 0),
+          averageContrast: Math.round(averageContrast || 0),
+          averageSaturation: Math.round(averageSaturation || 0),
+          averageEdgeDensity: Math.round(averageEdgeDensity || 0),
+          highLegibilityRisk: highLegibilityRiskAssets,
+          dominantColors
         },
         proArtBrief
       }
@@ -1919,7 +1967,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
           highResolution: highResolutionAssets.length,
           capsuleRatio: capsuleRatioAssets.length,
           square: squareAssets.length,
-          evidenceScore: artAssetEvidenceScore
+          evidenceScore: artAssetEvidenceScore,
+          pixelAnalyzed: assetsWithVisualMetrics.length,
+          averageReadabilityScore: Math.round(averageReadabilityScore || 0),
+          averageContrast: Math.round(averageContrast || 0),
+          averageSaturation: Math.round(averageSaturation || 0),
+          averageEdgeDensity: Math.round(averageEdgeDensity || 0),
+          highLegibilityRisk: highLegibilityRiskAssets,
+          dominantColors
         },
         proArtBrief
       }
@@ -2012,6 +2067,7 @@ export async function uploadProjectArtAsset(params: {
       sizeBytes: upload.sizeBytes,
       width: upload.width,
       height: upload.height,
+      ...(upload.visualMetrics ? { visualMetrics: upload.visualMetrics as Prisma.InputJsonValue } : {}),
       notes: params.notes?.trim() || null
     }
   });

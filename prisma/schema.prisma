@@ -1914,6 +1914,7 @@ model ProjectArtAsset {
   sizeBytes    Int
   width        Int?
   height       Int?
+  visualMetrics Json?
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -745,6 +745,13 @@ export function ProjectDetailClient({
       capsuleRatio: number;
       square: number;
       evidenceScore: number;
+      pixelAnalyzed?: number;
+      averageReadabilityScore?: number;
+      averageContrast?: number;
+      averageSaturation?: number;
+      averageEdgeDensity?: number;
+      highLegibilityRisk?: number;
+      dominantColors?: string[];
     };
     proArtBrief?: {
       capsuleReadinessScore: number;
@@ -1458,6 +1465,27 @@ export function ProjectDetailClient({
                             <p className="text-xs text-muted-foreground">
                               {asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensions unavailable"} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
                             </p>
+                            {asset.visualMetrics ? (
+                              <div className="grid gap-2 rounded-xl border bg-background/60 p-3 text-xs">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Readability</span>
+                                  <span className="font-medium">{asset.visualMetrics.readabilityScore}/100 · {asset.visualMetrics.legibilityRisk} risk</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Contrast / saturation</span>
+                                  <span className="font-medium">{asset.visualMetrics.contrast} / {asset.visualMetrics.saturation}</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Dominant color</span>
+                                  <span className="inline-flex items-center gap-2 font-medium">
+                                    <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: asset.visualMetrics.dominantColor }} />
+                                    {asset.visualMetrics.dominantColor}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">Pixel metrics unavailable for this file. Re-upload to analyze visual readability.</p>
+                            )}
                             {asset.notes ? <p className="text-xs text-muted-foreground">{asset.notes}</p> : null}
                           </div>
                         </div>
@@ -1508,7 +1536,7 @@ export function ProjectDetailClient({
                 <CardHeader>
                   <CardTitle>Asset evidence</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4 text-sm md:grid-cols-3">
+                <CardContent className="grid gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Uploaded assets</p>
                     <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.total ?? project.artAssets.length}</p>
@@ -1521,8 +1549,48 @@ export function ProjectDetailClient({
                     <p className="font-medium">Evidence score</p>
                     <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.evidenceScore ?? null)}</p>
                   </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Pixel-analyzed</p>
+                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset) => asset.visualMetrics).length}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Avg readability</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">High-risk assets</p>
+                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
+                  </div>
                 </CardContent>
               </Card>
+              {artMetadata?.uploadedArtAssets?.dominantColors?.length ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Visual signal read</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 text-sm md:grid-cols-3">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Average contrast</p>
+                      <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageContrast ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Average saturation</p>
+                      <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageSaturation ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Dominant colors</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {artMetadata.uploadedArtAssets.dominantColors.map((color) => (
+                          <span key={color} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+                            <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: color }} />
+                            {color}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Integrated art direction analysis</CardTitle>

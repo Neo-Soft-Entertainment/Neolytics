@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 import { env } from "@/env";
 
@@ -18,6 +19,19 @@ export type ProjectArtAssetUpload = {
   sizeBytes: number;
   width: number | null;
   height: number | null;
+  visualMetrics: ProjectArtAssetVisualMetrics | null;
+};
+
+export type ProjectArtAssetVisualMetrics = {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  colorfulness: number;
+  edgeDensity: number;
+  dominantColor: string;
+  readabilityScore: number;
+  legibilityRisk: "low" | "medium" | "high";
+  analysisSource: "sharp";
 };
 
 function getStorageClient() {
@@ -164,6 +178,115 @@ function validateArtAsset(file: File) {
   }
 }
 
+function getRgbSaturation(red: number, green: number, blue: number) {
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+
+  if (max === 0) {
+    return 0;
+  }
+
+  return (max - min) / max;
+}
+
+function toHexColor(red: number, green: number, blue: number) {
+  return `#${[red, green, blue].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
+}
+
+async function analyzeImageVisualMetrics(buffer: Buffer) {
+  try {
+    const image = sharp(buffer, {
+      animated: false,
+      limitInputPixels: 28_000_000
+    }).rotate();
+    const metadata = await image.metadata();
+    const { data, info } = await image
+      .clone()
+      .resize({
+        width: 96,
+        height: 96,
+        fit: "inside",
+        withoutEnlargement: true
+      })
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const channels = info.channels;
+    const pixelCount = Math.max(1, info.width * info.height);
+    let totalBrightness = 0;
+    let totalBrightnessSquared = 0;
+    let totalSaturation = 0;
+    let totalRed = 0;
+    let totalGreen = 0;
+    let totalBlue = 0;
+    let edgeCount = 0;
+    const luminanceValues: number[] = [];
+
+    for (let index = 0; index < data.length; index += channels) {
+      const red = data[index] ?? 0;
+      const green = data[index + 1] ?? red;
+      const blue = data[index + 2] ?? green;
+      const luminance = (red * 0.2126) + (green * 0.7152) + (blue * 0.0722);
+
+      totalBrightness += luminance;
+      totalBrightnessSquared += luminance * luminance;
+      totalSaturation += getRgbSaturation(red, green, blue);
+      totalRed += red;
+      totalGreen += green;
+      totalBlue += blue;
+      luminanceValues.push(luminance);
+    }
+
+    for (let y = 0; y < info.height; y += 1) {
+      for (let x = 1; x < info.width; x += 1) {
+        const current = luminanceValues[(y * info.width) + x] ?? 0;
+        const previous = luminanceValues[(y * info.width) + x - 1] ?? current;
+
+        if (Math.abs(current - previous) > 32) {
+          edgeCount += 1;
+        }
+      }
+    }
+
+    const brightness = totalBrightness / pixelCount;
+    const variance = (totalBrightnessSquared / pixelCount) - (brightness * brightness);
+    const contrast = Math.sqrt(Math.max(0, variance));
+    const saturation = (totalSaturation / pixelCount) * 100;
+    const edgeDensity = (edgeCount / Math.max(1, info.height * Math.max(1, info.width - 1))) * 100;
+    const readabilityScore = Math.max(0, Math.min(100, Math.round(
+      contrast * 1.25
+      + Math.min(24, saturation * 0.18)
+      - Math.max(0, edgeDensity - 28) * 0.7
+      - (brightness < 34 || brightness > 222 ? 16 : 0)
+    )));
+    const legibilityRisk = readabilityScore < 45 ? "high" : readabilityScore < 68 ? "medium" : "low";
+
+    return {
+      width: metadata.width ?? null,
+      height: metadata.height ?? null,
+      visualMetrics: {
+        brightness: Math.round(brightness),
+        contrast: Math.round(contrast),
+        saturation: Math.round(saturation),
+        colorfulness: Math.round(Math.min(100, saturation + (contrast * 0.35))),
+        edgeDensity: Math.round(edgeDensity),
+        dominantColor: toHexColor(totalRed / pixelCount, totalGreen / pixelCount, totalBlue / pixelCount),
+        readabilityScore,
+        legibilityRisk,
+        analysisSource: "sharp"
+      } satisfies ProjectArtAssetVisualMetrics
+    };
+  } catch {
+    const dimensions = getImageDimensions(buffer);
+
+    return {
+      width: dimensions.width,
+      height: dimensions.height,
+      visualMetrics: null
+    };
+  }
+}
+
 export async function uploadProjectArtAssetFile(params: {
   organizationId: string;
   projectId: string;
@@ -175,7 +298,7 @@ export async function uploadProjectArtAssetFile(params: {
   const safeName = params.file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${params.organizationId}/${params.projectId}/${Date.now()}-${safeName}`;
   const buffer = Buffer.from(await params.file.arrayBuffer());
-  const dimensions = getImageDimensions(buffer);
+  const analysis = await analyzeImageVisualMetrics(buffer);
   const { error } = await supabase.storage.from(bucket).upload(path, buffer, {
     upsert: false,
     contentType: params.file.type
@@ -190,8 +313,9 @@ export async function uploadProjectArtAssetFile(params: {
     originalName: params.file.name,
     mimeType: params.file.type,
     sizeBytes: params.file.size,
-    width: dimensions.width,
-    height: dimensions.height
+    width: analysis.width,
+    height: analysis.height,
+    visualMetrics: analysis.visualMetrics
   } satisfies ProjectArtAssetUpload;
 }
 

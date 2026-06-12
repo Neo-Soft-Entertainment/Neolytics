@@ -219,6 +219,17 @@ export interface ProjectDetailResponse extends ProjectListItem {
     sizeBytes: number;
     width: number | null;
     height: number | null;
+    visualMetrics: {
+      brightness: number;
+      contrast: number;
+      saturation: number;
+      colorfulness: number;
+      edgeDensity: number;
+      dominantColor: string;
+      readabilityScore: number;
+      legibilityRisk: "low" | "medium" | "high";
+      analysisSource: string;
+    } | null;
     notes: string | null;
     signedUrl: string | null;
     createdAt: string;
