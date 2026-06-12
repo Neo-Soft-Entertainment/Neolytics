@@ -87,52 +87,6 @@ export function DashboardClient() {
           </div>
         )}
       />
-      <Card className="overflow-hidden border-cyan-300/12 bg-white/78 shadow-[0_22px_60px_rgba(8,47,73,0.07)] dark:bg-white/[0.035]">
-        <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
-        <CardHeader>
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>ERP operating map</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                The product is moving toward one source of truth for commercial data, production, legal entities, and financial execution.
-              </p>
-            </div>
-            <Badge variant="secondary" className="w-fit border-cyan-300/15 bg-cyan-50/80 text-cyan-950 dark:bg-cyan-300/10 dark:text-cyan-100">
-              Live modules
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <Link className="rounded-2xl border border-white/10 bg-white/55 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-50/70 dark:bg-white/[0.035] dark:hover:bg-cyan-300/[0.08]" href="/games">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Market</p>
-            <p className="mt-2 font-semibold">Steam intelligence</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatNumber(data.marketOverview.totalGames)} catalog games, competitors, opportunities, and launch signals.
-            </p>
-          </Link>
-          <Link className="rounded-2xl border border-white/10 bg-white/55 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-50/70 dark:bg-white/[0.035] dark:hover:bg-cyan-300/[0.08]" href="/projects">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Production</p>
-            <p className="mt-2 font-semibold">Projects and game board</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatNumber(data.projectSignals.length)} analyzed theses connected to GDD, kanban, demo planning, and feasibility.
-            </p>
-          </Link>
-          <Link className="rounded-2xl border border-white/10 bg-white/55 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-50/70 dark:bg-white/[0.035] dark:hover:bg-cyan-300/[0.08]" href="/finance">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Finance</p>
-            <p className="mt-2 font-semibold">Cash, budgets, invoices</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {formatCurrency(data.financeSnapshot.netCashCents)} net cash with payables, receivables, contracts, royalties, and approvals.
-            </p>
-          </Link>
-          <Link className="rounded-2xl border border-white/10 bg-white/55 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300/30 hover:bg-cyan-50/70 dark:bg-white/[0.035] dark:hover:bg-cyan-300/[0.08]" href="/company">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Governance</p>
-            <p className="mt-2 font-semibold">Company records</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Legal entities, documents, compliance tasks, audit trail, and studio administration in one workspace.
-            </p>
-          </Link>
-        </CardContent>
-      </Card>
       <div className="grid gap-3 md:grid-cols-4">
         <KpiCard label="Catalog games" value={formatNumber(data.marketOverview.totalGames)} />
         <KpiCard
