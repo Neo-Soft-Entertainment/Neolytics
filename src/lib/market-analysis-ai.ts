@@ -30,6 +30,18 @@ export interface AiSegmentReportLayer {
   actionItems: string[];
 }
 
+export interface AiProjectArtAnalysisLayer {
+  visualCritique: string;
+  firstReadAssessment: string;
+  capsuleAdvice: string;
+  productionAdvice: string;
+  marketPositioningAdvice: string;
+  confidenceNarrative: string;
+  priorityFixes: string[];
+  strengths: string[];
+  risks: string[];
+}
+
 type OpenAiResponsePayload = {
   output_text?: string;
   output?: Array<{
@@ -358,6 +370,205 @@ export async function generateAiProjectMarketAnalysis(input: {
   );
 
   return result ?? fallback;
+}
+
+export async function generateAiProjectArtAnalysis(input: {
+  project: {
+    name: string;
+    elevatorPitch: string | null;
+    description: string | null;
+    genreInput: string | null;
+    tagInput: string | null;
+    targetAudience: string | null;
+    coreLoop: string | null;
+    differentiator: string | null;
+    artDirection: string | null;
+    playerFantasy: string | null;
+    pricePointCents: number | null;
+  };
+  metrics: {
+    assetCount: number;
+    measuredAssets: number;
+    highResolutionAssets: number;
+    capsuleRatioAssets: number;
+    squareAssets: number;
+    pixelAnalyzedAssets: number;
+    averageReadabilityScore: number;
+    averageContrast: number;
+    averageSaturation: number;
+    averageEdgeDensity: number;
+    highLegibilityRiskAssets: number;
+    dominantColors: string[];
+    distinctivenessScore: number;
+    productionComplexityScore: number;
+    marketFitScore: number;
+    visualTrendScore: number;
+    referenceGameNames: string[];
+    paletteKeywords: string[];
+    moodKeywords: string[];
+  };
+  assets: Array<{
+    kind: string;
+    originalName: string;
+    width: number | null;
+    height: number | null;
+    notes: string | null;
+    signedUrl: string | null;
+    visualMetrics: unknown;
+  }>;
+}) {
+  if (!env.ENABLE_AI_MARKET_ANALYSIS || !env.OPENAI_API_KEY || input.assets.length === 0) {
+    return null;
+  }
+
+  const schema = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      visualCritique: { type: "string" },
+      firstReadAssessment: { type: "string" },
+      capsuleAdvice: { type: "string" },
+      productionAdvice: { type: "string" },
+      marketPositioningAdvice: { type: "string" },
+      confidenceNarrative: { type: "string" },
+      priorityFixes: {
+        type: "array",
+        items: { type: "string" }
+      },
+      strengths: {
+        type: "array",
+        items: { type: "string" }
+      },
+      risks: {
+        type: "array",
+        items: { type: "string" }
+      }
+    },
+    required: [
+      "visualCritique",
+      "firstReadAssessment",
+      "capsuleAdvice",
+      "productionAdvice",
+      "marketPositioningAdvice",
+      "confidenceNarrative",
+      "priorityFixes",
+      "strengths",
+      "risks"
+    ]
+  };
+
+  try {
+    const imageInputs = input.assets
+      .filter((asset) => Boolean(asset.signedUrl))
+      .slice(0, 4)
+      .map((asset) => ({
+        type: "input_image",
+        image_url: asset.signedUrl,
+        detail: "low"
+      }));
+
+    if (imageInputs.length === 0) {
+      return null;
+    }
+
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: env.OPENAI_MARKET_ANALYSIS_MODEL || "gpt-5.4-mini",
+        input: [
+          {
+            role: "developer",
+            content: [
+              {
+                type: "input_text",
+                text: "You are a senior game art director and Steam capsule conversion analyst. Use only the supplied project context, visual metrics, and uploaded images. Do not invent market data. Be direct, practical, and specific. If image access is weak or metrics are limited, say so."
+              }
+            ]
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: [
+                  "Analyze these uploaded game art assets for Steam store readability, art direction fit, capsule strength, production risk, and commercial positioning.",
+                  "Ground the critique in the visual assets and supplied metrics.",
+                  "Do not repeat the numbers mechanically. Explain what they imply for a game studio.",
+                  "",
+                  "PROJECT",
+                  JSON.stringify(input.project, null, 2),
+                  "",
+                  "VISUAL METRICS AND BENCHMARK CONTEXT",
+                  JSON.stringify(input.metrics, null, 2),
+                  "",
+                  "UPLOADED ASSET METADATA",
+                  JSON.stringify(input.assets.map((asset) => ({
+                    kind: asset.kind,
+                    originalName: asset.originalName,
+                    width: asset.width,
+                    height: asset.height,
+                    notes: asset.notes,
+                    visualMetrics: asset.visualMetrics
+                  })), null, 2),
+                  "",
+                  "OUTPUT RULES",
+                  "- visualCritique: 3-5 sentences on the actual visual direction.",
+                  "- firstReadAssessment: judge if the art communicates the fantasy quickly.",
+                  "- capsuleAdvice: practical Steam capsule/header improvements.",
+                  "- productionAdvice: practical scope and art pipeline advice.",
+                  "- marketPositioningAdvice: how the visuals should position against the reference shelf.",
+                  "- confidenceNarrative: explain confidence based on image count, metrics, and image quality.",
+                  "- priorityFixes: 3 to 6 concrete fixes.",
+                  "- strengths: 2 to 5 current strengths.",
+                  "- risks: 2 to 5 risks."
+                ].join("\n")
+              },
+              ...imageInputs
+            ]
+          }
+        ],
+        max_output_tokens: 1400,
+        text: {
+          format: {
+            type: "json_schema",
+            name: "project_art_analysis",
+            schema,
+            strict: true
+          }
+        }
+      })
+    });
+
+    if (!response.ok) {
+      logger.warn({
+        status: response.status,
+        body: await response.text()
+      }, "OpenAI art analysis request failed");
+      return null;
+    }
+
+    const payload = await response.json() as OpenAiResponsePayload;
+    const text = payload.output_text?.trim()
+      || payload.output
+        ?.flatMap((item) => item.content ?? [])
+        .find((item) => item.type === "output_text" && typeof item.text === "string")
+        ?.text
+        ?.trim();
+
+    if (!text) {
+      logger.warn("OpenAI art analysis returned no output text");
+      return null;
+    }
+
+    return JSON.parse(text) as AiProjectArtAnalysisLayer;
+  } catch (error) {
+    logger.error({ error }, "OpenAI art analysis request crashed");
+    return null;
+  }
 }
 
 export async function generateAiSegmentReportLayer(input: {

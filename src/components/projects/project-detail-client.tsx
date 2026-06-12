@@ -763,6 +763,17 @@ export function ProjectDetailClient({
         priceCents: number;
       }>;
     } | null;
+    aiArtLayer?: {
+      visualCritique: string;
+      firstReadAssessment: string;
+      capsuleAdvice: string;
+      productionAdvice: string;
+      marketPositioningAdvice: string;
+      confidenceNarrative: string;
+      priorityFixes: string[];
+      strengths: string[];
+      risks: string[];
+    } | null;
   } | null;
 
   return (
@@ -1662,6 +1673,75 @@ export function ProjectDetailClient({
                   ) : null}
                 </CardContent>
               </Card>
+              {artMetadata?.aiArtLayer ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AI visual critique</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 text-sm">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Visual critique</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.visualCritique}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">First-read assessment</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.firstReadAssessment}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Capsule advice</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.capsuleAdvice}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Production advice</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.productionAdvice}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Market positioning</p>
+                      <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.marketPositioningAdvice}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">{artMetadata.aiArtLayer.confidenceNarrative}</p>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Priority fixes</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {artMetadata.aiArtLayer.priorityFixes.map((item) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Strengths</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {artMetadata.aiArtLayer.strengths.map((item) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Risks</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {artMetadata.aiArtLayer.risks.map((item) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : project.artAssets.length > 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>AI visual critique</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      AI critique is optional. When AI is enabled, running art analysis will review the uploaded images together with the measured visual signals.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : null}
               {isProArtAnalysis ? (
                 <Card>
                   <CardHeader>

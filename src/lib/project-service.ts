@@ -8,7 +8,7 @@ import {
   assertCurrentUsageWithinLimit,
   recordUsage
 } from "@/lib/entitlements";
-import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
+import { generateAiProjectArtAnalysis, generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
 import {
   createProjectArtAssetSignedUrl,
@@ -1892,6 +1892,52 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
         }))
       }
     : null;
+  const aiArtAssets = await Promise.all(artAssets.slice(0, 4).map(async (asset) => ({
+    kind: asset.kind,
+    originalName: asset.originalName,
+    width: asset.width,
+    height: asset.height,
+    notes: asset.notes,
+    signedUrl: await createProjectArtAssetSignedUrl(asset.storagePath).catch(() => null),
+    visualMetrics: asset.visualMetrics
+  })));
+  const aiArtLayer = await generateAiProjectArtAnalysis({
+    project: {
+      name: project.name,
+      elevatorPitch: project.elevatorPitch,
+      description: project.description,
+      genreInput: project.genreInput,
+      tagInput: project.tagInput,
+      targetAudience: project.targetAudience,
+      coreLoop: project.coreLoop,
+      differentiator: project.differentiator,
+      artDirection: project.artDirection,
+      playerFantasy: project.playerFantasy,
+      pricePointCents: project.pricePointCents
+    },
+    metrics: {
+      assetCount: artAssets.length,
+      measuredAssets: measuredAssets.length,
+      highResolutionAssets: highResolutionAssets.length,
+      capsuleRatioAssets: capsuleRatioAssets.length,
+      squareAssets: squareAssets.length,
+      pixelAnalyzedAssets: assetsWithVisualMetrics.length,
+      averageReadabilityScore: Math.round(averageReadabilityScore || 0),
+      averageContrast: Math.round(averageContrast || 0),
+      averageSaturation: Math.round(averageSaturation || 0),
+      averageEdgeDensity: Math.round(averageEdgeDensity || 0),
+      highLegibilityRiskAssets,
+      dominantColors,
+      distinctivenessScore,
+      productionComplexityScore,
+      marketFitScore,
+      visualTrendScore,
+      referenceGameNames: topCompetitors.map((game) => game.name),
+      paletteKeywords,
+      moodKeywords
+    },
+    assets: aiArtAssets
+  });
 
   await db.project.update({
     where: {
@@ -1942,6 +1988,7 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
           highLegibilityRisk: highLegibilityRiskAssets,
           dominantColors
         },
+        aiArtLayer: aiArtLayer as Prisma.InputJsonValue | null,
         proArtBrief
       }
     },
@@ -1976,6 +2023,7 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
           highLegibilityRisk: highLegibilityRiskAssets,
           dominantColors
         },
+        aiArtLayer: aiArtLayer as Prisma.InputJsonValue | null,
         proArtBrief
       }
     }
