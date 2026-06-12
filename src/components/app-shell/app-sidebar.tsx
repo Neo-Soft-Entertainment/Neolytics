@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
@@ -56,23 +56,6 @@ export function AppSidebar() {
             </div>
           </>
         ) : null}
-        <button
-          type="button"
-          className={cn(
-            "mt-4 flex h-9 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition hover:bg-white/10 hover:text-white",
-            isCollapsed ? "w-full" : "w-full gap-2 text-sm"
-          )}
-          onClick={toggleSidebar}
-          aria-label={isCollapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")}
-          title={isCollapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")}
-        >
-          {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          {!isCollapsed ? (
-            <span>
-              {t("shell.collapseSidebar")}
-            </span>
-          ) : null}
-        </button>
       </div>
       <nav className={cn("flex flex-1 flex-col gap-3 p-3", isCollapsed && "items-center")}>
         {navSections.map((section) => (
@@ -114,6 +97,17 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
+      <div className={cn("border-t border-white/10 p-3", isCollapsed ? "flex justify-center" : "flex justify-end")}>
+        <button
+          type="button"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 shadow-[0_12px_28px_rgba(15,23,42,0.22)] transition hover:bg-white/10 hover:text-white"
+          onClick={toggleSidebar}
+          aria-label={isCollapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")}
+          title={isCollapsed ? t("shell.expandSidebar") : t("shell.collapseSidebar")}
+        >
+          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </button>
+      </div>
     </aside>
   );
 }
