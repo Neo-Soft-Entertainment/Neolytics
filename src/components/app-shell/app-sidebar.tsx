@@ -7,14 +7,12 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { NeolyticsBrand } from "@/components/brand/neolytics-brand";
-import { getCurrentNavItem, getNavSection, navItems, navSections } from "@/components/app-shell/navigation";
+import { navItems, navSections } from "@/components/app-shell/navigation";
 import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const t = useI18n();
-  const currentItem = getCurrentNavItem(pathname);
-  const currentSection = getNavSection(currentItem?.section);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -44,17 +42,9 @@ export function AppSidebar() {
           className={cn("animate-rise-in", isCollapsed && "justify-center")}
         />
         {!isCollapsed ? (
-          <>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-              {t("shell.sidebarTagline")}
-            </p>
-            <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-200/80">
-                {currentSection ? t(currentSection.labelKey) : t("shell.today")}
-              </p>
-              <p className="mt-2 text-sm font-medium text-white">{currentItem ? t(currentItem.labelKey) : t("shell.sidebarCopy")}</p>
-            </div>
-          </>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+            {t("shell.sidebarTagline")}
+          </p>
         ) : null}
       </div>
       <nav className={cn("flex flex-col gap-3 p-3", isCollapsed && "items-center")}>
