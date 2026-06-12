@@ -17,13 +17,12 @@ export const metadata: Metadata = {
   description: "Steam-first studio ERP and market operating system for research, projects, finance, contracts, and company operations.",
   icons: {
     icon: [
-      { url: "/icon.jpg", type: "image/jpeg" },
-      { url: "/neolytics-logo.jpg", type: "image/jpeg" }
+      { url: "/neolytics-icon.png", type: "image/png" }
     ],
     apple: [
-      { url: "/apple-icon.jpg", type: "image/jpeg" }
+      { url: "/neolytics-icon.png", type: "image/png" }
     ],
-    shortcut: ["/icon.jpg"]
+    shortcut: ["/neolytics-icon.png"]
   }
 };
 

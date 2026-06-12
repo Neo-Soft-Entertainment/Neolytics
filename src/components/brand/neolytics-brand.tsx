@@ -16,7 +16,7 @@ export function NeolyticsBrand({
     <Link href={href} className={cn("inline-flex items-center gap-3 transition-transform duration-300 hover:-translate-y-0.5", className)}>
       <span className="relative flex h-11 w-11 overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-[0_18px_40px_rgba(14,165,233,0.28)] ring-1 ring-cyan-400/30">
         <Image
-          src="/neolytics-logo.jpg"
+          src="/neolytics-icon.png"
           alt="Neolytics logo"
           fill
           sizes="44px"
