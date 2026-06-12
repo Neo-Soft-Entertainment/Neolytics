@@ -1,3 +1,5 @@
+import { PrivacyDecision } from "@prisma/client";
+
 import { badRequest, ok, serverError } from "@/lib/api-response";
 import {
   createDownloadResponse,
@@ -5,11 +7,13 @@ import {
   isGoogleSheetsConfigured,
   publishWorkbookToGoogleSheets
 } from "@/lib/export-service";
+import { db } from "@/lib/db";
 import {
   consumeSubscriptionUsage,
   SubscriptionLimitError
 } from "@/lib/subscription-service";
 import { getApiContext } from "@/lib/auth-helpers";
+import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 import {
   EntitlementError,
   assertCanUseFeature,
@@ -33,14 +37,13 @@ export async function createWorkbookDownloadResponse(
 ) {
   try {
     const format = getExportFormat(new URL(request.url));
+    const context = await getApiContext();
 
     if (!format) {
       return badRequest("Invalid export format.");
     }
 
     if (format === "pdf") {
-      const context = await getApiContext();
-
       if (!context) {
         return badRequest("A valid session is required for PDF export.");
       }
@@ -54,6 +57,19 @@ export async function createWorkbookDownloadResponse(
 
     const workbook = await buildWorkbook();
     await consumeSubscriptionUsage(organizationId, "exportsGenerated");
+    await createPrivacyAuditLog(db, {
+      organizationId,
+      actorId: context?.userId ?? null,
+      actorRole: context?.organizationRole ?? null,
+      action: "export.downloaded",
+      resourceType: "workbook_export",
+      resourceId: format,
+      decision: PrivacyDecision.ALLOW,
+      reason: "Internal workbook export created.",
+      metadata: {
+        format
+      }
+    });
     return await createDownloadResponse(workbook, format);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {
@@ -85,6 +101,17 @@ export async function createGoogleSheetsPublishResponse(
     const workbook = await buildWorkbook();
     const published = await publishWorkbookToGoogleSheets(workbook, userEmail);
     await consumeSubscriptionUsage(organizationId, "exportsGenerated");
+    const context = await getApiContext();
+    await createPrivacyAuditLog(db, {
+      organizationId,
+      actorId: context?.userId ?? null,
+      actorRole: context?.organizationRole ?? null,
+      action: "export.published_google_sheets",
+      resourceType: "workbook_export",
+      resourceId: published.spreadsheetId,
+      decision: PrivacyDecision.ALLOW,
+      reason: "Workbook export published to Google Sheets."
+    });
     return ok(published);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {

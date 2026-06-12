@@ -1,3 +1,4 @@
+import { Prisma, PrivacyDecision } from "@prisma/client";
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
@@ -11,6 +12,7 @@ import { createSecureAuthAdapter } from "@/lib/auth-adapter";
 import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 
 if (process.env.AUTH_URL) {
   process.env.APP_URL ??= process.env.AUTH_URL;
@@ -37,6 +39,25 @@ class RateLimitedCredentialsError extends CredentialsSignin {
 
 class RecaptchaCredentialsError extends CredentialsSignin {
   code = "recaptcha_failed";
+}
+
+async function createLoginAudit(params: {
+  userId?: string | null;
+  action: string;
+  decision: PrivacyDecision;
+  reason: string;
+  metadata?: Prisma.InputJsonValue;
+}) {
+  await createPrivacyAuditLog(db, {
+    actorId: params.userId ?? null,
+    actorRole: null,
+    action: params.action,
+    resourceType: "auth",
+    resourceId: params.userId ?? null,
+    decision: params.decision,
+    reason: params.reason,
+    metadata: params.metadata
+  });
 }
 
 async function verifyRecaptchaToken(token?: string) {
@@ -123,6 +144,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isRecaptchaValid) {
           await recordAuthAttempt(rateLimitKey, false);
+          await createLoginAudit({
+            action: "login.recaptcha_failed",
+            decision: PrivacyDecision.BLOCK,
+            reason: "reCAPTCHA verification failed.",
+            metadata: {
+              email
+            }
+          });
           throw new RecaptchaCredentialsError();
         }
 
@@ -134,6 +163,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user?.passwordHash) {
           await recordAuthAttempt(rateLimitKey, false);
+          await createLoginAudit({
+            action: "login.failed",
+            decision: PrivacyDecision.BLOCK,
+            reason: "User account was not found or has no credentials password.",
+            metadata: {
+              email
+            }
+          });
           return null;
         }
 
@@ -141,6 +178,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!passwordResult.isValid) {
           await recordAuthAttempt(rateLimitKey, false);
+          await createLoginAudit({
+            userId: user.id,
+            action: "login.failed",
+            decision: PrivacyDecision.BLOCK,
+            reason: "Invalid credentials.",
+            metadata: {
+              email
+            }
+          });
           return null;
         }
 
@@ -156,6 +202,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         await recordAuthAttempt(rateLimitKey, true);
+        await createLoginAudit({
+          userId: user.id,
+          action: "login.succeeded",
+          decision: PrivacyDecision.ALLOW,
+          reason: "Credentials login succeeded.",
+          metadata: {
+            email
+          }
+        });
 
         return {
           id: user.id,

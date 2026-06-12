@@ -7,14 +7,20 @@ import { AccountSecurityPanel } from "@/components/settings/account-security-pan
 import { OrganizationMembershipsPanel } from "@/components/settings/organization-memberships-panel";
 import { OrganizationDangerZone } from "@/components/settings/organization-danger-zone";
 import { OrganizationDiscordPanel } from "@/components/settings/organization-discord-panel";
+import { PrivacyPanel } from "@/components/settings/privacy-panel";
 import { SubscriptionPanel } from "@/components/settings/subscription-panel";
 import { WorkspaceManagementPanel } from "@/components/settings/workspace-management-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { env } from "@/env";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { translate } from "@/lib/i18n";
+import { listUserConsentState } from "@/lib/privacy/consent-service";
+import { listAdminDataSubjectRequests, listUserDataSubjectRequests } from "@/lib/privacy/data-subject-request-service";
+import { listDataProducts } from "@/lib/privacy/data-product-service";
+import { listProcessingPurposes } from "@/lib/privacy/processing-purposes";
 import { getOrganizationSubscriptionSnapshot } from "@/lib/subscription-service";
 
 export async function SettingsPage() {
@@ -85,6 +91,129 @@ export async function SettingsPage() {
   const seatLimitLabel = subscriptionSnapshot.limits.seats === null
     ? "Unlimited"
     : `${subscriptionSnapshot.usage.seats}/${subscriptionSnapshot.limits.seats}`;
+  const privacyPurposes = listProcessingPurposes();
+  const privacyConsents = session?.user?.id ? await listUserConsentState(session.user.id) : [];
+  const privacyRequests = session?.user?.id ? await listUserDataSubjectRequests(session.user.id) : [];
+  const privacyAdminSnapshot = canManageSubscription
+    ? await Promise.all([
+        db.userConsent.count(),
+        db.dataSubjectRequest.count({
+          where: {
+            organizationId: organization.id
+          }
+        }),
+        db.privacyIncident.count({
+          where: {
+            OR: [
+              { organizationId: organization.id },
+              { organizationId: null }
+            ]
+          }
+        }),
+        db.privacyAuditLog.count({
+          where: {
+            OR: [
+              { organizationId: organization.id },
+              { organizationId: null }
+            ]
+          }
+        }),
+        db.privacyLegalHold.count({
+          where: {
+            OR: [
+              { organizationId: organization.id },
+              { organizationId: null }
+            ],
+            active: true
+          }
+        }),
+        listAdminDataSubjectRequests(organization.id),
+        listDataProducts(organization.id),
+        db.privacyIncident.findMany({
+          where: {
+            OR: [
+              { organizationId: organization.id },
+              { organizationId: null }
+            ]
+          },
+          orderBy: {
+            discoveredAt: "desc"
+          },
+          take: 8
+        }),
+        db.privacyAuditLog.findMany({
+          where: {
+            OR: [
+              { organizationId: organization.id },
+              { organizationId: null }
+            ]
+          },
+          orderBy: {
+            createdAt: "desc"
+          },
+          take: 8
+        })
+      ]).then(([
+        consentCount,
+        requestCount,
+        incidentCount,
+        auditLogCount,
+        legalHoldCount,
+        adminRequests,
+        adminProducts,
+        adminIncidents,
+        adminAuditLogs
+      ]) => ({
+        stats: {
+          consents: consentCount,
+          requests: requestCount,
+          products: adminProducts.length,
+          incidents: incidentCount,
+          auditLogs: auditLogCount,
+          legalHolds: legalHoldCount
+        },
+        requests: adminRequests.map((item) => ({
+          id: item.id,
+          requestType: item.requestType,
+          status: item.status,
+          reason: item.reason,
+          dueAt: item.dueAt.toISOString(),
+          createdAt: item.createdAt.toISOString(),
+          completedAt: item.completedAt?.toISOString() ?? null,
+          user: {
+            email: item.user.email,
+            name: item.user.name
+          },
+          handledBy: item.handledBy
+            ? {
+                email: item.handledBy.email,
+                name: item.handledBy.name
+              }
+            : null
+        })),
+        products: adminProducts.map((item) => ({
+          id: item.id,
+          productName: item.productName,
+          productType: item.productType,
+          approvalStatus: item.approvalStatus,
+          minimumCohortSize: item.minimumCohortSize,
+          privacyRiskScore: item.privacyRiskScore
+        })),
+        incidents: adminIncidents.map((item) => ({
+          id: item.id,
+          severity: item.severity,
+          status: item.status,
+          discoveredAt: item.discoveredAt.toISOString()
+        })),
+        auditLogs: adminAuditLogs.map((item) => ({
+          id: item.id,
+          action: item.action,
+          resourceType: item.resourceType,
+          decision: item.decision,
+          createdAt: item.createdAt.toISOString()
+        }))
+      }))
+    : null;
 
   return (
     <div className="space-y-6">
@@ -163,10 +292,11 @@ export async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="organization" className="space-y-4">
-        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur md:grid-cols-3 dark:bg-white/[0.04]">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur md:grid-cols-4 dark:bg-white/[0.04]">
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
           <TabsTrigger value="user">Account</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
@@ -350,6 +480,36 @@ export async function SettingsPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="privacy" className="space-y-4">
+          <PrivacyPanel
+            consents={privacyConsents.map((item) => ({
+              purpose: item.purpose,
+              consent: item.consent
+                ? {
+                    id: item.consent.id,
+                    status: item.consent.status,
+                    consentTextVersion: item.consent.consentTextVersion,
+                    grantedAt: item.consent.grantedAt.toISOString(),
+                    revokedAt: item.consent.revokedAt?.toISOString() ?? null
+                  }
+                : null
+            }))}
+            requests={privacyRequests.map((item) => ({
+              id: item.id,
+              requestType: item.requestType,
+              status: item.status,
+              reason: item.reason,
+              dueAt: item.dueAt.toISOString(),
+              createdAt: item.createdAt.toISOString(),
+              completedAt: item.completedAt?.toISOString() ?? null
+            }))}
+            purposes={privacyPurposes}
+            supportEmail={env.PRIVACY_SUPPORT_EMAIL ?? null}
+            canAdmin={Boolean(canManageSubscription)}
+            adminSnapshot={privacyAdminSnapshot}
+          />
         </TabsContent>
       </Tabs>
     </div>

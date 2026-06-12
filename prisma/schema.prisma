@@ -247,6 +247,107 @@ enum IngestionStatus {
   SKIPPED
 }
 
+enum DataClassification {
+  PUBLIC
+  INTERNAL
+  PERSONAL
+  SENSITIVE_PERSONAL
+  CHILD_OR_TEEN_DATA
+  PSEUDONYMOUS_IDENTIFIER
+  AGGREGATED
+  ANONYMIZED
+  SYNTHETIC
+  BLOCKED_FOR_EXPORT
+}
+
+enum PrivacyLegalBasis {
+  CONSENT
+  CONTRACT_EXECUTION
+  LEGAL_OBLIGATION
+  LEGITIMATE_INTEREST
+  EXERCISE_OF_RIGHTS
+  CREDIT_PROTECTION
+  HEALTH_PROTECTION
+  PUBLIC_POLICY
+  RESEARCH
+  VITAL_INTEREST
+}
+
+enum PrivacyRiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ConsentStatus {
+  GRANTED
+  REVOKED
+  EXPIRED
+}
+
+enum DataSubjectRequestType {
+  CONFIRM_PROCESSING
+  ACCESS_PERSONAL_DATA
+  CORRECT_PERSONAL_DATA
+  EXPORT_PORTABILITY
+  DELETE_PERSONAL_DATA
+  ANONYMIZE_OR_BLOCK_DATA
+  REVOKE_CONSENT
+  OBJECT_TO_PROCESSING
+  REVIEW_AUTOMATED_DECISION
+}
+
+enum DataSubjectRequestStatus {
+  OPEN
+  IN_REVIEW
+  COMPLETED
+  REJECTED
+}
+
+enum RetentionDeletionStrategy {
+  DELETE
+  ANONYMIZE
+  ARCHIVE
+  BLOCK
+}
+
+enum PrivacyIncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PrivacyIncidentStatus {
+  OPEN
+  IN_PROGRESS
+  CONTAINED
+  RESOLVED
+  CLOSED
+}
+
+enum DataProductType {
+  AGGREGATED_INSIGHTS
+  SYNTHETIC_DATASET
+  ANONYMIZED_STATISTICS
+  COHORT_REPORT
+  PARTNER_ACTIVATION_WITH_EXPLICIT_CONSENT
+  RAW_EVENTS
+  USER_LEVEL_PROFILES
+  PERSONAL_IDENTIFIER_LISTS
+  PSEUDONYMOUS_IDENTIFIER_EXPORT
+  SENSITIVE_DATA_EXPORT
+  CHILD_OR_TEEN_COMMERCIAL_PROFILING
+}
+
+enum PrivacyDecision {
+  ALLOW
+  ALLOW_WITH_TRANSFORMATION
+  BLOCK
+  REQUIRE_REVIEW
+}
+
 model User {
   id                       String                   @id @default(cuid())
   name                     String?
@@ -272,6 +373,14 @@ model User {
   uploadedDocumentVersions CompanyDocumentVersion[] @relation("CompanyDocumentVersionUploadedBy")
   complianceItemsOwned     ComplianceItem[]         @relation("ComplianceItemOwner")
   auditEvents              AuditEvent[]
+  userConsents             UserConsent[]
+  dataSubjectRequests      DataSubjectRequest[]     @relation("DataSubjectRequestUser")
+  handledDataSubjectRequests DataSubjectRequest[]   @relation("DataSubjectRequestHandler")
+  createdPrivacyLegalHolds PrivacyLegalHold[]       @relation("PrivacyLegalHoldCreatedBy")
+  createdPrivacyIncidents  PrivacyIncident[]        @relation("PrivacyIncidentCreatedBy")
+  approvedDataProducts     DataProduct[]            @relation("DataProductApprovedBy")
+  requestedDataExports     DataExportManifest[]     @relation("DataExportManifestRequestedBy")
+  privacyAuditLogs         PrivacyAuditLog[]        @relation("PrivacyAuditLogActor")
   requestedApprovals       ApprovalRequest[]        @relation("ApprovalRequestedBy")
   decidedApprovals         ApprovalRequest[]        @relation("ApprovalDecidedBy")
 }
@@ -367,6 +476,12 @@ model Organization {
   costCenters                    CostCenter[]
   payableTitles                  PayableTitle[]
   payablePayments                PayablePayment[]
+  privacyIncidents               PrivacyIncident[]
+  dataProducts                   DataProduct[]
+  dataExportManifests            DataExportManifest[]
+  privacyAuditLogs               PrivacyAuditLog[]
+  privacyLegalHolds              PrivacyLegalHold[]
+  dataSubjectRequests            DataSubjectRequest[]
 }
 
 model OrganizationSubscriptionUsage {
@@ -1348,6 +1463,166 @@ model AuditEvent {
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([entityType, entityId, createdAt(sort: Desc)])
   @@index([userId, createdAt(sort: Desc)])
+}
+
+model UserConsent {
+  id                 String        @id @default(cuid())
+  userId             String
+  purposeId          String
+  consentTextVersion String
+  status             ConsentStatus @default(GRANTED)
+  grantedAt          DateTime      @default(now())
+  revokedAt          DateTime?
+  expiresAt          DateTime?
+  source             String
+  ipHash             String?
+  userAgentHash      String?
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, purposeId])
+  @@index([status, updatedAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model DataSubjectRequest {
+  id             String                   @id @default(cuid())
+  userId         String
+  organizationId String?
+  requestType    DataSubjectRequestType
+  status         DataSubjectRequestStatus @default(OPEN)
+  reason         String?
+  dueAt          DateTime
+  completedAt    DateTime?
+  handledById    String?
+  resolution     String?
+  metadata       Json?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  user           User                     @relation("DataSubjectRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  handledBy      User?                    @relation("DataSubjectRequestHandler", fields: [handledById], references: [id], onDelete: SetNull)
+  organization   Organization?            @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([organizationId, status, dueAt])
+  @@index([handledById, status, dueAt])
+}
+
+model PrivacyLegalHold {
+  id               String                    @id @default(cuid())
+  organizationId   String?
+  resourceType     String
+  resourceId       String
+  reason           String
+  deletionStrategy RetentionDeletionStrategy?
+  active           Boolean                   @default(true)
+  createdById      String?
+  releasedAt       DateTime?
+  metadata         Json?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  organization     Organization?             @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdBy        User?                     @relation("PrivacyLegalHoldCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, active, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId, active])
+}
+
+model PrivacyIncident {
+  id                            String                @id @default(cuid())
+  organizationId                String?
+  severity                      PrivacyIncidentSeverity
+  affectedDataCategories        Json
+  affectedUserCountEstimate     Int?
+  discoveredAt                  DateTime
+  containedAt                   DateTime?
+  rootCause                     String?
+  mitigationSteps               String?
+  requiresAuthorityNotification Boolean               @default(false)
+  requiresUserNotification      Boolean               @default(false)
+  status                        PrivacyIncidentStatus @default(OPEN)
+  createdById                   String?
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @updatedAt
+  organization                  Organization?         @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdBy                     User?                 @relation("PrivacyIncidentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, severity, createdAt(sort: Desc)])
+  @@index([status, discoveredAt(sort: Desc)])
+}
+
+model DataProduct {
+  id                         String          @id @default(cuid())
+  organizationId             String?
+  productName                String
+  productType                DataProductType
+  description                String
+  sourceTables               Json
+  outputFields               Json
+  aggregationLevel           String?
+  minimumCohortSize          Int             @default(100)
+  privacyRiskScore           Int             @default(0)
+  exportAllowed              Boolean         @default(false)
+  requiresLegalReview        Boolean         @default(true)
+  requiresDpoApproval        Boolean         @default(true)
+  contractRequired           Boolean         @default(true)
+  reidentificationProhibited Boolean         @default(true)
+  approvalStatus             ApprovalStatus  @default(PENDING)
+  approvedAt                 DateTime?
+  approvedById               String?
+  buyerContractAccepted      Boolean         @default(false)
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  organization               Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  approvedBy                 User?           @relation("DataProductApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  exportManifests            DataExportManifest[]
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([productType, approvalStatus])
+}
+
+model DataExportManifest {
+  id                 String          @id @default(cuid())
+  organizationId     String?
+  productId          String
+  requestedById      String?
+  buyerName          String
+  buyerEmail         String?
+  contractAcceptedAt DateTime?
+  decision           PrivacyDecision
+  reason             String?
+  manifest           Json
+  downloadedAt       DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  organization       Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  product            DataProduct     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  requestedBy        User?           @relation("DataExportManifestRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([productId, createdAt(sort: Desc)])
+}
+
+model PrivacyAuditLog {
+  id             String          @id @default(cuid())
+  organizationId String?
+  actorId        String?
+  actorRole      String?
+  action         String
+  resourceType   String
+  resourceId     String?
+  decision       PrivacyDecision?
+  reason         String?
+  metadata       Json?
+  createdAt      DateTime        @default(now())
+  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor          User?           @relation("PrivacyAuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId, createdAt(sort: Desc)])
 }
 
 model ProjectAnalysis {

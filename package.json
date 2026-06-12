@@ -16,7 +16,9 @@
     "jobs:steam:once": "tsx src/jobs/steam/run-steam-sync-once.ts",
     "security:migrate-secrets": "tsx scripts/migrate-encrypted-secrets.ts",
     "security:test": "tsx scripts/security-self-test.ts",
-    "entitlements:test": "tsx scripts/entitlements-self-test.ts"
+    "entitlements:test": "tsx scripts/entitlements-self-test.ts",
+    "privacy:test": "tsx scripts/privacy-self-test.ts",
+    "privacy:retention": "tsx scripts/run-privacy-retention.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
