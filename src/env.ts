@@ -100,6 +100,7 @@ const envSchema = z.object({
   COMPANY_DOCUMENTS_BUCKET: optionalString,
   USER_AVATARS_BUCKET: optionalString,
   COMMUNITY_MEDIA_BUCKET: optionalString,
+  PROJECT_ART_ASSETS_BUCKET: optionalString,
   GOOGLE_SHEETS_CLIENT_EMAIL: optionalEmail,
   GOOGLE_SHEETS_PRIVATE_KEY: optionalString,
   GOOGLE_SHEETS_FOLDER_ID: optionalString

@@ -211,6 +211,18 @@ export interface ProjectDetailResponse extends ProjectListItem {
       referenceGameNames?: string[];
     } | null;
   } | null;
+  artAssets: Array<{
+    id: string;
+    kind: string;
+    originalName: string;
+    mimeType: string;
+    sizeBytes: number;
+    width: number | null;
+    height: number | null;
+    notes: string | null;
+    signedUrl: string | null;
+    createdAt: string;
+  }>;
   competitorGames: Array<{
     steamGame: {
       id: string;

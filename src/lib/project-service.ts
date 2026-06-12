@@ -10,6 +10,11 @@ import {
 } from "@/lib/entitlements";
 import { generateAiProjectMarketAnalysis } from "@/lib/market-analysis-ai";
 import { buildHybridMarketIntelligence } from "@/lib/market-intelligence";
+import {
+  createProjectArtAssetSignedUrl,
+  deleteProjectArtAssetFile,
+  uploadProjectArtAssetFile
+} from "@/lib/project-art-storage";
 import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
 import { slugify } from "@/lib/slugify";
 import { fetchSteamSearchAppIds } from "@/lib/steam/client";
@@ -72,6 +77,20 @@ function decryptProject<T extends {
     playerFantasy: decryptProjectField(project.playerFantasy, project.organizationId, project.workspaceId, "playerFantasy"),
     gdds: project.gdds?.map(decryptGdd)
   } as T;
+}
+
+async function hydrateProjectArtAssets<T extends { artAssets?: Array<{ storagePath: string }> }>(project: T) {
+  if (!project.artAssets?.length) {
+    return project;
+  }
+
+  return {
+    ...project,
+    artAssets: await Promise.all(project.artAssets.map(async (asset) => ({
+      ...asset,
+      signedUrl: await createProjectArtAssetSignedUrl(asset.storagePath).catch(() => null)
+    })))
+  };
 }
 
 function parseCsv(value?: string | null) {
@@ -776,6 +795,11 @@ const projectInclude = {
     }
   },
   artAnalysis: true,
+  artAssets: {
+    orderBy: {
+      createdAt: "desc"
+    }
+  },
   milestones: {
     orderBy: [
       { sortOrder: "asc" },
@@ -932,7 +956,7 @@ export async function createProject(params: {
     ]
   });
 
-  return decryptProject(project);
+  return hydrateProjectArtAssets(decryptProject(project));
 }
 
 export async function listProjects(workspaceId: string) {
@@ -966,7 +990,7 @@ export async function getProjectById(projectId: string, workspaceId: string) {
     include: projectInclude
   });
 
-  return project ? decryptProject(project) : null;
+  return project ? hydrateProjectArtAssets(decryptProject(project)) : null;
 }
 
 export async function updateProject(params: {
@@ -1075,7 +1099,7 @@ export async function updateProject(params: {
     include: projectInclude
   });
 
-  return decryptProject(project);
+  return hydrateProjectArtAssets(decryptProject(project));
 }
 
 export async function analyzeProject(projectId: string, workspaceId: string, userId: string) {
@@ -1635,7 +1659,7 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     }
   });
 
-  return decryptProject(result);
+  return hydrateProjectArtAssets(decryptProject(result));
 }
 
 export async function analyzeProjectArt(projectId: string, workspaceId: string, userId: string) {
@@ -1645,6 +1669,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       workspaceId
     }
   }));
+  const artAssets = await db.projectArtAsset.findMany({
+    where: {
+      projectId: project.id
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
 
   const entitlementContext = {
     userId,
@@ -1687,6 +1719,23 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     const ageInDays = (Date.now() - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
     return ageInDays <= 365;
   }).length;
+  const measuredAssets = artAssets.filter((asset) => asset.width && asset.height);
+  const highResolutionAssets = measuredAssets.filter((asset) => (asset.width ?? 0) >= 1280 && (asset.height ?? 0) >= 720);
+  const capsuleRatioAssets = measuredAssets.filter((asset) => {
+    const ratio = (asset.width ?? 1) / (asset.height ?? 1);
+    return ratio >= 1.5 && ratio <= 2.2;
+  });
+  const squareAssets = measuredAssets.filter((asset) => {
+    const ratio = (asset.width ?? 1) / (asset.height ?? 1);
+    return ratio >= 0.85 && ratio <= 1.15;
+  });
+  const artAssetEvidenceScore = clampScore(
+    artAssets.length * 9
+    + measuredAssets.length * 8
+    + highResolutionAssets.length * 7
+    + capsuleRatioAssets.length * 8
+    + squareAssets.length * 5
+  );
   const artText = [
     project.artDirection,
     project.description,
@@ -1736,6 +1785,8 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     + (project.artDirection?.trim() ? 10 : -6)
     + (project.differentiator?.trim() ? 8 : 0)
     + (project.playerFantasy?.trim() ? 6 : 0)
+    + (artAssetEvidenceScore * 0.12)
+    - (artAssets.length === 0 ? 12 : 0)
     - Math.min(competitionCount, 18) * 1.5,
     18,
     96
@@ -1743,6 +1794,7 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
   const productionComplexityScore = clampScore(
     45
     + realismComplexity
+    + Math.min(highResolutionAssets.length * 3, 9)
     + (project.pricePointCents && project.pricePointCents >= 2999 ? 8 : 0)
     + (competitionCount > 15 ? 8 : 0)
   );
@@ -1756,11 +1808,15 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
   );
   const visualTrendScore = clampScore(competitionCount > 0 ? (releaseMomentum / competitionCount) * 100 : 25);
   const styleSummary =
-    topCompetitors.length > 0
+    artAssets.length > 0
+      ? `${artAssets.length} uploaded art asset${artAssets.length === 1 ? "" : "s"} were reviewed. ${measuredAssets.length} have readable dimensions, ${capsuleRatioAssets.length} are close to Steam capsule/header ratios, and ${highResolutionAssets.length} meet a basic high-resolution threshold. Comparable Steam games currently suggest ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"} as the shelf baseline.`
+      : topCompetitors.length > 0
       ? `Comparable Steam games currently cluster around ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"}, with ${paletteKeywords.slice(0, 2).join(" plus ") || "readable capsule contrast"} showing up as the strongest shelf signal.`
       : "The current dataset does not have enough comparable art references yet, so the visual brief should be treated as exploratory.";
   const fitSummary =
-    marketFitScore >= 70
+    artAssets.length === 0
+      ? "No artwork has been uploaded yet, so this is still a visual-direction estimate rather than a true asset review."
+      : marketFitScore >= 70
       ? "The proposed art direction is close to the current quality bar for this niche and should support commercial positioning if execution stays consistent."
       : "The current art direction thesis is still under-specified relative to the niche, so the market fit will depend heavily on sharpening readability, fantasy, and store presence.";
   const productionSummary =
@@ -1769,6 +1825,8 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       : "This direction is commercially workable without blockbuster art scope, as long as the team keeps consistency high across key surfaces.";
   const recommendationSummary = [
     distinctivenessScore < 55 ? "Push a more ownable silhouette or color story before production lock." : "Keep the current visual hook and reinforce it in the capsule and hero scenes.",
+    artAssets.length === 0 ? "Upload capsule art, key art, screenshots, or mood targets before treating this as a real art review." : null,
+    artAssets.length > 0 && capsuleRatioAssets.length === 0 ? "Add at least one wide store-facing image so the analysis can judge Steam capsule/header readability." : null,
     priceFitScore < 55 ? `Your target price is drifting away from the niche median of ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}; align the finish bar or pricing.` : null,
     competitionCount > 12 ? "The shelf is crowded, so capsule readability and instant fantasy communication matter more than detail density." : "There is room to claim a stronger identity if the art direction lands cleanly."
   ]
@@ -1828,6 +1886,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
         planLabel: organization.subscriptionPlan,
         referenceGameIds: topCompetitors.map((game) => game.id),
         referenceGameNames: topCompetitors.map((game) => game.name),
+        uploadedArtAssets: {
+          total: artAssets.length,
+          measured: measuredAssets.length,
+          highResolution: highResolutionAssets.length,
+          capsuleRatio: capsuleRatioAssets.length,
+          square: squareAssets.length,
+          evidenceScore: artAssetEvidenceScore
+        },
         proArtBrief
       }
     },
@@ -1847,6 +1913,14 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
         planLabel: organization.subscriptionPlan,
         referenceGameIds: topCompetitors.map((game) => game.id),
         referenceGameNames: topCompetitors.map((game) => game.name),
+        uploadedArtAssets: {
+          total: artAssets.length,
+          measured: measuredAssets.length,
+          highResolution: highResolutionAssets.length,
+          capsuleRatio: capsuleRatioAssets.length,
+          square: squareAssets.length,
+          evidenceScore: artAssetEvidenceScore
+        },
         proArtBrief
       }
     }
@@ -1897,7 +1971,80 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     }
   });
 
-  return decryptProject(result);
+  return hydrateProjectArtAssets(decryptProject(result));
+}
+
+export async function uploadProjectArtAsset(params: {
+  projectId: string;
+  workspaceId: string;
+  userId: string;
+  file: File;
+  kind?: string;
+  notes?: string;
+}) {
+  const project = await db.project.findFirstOrThrow({
+    where: {
+      id: params.projectId,
+      workspaceId: params.workspaceId
+    }
+  });
+
+  await assertCanUseFeature({
+    userId: params.userId,
+    workspaceId: params.workspaceId,
+    organizationId: project.organizationId
+  }, "artAnalysis");
+
+  const upload = await uploadProjectArtAssetFile({
+    organizationId: project.organizationId,
+    projectId: project.id,
+    file: params.file
+  });
+
+  const asset = await db.projectArtAsset.create({
+    data: {
+      projectId: project.id,
+      uploadedById: params.userId,
+      kind: params.kind?.trim() || "reference",
+      storagePath: upload.storagePath,
+      originalName: upload.originalName,
+      mimeType: upload.mimeType,
+      sizeBytes: upload.sizeBytes,
+      width: upload.width,
+      height: upload.height,
+      notes: params.notes?.trim() || null
+    }
+  });
+
+  return {
+    ...asset,
+    signedUrl: await createProjectArtAssetSignedUrl(asset.storagePath).catch(() => null)
+  };
+}
+
+export async function deleteProjectArtAsset(params: {
+  projectId: string;
+  assetId: string;
+  workspaceId: string;
+}) {
+  const asset = await db.projectArtAsset.findFirstOrThrow({
+    where: {
+      id: params.assetId,
+      projectId: params.projectId,
+      project: {
+        workspaceId: params.workspaceId
+      }
+    }
+  });
+
+  await db.projectArtAsset.delete({
+    where: {
+      id: asset.id
+    }
+  });
+  await deleteProjectArtAssetFile(asset.storagePath);
+
+  return { id: asset.id };
 }
 
 export async function generateProjectGdd(projectId: string, workspaceId: string, userId: string) {
@@ -2135,7 +2282,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
 
   await recordSubscriptionUsage(project.organizationId, "gddsGenerated");
 
-  return decryptProject(result);
+  return hydrateProjectArtAssets(decryptProject(result));
 }
 
 export async function createKanbanColumn(params: {

@@ -969,6 +969,7 @@ model Project {
   gdds              ProjectGdd[]
   kanbanBoards      KanbanBoard[]
   artAnalysis       ProjectArtAnalysis?
+  artAssets         ProjectArtAsset[]
   communityPosts    CommunityPost[]
   companyDocuments  CompanyDocument[]
   complianceItems   ComplianceItem[]
@@ -1900,6 +1901,26 @@ model ProjectArtAnalysis {
   moodKeywords              Json?
   metadata                  Json?
   project                   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectArtAsset {
+  id           String   @id @default(cuid())
+  projectId    String
+  uploadedById String
+  kind         String   @default("reference")
+  storagePath  String
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt(sort: Desc)])
+  @@index([uploadedById, createdAt(sort: Desc)])
 }
 
 model ProjectCompetitorGame {

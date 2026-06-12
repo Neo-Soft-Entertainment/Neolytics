@@ -42,6 +42,7 @@ export function ProjectDetailClient({
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzingArt, setIsAnalyzingArt] = useState(false);
+  const [isUploadingArtAsset, setIsUploadingArtAsset] = useState(false);
   const [isGeneratingGdd, setIsGeneratingGdd] = useState(false);
   const [projectForm, setProjectForm] = useState({
     name: "",
@@ -96,6 +97,10 @@ export function ProjectDetailClient({
   const [kanbanAssigneeFilter, setKanbanAssigneeFilter] = useState("all");
   const [kanbanLabelFilter, setKanbanLabelFilter] = useState("all");
   const [kanbanViewMode, setKanbanViewMode] = useState<"detailed" | "compact">("detailed");
+  const [artAssetForm, setArtAssetForm] = useState({
+    kind: "capsule",
+    notes: ""
+  });
 
   useEffect(() => {
     if (!query.data) {
@@ -326,6 +331,62 @@ export function ProjectDetailClient({
     }
 
     setFeedback(t("projectDetail.artAnalysisUpdated"));
+    await query.refetch();
+  }
+
+  async function uploadArtAsset(file: File | null) {
+    setFeedback(null);
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/") || file.size > 12 * 1024 * 1024) {
+      setFeedback("Upload an image up to 12 MB.");
+      return;
+    }
+
+    setIsUploadingArtAsset(true);
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("kind", artAssetForm.kind);
+    payload.append("notes", artAssetForm.notes);
+
+    const response = await fetch(`/api/projects/${projectId}/art-assets`, {
+      method: "POST",
+      body: payload
+    });
+
+    setIsUploadingArtAsset(false);
+
+    if (!response.ok) {
+      const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(errorPayload?.message ?? "Unable to upload art asset.");
+      return;
+    }
+
+    setArtAssetForm({
+      kind: "capsule",
+      notes: ""
+    });
+    setFeedback("Art asset uploaded.");
+    await query.refetch();
+  }
+
+  async function deleteArtAsset(assetId: string) {
+    setFeedback(null);
+
+    const response = await fetch(`/api/projects/${projectId}/art-assets/${assetId}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(errorPayload?.message ?? "Unable to delete art asset.");
+      return;
+    }
+
+    setFeedback("Art asset deleted.");
     await query.refetch();
   }
 
@@ -677,6 +738,14 @@ export function ProjectDetailClient({
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
   const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
   const artMetadata = (project.artAnalysis?.metadata ?? null) as {
+    uploadedArtAssets?: {
+      total: number;
+      measured: number;
+      highResolution: number;
+      capsuleRatio: number;
+      square: number;
+      evidenceScore: number;
+    };
     proArtBrief?: {
       capsuleReadinessScore: number;
       shelfGapSummary: string;
@@ -1325,6 +1394,82 @@ export function ProjectDetailClient({
             </Card>
           ) : (
             <>
+              <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/15">
+                <CardHeader>
+                  <CardTitle>Uploaded art assets</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="grid gap-3 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4 lg:grid-cols-[180px_minmax(0,1fr)_220px]">
+                    <div className="space-y-2">
+                      <Label>Asset type</Label>
+                      <Select value={artAssetForm.kind} onValueChange={(value) => setArtAssetForm((current) => ({ ...current, kind: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="capsule">Steam capsule</SelectItem>
+                          <SelectItem value="header">Header/key art</SelectItem>
+                          <SelectItem value="screenshot">Screenshot</SelectItem>
+                          <SelectItem value="character">Character</SelectItem>
+                          <SelectItem value="environment">Environment</SelectItem>
+                          <SelectItem value="reference">Reference</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="art-asset-notes">Notes</Label>
+                      <Input
+                        id="art-asset-notes"
+                        value={artAssetForm.notes}
+                        onChange={(event) => setArtAssetForm((current) => ({ ...current, notes: event.target.value }))}
+                        placeholder="What should the analysis look for?"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="art-asset-file">Image</Label>
+                      <Input
+                        id="art-asset-file"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        disabled={isUploadingArtAsset}
+                        onChange={(event) => uploadArtAsset(event.target.files?.[0] ?? null)}
+                      />
+                    </div>
+                  </div>
+                  {project.artAssets.length > 0 ? (
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {project.artAssets.map((asset) => (
+                        <div key={asset.id} className="overflow-hidden rounded-2xl border bg-muted/20">
+                          {asset.signedUrl ? (
+                            <img src={asset.signedUrl} alt={asset.originalName} className="h-52 w-full object-cover" />
+                          ) : (
+                            <div className="flex h-52 items-center justify-center bg-muted text-sm text-muted-foreground">Preview unavailable</div>
+                          )}
+                          <div className="space-y-2 p-4 text-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium">{asset.kind.replaceAll("_", " ")}</p>
+                                <p className="text-muted-foreground">{asset.originalName}</p>
+                              </div>
+                              <Button size="sm" variant="ghost" onClick={() => deleteArtAsset(asset.id)}>
+                                Delete
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensions unavailable"} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            {asset.notes ? <p className="text-xs text-muted-foreground">{asset.notes}</p> : null}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+                      Upload capsule art, headers, screenshots, characters, environments, or references before running art analysis. Without uploads, the system can only estimate from project text and market comps.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Card>
                   <CardHeader>
@@ -1359,6 +1504,25 @@ export function ProjectDetailClient({
                   </CardContent>
                 </Card>
               </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Asset evidence</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-3">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Uploaded assets</p>
+                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.total ?? project.artAssets.length}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Store-ratio images</p>
+                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.capsuleRatio ?? 0}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Evidence score</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.evidenceScore ?? null)}</p>
+                  </div>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Integrated art direction analysis</CardTitle>
