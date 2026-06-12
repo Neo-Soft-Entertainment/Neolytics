@@ -92,6 +92,10 @@ export function ProjectDetailClient({
     dueDate: string;
     labels: string;
   }>>({});
+  const [kanbanSearch, setKanbanSearch] = useState("");
+  const [kanbanAssigneeFilter, setKanbanAssigneeFilter] = useState("all");
+  const [kanbanLabelFilter, setKanbanLabelFilter] = useState("all");
+  const [kanbanViewMode, setKanbanViewMode] = useState<"detailed" | "compact">("detailed");
 
   useEffect(() => {
     if (!query.data) {
@@ -181,6 +185,54 @@ export function ProjectDetailClient({
     () => board?.columns.map((column) => ({ id: column.id, name: column.name })) ?? [],
     [board]
   );
+  const kanbanLabels = useMemo(() => {
+    const labels = new Set<string>();
+
+    for (const column of board?.columns ?? []) {
+      for (const card of column.cards) {
+        for (const label of getKanbanCardLabels(card.labels)) {
+          labels.add(label);
+        }
+      }
+    }
+
+    return Array.from(labels).sort((first, second) => first.localeCompare(second));
+  }, [board]);
+  const kanbanAssignees = useMemo(() => {
+    const assignees = new Set<string>();
+
+    for (const column of board?.columns ?? []) {
+      for (const card of column.cards) {
+        if (card.assigneeLabel) {
+          assignees.add(card.assigneeLabel);
+        }
+      }
+    }
+
+    return Array.from(assignees).sort((first, second) => first.localeCompare(second));
+  }, [board]);
+  const filteredKanbanColumns = useMemo(() => {
+    const search = kanbanSearch.trim().toLowerCase();
+
+    return board?.columns.map((column) => ({
+      ...column,
+      cards: column.cards.filter((card) => {
+        const labels = getKanbanCardLabels(card.labels);
+        const matchesSearch =
+          !search ||
+          card.title.toLowerCase().includes(search) ||
+          (card.description ?? "").toLowerCase().includes(search) ||
+          (card.assigneeLabel ?? "").toLowerCase().includes(search) ||
+          labels.some((label) => label.toLowerCase().includes(search));
+        const matchesAssignee = kanbanAssigneeFilter === "all" || card.assigneeLabel === kanbanAssigneeFilter;
+        const matchesLabel = kanbanLabelFilter === "all" || labels.includes(kanbanLabelFilter);
+
+        return matchesSearch && matchesAssignee && matchesLabel;
+      })
+    })) ?? [];
+  }, [board, kanbanAssigneeFilter, kanbanLabelFilter, kanbanSearch]);
+  const totalKanbanCards = board?.columns.reduce((sum, column) => sum + column.cards.length, 0) ?? 0;
+  const visibleKanbanCards = filteredKanbanColumns.reduce((sum, column) => sum + column.cards.length, 0);
   const latestGdd = query.data?.gdds[0] ?? null;
   const canRunViabilityAnalysis = entitlements.canUse("viabilityAnalysis");
   const canRunArtAnalysis = entitlements.canUse("artAnalysis");
@@ -1690,6 +1742,57 @@ export function ProjectDetailClient({
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
+              <CardTitle>Board controls</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_180px_190px]">
+              <Input
+                value={kanbanSearch}
+                onChange={(event) => setKanbanSearch(event.target.value)}
+                placeholder="Search title, description, owner or labels"
+              />
+              <Select value={kanbanAssigneeFilter} onValueChange={setKanbanAssigneeFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All owners</SelectItem>
+                  {kanbanAssignees.map((assignee) => (
+                    <SelectItem key={assignee} value={assignee}>
+                      {assignee}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={kanbanLabelFilter} onValueChange={setKanbanLabelFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Label" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All labels</SelectItem>
+                  {kanbanLabels.map((label) => (
+                    <SelectItem key={label} value={label}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={kanbanViewMode} onValueChange={(value) => setKanbanViewMode(value as "detailed" | "compact")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="detailed">Detailed cards</SelectItem>
+                  <SelectItem value="compact">Compact cards</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground lg:col-span-4">
+                Showing {formatNumber(visibleKanbanCards)} of {formatNumber(totalKanbanCards)} cards. Use labels as custom fields like priority, discipline, sprint, risk or platform.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader>
               <CardTitle>{t("projectDetail.customizeBoard")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_160px_140px]">
@@ -1708,7 +1811,7 @@ export function ProjectDetailClient({
           </Card>
           <div className="-mx-4 overflow-x-auto px-4 pb-4">
             <div className="flex min-w-max gap-4">
-              {board?.columns.map((column, index) => (
+              {filteredKanbanColumns.map((column, index) => (
                 <Card key={column.id} className="h-fit w-[320px] shrink-0 overflow-hidden sm:w-[360px] 2xl:w-[390px]">
                 <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader className="space-y-3">
@@ -1725,6 +1828,9 @@ export function ProjectDetailClient({
                       }))}
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formatNumber(column.cards.length)} visible card{column.cards.length === 1 ? "" : "s"}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     <Input
                       className="min-w-[120px] flex-1"
@@ -1777,6 +1883,17 @@ export function ProjectDetailClient({
                             }
                           }))}
                         />
+                        {getKanbanCardLabels(card.labels).length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {getKanbanCardLabels(card.labels).map((label) => (
+                              <span key={label} className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[11px] font-medium text-cyan-700 dark:text-cyan-200">
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {kanbanViewMode === "detailed" ? (
+                          <>
                         <Textarea
                           value={cardEdits[card.id]?.description ?? card.description ?? ""}
                           onChange={(event) => setCardEdits((current) => ({
@@ -1833,6 +1950,14 @@ export function ProjectDetailClient({
                           }))}
                           placeholder={t("projectDetail.labelsPlaceholder")}
                         />
+                          </>
+                        ) : (
+                          <div className="grid gap-1 text-xs text-muted-foreground">
+                            {card.assigneeLabel ? <span>Owner: {card.assigneeLabel}</span> : null}
+                            {card.dueDate ? <span>Due: {new Date(card.dueDate).toLocaleDateString()}</span> : null}
+                            {card.description ? <span className="line-clamp-2">{card.description}</span> : null}
+                          </div>
+                        )}
                         <Select value={column.id} onValueChange={(value) => moveCard(card.id, value)}>
                           <SelectTrigger>
                             <SelectValue />
@@ -1948,4 +2073,12 @@ export function ProjectDetailClient({
       </Tabs>
     </div>
   );
+}
+
+function getKanbanCardLabels(labels: unknown) {
+  if (!Array.isArray(labels)) {
+    return [];
+  }
+
+  return labels.filter((label): label is string => typeof label === "string" && label.trim().length > 0);
 }
