@@ -39,6 +39,75 @@ enum ProjectStage {
   ARCHIVED
 }
 
+enum DemoElementKind {
+  MECHANIC
+  CHARACTER
+  ITEM
+  LOCATION
+  DIALOGUE
+  QUEST
+}
+
+enum DemoEntityStatus {
+  IDEA
+  PLANNED
+  IN_DEVELOPMENT
+  IMPLEMENTED
+  TESTING
+  REVIEW
+  CUT
+  DEFERRED
+}
+
+enum DemoPriority {
+  ESSENTIAL
+  IMPORTANT
+  OPTIONAL
+  POST_DEMO
+}
+
+enum DemoStage {
+  IDEATION
+  INITIAL_ORGANIZATION
+  DEMO_DEFINITION
+  PLAYABLE_LINE_PLANNING
+  FOUNDATION_IMPLEMENTATION
+  PLAYABLE_LINE_IMPLEMENTATION
+  POLISH
+  TESTING
+  PLAYABLE_DEMO
+  POST_DEMO
+}
+
+enum DemoDependencyEntityType {
+  MECHANIC
+  CHARACTER
+  ITEM
+  LOCATION
+  DIALOGUE
+  QUEST
+  PLAYABLE_STEP
+  EMOTIONAL_BEAT
+  BUG
+  BLOCKER
+}
+
+enum DemoBugSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum DemoBugStatus {
+  OPEN
+  IN_REVIEW
+  FIXING
+  RESOLVED
+  IGNORED
+  DEFERRED
+}
+
 enum LegalEntityStatus {
   DRAFT
   ACTIVE
@@ -549,6 +618,7 @@ model Workspace {
   aiReports      AiReport[]
   projects       Project[]
   communityPosts CommunityPost[]
+  demoPlans      DemoPlan[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -913,10 +983,177 @@ model Project {
   milestones        ProjectMilestone[]
   approvalRequests  ApprovalRequest[]
   payableTitles     PayableTitle[]
+  demoPlans          DemoPlan[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([workspaceId, createdAt(sort: Desc)])
+}
+
+model DemoPlan {
+  id                String              @id @default(cuid())
+  workspaceId       String
+  projectId         String
+  demoGoal          String?
+  demoScope         String?
+  targetPlatform    String?
+  targetBuildDate   DateTime?
+  currentStage      DemoStage           @default(IDEATION)
+  progressEstimate  Int                 @default(0)
+  notes             String?
+  stageExitCriteria String?
+  activeProblems    String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  workspace         Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  elements          DemoElement[]
+  playableSteps     DemoPlayableStep[]
+  emotionalBeats    DemoEmotionalBeat[]
+  dependencies      DemoDependency[]
+  bugs              DemoBug[]
+  blockers          DemoBlocker[]
+
+  @@unique([workspaceId, projectId])
+  @@index([workspaceId, updatedAt(sort: Desc)])
+  @@index([projectId])
+}
+
+model DemoElement {
+  id          String           @id @default(cuid())
+  workspaceId String
+  projectId   String
+  demoPlanId  String
+  kind        DemoElementKind
+  name        String
+  description String?
+  status      DemoEntityStatus @default(IDEA)
+  priority    DemoPriority     @default(IMPORTANT)
+  tags        String[]         @default([])
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  demoPlan    DemoPlan         @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId, kind])
+  @@index([demoPlanId, kind, priority])
+}
+
+model DemoPlayableStep {
+  id                  String           @id @default(cuid())
+  workspaceId         String
+  projectId           String
+  demoPlanId          String
+  sortOrder           Int              @default(0)
+  title               String
+  description         String?
+  playerAction        String?
+  playerObjective     String?
+  expectedResult      String?
+  relatedLocationId   String?
+  relatedCharacterIds String[]         @default([])
+  relatedItemIds      String[]         @default([])
+  relatedMechanicIds  String[]         @default([])
+  relatedQuestIds     String[]         @default([])
+  relatedDialogueIds  String[]         @default([])
+  status              DemoEntityStatus @default(IDEA)
+  priority            DemoPriority     @default(ESSENTIAL)
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  demoPlan            DemoPlan         @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId, sortOrder])
+  @@index([demoPlanId, priority, status])
+}
+
+model DemoEmotionalBeat {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  projectId       String
+  demoPlanId      String
+  sortOrder       Int      @default(0)
+  playableStepId  String?
+  momentName      String
+  desiredEmotion  String
+  intensity       Int      @default(50)
+  triggerElements String[] @default([])
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  demoPlan        DemoPlan @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId, sortOrder])
+  @@index([demoPlanId])
+}
+
+model DemoDependency {
+  id             String                   @id @default(cuid())
+  workspaceId    String
+  projectId      String
+  demoPlanId     String
+  sourceType     DemoDependencyEntityType
+  sourceId       String
+  targetType     DemoDependencyEntityType
+  targetId       String
+  dependencyType String
+  description    String?
+  isCritical     Boolean                  @default(false)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  demoPlan       DemoPlan                 @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId])
+  @@index([demoPlanId, sourceType, sourceId])
+  @@index([demoPlanId, targetType, targetId])
+}
+
+model DemoBug {
+  id                     String                    @id @default(cuid())
+  workspaceId            String
+  projectId              String
+  demoPlanId             String
+  title                  String
+  description            String?
+  severity               DemoBugSeverity           @default(MEDIUM)
+  status                 DemoBugStatus             @default(OPEN)
+  affectedEntityType     DemoDependencyEntityType?
+  affectedEntityId       String?
+  affectedPlayableStepId String?
+  reproductionSteps      String?
+  expectedResult         String?
+  actualResult           String?
+  notes                  String?
+  createdAt              DateTime                  @default(now())
+  resolvedAt             DateTime?
+  updatedAt              DateTime                  @updatedAt
+  demoPlan               DemoPlan                  @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId, severity, status])
+  @@index([demoPlanId, affectedPlayableStepId])
+}
+
+model DemoBlocker {
+  id                String                    @id @default(cuid())
+  workspaceId       String
+  projectId         String
+  demoPlanId        String
+  title             String
+  description       String?
+  blockedEntityType DemoDependencyEntityType?
+  blockedEntityId   String?
+  cause             String?
+  possibleSolution  String?
+  status            DemoBugStatus             @default(OPEN)
+  priority          DemoPriority              @default(IMPORTANT)
+  notes             String?
+  createdAt         DateTime                  @default(now())
+  resolvedAt        DateTime?
+  updatedAt         DateTime                  @updatedAt
+  demoPlan          DemoPlan                  @relation(fields: [demoPlanId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, projectId, status])
+  @@index([demoPlanId, blockedEntityType, blockedEntityId])
 }
 
 model CostCenter {
