@@ -307,6 +307,46 @@ enum CommercePaymentStatus {
   CANCELED
 }
 
+enum MarketingCampaignStatus {
+  DRAFT
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELED
+}
+
+enum MarketingCampaignChannel {
+  STEAM_STORE
+  STEAM_NEXT_FEST
+  DISCORD
+  TIKTOK
+  YOUTUBE
+  INSTAGRAM
+  REDDIT
+  X
+  PRESS
+  INFLUENCER
+  EMAIL
+  META_ADS
+  GOOGLE_ADS
+  FESTIVAL
+  COMMUNITY
+  OTHER
+}
+
+enum MarketingCampaignObjective {
+  WISHLISTS
+  DEMO_DOWNLOADS
+  LAUNCH_SALES
+  PLAYTESTING
+  PRESS_AWARENESS
+  COMMUNITY_GROWTH
+  PUBLISHER_SIGNAL
+  RETENTION
+  OTHER
+}
+
 enum ProjectMilestoneStatus {
   PLANNED
   IN_PROGRESS
@@ -506,6 +546,7 @@ model User {
   requestedApprovals         ApprovalRequest[]        @relation("ApprovalRequestedBy")
   decidedApprovals           ApprovalRequest[]        @relation("ApprovalDecidedBy")
   createdCommerceOrders      CommerceOrder[]          @relation("CommerceOrderCreatedBy")
+  createdMarketingCampaigns  MarketingCampaign[]      @relation("MarketingCampaignCreatedBy")
 }
 
 model Account {
@@ -601,6 +642,7 @@ model Organization {
   payablePayments                PayablePayment[]
   commerceChannels               CommerceChannel[]
   commerceOrders                 CommerceOrder[]
+  marketingCampaigns             MarketingCampaign[]
   privacyIncidents               PrivacyIncident[]
   dataProducts                   DataProduct[]
   dataExportManifests            DataExportManifest[]
@@ -999,51 +1041,52 @@ model CompetitorSetGame {
 }
 
 model Project {
-  id                String                  @id @default(cuid())
-  organizationId    String
-  workspaceId       String
-  createdById       String
-  name              String
-  slug              String
-  elevatorPitch     String?
-  description       String?
-  genreInput        String?
-  tagInput          String?
-  targetAudience    String?
-  coreLoop          String?
-  differentiator    String?
-  monetizationModel String?
-  artDirection      String?
-  playerFantasy     String?
-  pricePointCents   Int?
-  stage             ProjectStage            @default(DISCOVERY)
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workspace         Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  createdBy         User                    @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  analysis          ProjectAnalysis?
-  competitorGames   ProjectCompetitorGame[]
-  gdds              ProjectGdd[]
-  kanbanBoards      KanbanBoard[]
-  artAnalysis       ProjectArtAnalysis?
-  artAssets         ProjectArtAsset[]
-  communityPosts    CommunityPost[]
-  companyDocuments  CompanyDocument[]
-  complianceItems   ComplianceItem[]
-  budgets           Budget[]
-  revenueEntries    RevenueEntry[]
-  expenseEntries    ExpenseEntry[]
-  contracts         Contract[]
-  royaltyAgreements RoyaltyAgreement[]
-  royaltyStatements RoyaltyStatement[]
-  issuedInvoices    IssuedInvoice[]
-  receivedInvoices  ReceivedInvoice[]
-  milestones        ProjectMilestone[]
-  approvalRequests  ApprovalRequest[]
-  payableTitles     PayableTitle[]
-  demoPlans         DemoPlan[]
-  commerceOrders    CommerceOrder[]
+  id                 String                  @id @default(cuid())
+  organizationId     String
+  workspaceId        String
+  createdById        String
+  name               String
+  slug               String
+  elevatorPitch      String?
+  description        String?
+  genreInput         String?
+  tagInput           String?
+  targetAudience     String?
+  coreLoop           String?
+  differentiator     String?
+  monetizationModel  String?
+  artDirection       String?
+  playerFantasy      String?
+  pricePointCents    Int?
+  stage              ProjectStage            @default(DISCOVERY)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspace          Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy          User                    @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  analysis           ProjectAnalysis?
+  competitorGames    ProjectCompetitorGame[]
+  gdds               ProjectGdd[]
+  kanbanBoards       KanbanBoard[]
+  artAnalysis        ProjectArtAnalysis?
+  artAssets          ProjectArtAsset[]
+  communityPosts     CommunityPost[]
+  companyDocuments   CompanyDocument[]
+  complianceItems    ComplianceItem[]
+  budgets            Budget[]
+  revenueEntries     RevenueEntry[]
+  expenseEntries     ExpenseEntry[]
+  contracts          Contract[]
+  royaltyAgreements  RoyaltyAgreement[]
+  royaltyStatements  RoyaltyStatement[]
+  issuedInvoices     IssuedInvoice[]
+  receivedInvoices   ReceivedInvoice[]
+  milestones         ProjectMilestone[]
+  approvalRequests   ApprovalRequest[]
+  payableTitles      PayableTitle[]
+  demoPlans          DemoPlan[]
+  commerceOrders     CommerceOrder[]
+  marketingCampaigns MarketingCampaign[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
@@ -1441,6 +1484,38 @@ model CommerceOrder {
   @@index([organizationId, status, fulfillmentStatus])
   @@index([projectId])
   @@index([channelId])
+}
+
+model MarketingCampaign {
+  id             String                     @id @default(cuid())
+  organizationId String
+  projectId      String?
+  name           String
+  channel        MarketingCampaignChannel
+  objective      MarketingCampaignObjective @default(WISHLISTS)
+  status         MarketingCampaignStatus    @default(PLANNED)
+  currencyCode   String                     @default("USD")
+  budgetCents    BigInt                     @default(0)
+  spendCents     BigInt                     @default(0)
+  impressions    Int                        @default(0)
+  clicks         Int                        @default(0)
+  wishlists      Int                        @default(0)
+  demoDownloads  Int                        @default(0)
+  conversions    Int                        @default(0)
+  revenueCents   BigInt                     @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  notes          String?                    @db.Text
+  createdById    String
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?                   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy      User                       @relation("MarketingCampaignCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, status, startsAt])
+  @@index([organizationId, channel, createdAt(sort: Desc)])
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 model Contract {

@@ -2,7 +2,10 @@ import {
   CommerceChannelType,
   CommerceFulfillmentStatus,
   CommerceOrderStatus,
-  CommercePaymentStatus
+  CommercePaymentStatus,
+  MarketingCampaignChannel,
+  MarketingCampaignObjective,
+  MarketingCampaignStatus
 } from "@prisma/client";
 
 import { createAuditEvent } from "@/lib/audit-service";
@@ -22,7 +25,7 @@ function toIso(value: Date | null | undefined) {
 }
 
 export async function getCommerceOverview(organizationId: string) {
-  const [channels, orders, projects] = await Promise.all([
+  const [channels, orders, campaigns, projects] = await Promise.all([
     db.commerceChannel.findMany({
       where: {
         organizationId
@@ -45,6 +48,30 @@ export async function getCommerceOverview(organizationId: string) {
             type: true
           }
         },
+        project: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 80
+    }),
+    db.marketingCampaign.findMany({
+      where: {
+        organizationId
+      },
+      include: {
         project: {
           select: {
             id: true,
@@ -92,6 +119,68 @@ export async function getCommerceOverview(organizationId: string) {
 
     return total + toNumber(order.netCents);
   }, 0);
+  const activeCampaigns = campaigns.filter((campaign) => campaign.status === "ACTIVE").length;
+  const marketingSpendCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
+  const marketingBudgetCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.budgetCents), 0);
+  const attributedRevenueCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
+  const wishlists = campaigns.reduce((total, campaign) => total + campaign.wishlists, 0);
+  const demoDownloads = campaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0);
+  const campaignConversions = campaigns.reduce((total, campaign) => total + campaign.conversions, 0);
+  const campaignClicks = campaigns.reduce((total, campaign) => total + campaign.clicks, 0);
+  const channelPerformance = [...new Set(campaigns.map((campaign) => campaign.channel))].map((channel) => {
+    const channelCampaigns = campaigns.filter((campaign) => campaign.channel === channel);
+    const spendCents = channelCampaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
+    const revenueCents = channelCampaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
+    const impressions = channelCampaigns.reduce((total, campaign) => total + campaign.impressions, 0);
+    const clicks = channelCampaigns.reduce((total, campaign) => total + campaign.clicks, 0);
+    const channelWishlists = channelCampaigns.reduce((total, campaign) => total + campaign.wishlists, 0);
+    const conversions = channelCampaigns.reduce((total, campaign) => total + campaign.conversions, 0);
+
+    return {
+      channel,
+      campaignsCount: channelCampaigns.length,
+      spendCents,
+      revenueCents,
+      impressions,
+      clicks,
+      wishlists: channelWishlists,
+      demoDownloads: channelCampaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0),
+      conversions,
+      roas: spendCents > 0 ? revenueCents / spendCents : null,
+      clickThroughRate: impressions > 0 ? (clicks / impressions) * 100 : null,
+      conversionRate: clicks > 0 ? (conversions / clicks) * 100 : null,
+      costPerWishlistCents: channelWishlists > 0 ? Math.round(spendCents / channelWishlists) : null
+    };
+  }).sort((left, right) => right.revenueCents - left.revenueCents || right.wishlists - left.wishlists);
+  const projectSignals = projects.map((project) => {
+    const projectOrders = orders.filter((order) => order.projectId === project.id && order.paymentStatus === "PAID");
+    const projectCampaigns = campaigns.filter((campaign) => campaign.projectId === project.id);
+    const salesCents = projectOrders.reduce((total, order) => total + toNumber(order.netCents), 0);
+    const spendCents = projectCampaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
+    const revenueCents = projectCampaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
+    const projectWishlists = projectCampaigns.reduce((total, campaign) => total + campaign.wishlists, 0);
+    const projectDemos = projectCampaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0);
+    const activeProjectCampaigns = projectCampaigns.filter((campaign) => campaign.status === "ACTIVE").length;
+    const readinessScore = Math.min(
+      100,
+      activeProjectCampaigns * 25 +
+      Math.min(projectWishlists, 1000) / 20 +
+      Math.min(projectDemos, 500) / 20 +
+      (salesCents + revenueCents > 0 ? 15 : 0)
+    );
+
+    return {
+      project,
+      activeCampaigns: activeProjectCampaigns,
+      salesCents,
+      marketingSpendCents: spendCents,
+      attributedRevenueCents: revenueCents,
+      wishlists: projectWishlists,
+      demoDownloads: projectDemos,
+      readinessScore: Math.round(readinessScore),
+      roas: spendCents > 0 ? revenueCents / spendCents : null
+    };
+  }).sort((left, right) => right.readinessScore - left.readinessScore || right.wishlists - left.wishlists);
 
   return {
     channels: channels.map((channel) => ({
@@ -108,12 +197,35 @@ export async function getCommerceOverview(organizationId: string) {
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString()
     })),
+    campaigns: campaigns.map((campaign) => ({
+      ...campaign,
+      budgetCents: toNumber(campaign.budgetCents),
+      spendCents: toNumber(campaign.spendCents),
+      revenueCents: toNumber(campaign.revenueCents),
+      startsAt: toIso(campaign.startsAt),
+      endsAt: toIso(campaign.endsAt),
+      createdAt: campaign.createdAt.toISOString(),
+      updatedAt: campaign.updatedAt.toISOString()
+    })),
     projects,
+    channelPerformance,
+    projectSignals,
     summary: {
       openOrders,
       pendingFulfillment,
       paidOrders,
-      netSalesCents
+      netSalesCents,
+      activeCampaigns,
+      marketingSpendCents,
+      marketingBudgetCents,
+      attributedRevenueCents,
+      wishlists,
+      demoDownloads,
+      campaignConversions,
+      roas: marketingSpendCents > 0 ? attributedRevenueCents / marketingSpendCents : null,
+      conversionRate: campaignClicks > 0 ? (campaignConversions / campaignClicks) * 100 : null,
+      costPerWishlistCents: wishlists > 0 ? Math.round(marketingSpendCents / wishlists) : null,
+      commercialRevenueCents: netSalesCents + attributedRevenueCents
     }
   };
 }
@@ -240,4 +352,83 @@ export async function createCommerceOrder(params: {
   });
 
   return order;
+}
+
+export async function createMarketingCampaign(params: {
+  organizationId: string;
+  userId: string;
+  projectId?: string | null;
+  name: string;
+  channel: MarketingCampaignChannel;
+  objective: MarketingCampaignObjective;
+  status: MarketingCampaignStatus;
+  currencyCode?: string | null;
+  budgetCents: number;
+  spendCents: number;
+  impressions: number;
+  clicks: number;
+  wishlists: number;
+  demoDownloads: number;
+  conversions: number;
+  revenueCents: number;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+  notes?: string | null;
+}) {
+  await enforceSubscriptionCapability(params.organizationId, "commerceOps");
+
+  if (params.projectId) {
+    const project = await db.project.findFirst({
+      where: {
+        id: params.projectId,
+        organizationId: params.organizationId
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!project) {
+      throw new Error("Project not found.");
+    }
+  }
+
+  const campaign = await db.marketingCampaign.create({
+    data: {
+      organizationId: params.organizationId,
+      projectId: params.projectId || null,
+      name: params.name.trim(),
+      channel: params.channel,
+      objective: params.objective,
+      status: params.status,
+      currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
+      budgetCents: params.budgetCents,
+      spendCents: params.spendCents,
+      impressions: params.impressions,
+      clicks: params.clicks,
+      wishlists: params.wishlists,
+      demoDownloads: params.demoDownloads,
+      conversions: params.conversions,
+      revenueCents: params.revenueCents,
+      startsAt: params.startsAt ?? null,
+      endsAt: params.endsAt ?? null,
+      notes: params.notes?.trim() || null,
+      createdById: params.userId
+    }
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "marketing_campaign",
+    entityId: campaign.id,
+    action: "created",
+    metadata: {
+      name: campaign.name,
+      channel: campaign.channel,
+      objective: campaign.objective
+    }
+  });
+
+  return campaign;
 }
