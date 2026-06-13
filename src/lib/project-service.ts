@@ -2180,6 +2180,28 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
           version: "desc"
         },
         take: 1
+      },
+      milestones: {
+        orderBy: {
+          sortOrder: "asc"
+        }
+      },
+      kanbanBoards: {
+        include: {
+          columns: {
+            orderBy: {
+              sortOrder: "asc"
+            },
+            include: {
+              cards: {
+                orderBy: {
+                  sortOrder: "asc"
+                }
+              }
+            }
+          }
+        },
+        take: 1
       }
     }
   }));
@@ -2257,57 +2279,117 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
   const acquisitionChannels = analysisMetadata?.aiLayer?.acquisitionChannels ?? [];
   const wishlistDrivers = analysisMetadata?.aiLayer?.wishlistDrivers ?? [];
   const redFlags = analysisMetadata?.aiLayer?.redFlags ?? [];
+  const board = project.kanbanBoards[0] ?? null;
+  const activeMilestones = project.milestones.filter((milestone) => milestone.status !== "COMPLETED").slice(0, 8);
+  const boardCards = board?.columns.flatMap((column) => column.cards.map((card) => ({
+    column: column.name,
+    title: card.title,
+    assignee: card.assigneeLabel,
+    dueDate: card.dueDate,
+    labels: Array.isArray(card.labels) ? card.labels : []
+  }))) ?? [];
+  const featureSeeds = [
+    ...parseCsv(project.genreInput),
+    ...parseCsv(project.tagInput),
+    ...parseCsv(project.coreLoop),
+    ...parseCsv(project.differentiator),
+    ...creativeAngles
+  ].slice(0, 10);
+  const productionPillars = [
+    project.playerFantasy ? `Deliver the fantasy of ${project.playerFantasy}.` : "Make the player fantasy explicit before production lock.",
+    project.coreLoop ? `Protect the core loop: ${project.coreLoop}.` : "Prototype one repeatable 60-second loop before expanding scope.",
+    project.differentiator ? `Make the differentiator visible in the first playable slice: ${project.differentiator}.` : "Define one hook that is visible from screenshots and trailer beats.",
+    analysisMetadata?.projectFitLayer?.positioningClarityScore !== undefined
+      ? `Positioning clarity target: improve from ${analysisMetadata.projectFitLayer.positioningClarityScore}/100 toward a store-ready pitch.`
+      : "Create a store-ready positioning statement before capsule review."
+  ];
+  const mvpFeatures = featureSeeds.length > 0
+    ? featureSeeds.map((item, index) => `${index + 1}. ${item}: prove it with one playable, measurable implementation.`)
+    : [
+        "1. Core movement/combat/interact loop: build one shippable-feeling minute.",
+        "2. Progression reward: define why the second session should happen.",
+        "3. Store-facing hook: create a visual or systemic moment that can sell the game."
+      ];
+  const acceptanceCriteria = [
+    analysisMetadata?.opportunityLayer?.executionBarScore !== undefined
+      ? `Prototype scope must match an execution bar of ${analysisMetadata.opportunityLayer.executionBarScore}/100.`
+      : "Prototype scope must be small enough for the current team to finish.",
+    analysisMetadata?.projectFitLayer?.priceFitScore !== undefined
+      ? `Price/value promise must reach a fit score above current ${analysisMetadata.projectFitLayer.priceFitScore}/100 before pricing lock.`
+      : "Price/value promise must be tested against direct comparable games.",
+    project.artAnalysis?.marketFitScore !== undefined
+      ? `Visual direction must maintain market fit above ${project.artAnalysis.marketFitScore}/100 while improving distinctiveness.`
+      : "Visual direction must pass a capsule readability review.",
+    "Every feature entering production needs an owner, a done definition, and a validation signal."
+  ];
+  const validationPlan = [
+    "Run a 5-player friction test on the first playable loop.",
+    "Compare capsule, short description, and first 15 seconds of trailer against the strongest comparable games.",
+    "Track wishlist intent, demo completion, first-session retention, and feature confusion notes.",
+    analysisMetadata?.marketDepth?.confidenceLabel === "Low"
+      ? "Improve comparable coverage before greenlighting budget-sensitive scope."
+      : "Refresh market analysis before each production milestone."
+  ];
+  const generatedBacklog = boardCards.length > 0
+    ? boardCards.slice(0, 12).map((card) => `- [${card.column}] ${card.title}${card.assignee ? ` — owner: ${card.assignee}` : ""}${card.labels.length > 0 ? ` — labels: ${card.labels.join(", ")}` : ""}`)
+    : mvpFeatures.map((item) => `- ${item}`);
   const content = [
     `# ${project.name} - Game Design Document`,
     "",
     `Version: ${nextVersion}`,
+    `Generated at: ${new Date().toISOString()}`,
     "",
-    "## Vision",
-    project.elevatorPitch || "Define a sharper elevator pitch before greenlight.",
+    "## 1. Executive Design Thesis",
+    project.elevatorPitch
+      ? `This game should be produced around the promise: ${project.elevatorPitch}`
+      : "This project still needs a sharper one-sentence promise before it is production-ready.",
+    analysisMetadata?.aiLayer?.strategicNarrative || analysis?.opportunitySummary || "Market analysis is missing, so this GDD treats the concept as an unvalidated production thesis.",
     "",
-    "## Player Fantasy",
-    project.playerFantasy || analysis?.audienceAutofill || "Clarify the fantasy this project should own in the market.",
+    "### Production decision",
+    analysisMetadata?.opportunityLayer?.opportunityScore !== undefined && analysisMetadata.opportunityLayer.opportunityScore >= 70
+      ? "Proceed as a high-upside thesis, but keep milestone gates strict because upside still depends on execution quality."
+      : "Proceed as a controlled validation project until positioning, prototype proof, and market confidence improve.",
     "",
-    "## Audience",
-    project.targetAudience || analysis?.audienceAutofill || "Audience not defined yet.",
+    "## 2. Player Promise",
+    `- Primary fantasy: ${project.playerFantasy || analysis?.audienceAutofill || "TBD"}`,
+    `- Target audience: ${project.targetAudience || analysis?.audienceAutofill || "TBD"}`,
+    `- Core loop: ${project.coreLoop || analysis?.coreLoopAutofill || "TBD"}`,
+    `- Differentiator: ${project.differentiator || "TBD"}`,
+    `- Store hook: ${analysisMetadata?.aiLayer?.storeCapsuleAdvice || "TBD"}`,
     "",
-    "## Core Loop",
-    project.coreLoop || analysis?.coreLoopAutofill || "Core loop not defined yet.",
+    "## 3. Generated Production Pillars",
+    ...productionPillars.map((item) => `- ${item}`),
     "",
-    "## Differentiation",
-    project.differentiator || "",
-    ...(Array.isArray(analysis?.differentiators) ? (analysis?.differentiators as string[]).map((item) => `- ${item}`) : []),
+    "## 4. MVP Feature Set",
+    ...mvpFeatures.map((item) => `- ${item}`),
     "",
-    "## Commercial Thesis",
-    analysisMetadata?.aiLayer?.strategicNarrative || "Run market analysis to generate the commercial thesis layer.",
+    "## 5. Systems Design Notes",
+    `- Moment-to-moment: ${project.coreLoop || "Define the first playable interaction loop."}`,
+    `- Progression: ${project.monetizationModel ? `Support the ${project.monetizationModel} model without hiding core satisfaction behind economy friction.` : "Define progression rewards before content scale-up."}`,
+    `- Content structure: Use milestones and Kanban status as production truth; avoid adding features without a board owner.`,
+    `- Difficulty/readability: Make the first session teach the fantasy without requiring external explanation.`,
     "",
-    "## Market Snapshot",
-    analysis?.marketSummary || "Run market analysis to populate this section.",
-    "",
-    "## Opportunity Thesis",
-    analysis?.opportunitySummary || "Opportunity thesis pending analysis.",
-    "",
-    "## Risks",
-    analysis?.riskSummary || "Risk analysis pending.",
-    "",
-    "## Market Operating Read",
+    "## 6. Market Constraints To Design Against",
     `- Market size: ${analysisMetadata?.marketDepth?.marketSizeLabel || "Unknown"}`,
     `- Opportunity score: ${analysisMetadata?.opportunityLayer?.opportunityScore ?? "N/A"}`,
     `- Risk score: ${analysisMetadata?.opportunityLayer?.riskScore ?? "N/A"}`,
     `- Fit score: ${analysisMetadata?.projectFitLayer?.overallFitScore ?? "N/A"}`,
     `- Confidence: ${analysisMetadata?.marketDepth?.confidenceLabel ? `${analysisMetadata.marketDepth.confidenceLabel} (${analysisMetadata.marketDepth.confidenceScore ?? "N/A"})` : "Unknown"}`,
-    `- Revenue concentration: ${analysisMetadata?.marketDepth?.revenueConcentrationPercent ?? "N/A"}%`,
-    `- Review velocity (90d): ${analysisMetadata?.marketDepth?.reviewVelocity90?.toLocaleString("en-US") ?? "N/A"}`,
-    `- Launches in 90d: ${launchCohorts?.last90Days ?? "N/A"}`,
-    `- Launches in 180d: ${launchCohorts?.last180Days ?? "N/A"}`,
+    analysis?.marketSummary || "Run market analysis to populate this section.",
     "",
-    "## Positioning",
+    "## 7. Comparable Game Lessons",
+    ...(comparables.length > 0
+      ? comparables.map((item, index) => `${index + 1}. ${item.name}: use as a bar for ${item.reviewScore ? `${item.reviewScore.toFixed(1)}% review quality` : "quality"} and ${item.priceCents ? `${formatMoney(item.priceCents)} price expectation` : "pricing expectation"}.`)
+      : ["No competitor set has been attached yet. Add direct comparables before production lock."]),
+    "",
+    "## 8. Acceptance Criteria",
+    ...acceptanceCriteria.map((item) => `- ${item}`),
+    "",
+    "## 9. Validation Plan",
+    ...validationPlan.map((item) => `- ${item}`),
+    "",
+    "## 10. Positioning And Go-To-Market",
     analysisMetadata?.aiLayer?.positioningSummary || "Positioning layer pending analysis.",
-    "",
-    "## Pricing",
-    analysisMetadata?.aiLayer?.pricingNarrative || `Current target price: ${project.pricePointCents ? formatMoney(project.pricePointCents) : "TBD"}.`,
-    "",
-    "## Go-to-Market",
     analysisMetadata?.aiLayer?.launchStrategy || "Run market analysis to generate launch strategy guidance.",
     "",
     "### Acquisition channels",
@@ -2319,41 +2401,25 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     "### Creative angles",
     ...(creativeAngles.length > 0 ? creativeAngles.map((item) => `- ${item}`) : ["- Creative angle guidance pending analysis."]),
     "",
-    "## Art direction analysis",
+    "## 11. Art Direction Requirements",
     project.artAnalysis?.styleSummary || "Run art analysis to populate this section.",
-    "",
-    "## Visual production notes",
     project.artAnalysis?.productionSummary || "Production notes pending.",
     "",
-    "## Competitive Set",
-    ...(comparables.length > 0
-      ? comparables.map((item, index) => `${index + 1}. ${item.name} - ${item.priceCents ? formatMoney(item.priceCents) : "price unknown"} · ${item.reviewScore ? `${item.reviewScore.toFixed(1)}% review score` : "review score unknown"} · ${item.revenueCents > 0 ? `${formatMoney(item.revenueCents)} est. net revenue` : "revenue estimate unavailable"}`)
-      : ["No competitor set has been attached yet."]),
+    "## 12. Production Backlog",
+    ...generatedBacklog,
     "",
-    "## Production Pillars",
-    `- Genre focus: ${project.genreInput || "TBD"}`,
-    `- Tag focus: ${project.tagInput || "TBD"}`,
-    `- Monetization: ${project.monetizationModel || "TBD"}${analysisMetadata?.competitionLayer?.dominantMonetization ? ` (market baseline: ${analysisMetadata.competitionLayer.dominantMonetization})` : ""}`,
-    `- Price target: ${project.pricePointCents ? (project.pricePointCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" }) : "TBD"}`,
-    `- Art direction: ${project.artDirection || "TBD"}`,
-    `- Positioning clarity score: ${analysisMetadata?.projectFitLayer?.positioningClarityScore ?? "N/A"}`,
-    `- Price fit score: ${analysisMetadata?.projectFitLayer?.priceFitScore ?? "N/A"}`,
-    `- Monetization fit score: ${analysisMetadata?.projectFitLayer?.monetizationFitScore ?? "N/A"}`,
+    "## 13. Milestone Gates",
+    ...(activeMilestones.length > 0
+      ? activeMilestones.map((milestone) => `- ${milestone.title}: ${milestone.status}${milestone.dueAt ? `, due ${milestone.dueAt.toISOString().slice(0, 10)}` : ""}. ${milestone.description ?? "Define exit criteria before work starts."}`)
+      : ["- Create milestone gates for prototype, vertical slice, content lock, launch readiness, and post-launch review."]),
     "",
-    "## Store Read",
-    analysisMetadata?.aiLayer?.storeCapsuleAdvice || "Store-facing guidance pending analysis.",
+    "## 14. Risk Register",
+    ...(redFlags.length > 0 ? redFlags.map((item) => `- ${item}`) : keyMismatches.length > 0 ? keyMismatches.map((item) => `- ${item}`) : analysis?.riskSummary ? [`- ${analysis.riskSummary}`] : ["- Risk register pending analysis."]),
     "",
-    "## Risk Register",
-    ...(redFlags.length > 0 ? redFlags.map((item) => `- ${item}`) : keyMismatches.length > 0 ? keyMismatches.map((item) => `- ${item}`) : ["- Risk register pending analysis."]),
-    "",
-    "## Recommended next moves",
+    "## 15. Recommended Next Moves",
     ...(recommendations.length > 0 ? recommendations.map((item) => `- ${item}`) : ["- Keep refining the concept against direct Steam comparables."]),
-    "",
-    "## Next Validation Steps",
-    "- Confirm the feature stack against the top Steam comps.",
-    "- Tighten the fantasy and store positioning before production lock.",
-    "- Keep market analysis updated as the concept evolves.",
-    ...(analysisMetadata?.marketDepth?.confidenceLabel === "Low" ? ["- Improve research coverage before final budget or production commitments."] : [])
+    `- Pricing: ${analysisMetadata?.aiLayer?.pricingNarrative || `Current target price is ${project.pricePointCents ? formatMoney(project.pricePointCents) : "TBD"}; validate against comparable perceived value.`}`,
+    `- Market cadence: ${launchCohorts?.last90Days ?? "N/A"} comparable launches in 90d and ${launchCohorts?.last180Days ?? "N/A"} in 180d.`
   ].join("\n");
 
   const gdd = await db.projectGdd.create({

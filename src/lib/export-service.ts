@@ -48,6 +48,49 @@ function formatDate(value: Date | string | null | undefined) {
   return new Date(value).toISOString();
 }
 
+function toNumber(value: number | bigint | null | undefined) {
+  return value === null || value === undefined ? 0 : Number(value);
+}
+
+function average(values: number[]) {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function median(values: number[]) {
+  if (values.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+
+  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+}
+
+function getSignalLabel(score: number | null | undefined, reviewCount: number | null | undefined) {
+  if ((score ?? 0) >= 85 && (reviewCount ?? 0) >= 500) {
+    return "Quality leader";
+  }
+
+  if ((score ?? 0) >= 80 && (reviewCount ?? 0) < 500) {
+    return "Niche proof";
+  }
+
+  if ((reviewCount ?? 0) >= 5000) {
+    return "Demand anchor";
+  }
+
+  if ((score ?? 0) < 70 && (reviewCount ?? 0) >= 500) {
+    return "Demand with quality risk";
+  }
+
+  return "Watchlist";
+}
+
 function sanitizeSheetName(value: string) {
   return value.replace(/[\\/*?:[\]]/g, " ").slice(0, 31) || "Sheet1";
 }
@@ -565,22 +608,179 @@ export async function buildGameSearchWorkbook(input: {
     page: 1,
     pageSize: input.pageSize ?? 500
   });
+  const appIds = result.items.map((game) => game.appId);
+  const enrichedGames = await db.steamGame.findMany({
+    where: {
+      appId: {
+        in: appIds
+      }
+    },
+    include: {
+      priceCurrent: true,
+      salesEstimates: {
+        orderBy: {
+          calculatedAt: "desc"
+        },
+        take: 1
+      },
+      revenueEstimates: {
+        orderBy: {
+          calculatedAt: "desc"
+        },
+        take: 1
+      },
+      genres: {
+        include: {
+          steamGenre: true
+        }
+      },
+      tags: {
+        include: {
+          steamTag: true
+        }
+      }
+    }
+  });
+  const gamesByAppId = new Map(enrichedGames.map((game) => [game.appId, game]));
+  const games = result.items.map((game) => gamesByAppId.get(game.appId) ?? game);
+  const prices = games.map((game) => game.priceCurrent?.finalPriceCents ?? null).filter((value): value is number => value !== null);
+  const reviewScores = games.map((game) => game.reviewScore ?? null).filter((value): value is number => value !== null);
+  const reviewCounts = games.map((game) => game.reviewCount ?? 0);
+  const revenues = games.map((game) => toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null)).filter((value) => value > 0);
+  const shortlist = [...games]
+    .map((game) => {
+      const revenue = toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null);
+      const score = Math.round(
+        (game.reviewScore ?? 0) * 0.55
+        + Math.min(25, Math.log10((game.reviewCount ?? 0) + 1) * 7)
+        + Math.min(20, revenue / 2_500_000)
+      );
+
+      return {
+        game,
+        score,
+        revenue
+      };
+    })
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 25);
+  const priceBands = [
+    { band: "Free / unknown", min: null, max: 0 },
+    { band: "Under $10", min: 1, max: 999 },
+    { band: "$10-$20", min: 1000, max: 1999 },
+    { band: "$20-$30", min: 2000, max: 2999 },
+    { band: "$30+", min: 3000, max: null }
+  ].map((band) => {
+    const bandGames = games.filter((game) => {
+      const price = game.priceCurrent?.finalPriceCents ?? 0;
+
+      if (band.min === null) {
+        return price <= (band.max ?? 0);
+      }
+
+      if (band.max === null) {
+        return price >= band.min;
+      }
+
+      return price >= band.min && price <= band.max;
+    });
+
+    return {
+      band: band.band,
+      games: bandGames.length,
+      avgReviewScore: Math.round(average(bandGames.map((game) => game.reviewScore ?? 0))),
+      medianReviews: Math.round(median(bandGames.map((game) => game.reviewCount ?? 0))),
+      medianRevenueUsd: formatCurrency(median(bandGames.map((game) => toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null)).filter((value) => value > 0)))
+    };
+  });
+  const tagCounts = new Map<string, { count: number; reviewScoreTotal: number; revenueTotal: number }>();
+
+  for (const game of games) {
+    for (const tag of game.tags.map((item) => item.steamTag.name)) {
+      const current = tagCounts.get(tag) ?? { count: 0, reviewScoreTotal: 0, revenueTotal: 0 };
+      current.count += 1;
+      current.reviewScoreTotal += game.reviewScore ?? 0;
+      current.revenueTotal += toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null);
+      tagCounts.set(tag, current);
+    }
+  }
 
   return {
     fileName: "steam-games-search",
     title: "Steam Games Search Export",
     sheets: [
       {
+        name: "Executive Read",
+        rows: [
+          { metric: "Games exported", value: games.length },
+          { metric: "Total matched in database", value: result.total },
+          { metric: "Median price", value: formatCurrency(median(prices)) },
+          { metric: "Average review score", value: `${average(reviewScores).toFixed(1)}%` },
+          { metric: "Median review count", value: Math.round(median(reviewCounts)) },
+          { metric: "Median estimated revenue", value: formatCurrency(median(revenues)) },
+          {
+            metric: "Quality read",
+            value: average(reviewScores) >= 80 ? "The exported segment has a strong quality bar." : "The exported segment has quality gaps; inspect leaders before copying patterns."
+          },
+          {
+            metric: "Commercial read",
+            value: revenues.length > 0 ? "Revenue estimates are available for part of this set; use the shortlist to prioritize deeper comparison." : "Revenue estimate coverage is thin; use reviews and price as the primary signal."
+          },
+          {
+            metric: "Recommended next action",
+            value: shortlist[0] ? `Start by comparing ${shortlist[0].game.name} against the top 5 shortlist titles.` : "Refine filters and export again with a clearer segment."
+          }
+        ]
+      },
+      {
+        name: "Opportunity Shortlist",
+        rows: shortlist.map((item, index) => ({
+          rank: index + 1,
+          appId: item.game.appId,
+          name: item.game.name,
+          signalScore: item.score,
+          signal: getSignalLabel(item.game.reviewScore, item.game.reviewCount),
+          priceUsd: formatCurrency(item.game.priceCurrent?.finalPriceCents ?? null),
+          reviewScore: item.game.reviewScore ?? null,
+          reviewCount: item.game.reviewCount ?? null,
+          medianSales: "salesEstimates" in item.game ? item.game.salesEstimates[0]?.medianEstimate ?? null : null,
+          medianRevenueUsd: formatCurrency(item.revenue),
+          genres: item.game.genres.map((genre) => genre.steamGenre.name).join(", "),
+          tags: item.game.tags.slice(0, 8).map((tag) => tag.steamTag.name).join(", ")
+        }))
+      },
+      {
+        name: "Pricing Bands",
+        rows: priceBands
+      },
+      {
+        name: "Tag Signals",
+        rows: Array.from(tagCounts.entries())
+          .map(([tag, data]) => ({
+            tag,
+            games: data.count,
+            avgReviewScore: Math.round(data.reviewScoreTotal / data.count),
+            totalEstimatedRevenueUsd: formatCurrency(data.revenueTotal),
+            read: data.count >= 5 ? "Recurring segment signal" : "Niche/edge signal"
+          }))
+          .sort((left, right) => right.games - left.games)
+          .slice(0, 40)
+      },
+      {
         name: "Games",
-        rows: result.items.map((game) => ({
+        rows: games.map((game) => ({
           appId: game.appId,
           name: game.name,
           genres: game.genres.map((genre) => genre.steamGenre.name).join(", "),
+          tags: game.tags.slice(0, 12).map((tag) => tag.steamTag.name).join(", "),
           priceCents: game.priceCurrent?.finalPriceCents ?? null,
           priceUsd: formatCurrency(game.priceCurrent?.finalPriceCents ?? null),
           reviewScore: game.reviewScore ?? null,
           reviewCount: game.reviewCount ?? null,
-          releaseDate: formatDate(game.releaseDate)
+          releaseDate: formatDate(game.releaseDate),
+          medianSales: "salesEstimates" in game ? game.salesEstimates[0]?.medianEstimate ?? null : null,
+          medianRevenueUsd: formatCurrency("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents ?? null : null),
+          signal: getSignalLabel(game.reviewScore, game.reviewCount)
         }))
       }
     ]
@@ -601,11 +801,79 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
 
   const latestSalesEstimate = game.salesEstimates[0] ?? null;
   const latestRevenueEstimate = game.revenueEstimates[0] ?? null;
+  const firstReviewSnapshot = reviewHistory[0] ?? null;
+  const latestReviewSnapshot = reviewHistory[reviewHistory.length - 1] ?? null;
+  const firstPlayerSnapshot = playerHistory[0] ?? null;
+  const latestPlayerSnapshot = playerHistory[playerHistory.length - 1] ?? null;
+  const reviewDelta = latestReviewSnapshot && firstReviewSnapshot ? latestReviewSnapshot.totalReviews - firstReviewSnapshot.totalReviews : null;
+  const playerDelta = latestPlayerSnapshot && firstPlayerSnapshot ? latestPlayerSnapshot.currentPlayers - firstPlayerSnapshot.currentPlayers : null;
+  const discountEvents = priceHistory.filter((item) => (item.discountPercent ?? 0) > 0);
+  const lowestObservedPrice = median(priceHistory.map((item) => item.finalPriceCents ?? 0).filter((value) => value > 0));
+  const executiveSignals = [
+    {
+      signal: "Market role",
+      read: getSignalLabel(game.reviewScore, game.reviewCount),
+      implication: "Use this role to decide whether the game is a benchmark, warning sign, or watchlist reference."
+    },
+    {
+      signal: "Quality bar",
+      read: game.reviewScore ? `${game.reviewScore}% across ${game.reviewCount ?? 0} reviews` : "Review quality unavailable",
+      implication: (game.reviewScore ?? 0) >= 80 ? "Audience reception is strong enough to study feature promises and store positioning." : "Treat this as a cautionary comp unless demand is unusually high."
+    },
+    {
+      signal: "Commercial range",
+      read: latestRevenueEstimate ? `${formatCurrency(latestRevenueEstimate.lowNetRevenueCents)} - ${formatCurrency(latestRevenueEstimate.highNetRevenueCents)}` : "Revenue estimate unavailable",
+      implication: latestRevenueEstimate ? "Use the median estimate as a planning anchor, not a forecast guarantee." : "Do not use this title for revenue planning until estimates are available."
+    },
+    {
+      signal: "Price posture",
+      read: `${formatCurrency(game.priceCurrent?.finalPriceCents ?? null)} current price${discountEvents.length > 0 ? `, ${discountEvents.length} observed discount snapshots` : ""}`,
+      implication: discountEvents.length > 0 ? "Discount behavior is visible; compare timing against review/player movement." : "No discount cadence is visible in the export window."
+    },
+    {
+      signal: "Momentum",
+      read: `Reviews ${reviewDelta === null ? "unknown" : reviewDelta >= 0 ? `+${reviewDelta}` : String(reviewDelta)}, players ${playerDelta === null ? "unknown" : playerDelta >= 0 ? `+${playerDelta}` : String(playerDelta)}`,
+      implication: (reviewDelta ?? 0) > 0 || (playerDelta ?? 0) > 0 ? "There is observable movement worth checking against content updates or discounts." : "Momentum is flat in available snapshots."
+    }
+  ];
 
   return {
     fileName: `steam-game-${appId}`,
     title: `${game.name} Report`,
     sheets: [
+      {
+        name: "Executive Read",
+        rows: executiveSignals
+      },
+      {
+        name: "Operating Actions",
+        rows: [
+          {
+            priority: "High",
+            action: "Compare store promise",
+            reason: `Use ${game.name}'s capsule, tags, price, and review score as a direct bar for positioning.`,
+            output: "One positioning note: copy, avoid, or outflank."
+          },
+          {
+            priority: latestRevenueEstimate ? "High" : "Medium",
+            action: "Set revenue planning band",
+            reason: latestRevenueEstimate ? `Median net revenue estimate is ${formatCurrency(latestRevenueEstimate.medianNetRevenueCents)}.` : "Revenue estimate is unavailable.",
+            output: "Low/base/high planning range for project forecast."
+          },
+          {
+            priority: discountEvents.length > 0 ? "Medium" : "Low",
+            action: "Review discount timing",
+            reason: discountEvents.length > 0 ? `${discountEvents.length} discount snapshots observed; median observed paid price is ${formatCurrency(lowestObservedPrice)}.` : "No discount pattern observed.",
+            output: "Pricing and discount assumption for launch/post-launch model."
+          },
+          {
+            priority: "Medium",
+            action: "Extract feature promises from tags",
+            reason: game.tags.length > 0 ? `Dominant tags: ${game.tags.slice(0, 8).map((tag) => tag.steamTag.name).join(", ")}.` : "Tag coverage is thin.",
+            output: "Feature promise checklist for concept comparison."
+          }
+        ]
+      },
       {
         name: "Overview",
         rows: [
@@ -834,6 +1102,29 @@ export async function buildReportWorkbook(reportId: string, organizationId: stri
     throw new Error("Report not found.");
   }
 
+  const metadata = (report.metadata ?? {}) as {
+    segment?: Record<string, unknown>;
+    aiNarrative?: {
+      executiveSummary?: string;
+      demandDrivers?: string;
+      saturationRead?: string;
+      pricingRead?: string;
+      launchWindowAdvice?: string;
+      monetizationRead?: string;
+      confidenceNarrative?: string;
+      actionItems?: string[];
+    } | null;
+    operatingBrief?: {
+      boardDirective?: string;
+      commercialDirective?: string;
+      operatingDirective?: string;
+    } | null;
+    planLabel?: string;
+  };
+  const segment = metadata.segment ?? {};
+  const aiNarrative = metadata.aiNarrative ?? null;
+  const operatingBrief = metadata.operatingBrief ?? null;
+
   return {
     fileName: `report-${report.id}`,
     title: report.title,
@@ -848,6 +1139,37 @@ export async function buildReportWorkbook(reportId: string, organizationId: stri
           { field: "Created at", value: formatDate(report.createdAt) },
           { field: "Updated at", value: formatDate(report.updatedAt) }
         ]
+      },
+      {
+        name: "Decision Brief",
+        rows: [
+          { area: "Executive summary", recommendation: aiNarrative?.executiveSummary ?? (report.content ?? "").split("\n").find((line) => line.trim().length > 0) ?? "" },
+          { area: "Demand drivers", recommendation: aiNarrative?.demandDrivers ?? "" },
+          { area: "Saturation", recommendation: aiNarrative?.saturationRead ?? "" },
+          { area: "Pricing", recommendation: aiNarrative?.pricingRead ?? "" },
+          { area: "Launch window", recommendation: aiNarrative?.launchWindowAdvice ?? "" },
+          { area: "Monetization", recommendation: aiNarrative?.monetizationRead ?? "" },
+          { area: "Confidence", recommendation: aiNarrative?.confidenceNarrative ?? "" },
+          { area: "Board directive", recommendation: operatingBrief?.boardDirective ?? "" },
+          { area: "Commercial directive", recommendation: operatingBrief?.commercialDirective ?? "" },
+          { area: "Operating directive", recommendation: operatingBrief?.operatingDirective ?? "" }
+        ].filter((row) => row.recommendation)
+      },
+      {
+        name: "Market Metrics",
+        rows: Object.entries(segment).map(([metric, value]) => ({
+          metric,
+          value: typeof value === "object" ? JSON.stringify(value) : String(value ?? "")
+        }))
+      },
+      {
+        name: "Action Items",
+        rows: (aiNarrative?.actionItems ?? []).map((item, index) => ({
+          priority: index + 1,
+          action: item,
+          owner: "",
+          status: "Open"
+        }))
       },
       {
         name: "Content",
