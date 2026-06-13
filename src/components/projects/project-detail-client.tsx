@@ -797,12 +797,11 @@ export function ProjectDetailClient({
           <TabsTrigger value="overview">{t("projectDetail.overviewTab")}</TabsTrigger>
           <TabsTrigger value="market">{t("projectDetail.marketTab")}</TabsTrigger>
           <TabsTrigger value="art">{t("projectDetail.artTab")}</TabsTrigger>
-          <TabsTrigger value="milestones">{t("projectDetail.milestonesTab")}</TabsTrigger>
+          <TabsTrigger value="milestones">Execution</TabsTrigger>
           <TabsTrigger value="gdd">{t("projectDetail.gddTab")}</TabsTrigger>
-          <TabsTrigger value="kanban">{t("projectDetail.kanbanTab")}</TabsTrigger>
         </TabsList>
         <p className="text-sm text-muted-foreground">
-          Use these sections to connect project definition, market validation, art review, milestones, GDD, and the work board.
+          Use these sections to connect project definition, market validation, art review, execution, and the GDD.
         </p>
         <TabsContent value="overview" className="space-y-6">
           <Card className="overflow-hidden">
@@ -1978,6 +1977,32 @@ export function ProjectDetailClient({
               ) : null}
             </CardContent>
           </Card>
+          <ProjectKanbanBoard
+            projectName={project.name}
+            board={board}
+            search={kanbanSearch}
+            setSearch={setKanbanSearch}
+            assigneeFilter={kanbanAssigneeFilter}
+            setAssigneeFilter={setKanbanAssigneeFilter}
+            labelFilter={kanbanLabelFilter}
+            setLabelFilter={setKanbanLabelFilter}
+            newColumn={newColumn}
+            setNewColumn={setNewColumn}
+            createColumn={createColumn}
+            updateColumn={updateColumn}
+            moveColumn={moveColumn}
+            deleteColumn={deleteColumn}
+            newCards={newCards}
+            setNewCards={setNewCards}
+            cardEdits={cardEdits}
+            setCardEdits={setCardEdits}
+            createCard={createCard}
+            saveCard={saveCard}
+            moveCard={moveCard}
+            moveCardInColumn={moveCardInColumn}
+            deleteCard={deleteCard}
+            reorderCard={reorderCard}
+          />
         </TabsContent>
         <TabsContent value="gdd" className="space-y-6">
           <Card className="overflow-hidden">
@@ -2007,34 +2032,6 @@ export function ProjectDetailClient({
             projectId={projectId}
             sections={["Personagens", "Itens", "Locais", "Diálogos", "Missões"]}
             showHeader={false}
-          />
-        </TabsContent>
-        <TabsContent value="kanban">
-          <ProjectKanbanBoard
-            projectName={project.name}
-            board={board}
-            search={kanbanSearch}
-            setSearch={setKanbanSearch}
-            assigneeFilter={kanbanAssigneeFilter}
-            setAssigneeFilter={setKanbanAssigneeFilter}
-            labelFilter={kanbanLabelFilter}
-            setLabelFilter={setKanbanLabelFilter}
-            newColumn={newColumn}
-            setNewColumn={setNewColumn}
-            createColumn={createColumn}
-            updateColumn={updateColumn}
-            moveColumn={moveColumn}
-            deleteColumn={deleteColumn}
-            newCards={newCards}
-            setNewCards={setNewCards}
-            cardEdits={cardEdits}
-            setCardEdits={setCardEdits}
-            createCard={createCard}
-            saveCard={saveCard}
-            moveCard={moveCard}
-            moveCardInColumn={moveCardInColumn}
-            deleteCard={deleteCard}
-            reorderCard={reorderCard}
           />
         </TabsContent>
       </Tabs>
