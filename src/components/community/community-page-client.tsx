@@ -315,9 +315,9 @@ export function CommunityPageClient({
           <Badge variant="secondary">{planLabel}</Badge>
         </div>
       </div>
-      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_180px] xl:items-start">
+      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_170px] lg:items-start 2xl:grid-cols-[320px_minmax(0,1fr)_190px]">
         <Tabs
-          className="order-3 rounded-lg border bg-card p-3 xl:sticky xl:top-20 xl:col-start-3 xl:row-start-1 xl:self-start"
+          className="order-3 rounded-lg border bg-card p-3 lg:sticky lg:top-20 lg:col-start-3 lg:row-start-1 lg:self-start"
           value={scopeFilter}
           onValueChange={(value) => {
             const scope = value as CommunityPostScope;
@@ -354,12 +354,12 @@ export function CommunityPageClient({
         </Tabs>
 
         <div className="contents">
-          <Card className="order-2 overflow-hidden xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1 xl:self-start">
+          <Card className="order-2 overflow-hidden lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:self-start">
             <CardHeader>
               <CardTitle>Find signals</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3 lg:grid-cols-3">
-              <div className="space-y-2 md:col-span-2">
+            <CardContent className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] xl:grid-cols-[minmax(0,1fr)_180px_180px]">
+              <div className="space-y-2 md:col-span-2 xl:col-span-1">
                 <Label htmlFor="community-search">Search the feed</Label>
                 <Input
                   id="community-search"
@@ -402,12 +402,12 @@ export function CommunityPageClient({
               </div>
             </CardContent>
           </Card>
-          <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto xl:sticky xl:top-20 xl:col-start-1 xl:row-start-1 xl:self-start">
+          <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto lg:sticky lg:top-20 lg:col-start-1 lg:row-start-1 lg:self-start">
             <CardHeader>
               <CardTitle>Create a post</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3">
                 <div className="space-y-2">
                   <Label>Audience</Label>
                   <Select
@@ -523,7 +523,7 @@ export function CommunityPageClient({
               </Button>
             </CardContent>
           </Card>
-          <div className="order-4 space-y-4 xl:col-start-2 xl:row-start-2">
+          <div className="order-4 space-y-4 lg:col-start-2 lg:row-start-2">
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
             <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
               <CardHeader className="space-y-2">
