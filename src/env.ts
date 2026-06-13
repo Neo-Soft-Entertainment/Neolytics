@@ -95,7 +95,9 @@ const envSchema = z.object({
 
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
-  }, z.string().url().optional()),
+  }, z.string().url().optional()).refine((value) => !value || value.startsWith("https://"), {
+    message: "SUPABASE_URL must use HTTPS."
+  }),
   SUPABASE_SERVICE_ROLE_KEY: optionalString,
   COMPANY_DOCUMENTS_BUCKET: optionalString,
   USER_AVATARS_BUCKET: optionalString,
