@@ -3,7 +3,6 @@
 import { CommunityPostPriority, CommunityPostScope, CommunityPostType, SubscriptionPlan } from "@prisma/client";
 import { useDeferredValue, useMemo, useState } from "react";
 
-import { PageHero } from "@/components/app-shell/page-hero";
 import { ErrorState } from "@/components/error-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
 ];
 
 const scopeOptions: Array<{ value: CommunityPostScope; label: string }> = [
-  { value: CommunityPostScope.ORGANIZATION, label: "Organization" },
+  { value: CommunityPostScope.ORGANIZATION, label: "Interno" },
   { value: CommunityPostScope.GLOBAL, label: "Global" }
 ];
 
@@ -38,8 +37,8 @@ const priorityOptions: Array<{ value: CommunityPostPriority; label: string }> = 
 ];
 
 const scopeDescriptions = {
-  [CommunityPostScope.ORGANIZATION]: "Posts, comments, and project links visible inside your organization.",
-  [CommunityPostScope.GLOBAL]: "Public studio feed across Neolytics, without internal project links."
+  [CommunityPostScope.ORGANIZATION]: "Posts internos da organização, com comentários e vínculos de projeto.",
+  [CommunityPostScope.GLOBAL]: "Feed global entre estúdios no Neolytics, sem vínculos internos."
 };
 
 function getPriorityBadgeClass(priority: CommunityPostPriority) {
@@ -302,40 +301,23 @@ export function CommunityPageClient({
   }
 
   return (
-    <div className="space-y-6">
-      <PageHero
-        title="Community"
-        description="Share studio updates with your organization or the wider Neolytics community."
-        actions={(
-          <>
-            <Badge variant="secondary">Organization</Badge>
-            <Badge variant="secondary">Global</Badge>
-            <Badge variant="secondary">{planLabel}</Badge>
-          </>
-        )}
-        summary={(
-          <div className="grid gap-2.5 rounded-lg border bg-background p-3 text-sm">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Visible posts</span>
-              <span className="font-medium">{query.data.feed.length}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Comments</span>
-              <span className="font-medium">{query.data.feed.reduce((total, post) => total + post.comments.length, 0)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Ranking data</span>
-              <span className="font-medium">{canAccessRanking ? "Enabled" : "Locked"}</span>
-            </div>
-            <div className="rounded-lg border bg-muted/35 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Current view</p>
-              <p className="mt-2 font-medium">Turn team insight into searchable operating memory.</p>
-            </div>
-          </div>
-        )}
-      />
-      <div className="mx-auto max-w-5xl space-y-4">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Community</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Share studio updates with your organization or the wider Neolytics community.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">Interno</Badge>
+          <Badge variant="secondary">Global</Badge>
+          <Badge variant="secondary">{planLabel}</Badge>
+        </div>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_180px] xl:items-start">
         <Tabs
+          className="order-3 rounded-lg border bg-card p-3 xl:sticky xl:top-20 xl:col-start-3 xl:row-start-1 xl:self-start"
           value={scopeFilter}
           onValueChange={(value) => {
             const scope = value as CommunityPostScope;
@@ -347,7 +329,7 @@ export function CommunityPageClient({
             }));
           }}
         >
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-lg border bg-card p-1.5">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-lg border bg-card p-1.5">
             {scopeOptions.map((option) => (
               <TabsTrigger key={option.value} value={option.value}>
                 {option.label}
@@ -355,14 +337,28 @@ export function CommunityPageClient({
             ))}
           </TabsList>
           <p className="mt-2 text-sm text-muted-foreground">{scopeDescriptions[scopeFilter]}</p>
+          <div className="mt-3 space-y-2 border-t pt-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Posts</span>
+              <span className="font-medium">{query.data.feed.length}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Comentários</span>
+              <span className="font-medium">{query.data.feed.reduce((total, post) => total + post.comments.length, 0)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Ranking</span>
+              <span className="font-medium">{canAccessRanking ? "Ativo" : "Bloqueado"}</span>
+            </div>
+          </div>
         </Tabs>
 
-        <div className="space-y-4">
-          <Card className="overflow-hidden">
+        <div className="contents">
+          <Card className="order-2 overflow-hidden xl:sticky xl:top-20 xl:col-start-2 xl:row-start-1 xl:self-start">
             <CardHeader>
               <CardTitle>Find signals</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-3">
+            <CardContent className="grid gap-3 lg:grid-cols-3">
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="community-search">Search the feed</Label>
                 <Input
@@ -406,7 +402,7 @@ export function CommunityPageClient({
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden">
+          <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto xl:sticky xl:top-20 xl:col-start-1 xl:row-start-1 xl:self-start">
             <CardHeader>
               <CardTitle>Create a post</CardTitle>
             </CardHeader>
@@ -527,6 +523,7 @@ export function CommunityPageClient({
               </Button>
             </CardContent>
           </Card>
+          <div className="order-4 space-y-4 xl:col-start-2 xl:row-start-2">
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
             <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
               <CardHeader className="space-y-2">
@@ -548,7 +545,7 @@ export function CommunityPageClient({
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      {post.scope === CommunityPostScope.GLOBAL ? "Global" : "Organization"}
+                      {post.scope === CommunityPostScope.GLOBAL ? "Global" : "Interno"}
                     </span>
                     <span className={`rounded-full border px-2.5 py-1 text-xs ${getPriorityBadgeClass(post.priority)}`}>
                       {priorityOptions.find((option) => option.value === post.priority)?.label ?? post.priority}
@@ -640,6 +637,7 @@ export function CommunityPageClient({
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </div>
