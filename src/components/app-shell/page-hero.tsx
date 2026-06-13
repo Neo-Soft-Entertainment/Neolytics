@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export function PageHero({
   title,
@@ -15,7 +16,12 @@ export function PageHero({
 }) {
   return (
     <Card className="aurora-panel overflow-hidden border-cyan-300/15 shadow-[0_28px_70px_rgba(8,47,73,0.12)] dark:shadow-[0_28px_70px_rgba(14,165,233,0.08)]">
-      <CardContent className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+      <CardContent
+        className={cn(
+          "grid gap-4 p-4 lg:items-start",
+          summary ? "lg:grid-cols-[minmax(0,1fr)_280px]" : "lg:grid-cols-1"
+        )}
+      >
         <div className="space-y-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>

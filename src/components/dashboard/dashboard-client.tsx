@@ -66,26 +66,6 @@ export function DashboardClient() {
             />
           </>
         )}
-        summary={(
-          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Catalog</span>
-              <span className="font-medium">{formatNumber(data.marketOverview.totalGames)} games</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Tracked</span>
-              <span className="font-medium">{formatNumber(data.marketOverview.trackedGamesCount)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Recent launches</span>
-              <span className="font-medium">{formatNumber(data.recentLaunches.length)}</span>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">ERP mode</p>
-              <p className="mt-2 font-medium">From market signal to studio operation.</p>
-            </div>
-          </div>
-        )}
       />
       <div className="grid gap-3 md:grid-cols-4">
         <KpiCard label="Catalog games" value={formatNumber(data.marketOverview.totalGames)} />
