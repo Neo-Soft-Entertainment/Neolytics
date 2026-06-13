@@ -769,20 +769,20 @@ export function ProjectDetailClient({
           </div>
           <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Stage</span>
+              <span className="text-muted-foreground">{t("projectDetail.stageLabel")}</span>
               <span className="font-medium">{project.stage.replaceAll("_", " ")}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Milestones</span>
+              <span className="text-muted-foreground">{t("projectDetail.milestonesLabel")}</span>
               <span className="font-medium">{formatNumber(project.milestones.length)}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Pending approvals</span>
+              <span className="text-muted-foreground">{t("projectDetail.pendingApprovalsLabel")}</span>
               <span className="font-medium">{formatNumber(pendingApprovalsCount)}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("projectDetail.operatingMode")}</p>
-              <p className="mt-2 font-medium">Use analysis, milestones, GDD, and board management as one connected execution loop.</p>
+              <p className="mt-2 font-medium">{t("projectDetail.executionLoopCopy")}</p>
             </div>
           </div>
         </CardContent>
@@ -798,11 +798,11 @@ export function ProjectDetailClient({
           <TabsTrigger value="overview">{t("projectDetail.overviewTab")}</TabsTrigger>
           <TabsTrigger value="market">{t("projectDetail.marketTab")}</TabsTrigger>
           <TabsTrigger value="art">{t("projectDetail.artTab")}</TabsTrigger>
-          <TabsTrigger value="milestones">Execution</TabsTrigger>
+          <TabsTrigger value="milestones">{t("projectDetail.executionTab")}</TabsTrigger>
           <TabsTrigger value="gdd">{t("projectDetail.gddTab")}</TabsTrigger>
         </TabsList>
         <p className="text-sm text-muted-foreground">
-          Use these sections to connect project definition, market validation, art review, execution, and the GDD.
+          {t("projectDetail.sectionsHelp")}
         </p>
         <TabsContent value="overview" className="space-y-6">
           <Card className="overflow-hidden">
@@ -1285,7 +1285,7 @@ export function ProjectDetailClient({
                     <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.revenuePotentialScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Execution bar</p>
+                    <p className="font-medium">{t("projectDetail.executionBar")}</p>
                     <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.executionBarScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
@@ -1764,7 +1764,7 @@ export function ProjectDetailClient({
               variant={executionView === "board" ? "default" : "ghost"}
               onClick={() => setExecutionView("board")}
             >
-              Board
+              {t("projectDetail.executionBoardView")}
             </Button>
             <Button
               type="button"
@@ -1772,7 +1772,7 @@ export function ProjectDetailClient({
               variant={executionView === "milestones" ? "default" : "ghost"}
               onClick={() => setExecutionView("milestones")}
             >
-              Milestones
+              {t("projectDetail.executionMilestonesView")}
             </Button>
           </div>
           {executionView === "board" ? (
