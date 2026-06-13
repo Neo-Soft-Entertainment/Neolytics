@@ -301,8 +301,8 @@ export function CommunityPageClient({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-5 lg:flex lg:h-[calc(100vh-7rem)] lg:flex-col lg:overflow-hidden">
+      <div className="flex flex-col gap-3 lg:flex-none lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Community</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -315,9 +315,9 @@ export function CommunityPageClient({
           <Badge variant="secondary">{planLabel}</Badge>
         </div>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)_170px] lg:items-start 2xl:grid-cols-[320px_minmax(0,1fr)_190px]">
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_160px] lg:grid-rows-[auto_minmax(0,1fr)] lg:items-start lg:overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_180px] 2xl:grid-cols-[340px_minmax(0,1fr)_200px]">
         <Tabs
-          className="order-3 rounded-lg border bg-card p-3 lg:sticky lg:top-20 lg:col-start-3 lg:row-start-1 lg:self-start"
+          className="order-3 rounded-lg border bg-card p-3 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:max-h-full lg:self-start lg:overflow-y-auto"
           value={scopeFilter}
           onValueChange={(value) => {
             const scope = value as CommunityPostScope;
@@ -354,7 +354,7 @@ export function CommunityPageClient({
         </Tabs>
 
         <div className="contents">
-          <Card className="order-2 overflow-hidden lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1 lg:self-start">
+          <Card className="order-2 overflow-hidden lg:col-start-2 lg:row-start-1 lg:self-start">
             <CardHeader>
               <CardTitle>Find signals</CardTitle>
             </CardHeader>
@@ -402,7 +402,7 @@ export function CommunityPageClient({
               </div>
             </CardContent>
           </Card>
-          <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto lg:sticky lg:top-20 lg:col-start-1 lg:row-start-1 lg:self-start">
+          <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:max-h-full lg:self-start">
             <CardHeader>
               <CardTitle>Create a post</CardTitle>
             </CardHeader>
@@ -523,7 +523,7 @@ export function CommunityPageClient({
               </Button>
             </CardContent>
           </Card>
-          <div className="order-4 space-y-4 lg:col-start-2 lg:row-start-2">
+          <div className="order-4 space-y-4 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
             <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
               <CardHeader className="space-y-2">
