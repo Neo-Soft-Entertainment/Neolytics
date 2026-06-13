@@ -305,6 +305,9 @@ export async function SettingsPage() {
           <TabsTrigger value="user">Account</TabsTrigger>
           <TabsTrigger value="privacy">Privacy</TabsTrigger>
         </TabsList>
+        <p className="text-sm text-muted-foreground">
+          Switch between organization settings, workspaces, account security, and privacy controls.
+        </p>
 
         <TabsContent value="organization" className="space-y-4">
           <Card className="overflow-hidden">

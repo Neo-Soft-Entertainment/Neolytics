@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Montserrat } from "next/font/google";
 
 import "@/app/globals.css";
 import { auth } from "@/auth";
 import { Providers } from "@/app/providers";
 import { resolveUiLanguage } from "@/lib/i18n";
 
-const spaceGrotesk = Space_Grotesk({
+const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans"
@@ -36,7 +36,7 @@ export default async function RootLayout({
 
   return (
     <html lang={language} suppressHydrationWarning>
-      <body className={spaceGrotesk.variable}>
+      <body className={montserrat.variable}>
         <Providers language={language}>{children}</Providers>
       </body>
     </html>

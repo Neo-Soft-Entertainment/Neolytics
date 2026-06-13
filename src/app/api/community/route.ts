@@ -1,4 +1,4 @@
-import { CommunityPostType } from "@prisma/client";
+import { CommunityPostPriority, CommunityPostScope, CommunityPostType } from "@prisma/client";
 import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
@@ -12,6 +12,8 @@ import { SubscriptionLimitError } from "@/lib/subscription-service";
 const schema = z.object({
   title: z.string().trim().optional(),
   content: z.string().trim().min(1, "Write something before publishing."),
+  scope: z.nativeEnum(CommunityPostScope).optional(),
+  priority: z.nativeEnum(CommunityPostPriority).optional(),
   type: z.nativeEnum(CommunityPostType).optional(),
   projectId: z.string().cuid().nullable().optional(),
   tags: z.array(z.string().min(1)).max(8).optional()
@@ -35,6 +37,8 @@ async function parseCommunityPostRequest(request: Request) {
   const body = schema.parse({
     title: String(formData.get("title") ?? "") || undefined,
     content: String(formData.get("content") ?? ""),
+    scope: formData.get("scope") || undefined,
+    priority: formData.get("priority") || undefined,
     type: formData.get("type") || undefined,
     projectId: formData.get("projectId") === "none" ? null : formData.get("projectId") || null,
     tags
@@ -47,7 +51,7 @@ async function parseCommunityPostRequest(request: Request) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const context = await getApiContext();
 
   if (!context) {
@@ -64,9 +68,11 @@ export async function GET() {
     await assertCanUseFeature(entitlementContext, "communityFeed");
     await assertCanUseFeature(entitlementContext, "communityRanking");
 
+    const scopeParam = new URL(request.url).searchParams.get("scope");
+    const scope = scopeParam === CommunityPostScope.GLOBAL ? CommunityPostScope.GLOBAL : CommunityPostScope.ORGANIZATION;
     const [feed, ranking] = await Promise.all([
-      listCommunityFeed(context.organizationId, context.userId),
-      getCommunityRanking(context.organizationId)
+      listCommunityFeed(context.organizationId, context.userId, scope),
+      getCommunityRanking(context.organizationId, scope)
     ]);
 
     return ok({
@@ -115,6 +121,8 @@ export async function POST(request: Request) {
       authorId: context.userId,
       title,
       content: body.content,
+      scope: body.scope,
+      priority: body.priority,
       type: body.type,
       projectId: body.projectId ?? null,
       tags: body.tags,

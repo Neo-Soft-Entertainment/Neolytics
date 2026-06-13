@@ -15,11 +15,11 @@ export function PageHero({
   summary?: ReactNode;
 }) {
   return (
-    <Card className="aurora-panel overflow-hidden border-cyan-300/15 shadow-[0_28px_70px_rgba(8,47,73,0.12)] dark:shadow-[0_28px_70px_rgba(14,165,233,0.08)]">
+    <Card className="overflow-hidden border-border bg-card shadow-sm">
       <CardContent
         className={cn(
-          "grid gap-4 p-4 lg:items-start",
-          summary ? "lg:grid-cols-[minmax(0,1fr)_280px]" : "lg:grid-cols-1"
+          "grid gap-5 border-l-4 border-l-primary/70 p-5 lg:items-start",
+          summary ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-1"
         )}
       >
         <div className="space-y-3">

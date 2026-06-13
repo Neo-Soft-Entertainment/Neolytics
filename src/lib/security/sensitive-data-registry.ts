@@ -44,6 +44,7 @@ export const sensitiveFieldRegistry: SensitiveFieldDefinition[] = [
   { model: "ProjectGdd", field: "content", classification: "studio_operations", encryptedAtRest: true },
   { model: "CommunityPost", field: "title", classification: "business", encryptedAtRest: true },
   { model: "CommunityPost", field: "content", classification: "business", encryptedAtRest: true },
+  { model: "CommunityPostComment", field: "content", classification: "business", encryptedAtRest: true },
   { model: "AiReport", field: "content", classification: "business", encryptedAtRest: false }
 ];
 

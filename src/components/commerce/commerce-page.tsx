@@ -393,6 +393,9 @@ export function CommercePage({
           <TabsTrigger value="new-order">New order</TabsTrigger>
           <TabsTrigger value="new-channel">New channel</TabsTrigger>
         </TabsList>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Move between launch intelligence, campaign execution, orders, and sales channels for the studio pipeline.
+        </p>
 
         <TabsContent value="command">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">

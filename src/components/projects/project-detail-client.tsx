@@ -840,6 +840,9 @@ export function ProjectDetailClient({
           <TabsTrigger value="gdd">{t("projectDetail.gddTab")}</TabsTrigger>
           <TabsTrigger value="kanban">{t("projectDetail.kanbanTab")}</TabsTrigger>
         </TabsList>
+        <p className="text-sm text-muted-foreground">
+          Use these sections to connect project definition, market validation, art review, milestones, GDD, and the work board.
+        </p>
         <TabsContent value="overview" className="space-y-6">
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />

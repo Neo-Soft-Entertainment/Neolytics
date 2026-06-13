@@ -62,11 +62,10 @@ export function AppHeader({
   const currentSection = getNavSection(currentItem?.section);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-cyan-300/10 bg-background/72 px-4 shadow-[0_18px_50px_rgba(2,8,23,0.08)] backdrop-blur-2xl lg:px-8 relative">
-      <div className="pointer-events-none absolute inset-x-8 top-0 h-px shimmer-divider opacity-70" />
+    <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 shadow-sm lg:px-8 relative">
       <div className="flex flex-col gap-3 py-3 lg:hidden">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 shrink items-center gap-3 rounded-full border border-cyan-300/15 bg-white/65 px-2.5 py-1.5 shadow-[0_10px_30px_rgba(8,47,73,0.1)] backdrop-blur-xl dark:bg-white/[0.04]">
+          <div className="flex min-w-0 shrink items-center gap-3 rounded-lg border border-border bg-card px-2.5 py-1.5 shadow-sm">
             <NeolyticsBrand className="text-base" href="/dashboard" />
           </div>
           <div className="flex items-center gap-2">
@@ -101,7 +100,7 @@ export function AppHeader({
               workspaces={workspaces}
             />
           </div>
-          <Badge variant="secondary" className="w-fit border-cyan-300/15 bg-cyan-50/80 text-[11px] text-cyan-950 backdrop-blur dark:bg-cyan-300/10 dark:text-cyan-100">
+          <Badge variant="secondary" className="w-fit border-border bg-secondary text-[11px] text-secondary-foreground">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>
@@ -131,7 +130,7 @@ export function AppHeader({
               workspaces={workspaces}
             />
           </div>
-          <Badge variant="secondary" className="w-fit border-cyan-300/15 bg-cyan-50/80 text-[11px] text-cyan-950 backdrop-blur dark:bg-cyan-300/10 dark:text-cyan-100">
+          <Badge variant="secondary" className="w-fit border-border bg-secondary text-[11px] text-secondary-foreground">
             {getSubscriptionPlanLabel(subscriptionPlan)}
           </Badge>
         </div>

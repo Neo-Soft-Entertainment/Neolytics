@@ -107,6 +107,9 @@ export function CompanyPage({
           {canAccessDocumentVault ? <TabsTrigger value="documents">Documents</TabsTrigger> : null}
           {canAccessApprovalsAudit ? <TabsTrigger value="audit">Audit</TabsTrigger> : null}
         </TabsList>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Manage the legal profile, compliance work, documents, and audit trail for the studio organization.
+        </p>
         <TabsContent className="space-y-4" value="profile">
           <CompanyProfilePanel
             canManage={canManage}

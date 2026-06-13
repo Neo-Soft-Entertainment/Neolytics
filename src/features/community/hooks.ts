@@ -1,6 +1,6 @@
 "use client";
 
-import { CommunityPostType } from "@prisma/client";
+import { CommunityPostPriority, CommunityPostScope, CommunityPostType } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api-client";
@@ -9,6 +9,8 @@ export interface CommunityPostItem {
   id: string;
   title: string;
   content: string;
+  scope: CommunityPostScope;
+  priority: CommunityPostPriority;
   type: CommunityPostType;
   tags: string[] | null;
   likeCount: number;
@@ -21,6 +23,17 @@ export interface CommunityPostItem {
     mimeType: string;
     sizeBytes: number;
     signedUrl?: string;
+  }>;
+  comments: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    author: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
   }>;
   author: {
     id: string;
@@ -53,10 +66,10 @@ export interface CommunityResponse {
   ranking: CommunityRankingResponse;
 }
 
-export function useCommunity(enabled = true) {
+export function useCommunity(enabled = true, scope: CommunityPostScope = CommunityPostScope.ORGANIZATION) {
   return useQuery({
-    queryKey: ["community"],
-    queryFn: () => apiClient<CommunityResponse>("/api/community"),
+    queryKey: ["community", scope],
+    queryFn: () => apiClient<CommunityResponse>(`/api/community?scope=${scope}`),
     enabled
   });
 }

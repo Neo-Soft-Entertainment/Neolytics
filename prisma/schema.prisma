@@ -370,6 +370,18 @@ enum CommunityPostType {
   HELP
 }
 
+enum CommunityPostScope {
+  ORGANIZATION
+  GLOBAL
+}
+
+enum CommunityPostPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
 enum ReviewSentiment {
   OVERWHELMINGLY_POSITIVE
   VERY_POSITIVE
@@ -532,6 +544,7 @@ model User {
   organizationInvitations    OrganizationInvitation[] @relation("OrganizationInvitationCreatedBy")
   communityPosts             CommunityPost[]          @relation("CommunityPostAuthor")
   communityLikes             CommunityPostLike[]
+  communityComments          CommunityPostComment[]   @relation("CommunityPostCommentAuthor")
   uploadedDocumentVersions   CompanyDocumentVersion[] @relation("CompanyDocumentVersionUploadedBy")
   complianceItemsOwned       ComplianceItem[]         @relation("ComplianceItemOwner")
   auditEvents                AuditEvent[]
@@ -624,6 +637,7 @@ model Organization {
   subscriptionUsage              OrganizationSubscriptionUsage[]
   invitations                    OrganizationInvitation[]
   communityPosts                 CommunityPost[]
+  communityComments              CommunityPostComment[]
   legalEntities                  LegalEntity[]
   companyDocuments               CompanyDocument[]
   complianceItems                ComplianceItem[]
@@ -2180,6 +2194,8 @@ model CommunityPost {
   workspaceId    String?
   authorId       String
   projectId      String?
+  scope          CommunityPostScope    @default(ORGANIZATION)
+  priority       CommunityPostPriority @default(NORMAL)
   type           CommunityPostType   @default(GENERAL)
   title          String
   content        String
@@ -2193,8 +2209,10 @@ model CommunityPost {
   author         User                @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   project        Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
   likes          CommunityPostLike[]
+  comments       CommunityPostComment[]
 
   @@index([organizationId, createdAt(sort: Desc)])
+  @@index([scope, createdAt(sort: Desc)])
   @@index([projectId, createdAt(sort: Desc)])
   @@index([authorId, createdAt(sort: Desc)])
 }
@@ -2208,6 +2226,23 @@ model CommunityPostLike {
 
   @@id([postId, userId])
   @@index([userId, createdAt(sort: Desc)])
+}
+
+model CommunityPostComment {
+  id             String        @id @default(cuid())
+  postId         String
+  organizationId String
+  authorId       String
+  content        String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  post           CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  author         User          @relation("CommunityPostCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt(sort: Asc)])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([authorId, createdAt(sort: Desc)])
 }
 
 model IngestionRun {

@@ -1,6 +1,6 @@
 "use client";
 
-import { CommunityPostType, SubscriptionPlan } from "@prisma/client";
+import { CommunityPostPriority, CommunityPostScope, CommunityPostType, SubscriptionPlan } from "@prisma/client";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { PageHero } from "@/components/app-shell/page-hero";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useCommunity } from "@/features/community/hooks";
 import { useProjects } from "@/features/projects/hooks";
@@ -24,14 +25,53 @@ const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
   { value: CommunityPostType.HELP, label: "Help" }
 ];
 
-function getPostPreview(content: string) {
-  const trimmed = content.trim();
+const scopeOptions: Array<{ value: CommunityPostScope; label: string }> = [
+  { value: CommunityPostScope.ORGANIZATION, label: "Organization" },
+  { value: CommunityPostScope.GLOBAL, label: "Global" }
+];
 
-  if (trimmed.length <= 90) {
-    return trimmed || "Community post";
+const priorityOptions: Array<{ value: CommunityPostPriority; label: string }> = [
+  { value: CommunityPostPriority.LOW, label: "Low" },
+  { value: CommunityPostPriority.NORMAL, label: "Normal" },
+  { value: CommunityPostPriority.HIGH, label: "High" },
+  { value: CommunityPostPriority.URGENT, label: "Urgent" }
+];
+
+const scopeDescriptions = {
+  [CommunityPostScope.ORGANIZATION]: "Posts, comments, and project links visible inside your organization.",
+  [CommunityPostScope.GLOBAL]: "Public studio feed across Neolytics, without internal project links."
+};
+
+function getPriorityBadgeClass(priority: CommunityPostPriority) {
+  if (priority === CommunityPostPriority.URGENT) {
+    return "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300";
   }
 
-  return `${trimmed.slice(0, 90)}...`;
+  if (priority === CommunityPostPriority.HIGH) {
+    return "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  }
+
+  if (priority === CommunityPostPriority.LOW) {
+    return "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  }
+
+  return "border-sky-500/35 bg-sky-500/10 text-sky-700 dark:text-sky-300";
+}
+
+function getPriorityCardClass(priority: CommunityPostPriority) {
+  if (priority === CommunityPostPriority.URGENT) {
+    return "border-l-red-500";
+  }
+
+  if (priority === CommunityPostPriority.HIGH) {
+    return "border-l-amber-500";
+  }
+
+  if (priority === CommunityPostPriority.LOW) {
+    return "border-l-emerald-500";
+  }
+
+  return "border-l-sky-500";
 }
 
 export function CommunityPageClient({
@@ -43,29 +83,36 @@ export function CommunityPageClient({
   canAccessRanking: boolean;
   subscriptionPlan: SubscriptionPlan;
 }) {
-  const query = useCommunity(canAccessFeed);
+  const [scopeFilter, setScopeFilter] = useState<CommunityPostScope>(CommunityPostScope.ORGANIZATION);
+  const query = useCommunity(canAccessFeed, scopeFilter);
   const projectsQuery = useProjects();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingCommentId, setSubmittingCommentId] = useState<string | null>(null);
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<CommunityPostType | "ALL">("ALL");
   const [sortMode, setSortMode] = useState<"recent" | "liked">("recent");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState<{
     content: string;
+    scope: CommunityPostScope;
+    priority: CommunityPostPriority;
     type: CommunityPostType;
     projectId: string;
     tags: string;
   }>({
     content: "",
+    scope: CommunityPostScope.ORGANIZATION,
+    priority: CommunityPostPriority.NORMAL,
     type: CommunityPostType.GENERAL,
     projectId: "none",
     tags: ""
   });
-  const isPro = subscriptionPlan === SubscriptionPlan.PRO;
   const feed = query.data?.feed ?? [];
   const deferredSearch = useDeferredValue(search);
   const canPublishPost = form.content.trim().length > 0;
+  const planLabel = subscriptionPlan === SubscriptionPlan.PRO ? "Pro community" : "Community";
 
   async function createPost() {
     setFeedback(null);
@@ -78,8 +125,10 @@ export function CommunityPageClient({
     setIsSubmitting(true);
     const payload = new FormData();
     payload.append("content", form.content.trim());
+    payload.append("scope", form.scope);
+    payload.append("priority", form.priority);
     payload.append("type", form.type);
-    payload.append("projectId", form.projectId);
+    payload.append("projectId", form.scope === CommunityPostScope.GLOBAL ? "none" : form.projectId);
     payload.append("tags", form.tags);
 
     for (const file of mediaFiles) {
@@ -101,12 +150,47 @@ export function CommunityPageClient({
 
     setForm({
       content: "",
+      scope: scopeFilter,
+      priority: CommunityPostPriority.NORMAL,
       type: CommunityPostType.GENERAL,
       projectId: "none",
       tags: ""
     });
     setMediaFiles([]);
     setFeedback("Post published.");
+    await query.refetch();
+  }
+
+  async function createComment(postId: string) {
+    const content = commentDrafts[postId]?.trim() ?? "";
+
+    if (!content) {
+      setFeedback("Write a comment before sending.");
+      return;
+    }
+
+    setFeedback(null);
+    setSubmittingCommentId(postId);
+    const response = await fetch(`/api/community/${postId}/comments`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ content })
+    });
+    setSubmittingCommentId(null);
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? "Unable to publish comment.");
+      return;
+    }
+
+    setCommentDrafts((current) => {
+      const next = { ...current };
+      delete next[postId];
+      return next;
+    });
     await query.refetch();
   }
 
@@ -175,6 +259,8 @@ export function CommunityPageClient({
         post.author.name,
         post.author.email,
         post.project?.name,
+        post.scope,
+        post.priority,
         ...(post.tags ?? [])
       ]
         .filter(Boolean)
@@ -190,35 +276,6 @@ export function CommunityPageClient({
 
     return filtered;
   }, [deferredSearch, feed, sortMode, typeFilter]);
-
-  const signalBoard = useMemo(() => {
-    const typeCounts = new Map<string, number>();
-    const tagCounts = new Map<string, number>();
-    let linkedProjectPosts = 0;
-
-    for (const post of feed) {
-      typeCounts.set(post.type, (typeCounts.get(post.type) ?? 0) + 1);
-
-      if (post.project) {
-        linkedProjectPosts += 1;
-      }
-
-      for (const tag of post.tags ?? []) {
-        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
-      }
-    }
-
-    const topCategory = [...typeCounts.entries()].sort((left, right) => right[1] - left[1])[0] ?? null;
-    const topTag = [...tagCounts.entries()].sort((left, right) => right[1] - left[1])[0] ?? null;
-    const hottestPost = [...feed].sort((left, right) => right.likeCount - left.likeCount)[0] ?? null;
-
-    return {
-      linkedProjectShare: feed.length > 0 ? Math.round((linkedProjectPosts / feed.length) * 100) : 0,
-      topCategory,
-      topTag,
-      hottestPost
-    };
-  }, [feed]);
 
   if (!canAccessFeed) {
     return (
@@ -248,40 +305,60 @@ export function CommunityPageClient({
     <div className="space-y-6">
       <PageHero
         title="Community"
-        description="Share market notes, project updates, and team signals in one searchable feed."
+        description="Share studio updates with your organization or the wider Neolytics community."
         actions={(
           <>
-            <Badge variant="secondary">Internal feed</Badge>
-            <Badge variant="secondary">Market + project context</Badge>
+            <Badge variant="secondary">Organization</Badge>
+            <Badge variant="secondary">Global</Badge>
+            <Badge variant="secondary">{planLabel}</Badge>
           </>
         )}
         summary={(
-          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
+          <div className="grid gap-2.5 rounded-lg border bg-background p-3 text-sm">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Posts</span>
+              <span className="text-muted-foreground">Visible posts</span>
               <span className="font-medium">{query.data.feed.length}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Ranking</span>
+              <span className="text-muted-foreground">Comments</span>
+              <span className="font-medium">{query.data.feed.reduce((total, post) => total + post.comments.length, 0)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">Ranking data</span>
               <span className="font-medium">{canAccessRanking ? "Enabled" : "Locked"}</span>
             </div>
-            {isPro ? (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Signal board</span>
-                <span className="font-medium">Pro</span>
-              </div>
-            ) : null}
-            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Use this space</p>
+            <div className="rounded-lg border bg-muted/35 p-3">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Current view</p>
               <p className="mt-2 font-medium">Turn team insight into searchable operating memory.</p>
             </div>
           </div>
         )}
       />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="mx-auto max-w-5xl space-y-4">
+        <Tabs
+          value={scopeFilter}
+          onValueChange={(value) => {
+            const scope = value as CommunityPostScope;
+            setScopeFilter(scope);
+            setForm((current) => ({
+              ...current,
+              scope,
+              projectId: scope === CommunityPostScope.GLOBAL ? "none" : current.projectId
+            }));
+          }}
+        >
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-lg border bg-card p-1.5">
+            {scopeOptions.map((option) => (
+              <TabsTrigger key={option.value} value={option.value}>
+                {option.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <p className="mt-2 text-sm text-muted-foreground">{scopeDescriptions[scopeFilter]}</p>
+        </Tabs>
+
         <div className="space-y-4">
           <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>Find signals</CardTitle>
             </CardHeader>
@@ -323,19 +400,40 @@ export function CommunityPageClient({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-4 text-sm text-muted-foreground dark:bg-white/[0.03]">
+              <div className="rounded-lg border bg-muted/35 p-4 text-sm text-muted-foreground">
                 Showing <span className="font-medium text-foreground">{visibleFeed.length}</span> of{" "}
                 <span className="font-medium text-foreground">{query.data.feed.length}</span> community posts.
               </div>
             </CardContent>
           </Card>
-          <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/20 shadow-[0_28px_90px_rgba(8,145,178,0.12)]">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Create a post</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Audience</Label>
+                  <Select
+                    value={form.scope}
+                    onValueChange={(value) => setForm((current) => ({
+                      ...current,
+                      scope: value as CommunityPostScope,
+                      projectId: value === CommunityPostScope.GLOBAL ? "none" : current.projectId
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {scopeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select value={form.type} onValueChange={(value) => setForm((current) => ({ ...current, type: value as CommunityPostType }))}>
@@ -352,6 +450,23 @@ export function CommunityPageClient({
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select value={form.priority} onValueChange={(value) => setForm((current) => ({ ...current, priority: value as CommunityPostPriority }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {form.scope === CommunityPostScope.ORGANIZATION ? (
+                <div className="space-y-2">
                   <Label>Linked project</Label>
                   <Select value={form.projectId} onValueChange={(value) => setForm((current) => ({ ...current, projectId: value }))}>
                     <SelectTrigger>
@@ -367,7 +482,7 @@ export function CommunityPageClient({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="community-content">Caption</Label>
                 <Textarea
@@ -377,7 +492,7 @@ export function CommunityPageClient({
                   placeholder="Write a caption..."
                 />
               </div>
-              <div className="space-y-2 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4">
+              <div className="space-y-2 rounded-lg border border-dashed bg-muted/25 p-4">
                 <Label htmlFor="community-media">Photos</Label>
                 <Input
                   id="community-media"
@@ -390,7 +505,7 @@ export function CommunityPageClient({
                 {mediaFiles.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {mediaFiles.map((file) => (
-                      <span key={`${file.name}-${file.size}`} className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                      <span key={`${file.name}-${file.size}`} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
                         {file.name}
                       </span>
                     ))}
@@ -413,15 +528,14 @@ export function CommunityPageClient({
             </CardContent>
           </Card>
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
-            <Card key={post.id} className="overflow-hidden border-white/10 bg-gradient-to-br from-card via-card to-cyan-950/10 shadow-[0_20px_70px_rgba(15,23,42,0.16)]">
-              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
               <CardHeader className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     {post.author.image ? (
-                      <img src={post.author.image} alt="" className="h-11 w-11 rounded-full border border-white/10 object-cover" />
+                      <img src={post.author.image} alt="" className="h-11 w-11 rounded-full border object-cover" />
                     ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full border border-cyan-300/20 bg-cyan-400/10 text-sm font-semibold text-cyan-200">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full border bg-muted text-sm font-semibold">
                         {(post.author.name || post.author.email).slice(0, 1).toUpperCase()}
                       </div>
                     )}
@@ -433,6 +547,12 @@ export function CommunityPageClient({
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      {post.scope === CommunityPostScope.GLOBAL ? "Global" : "Organization"}
+                    </span>
+                    <span className={`rounded-full border px-2.5 py-1 text-xs ${getPriorityBadgeClass(post.priority)}`}>
+                      {priorityOptions.find((option) => option.value === post.priority)?.label ?? post.priority}
+                    </span>
                     {post.canDelete === true ? (
                       <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
                         Delete
@@ -443,13 +563,13 @@ export function CommunityPageClient({
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 {post.media.length > 0 ? (
-                  <div className={post.media.length === 1 ? "overflow-hidden rounded-[1.5rem] border border-white/10" : "grid gap-2 overflow-hidden rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-2 sm:grid-cols-2"}>
+                  <div className={post.media.length === 1 ? "overflow-hidden rounded-lg border" : "grid gap-2 overflow-hidden rounded-lg border bg-muted/20 p-2 sm:grid-cols-2"}>
                     {post.media.map((item) => item.signedUrl ? (
                       <img
                         key={item.storagePath}
                         src={item.signedUrl}
                         alt={item.originalName}
-                        className={post.media.length === 1 ? "max-h-[560px] w-full object-cover" : "h-64 w-full rounded-2xl object-cover"}
+                        className={post.media.length === 1 ? "max-h-[560px] w-full object-cover" : "h-64 w-full rounded-md object-cover"}
                       />
                     ) : null)}
                   </div>
@@ -459,20 +579,20 @@ export function CommunityPageClient({
                   {post.content}
                 </p>
                 {post.project ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 text-muted-foreground dark:bg-white/[0.03]">
+                  <div className="rounded-lg border bg-muted/35 p-3 text-muted-foreground">
                     Linked project: <span className="font-medium text-foreground">{post.project.name}</span>
                   </div>
                 ) : null}
                 {post.tags && post.tags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {post.tags.map((tag) => (
-                      <span key={tag} className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                      <span key={tag} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
                         {tag}
                       </span>
                     ))}
                   </div>
                 ) : null}
-                <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+                <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                   <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
                     {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
                   </Button>
@@ -480,11 +600,38 @@ export function CommunityPageClient({
                     More from author
                   </Button>
                 </div>
+                <div className="space-y-3 border-t pt-3">
+                  <p className="text-sm font-medium">Comments</p>
+                  {post.comments.length > 0 ? (
+                    <div className="space-y-2">
+                      {post.comments.map((comment) => (
+                        <div key={comment.id} className="rounded-lg border bg-muted/25 p-3">
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">{comment.author.name || comment.author.email}</span>{" "}
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{comment.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No comments yet.</p>
+                  )}
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <Input
+                      value={commentDrafts[post.id] ?? ""}
+                      onChange={(event) => setCommentDrafts((current) => ({ ...current, [post.id]: event.target.value }))}
+                      placeholder="Add a comment"
+                    />
+                    <Button disabled={submittingCommentId === post.id} onClick={() => createComment(post.id)}>
+                      {submittingCommentId === post.id ? "Sending..." : "Comment"}
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )) : (
             <Card className="overflow-hidden">
-              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
               <CardHeader>
                 <CardTitle>No posts yet</CardTitle>
               </CardHeader>
@@ -493,81 +640,6 @@ export function CommunityPageClient({
               </CardContent>
             </Card>
           )}
-        </div>
-        <div className="space-y-4">
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>Community ranking</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {canAccessRanking ? query.data.ranking.contributors.length > 0 ? query.data.ranking.contributors.map((entry) => (
-                <div key={entry.authorId} className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium">#{entry.rank} {entry.authorName}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {entry.postsCount} posts · {entry.likesReceived} likes received
-                      </p>
-                    </div>
-                    <p className="text-lg font-semibold">{entry.score}</p>
-                  </div>
-                </div>
-              )) : (
-                <p className="text-sm text-muted-foreground">Ranking starts as soon as members publish and react.</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Upgrade your plan to unlock contributor ranking.</p>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>Top posts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {query.data.ranking.topPosts.length > 0 ? query.data.ranking.topPosts.map((post) => (
-                <div key={post.id} className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="font-medium">{getPostPreview(post.content)}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {post.likeCount} likes · {post.author.name || post.author.email}
-                  </p>
-                </div>
-              )) : (
-                <p className="text-sm text-muted-foreground">No standout posts yet.</p>
-              )}
-            </CardContent>
-          </Card>
-          {isPro ? (
-            <Card className="overflow-hidden">
-              <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-              <CardHeader>
-                <CardTitle>Signal board</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="text-sm text-muted-foreground">Most active category</p>
-                  <p className="mt-1 font-medium">
-                    {signalBoard.topCategory ? `${signalBoard.topCategory[0].replaceAll("_", " ")} · ${signalBoard.topCategory[1]} posts` : "No signal concentration yet"}
-                  </p>
-                </div>
-                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="text-sm text-muted-foreground">Most repeated tag</p>
-                  <p className="mt-1 font-medium">
-                    {signalBoard.topTag ? `${signalBoard.topTag[0]} · ${signalBoard.topTag[1]} mentions` : "No repeated tags yet"}
-                  </p>
-                </div>
-                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="text-sm text-muted-foreground">Posts tied to projects</p>
-                  <p className="mt-1 font-medium">{signalBoard.linkedProjectShare}% of feed</p>
-                </div>
-                <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="text-sm text-muted-foreground">Hottest post right now</p>
-                  <p className="mt-1 font-medium">{signalBoard.hottestPost ? getPostPreview(signalBoard.hottestPost.content) : "No standout post yet"}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
         </div>
       </div>
     </div>

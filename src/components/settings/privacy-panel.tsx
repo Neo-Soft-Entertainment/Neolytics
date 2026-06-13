@@ -399,6 +399,9 @@ export function PrivacyPanel({
         <TabsTrigger value="requests">Requests</TabsTrigger>
         {canAdmin ? <TabsTrigger value="admin">Admin</TabsTrigger> : null}
       </TabsList>
+      <p className="text-sm text-muted-foreground">
+        Review privacy posture, consent records, data requests, and admin controls in one place.
+      </p>
 
       <TabsContent value="overview" className="space-y-4">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

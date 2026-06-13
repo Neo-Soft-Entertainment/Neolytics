@@ -1,4 +1,4 @@
-import { CommunityPostType, Prisma } from "@prisma/client";
+import { CommunityPostPriority, CommunityPostScope, CommunityPostType, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
@@ -26,6 +26,22 @@ const communityPostInclude = {
       name: true,
       stage: true
     }
+  },
+  comments: {
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      }
+    },
+    orderBy: [
+      { createdAt: "asc" }
+    ],
+    take: 25
   }
 } satisfies Prisma.CommunityPostInclude;
 
@@ -46,24 +62,33 @@ function getPostMedia(value: Prisma.JsonValue | null | undefined) {
   });
 }
 
-async function hydrateCommunityPost<T extends { organizationId: string; title: string; content: string; media?: Prisma.JsonValue | null }>(post: T) {
+async function hydrateCommunityPost<T extends {
+  organizationId: string;
+  title: string;
+  content: string;
+  media?: Prisma.JsonValue | null;
+  comments?: Array<{ organizationId: string; content: string }>;
+}>(post: T) {
   const media = await createCommunityImageSignedUrls(getPostMedia(post.media));
+  const comments = post.comments?.map((comment) => ({
+    ...comment,
+    content: decryptNullableString(comment.content, `communityPostComment:${comment.organizationId}:content`) ?? comment.content
+  }));
 
   return {
     ...post,
     title: decryptNullableString(post.title, `communityPost:${post.organizationId}:title`) ?? post.title,
     content: decryptNullableString(post.content, `communityPost:${post.organizationId}:content`) ?? post.content,
+    comments,
     media
   };
 }
 
-export async function listCommunityFeed(organizationId: string, userId: string) {
+export async function listCommunityFeed(organizationId: string, userId: string, scope: CommunityPostScope) {
   await enforceSubscriptionCapability(organizationId, "communityFeed");
 
   const posts = await db.communityPost.findMany({
-    where: {
-      organizationId
-    },
+    where: scope === CommunityPostScope.GLOBAL ? { scope } : { organizationId, scope: CommunityPostScope.ORGANIZATION },
     include: {
       ...communityPostInclude,
       likes: {
@@ -88,14 +113,13 @@ export async function listCommunityFeed(organizationId: string, userId: string) 
   })));
 }
 
-export async function getCommunityRanking(organizationId: string) {
+export async function getCommunityRanking(organizationId: string, scope: CommunityPostScope) {
   await enforceSubscriptionCapability(organizationId, "communityRanking");
+  const where = scope === CommunityPostScope.GLOBAL ? { scope } : { organizationId, scope: CommunityPostScope.ORGANIZATION };
 
   const contributors = await db.communityPost.groupBy({
     by: ["authorId"],
-    where: {
-      organizationId
-    },
+    where,
     _count: {
       _all: true
     },
@@ -127,9 +151,7 @@ export async function getCommunityRanking(organizationId: string) {
     : [];
   const userById = new Map(users.map((user) => [user.id, user]));
   const topPosts = await db.communityPost.findMany({
-    where: {
-      organizationId
-    },
+    where,
     include: communityPostInclude,
     orderBy: [
       { likeCount: "desc" },
@@ -164,17 +186,21 @@ export async function createCommunityPost(params: {
   authorId: string;
   title: string;
   content: string;
+  scope?: CommunityPostScope;
+  priority?: CommunityPostPriority;
   type?: CommunityPostType;
   projectId?: string | null;
   tags?: string[];
   mediaFiles?: File[];
 }) {
   await enforceSubscriptionCapability(params.organizationId, "communityFeed");
+  const scope = params.scope ?? CommunityPostScope.ORGANIZATION;
+  const projectId = scope === CommunityPostScope.GLOBAL ? null : params.projectId ?? null;
 
-  if (params.projectId) {
+  if (projectId) {
     await db.project.findFirstOrThrow({
       where: {
-        id: params.projectId,
+        id: projectId,
         organizationId: params.organizationId
       }
     });
@@ -185,10 +211,12 @@ export async function createCommunityPost(params: {
       organizationId: params.organizationId,
       workspaceId: params.workspaceId,
       authorId: params.authorId,
+      scope,
+      priority: params.priority ?? CommunityPostPriority.NORMAL,
       title: encryptNullableString(params.title.trim(), `communityPost:${params.organizationId}:title`) ?? "",
       content: encryptNullableString(params.content.trim(), `communityPost:${params.organizationId}:content`) ?? "",
       type: params.type ?? CommunityPostType.GENERAL,
-      projectId: params.projectId ?? null,
+      projectId,
       tags: params.tags ?? [],
       media: []
     },
@@ -261,11 +289,14 @@ export async function deleteCommunityPost(params: {
   const post = await db.communityPost.findFirstOrThrow({
     where: {
       id: params.postId,
-      organizationId: params.organizationId
+      OR: [
+        { organizationId: params.organizationId },
+        { scope: CommunityPostScope.GLOBAL }
+      ]
     }
   });
 
-  if (post.authorId !== params.userId && !params.canManage) {
+  if (post.authorId !== params.userId && !(post.organizationId === params.organizationId && params.canManage)) {
     throw new Error("You can only delete your own community posts.");
   }
 
@@ -289,7 +320,10 @@ export async function toggleCommunityPostLike(params: {
   const post = await db.communityPost.findFirstOrThrow({
     where: {
       id: params.postId,
-      organizationId: params.organizationId
+      OR: [
+        { organizationId: params.organizationId },
+        { scope: CommunityPostScope.GLOBAL }
+      ]
     }
   });
   const existing = await db.communityPostLike.findUnique({
@@ -346,4 +380,47 @@ export async function toggleCommunityPostLike(params: {
   ]);
 
   return { liked: true };
+}
+
+export async function createCommunityPostComment(params: {
+  organizationId: string;
+  userId: string;
+  postId: string;
+  content: string;
+}) {
+  await enforceSubscriptionCapability(params.organizationId, "communityFeed");
+
+  const post = await db.communityPost.findFirstOrThrow({
+    where: {
+      id: params.postId,
+      OR: [
+        { organizationId: params.organizationId },
+        { scope: CommunityPostScope.GLOBAL }
+      ]
+    }
+  });
+
+  const comment = await db.communityPostComment.create({
+    data: {
+      postId: post.id,
+      organizationId: params.organizationId,
+      authorId: params.userId,
+      content: encryptNullableString(params.content.trim(), `communityPostComment:${params.organizationId}:content`) ?? ""
+    },
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      }
+    }
+  });
+
+  return {
+    ...comment,
+    content: decryptNullableString(comment.content, `communityPostComment:${comment.organizationId}:content`) ?? comment.content
+  };
 }
