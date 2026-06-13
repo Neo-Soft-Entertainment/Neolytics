@@ -9,6 +9,7 @@ import {
   getOrganizationPermissionLabel,
   organizationPermissionOptions
 } from "@/lib/organization-permissions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 function canCopyInvitationToken(token: string) {
   return !/^[a-f0-9]{64}$/i.test(token);
+}
+
+function PermissionBadges({ permissions }: { permissions: OrganizationPermission[] }) {
+  if (permissions.length === 0) {
+    return <p className="text-xs text-muted-foreground">Role defaults only</p>;
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {permissions.map((permission) => (
+        <Badge key={permission} variant="secondary" className="border-white/10 bg-white/55 font-medium dark:bg-white/[0.04]">
+          {getOrganizationPermissionLabel(permission)}
+        </Badge>
+      ))}
+    </div>
+  );
 }
 
 export function OrganizationMembersPanel({
@@ -143,9 +160,7 @@ export function OrganizationMembersPanel({
               <p className="mt-1 text-muted-foreground">
                 {member.user.email} · {member.role}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Permissions: {member.permissions.length > 0 ? member.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}
-              </p>
+              <PermissionBadges permissions={member.permissions} />
               <p className="mt-1 text-muted-foreground">
                 Joined {new Date(member.joinedAt).toLocaleDateString()}
               </p>
@@ -165,9 +180,7 @@ export function OrganizationMembersPanel({
               <p className="mt-1 text-muted-foreground">
                 Role: {invitation.role} · Expires {new Date(invitation.expiresAt).toLocaleDateString()}
               </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Permissions: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}
-              </p>
+              <PermissionBadges permissions={invitation.permissions} />
               <div className="mt-3 flex flex-wrap gap-2">
                 {canCopyInvitationToken(invitation.token) ? (
                   <Button
@@ -231,29 +244,32 @@ export function OrganizationMembersPanel({
               {isSubmitting ? "Inviting..." : "Invite"}
             </Button>
           </div>
-          <div className="space-y-3 lg:col-span-3">
-            <div>
-              <p className="text-sm font-medium">Custom permissions</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pick the ERP areas this invitation should grant after acceptance.
-              </p>
+          <div className="space-y-3 rounded-lg border border-white/10 bg-white/35 p-3 lg:col-span-3 dark:bg-white/[0.03]">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Permissions</p>
+                <p className="mt-1 text-xs text-muted-foreground">Access applied when the invitation is accepted.</p>
+              </div>
+              <Badge variant="secondary" className="w-fit border-white/10 bg-white/55 dark:bg-white/[0.04]">
+                {permissions.length} selected
+              </Badge>
             </div>
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-1.5 md:grid-cols-2">
               {organizationPermissionOptions.map((option) => (
                 <label
                   key={option.value}
-                  className="flex gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 text-sm backdrop-blur dark:bg-white/[0.03]"
+                  className="flex min-h-14 items-start gap-2 rounded-md px-2 py-2 text-sm hover:bg-white/45 dark:hover:bg-white/[0.04]"
                 >
                   <input
-                    className="mt-1 h-4 w-4 accent-primary"
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
                     type="checkbox"
                     checked={permissions.includes(option.value)}
                     disabled={!canManage}
                     onChange={() => togglePermission(option.value)}
                   />
-                  <span>
-                    <span className="block font-medium">{option.label}</span>
-                    <span className="mt-1 block text-xs text-muted-foreground">{option.description}</span>
+                  <span className="min-w-0">
+                    <span className="block leading-5">{option.label}</span>
+                    <span className="block text-xs leading-4 text-muted-foreground">{option.description}</span>
                   </span>
                 </label>
               ))}
