@@ -315,7 +315,7 @@ export function CommunityPageClient({
           <Badge variant="secondary">{planLabel}</Badge>
         </div>
       </div>
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_160px] lg:grid-rows-[auto_minmax(0,1fr)] lg:items-start lg:overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_180px] 2xl:grid-cols-[340px_minmax(0,1fr)_200px]">
+      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_160px] lg:grid-rows-[auto_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[320px_minmax(0,1fr)_180px] 2xl:grid-cols-[340px_minmax(0,1fr)_200px]">
         <Tabs
           className="order-3 rounded-lg border bg-card p-3 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:max-h-full lg:self-start lg:overflow-y-auto"
           value={scopeFilter}
@@ -523,7 +523,7 @@ export function CommunityPageClient({
               </Button>
             </CardContent>
           </Card>
-          <div className="order-4 space-y-4 lg:col-start-2 lg:row-start-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="order-4 min-h-0 space-y-4 lg:col-start-2 lg:row-start-2 lg:h-full lg:overflow-y-auto lg:pr-1">
           {visibleFeed.length > 0 ? visibleFeed.map((post) => (
             <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
               <CardHeader className="space-y-2">
