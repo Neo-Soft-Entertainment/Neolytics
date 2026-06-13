@@ -1,6 +1,6 @@
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
-import { canManageOrganization } from "@/lib/authorization";
+import { canManageCommunity } from "@/lib/authorization";
 import { deleteCommunityPost } from "@/lib/community-service";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
@@ -21,7 +21,7 @@ export async function DELETE(
       organizationId: context.organizationId,
       userId: context.userId,
       postId,
-      canManage: canManageOrganization(context.organizationRole)
+      canManage: canManageCommunity(context.organizationRole, context.organizationPermissions)
     });
 
     return ok(result);

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageFinance } from "@/lib/authorization";
 import { createIssuedInvoice } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  if (!["OWNER", "ADMIN"].includes(context.organizationRole)) {
+  if (!canManageFinance(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can manage invoices.");
   }
 

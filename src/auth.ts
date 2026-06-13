@@ -314,6 +314,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: membership.organization.name,
           slug: membership.organization.slug,
           role: membership.role,
+          permissions: membership.permissions,
           subscriptionPlan: membership.organization.subscriptionPlan
         }));
       } catch (error) {

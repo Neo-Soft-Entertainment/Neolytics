@@ -10,11 +10,13 @@ export function AcceptInvitationCard({
   token,
   organizationName,
   invitedEmail,
+  permissions,
   currentEmail
 }: {
   token: string;
   organizationName: string;
   invitedEmail: string;
+  permissions: string[];
   currentEmail?: string | null;
 }) {
   const router = useRouter();
@@ -56,6 +58,7 @@ export function AcceptInvitationCard({
       </CardHeader>
       <CardContent className="space-y-4 text-sm text-muted-foreground">
         <p>Invited email: {invitedEmail}</p>
+        <p>Permissions: {permissions.length > 0 ? permissions.join(", ") : "Role defaults only"}</p>
         <p>Signed in as: {currentEmail ?? "Unknown user"}</p>
         {message ? <p className="text-destructive">{message}</p> : null}
         <Button disabled={isSubmitting} onClick={acceptInvite}>

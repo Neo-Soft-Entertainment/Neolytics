@@ -1,9 +1,14 @@
 "use client";
 
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationPermission, OrganizationRole } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  getDefaultOrganizationPermissions,
+  getOrganizationPermissionLabel,
+  organizationPermissionOptions
+} from "@/lib/organization-permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +28,7 @@ export function OrganizationMembersPanel({
   members: Array<{
     userId: string;
     role: OrganizationRole;
+    permissions: OrganizationPermission[];
     joinedAt: Date;
     user: {
       name: string | null;
@@ -33,6 +39,7 @@ export function OrganizationMembersPanel({
     id: string;
     email: string;
     role: OrganizationRole;
+    permissions: OrganizationPermission[];
     token: string;
     expiresAt: Date;
     createdAt: Date;
@@ -41,10 +48,26 @@ export function OrganizationMembersPanel({
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<OrganizationRole>(OrganizationRole.MEMBER);
+  const [permissions, setPermissions] = useState<OrganizationPermission[]>(getDefaultOrganizationPermissions(OrganizationRole.MEMBER));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastInviteUrl, setLastInviteUrl] = useState<string | null>(null);
+
+  function updateRole(value: OrganizationRole) {
+    setRole(value);
+    setPermissions(getDefaultOrganizationPermissions(value));
+  }
+
+  function togglePermission(permission: OrganizationPermission) {
+    setPermissions((current) => {
+      if (current.includes(permission)) {
+        return current.filter((item) => item !== permission);
+      }
+
+      return [...current, permission];
+    });
+  }
 
   async function createInvite() {
     if (!email.trim()) {
@@ -63,7 +86,8 @@ export function OrganizationMembersPanel({
       },
       body: JSON.stringify({
         email,
-        role
+        role,
+        permissions
       })
     });
 
@@ -80,7 +104,7 @@ export function OrganizationMembersPanel({
 
     await navigator.clipboard.writeText(inviteUrl).catch(() => {});
     setEmail("");
-    setRole(OrganizationRole.MEMBER);
+    updateRole(OrganizationRole.MEMBER);
     setLastInviteUrl(inviteUrl);
     setMessage("Invitation created. The invite link was copied to your clipboard.");
     router.refresh();
@@ -119,6 +143,9 @@ export function OrganizationMembersPanel({
               <p className="mt-1 text-muted-foreground">
                 {member.user.email} · {member.role}
               </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Permissions: {member.permissions.length > 0 ? member.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}
+              </p>
               <p className="mt-1 text-muted-foreground">
                 Joined {new Date(member.joinedAt).toLocaleDateString()}
               </p>
@@ -137,6 +164,9 @@ export function OrganizationMembersPanel({
               <p className="font-medium">{invitation.email}</p>
               <p className="mt-1 text-muted-foreground">
                 Role: {invitation.role} · Expires {new Date(invitation.expiresAt).toLocaleDateString()}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Permissions: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {canCopyInvitationToken(invitation.token) ? (
@@ -185,7 +215,7 @@ export function OrganizationMembersPanel({
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(value) => setRole(value as OrganizationRole)} disabled={!canManage}>
+            <Select value={role} onValueChange={(value) => updateRole(value as OrganizationRole)} disabled={!canManage}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -200,6 +230,34 @@ export function OrganizationMembersPanel({
             <Button className="w-full" disabled={!canManage || isSubmitting} onClick={createInvite}>
               {isSubmitting ? "Inviting..." : "Invite"}
             </Button>
+          </div>
+          <div className="space-y-3 lg:col-span-3">
+            <div>
+              <p className="text-sm font-medium">Custom permissions</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Pick the ERP areas this invitation should grant after acceptance.
+              </p>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {organizationPermissionOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 text-sm backdrop-blur dark:bg-white/[0.03]"
+                >
+                  <input
+                    className="mt-1 h-4 w-4 accent-primary"
+                    type="checkbox"
+                    checked={permissions.includes(option.value)}
+                    disabled={!canManage}
+                    onChange={() => togglePermission(option.value)}
+                  />
+                  <span>
+                    <span className="block font-medium">{option.label}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{option.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
           {lastInviteUrl ? (
             <div className="space-y-2 lg:col-span-3">

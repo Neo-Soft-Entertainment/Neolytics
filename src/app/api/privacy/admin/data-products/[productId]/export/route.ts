@@ -28,7 +28,7 @@ export async function POST(
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "manage_data_products")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
     return forbidden("This role cannot export data products.");
   }
 

@@ -7,6 +7,7 @@ import { AcceptInvitationCard } from "@/components/organization/accept-invitatio
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrganizationInvitationByToken } from "@/lib/organization-invitation-service";
+import { getOrganizationPermissionLabel } from "@/lib/organization-permissions";
 
 export default async function InvitationPage({
   params
@@ -48,6 +49,9 @@ export default async function InvitationPage({
               <p>
                 {invitation.invitedBy.name || invitation.invitedBy.email} invited {invitation.email} to join as {invitation.role}.
               </p>
+              <p>
+                Permissions: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}.
+              </p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
                   <Link href={`/login?inviteToken=${token}`}>Sign in</Link>
@@ -63,6 +67,7 @@ export default async function InvitationPage({
             token={token}
             organizationName={invitation.organization.name}
             invitedEmail={invitation.email}
+            permissions={invitation.permissions.map(getOrganizationPermissionLabel)}
             currentEmail={session.user.email}
           />
         )}

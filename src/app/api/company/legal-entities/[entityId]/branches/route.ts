@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { badRequest, forbidden, ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageCompany } from "@/lib/authorization";
 import { createLegalEntityBranch } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
 
@@ -23,7 +24,7 @@ export async function POST(
     return unauthorized();
   }
 
-  if (!["OWNER", "ADMIN"].includes(context.organizationRole)) {
+  if (!canManageCompany(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can manage company records.");
   }
 

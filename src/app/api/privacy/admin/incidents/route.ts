@@ -26,7 +26,7 @@ export async function GET() {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "manage_privacy_incidents")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_privacy_incidents")) {
     return forbidden("This role cannot access incidents.");
   }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "manage_privacy_incidents")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_privacy_incidents")) {
     return forbidden("This role cannot create incidents.");
   }
 

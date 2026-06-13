@@ -14,7 +14,7 @@ export async function POST(
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot upload art assets.");
   }
 

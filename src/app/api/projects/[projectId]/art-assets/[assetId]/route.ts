@@ -14,7 +14,7 @@ export async function DELETE(
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot delete art assets.");
   }
 

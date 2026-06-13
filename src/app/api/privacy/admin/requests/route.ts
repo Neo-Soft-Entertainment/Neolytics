@@ -10,7 +10,7 @@ export async function GET() {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "review_privacy_requests")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "review_privacy_requests")) {
     return forbidden("This role cannot review privacy requests.");
   }
 

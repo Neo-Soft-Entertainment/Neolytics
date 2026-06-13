@@ -28,7 +28,7 @@ export async function GET() {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "manage_data_products")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
     return forbidden("This role cannot access data products.");
   }
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "manage_data_products")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
     return forbidden("This role cannot create data products.");
   }
 

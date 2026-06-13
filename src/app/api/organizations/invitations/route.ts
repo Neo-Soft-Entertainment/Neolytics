@@ -1,14 +1,16 @@
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationPermission, OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageOrganization } from "@/lib/authorization";
 import { createOrganizationInvitation, OrganizationInvitationError, SubscriptionLimitError } from "@/lib/organization-invitation-service";
 import { parseJsonBody } from "@/lib/request";
 
 const schema = z.object({
   email: z.string().email(),
-  role: z.nativeEnum(OrganizationRole).default(OrganizationRole.MEMBER)
+  role: z.nativeEnum(OrganizationRole).default(OrganizationRole.MEMBER),
+  permissions: z.array(z.nativeEnum(OrganizationPermission)).default([])
 });
 
 export async function POST(request: Request) {
@@ -18,7 +20,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  if (context.organizationRole !== OrganizationRole.OWNER && context.organizationRole !== OrganizationRole.ADMIN) {
+  if (!canManageOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can invite members.");
   }
 
@@ -28,7 +30,8 @@ export async function POST(request: Request) {
       organizationId: context.organizationId,
       invitedById: context.userId,
       email: body.email,
-      role: body.role
+      role: body.role,
+      permissions: body.permissions
     });
 
     return ok(invitation, { status: 201 });

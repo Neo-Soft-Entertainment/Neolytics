@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageFinance } from "@/lib/authorization";
 import { updatePayableTitle } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 
@@ -41,7 +42,7 @@ export async function PATCH(
     return unauthorized();
   }
 
-  if (!["OWNER", "ADMIN"].includes(context.organizationRole)) {
+  if (!canManageFinance(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can manage accounts payable.");
   }
 

@@ -1,4 +1,6 @@
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationPermission, OrganizationRole } from "@prisma/client";
+
+import { hasOrganizationPermission } from "@/lib/organization-permissions";
 
 export type PrivacyPermission =
   | "view_raw_personal_data"
@@ -36,6 +38,14 @@ export function getPrivacyPermissions(role: OrganizationRole) {
   return rolePermissions[role];
 }
 
-export function hasPrivacyPermission(role: OrganizationRole, permission: PrivacyPermission) {
+export function hasPrivacyPermission(
+  role: OrganizationRole,
+  permissions: OrganizationPermission[],
+  permission: PrivacyPermission
+) {
+  if (hasOrganizationPermission(role, permissions, OrganizationPermission.MANAGE_PRIVACY)) {
+    return true;
+  }
+
   return getPrivacyPermissions(role).includes(permission);
 }

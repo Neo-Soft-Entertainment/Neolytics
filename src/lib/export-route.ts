@@ -13,6 +13,7 @@ import {
   SubscriptionLimitError
 } from "@/lib/subscription-service";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canExportData } from "@/lib/authorization";
 import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 import {
   EntitlementError,
@@ -41,6 +42,10 @@ export async function createWorkbookDownloadResponse(
 
     if (!format) {
       return badRequest("Invalid export format.");
+    }
+
+    if (context && !canExportData(context.organizationRole, context.organizationPermissions)) {
+      return badRequest("This role cannot export organization data.");
     }
 
     if (format === "pdf") {
@@ -98,10 +103,15 @@ export async function createGoogleSheetsPublishResponse(
   }
 
   try {
+    const context = await getApiContext();
+
+    if (context && !canExportData(context.organizationRole, context.organizationPermissions)) {
+      return badRequest("This role cannot export organization data.");
+    }
+
     const workbook = await buildWorkbook();
     const published = await publishWorkbookToGoogleSheets(workbook, userEmail);
     await consumeSubscriptionUsage(organizationId, "exportsGenerated");
-    const context = await getApiContext();
     await createPrivacyAuditLog(db, {
       organizationId,
       actorId: context?.userId ?? null,

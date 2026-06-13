@@ -17,7 +17,7 @@ export async function PATCH(
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot reorder emotional beats.");
   }
 

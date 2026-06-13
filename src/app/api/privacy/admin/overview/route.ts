@@ -11,7 +11,7 @@ export async function GET() {
     return unauthorized();
   }
 
-  if (!hasPrivacyPermission(context.organizationRole, "view_privacy_audit_logs")) {
+  if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "view_privacy_audit_logs")) {
     return forbidden("This role cannot access the privacy admin dashboard.");
   }
 

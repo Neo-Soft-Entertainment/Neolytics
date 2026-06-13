@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
-import { canManageOrganization, canWriteOrganization } from "@/lib/authorization";
+import { canManageCommunity, canWriteOrganization } from "@/lib/authorization";
 import { createCommunityPost, getCommunityRanking, listCommunityFeed } from "@/lib/community-service";
 import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { parseJsonBody } from "@/lib/request";
@@ -72,7 +72,7 @@ export async function GET() {
     return ok({
       feed: feed.map((post) => ({
         ...post,
-        canDelete: post.authorId === context.userId || canManageOrganization(context.organizationRole)
+        canDelete: post.authorId === context.userId || canManageCommunity(context.organizationRole, context.organizationPermissions)
       })),
       ranking
     });
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (!canWriteOrganization(context.organizationRole)) {
+    if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
       return forbidden("Viewers cannot create community posts.");
     }
 

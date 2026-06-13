@@ -1,4 +1,4 @@
-import { OrganizationRole, SubscriptionPlan } from "@prisma/client";
+import { OrganizationPermission, OrganizationRole, SubscriptionPlan } from "@prisma/client";
 import { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
@@ -11,6 +11,7 @@ declare module "next-auth" {
         name: string;
         slug: string;
         role: OrganizationRole;
+        permissions: OrganizationPermission[];
         subscriptionPlan: SubscriptionPlan;
       }>;
     };

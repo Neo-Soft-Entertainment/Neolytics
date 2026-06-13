@@ -17,7 +17,7 @@ export async function PATCH(
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot edit emotional beats.");
   }
 
@@ -51,7 +51,7 @@ export async function DELETE(
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot delete emotional beats.");
   }
 

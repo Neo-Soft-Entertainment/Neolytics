@@ -1,8 +1,9 @@
-import { OrganizationRole } from "@prisma/client";
+import { OrganizationPermission, OrganizationRole } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 
 import { db } from "@/lib/db";
 import { notifyOrganizationDiscordWebhook } from "@/lib/discord";
+import { organizationPermissionOptions } from "@/lib/organization-permissions";
 import { SubscriptionLimitError, enforceSubscriptionCapacity } from "@/lib/subscription-service";
 
 export class OrganizationInvitationError extends Error {
@@ -30,13 +31,20 @@ function isHashedInvitationToken(token: string) {
   return /^[a-f0-9]{64}$/i.test(token);
 }
 
+function normalizePermissions(permissions: OrganizationPermission[] = []) {
+  const allowedPermissions = new Set(organizationPermissionOptions.map((option) => option.value));
+  return [...new Set(permissions)].filter((permission) => allowedPermissions.has(permission));
+}
+
 export async function createOrganizationInvitation(params: {
   organizationId: string;
   invitedById: string;
   email: string;
   role: OrganizationRole;
+  permissions?: OrganizationPermission[];
 }) {
   const normalizedEmail = params.email.trim().toLowerCase();
+  const permissions = normalizePermissions(params.permissions);
   const existingMember = await db.organizationMember.findFirst({
     where: {
       organizationId: params.organizationId,
@@ -82,6 +90,7 @@ export async function createOrganizationInvitation(params: {
       invitedById: params.invitedById,
       email: normalizedEmail,
       role: params.role,
+      permissions,
       token: hashInvitationToken(token),
       expiresAt: getInvitationExpiryDate()
     }
@@ -92,7 +101,7 @@ export async function createOrganizationInvitation(params: {
     embeds: [
       {
         title: "Organization invitation created",
-        description: `${normalizedEmail} was invited as ${params.role}.`,
+        description: `${normalizedEmail} was invited as ${params.role} with ${permissions.length} custom permissions.`,
         color: 5814783,
         timestamp: new Date().toISOString()
       }
@@ -242,7 +251,8 @@ export async function acceptOrganizationInvitation(params: {
         data: {
           organizationId: invitation.organizationId,
           userId: params.userId,
-          role: invitation.role
+          role: invitation.role,
+          permissions: invitation.permissions
         }
       });
     }

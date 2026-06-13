@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { env } from "@/env";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
+import { canManageOrganization, canManageWorkspaces } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { translate } from "@/lib/i18n";
 import { listUserConsentState } from "@/lib/privacy/consent-service";
@@ -83,6 +84,12 @@ export async function SettingsPage() {
     translate(language, key, values);
   const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
+  const canManageAccess = currentMembership
+    ? canManageOrganization(currentMembership.role, currentMembership.permissions)
+    : false;
+  const canManageWorkspaceSettings = currentMembership
+    ? canManageWorkspaces(currentMembership.role, currentMembership.permissions)
+    : false;
   const canDeleteOrganization = currentMembership?.role === "OWNER";
   const hasGoogleLogin = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const hasDiscordLogin = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
@@ -331,13 +338,13 @@ export async function SettingsPage() {
           <SubscriptionPanel snapshot={subscriptionSnapshot} canManage={canManageSubscription} />
 
           <OrganizationDiscordPanel
-            canManage={canManageSubscription}
+            canManage={canManageAccess}
             initialEnabled={organization.discordWebhookEnabled}
             initialConfigured={Boolean(organization.discordWebhookUrl)}
           />
 
           <OrganizationMembersPanel
-            canManage={canManageSubscription}
+            canManage={canManageAccess}
             members={currentMembers}
             invitations={invitations}
           />
@@ -372,7 +379,7 @@ export async function SettingsPage() {
           </Card>
 
           <WorkspaceManagementPanel
-            canManage={Boolean(canManageSubscription)}
+            canManage={canManageWorkspaceSettings}
             currentWorkspaceId={organization.currentWorkspace?.id ?? null}
             workspaces={organization.workspaces}
           />

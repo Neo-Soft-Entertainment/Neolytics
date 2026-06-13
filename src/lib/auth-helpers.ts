@@ -101,6 +101,7 @@ export async function getApiContext() {
     userId: session.user.id,
     organizationId: membership.organizationId,
     organizationRole: membership.role,
+    organizationPermissions: membership.permissions,
     workspace: fallbackWorkspace
   };
 }

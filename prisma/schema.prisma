@@ -20,6 +20,17 @@ enum WorkspaceRole {
   MEMBER
 }
 
+enum OrganizationPermission {
+  MANAGE_ORGANIZATION
+  MANAGE_WORKSPACES
+  MANAGE_PROJECTS
+  MANAGE_FINANCE
+  MANAGE_COMPANY
+  MANAGE_COMMUNITY
+  MANAGE_PRIVACY
+  EXPORT_DATA
+}
+
 enum SubscriptionPlan {
   FREE
   PLUS
@@ -574,6 +585,7 @@ model OrganizationMember {
   organizationId String
   userId         String
   role           OrganizationRole @default(MEMBER)
+  permissions    OrganizationPermission[] @default([])
   joinedAt       DateTime         @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -588,6 +600,7 @@ model OrganizationInvitation {
   organizationId String
   email          String
   role           OrganizationRole @default(MEMBER)
+  permissions    OrganizationPermission[] @default([])
   invitedById    String
   token          String           @unique
   expiresAt      DateTime

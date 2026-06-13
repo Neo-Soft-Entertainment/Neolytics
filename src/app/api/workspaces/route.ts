@@ -3,7 +3,7 @@ import { z } from "zod";
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { setActiveWorkspaceCookie } from "@/lib/active-workspace";
 import { getApiContext } from "@/lib/auth-helpers";
-import { canWriteOrganization } from "@/lib/authorization";
+import { canManageWorkspaces } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { createWorkspaceForOrganization, deleteWorkspaceFromOrganization } from "@/lib/organization-service";
 import { parseJsonBody, parseSearchParams } from "@/lib/request";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canManageWorkspaces(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot create workspaces.");
   }
 
@@ -57,7 +57,7 @@ export async function DELETE(request: Request) {
     return unauthorized();
   }
 
-  if (!canWriteOrganization(context.organizationRole)) {
+  if (!canManageWorkspaces(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Viewers cannot delete workspaces.");
   }
 

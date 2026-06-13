@@ -1,6 +1,5 @@
-import { OrganizationRole } from "@prisma/client";
-
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
+import { canManageOrganization } from "@/lib/authorization";
 import { getApiContext } from "@/lib/auth-helpers";
 import { revokeOrganizationInvitation, OrganizationInvitationError } from "@/lib/organization-invitation-service";
 
@@ -14,7 +13,7 @@ export async function DELETE(
     return unauthorized();
   }
 
-  if (context.organizationRole !== OrganizationRole.OWNER && context.organizationRole !== OrganizationRole.ADMIN) {
+  if (!canManageOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can revoke invitations.");
   }
 

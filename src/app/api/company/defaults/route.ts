@@ -3,6 +3,7 @@ import { z } from "zod";
 import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { createAuditEvent } from "@/lib/audit-service";
 import { getApiContext } from "@/lib/auth-helpers";
+import { canManageCompany } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { parseJsonBody } from "@/lib/request";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
@@ -19,7 +20,7 @@ export async function PATCH(request: Request) {
     return unauthorized();
   }
 
-  if (!["OWNER", "ADMIN"].includes(context.organizationRole)) {
+  if (!canManageCompany(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can update company defaults.");
   }
 

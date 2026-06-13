@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return unauthorized();
     }
 
-    if (!canWriteOrganization(context.organizationRole)) {
+    if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
       return forbidden("Viewers cannot save games to workspaces.");
     }
 

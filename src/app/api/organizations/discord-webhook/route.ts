@@ -21,7 +21,7 @@ export async function PATCH(request: Request) {
     return unauthorized();
   }
 
-  if (!canManageOrganization(context.organizationRole)) {
+  if (!canManageOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can manage Discord integrations.");
   }
 
@@ -94,7 +94,7 @@ export async function POST() {
     return unauthorized();
   }
 
-  if (!canManageOrganization(context.organizationRole)) {
+  if (!canManageOrganization(context.organizationRole, context.organizationPermissions)) {
     return forbidden("Only organization admins can manage Discord integrations.");
   }
 
