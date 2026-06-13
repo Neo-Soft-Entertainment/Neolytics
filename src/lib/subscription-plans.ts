@@ -54,6 +54,7 @@ export type SubscriptionCapability =
   | "communityRanking"
   | "guidedJourney"
   | "pdfExport"
+  | "commerceOps"
   | "financeWorkspace"
   | "companyHub"
   | "documentVault"
@@ -78,6 +79,7 @@ export const subscriptionFeatureRows: Array<{
   { key: "communityRanking", label: "Community Ranking" },
   { key: "guidedJourney", label: "Guided Journey" },
   { key: "pdfExport", label: "PDF Export" },
+  { key: "commerceOps", label: "Commerce Operations" },
   { key: "financeWorkspace", label: "Finance Workspace" },
   { key: "companyHub", label: "Company Hub" },
   { key: "documentVault", label: "Document Vault" },
@@ -90,7 +92,7 @@ export const subscriptionFeatureRows: Array<{
 export const subscriptionTruthNotes = [
   "Steam Radar, Market Research, Revenue Calculator, Community, Steam X-Ray, and Guided Journey are live across all plans today.",
   "PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and ERP access layers are enforced in the product now.",
-  "Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
+  "Commerce Operations, Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
   "Paid plans start with a 7-day free Stripe trial.",
   "Early Access currently unlocks the raw Steam snapshot stream beta on Pro."
 ];
@@ -123,6 +125,7 @@ export const subscriptionPlans = {
       communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Not included",
+      commerceOps: "Not included",
       financeWorkspace: "Not included",
       companyHub: "Not included",
       documentVault: "Not included",
@@ -171,6 +174,7 @@ export const subscriptionPlans = {
       communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Included",
+      commerceOps: "Included",
       financeWorkspace: "Included",
       companyHub: "Included",
       documentVault: "Included",
@@ -219,6 +223,7 @@ export const subscriptionPlans = {
       communityRanking: "Included",
       guidedJourney: "Included",
       pdfExport: "Included",
+      commerceOps: "Included",
       financeWorkspace: "Included",
       companyHub: "Included",
       documentVault: "Included",

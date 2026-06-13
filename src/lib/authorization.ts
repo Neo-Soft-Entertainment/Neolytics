@@ -29,6 +29,10 @@ export function canManageFinance(role: OrganizationRole, permissions: Organizati
   return hasOrganizationPermission(role, permissions, OrganizationPermission.MANAGE_FINANCE);
 }
 
+export function canManageCommerce(role: OrganizationRole, permissions: OrganizationPermission[] = []) {
+  return hasOrganizationPermission(role, permissions, OrganizationPermission.MANAGE_COMMERCE);
+}
+
 export function canManageCompany(role: OrganizationRole, permissions: OrganizationPermission[] = []) {
   return hasOrganizationPermission(role, permissions, OrganizationPermission.MANAGE_COMPANY);
 }

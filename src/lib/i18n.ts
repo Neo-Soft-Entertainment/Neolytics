@@ -6,6 +6,7 @@ const messages = {
   en: {
     "shell.dashboard": "Dashboard",
     "shell.projects": "Projects",
+    "shell.commerce": "Commerce",
     "shell.finance": "Finance",
     "shell.company": "Company",
     "shell.community": "Community",
@@ -383,6 +384,7 @@ const messages = {
   "pt-BR": {
     "shell.dashboard": "Painel",
     "shell.projects": "Projetos",
+    "shell.commerce": "Comércio",
     "shell.finance": "Financeiro",
     "shell.company": "Empresa",
     "shell.community": "Comunidade",

@@ -17,6 +17,11 @@ export const organizationPermissionOptions = [
     description: "Create projects, update boards, and run project workflows."
   },
   {
+    value: OrganizationPermission.MANAGE_COMMERCE,
+    label: "Manage commerce",
+    description: "Manage sales channels, orders, payments, and fulfillment."
+  },
+  {
     value: OrganizationPermission.MANAGE_FINANCE,
     label: "Manage finance",
     description: "Work with budgets, revenue, expenses, invoices, and payables."

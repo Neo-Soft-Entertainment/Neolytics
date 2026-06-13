@@ -24,6 +24,7 @@ enum OrganizationPermission {
   MANAGE_ORGANIZATION
   MANAGE_WORKSPACES
   MANAGE_PROJECTS
+  MANAGE_COMMERCE
   MANAGE_FINANCE
   MANAGE_COMPANY
   MANAGE_COMMUNITY
@@ -265,6 +266,47 @@ enum PayablePaymentType {
   OTHER
 }
 
+enum CommerceChannelType {
+  DIRECT
+  STEAM
+  EPIC
+  ITCH_IO
+  MARKETPLACE
+  RETAILER
+  LICENSING
+  SERVICE
+  OTHER
+}
+
+enum CommerceOrderStatus {
+  DRAFT
+  QUOTED
+  CONFIRMED
+  IN_PRODUCTION
+  FULFILLING
+  FULFILLED
+  CANCELED
+}
+
+enum CommerceFulfillmentStatus {
+  NOT_REQUIRED
+  PENDING
+  PICKING
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  BLOCKED
+}
+
+enum CommercePaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  PARTIALLY_PAID
+  REFUNDED
+  CANCELED
+}
+
 enum ProjectMilestoneStatus {
   PLANNED
   IN_PROGRESS
@@ -429,40 +471,41 @@ enum PrivacyDecision {
 }
 
 model User {
-  id                       String                   @id @default(cuid())
-  name                     String?
-  email                    String                   @unique
-  preferredLanguage        String                   @default("en")
-  emailVerified            DateTime?
-  image                    String?
-  passwordHash             String?
-  passwordChangedAt        DateTime?
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-  accounts                 Account[]
-  sessions                 Session[]
-  organizationMembers      OrganizationMember[]
-  workspaces               Workspace[]              @relation("WorkspaceCreatedBy")
-  savedGames               SavedGame[]
-  competitorSets           CompetitorSet[]          @relation("CompetitorSetCreatedBy")
-  aiReports                AiReport[]               @relation("AiReportCreatedBy")
-  projects                 Project[]                @relation("ProjectCreatedBy")
-  organizationInvitations  OrganizationInvitation[] @relation("OrganizationInvitationCreatedBy")
-  communityPosts           CommunityPost[]          @relation("CommunityPostAuthor")
-  communityLikes           CommunityPostLike[]
-  uploadedDocumentVersions CompanyDocumentVersion[] @relation("CompanyDocumentVersionUploadedBy")
-  complianceItemsOwned     ComplianceItem[]         @relation("ComplianceItemOwner")
-  auditEvents              AuditEvent[]
-  userConsents             UserConsent[]
-  dataSubjectRequests      DataSubjectRequest[]     @relation("DataSubjectRequestUser")
-  handledDataSubjectRequests DataSubjectRequest[]   @relation("DataSubjectRequestHandler")
-  createdPrivacyLegalHolds PrivacyLegalHold[]       @relation("PrivacyLegalHoldCreatedBy")
-  createdPrivacyIncidents  PrivacyIncident[]        @relation("PrivacyIncidentCreatedBy")
-  approvedDataProducts     DataProduct[]            @relation("DataProductApprovedBy")
-  requestedDataExports     DataExportManifest[]     @relation("DataExportManifestRequestedBy")
-  privacyAuditLogs         PrivacyAuditLog[]        @relation("PrivacyAuditLogActor")
-  requestedApprovals       ApprovalRequest[]        @relation("ApprovalRequestedBy")
-  decidedApprovals         ApprovalRequest[]        @relation("ApprovalDecidedBy")
+  id                         String                   @id @default(cuid())
+  name                       String?
+  email                      String                   @unique
+  preferredLanguage          String                   @default("en")
+  emailVerified              DateTime?
+  image                      String?
+  passwordHash               String?
+  passwordChangedAt          DateTime?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  accounts                   Account[]
+  sessions                   Session[]
+  organizationMembers        OrganizationMember[]
+  workspaces                 Workspace[]              @relation("WorkspaceCreatedBy")
+  savedGames                 SavedGame[]
+  competitorSets             CompetitorSet[]          @relation("CompetitorSetCreatedBy")
+  aiReports                  AiReport[]               @relation("AiReportCreatedBy")
+  projects                   Project[]                @relation("ProjectCreatedBy")
+  organizationInvitations    OrganizationInvitation[] @relation("OrganizationInvitationCreatedBy")
+  communityPosts             CommunityPost[]          @relation("CommunityPostAuthor")
+  communityLikes             CommunityPostLike[]
+  uploadedDocumentVersions   CompanyDocumentVersion[] @relation("CompanyDocumentVersionUploadedBy")
+  complianceItemsOwned       ComplianceItem[]         @relation("ComplianceItemOwner")
+  auditEvents                AuditEvent[]
+  userConsents               UserConsent[]
+  dataSubjectRequests        DataSubjectRequest[]     @relation("DataSubjectRequestUser")
+  handledDataSubjectRequests DataSubjectRequest[]     @relation("DataSubjectRequestHandler")
+  createdPrivacyLegalHolds   PrivacyLegalHold[]       @relation("PrivacyLegalHoldCreatedBy")
+  createdPrivacyIncidents    PrivacyIncident[]        @relation("PrivacyIncidentCreatedBy")
+  approvedDataProducts       DataProduct[]            @relation("DataProductApprovedBy")
+  requestedDataExports       DataExportManifest[]     @relation("DataExportManifestRequestedBy")
+  privacyAuditLogs           PrivacyAuditLog[]        @relation("PrivacyAuditLogActor")
+  requestedApprovals         ApprovalRequest[]        @relation("ApprovalRequestedBy")
+  decidedApprovals           ApprovalRequest[]        @relation("ApprovalDecidedBy")
+  createdCommerceOrders      CommerceOrder[]          @relation("CommerceOrderCreatedBy")
 }
 
 model Account {
@@ -504,7 +547,7 @@ model VerificationToken {
 model AuthRateLimit {
   key           String    @id
   attempts      Int       @default(0)
-  blockedUntil DateTime?
+  blockedUntil  DateTime?
   lastAttemptAt DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -556,6 +599,8 @@ model Organization {
   costCenters                    CostCenter[]
   payableTitles                  PayableTitle[]
   payablePayments                PayablePayment[]
+  commerceChannels               CommerceChannel[]
+  commerceOrders                 CommerceOrder[]
   privacyIncidents               PrivacyIncident[]
   dataProducts                   DataProduct[]
   dataExportManifests            DataExportManifest[]
@@ -584,9 +629,9 @@ model OrganizationSubscriptionUsage {
 model OrganizationMember {
   organizationId String
   userId         String
-  role           OrganizationRole @default(MEMBER)
+  role           OrganizationRole         @default(MEMBER)
   permissions    OrganizationPermission[] @default([])
-  joinedAt       DateTime         @default(now())
+  joinedAt       DateTime                 @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -596,20 +641,20 @@ model OrganizationMember {
 }
 
 model OrganizationInvitation {
-  id             String           @id @default(cuid())
+  id             String                   @id @default(cuid())
   organizationId String
   email          String
-  role           OrganizationRole @default(MEMBER)
+  role           OrganizationRole         @default(MEMBER)
   permissions    OrganizationPermission[] @default([])
   invitedById    String
-  token          String           @unique
+  token          String                   @unique
   expiresAt      DateTime
   acceptedAt     DateTime?
   revokedAt      DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitedBy      User             @relation("OrganizationInvitationCreatedBy", fields: [invitedById], references: [id], onDelete: Restrict)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User                     @relation("OrganizationInvitationCreatedBy", fields: [invitedById], references: [id], onDelete: Restrict)
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([email])
@@ -997,7 +1042,8 @@ model Project {
   milestones        ProjectMilestone[]
   approvalRequests  ApprovalRequest[]
   payableTitles     PayableTitle[]
-  demoPlans          DemoPlan[]
+  demoPlans         DemoPlan[]
+  commerceOrders    CommerceOrder[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId, createdAt(sort: Desc)])
@@ -1273,7 +1319,7 @@ model ExpenseEntry {
 }
 
 model PayableTitle {
-  id                    String               @id @default(cuid())
+  id                    String              @id @default(cuid())
   organizationId        String
   projectId             String?
   costCenterId          String
@@ -1287,17 +1333,17 @@ model PayableTitle {
   dueDate               DateTime
   actualDueDate         DateTime
   titleAmountCents      BigInt
-  additionalAmountCents BigInt               @default(0)
+  additionalAmountCents BigInt              @default(0)
   totalAmountCents      BigInt
-  paidAmountCents       BigInt               @default(0)
-  currencyCode          String               @default("USD")
-  status                PayableTitleStatus   @default(OPEN)
+  paidAmountCents       BigInt              @default(0)
+  currencyCode          String              @default("USD")
+  status                PayableTitleStatus  @default(OPEN)
   notes                 String?
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  organization          Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  project               Project?             @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  costCenter            CostCenter           @relation(fields: [costCenterId], references: [id], onDelete: Restrict)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project               Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  costCenter            CostCenter          @relation(fields: [costCenterId], references: [id], onDelete: Restrict)
   allocations           PayableAllocation[]
   payments              PayablePayment[]
 
@@ -1326,25 +1372,75 @@ model PayableAllocation {
 }
 
 model PayablePayment {
-  id             String             @id @default(cuid())
-  organizationId String
-  payableTitleId String
-  paymentType    PayablePaymentType
-  bank           String?
-  branch         String?
-  account        String?
-  paymentDate    DateTime
-  history        String?
-  fineCents      BigInt             @default(0)
-  interestCents  BigInt             @default(0)
+  id              String             @id @default(cuid())
+  organizationId  String
+  payableTitleId  String
+  paymentType     PayablePaymentType
+  bank            String?
+  branch          String?
+  account         String?
+  paymentDate     DateTime
+  history         String?
+  fineCents       BigInt             @default(0)
+  interestCents   BigInt             @default(0)
   amountPaidCents BigInt
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  payableTitle   PayableTitle       @relation(fields: [payableTitleId], references: [id], onDelete: Cascade)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payableTitle    PayableTitle       @relation(fields: [payableTitleId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, paymentDate(sort: Desc)])
   @@index([payableTitleId, paymentDate(sort: Desc)])
+}
+
+model CommerceChannel {
+  id             String              @id @default(cuid())
+  organizationId String
+  name           String
+  type           CommerceChannelType @default(DIRECT)
+  externalCode   String?
+  active         Boolean             @default(true)
+  notes          String?             @db.Text
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orders         CommerceOrder[]
+
+  @@index([organizationId, active])
+  @@index([organizationId, createdAt(sort: Desc)])
+}
+
+model CommerceOrder {
+  id                String                    @id @default(cuid())
+  organizationId    String
+  channelId         String?
+  projectId         String?
+  orderNumber       String
+  customerName      String
+  customerEmail     String?
+  status            CommerceOrderStatus       @default(DRAFT)
+  fulfillmentStatus CommerceFulfillmentStatus @default(NOT_REQUIRED)
+  paymentStatus     CommercePaymentStatus     @default(PENDING)
+  currencyCode      String                    @default("USD")
+  grossCents        BigInt                    @default(0)
+  netCents          BigInt                    @default(0)
+  quantity          Int                       @default(1)
+  expectedShipAt    DateTime?
+  fulfilledAt       DateTime?
+  notes             String?                   @db.Text
+  createdById       String
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  organization      Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  channel           CommerceChannel?          @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  project           Project?                  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy         User                      @relation("CommerceOrderCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status, fulfillmentStatus])
+  @@index([projectId])
+  @@index([channelId])
 }
 
 model Contract {
@@ -1762,27 +1858,27 @@ model DataSubjectRequest {
 }
 
 model PrivacyLegalHold {
-  id               String                    @id @default(cuid())
+  id               String                     @id @default(cuid())
   organizationId   String?
   resourceType     String
   resourceId       String
   reason           String
   deletionStrategy RetentionDeletionStrategy?
-  active           Boolean                   @default(true)
+  active           Boolean                    @default(true)
   createdById      String?
   releasedAt       DateTime?
   metadata         Json?
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
-  organization     Organization?             @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  createdBy        User?                     @relation("PrivacyLegalHoldCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  organization     Organization?              @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdBy        User?                      @relation("PrivacyLegalHoldCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([organizationId, active, createdAt(sort: Desc)])
   @@index([resourceType, resourceId, active])
 }
 
 model PrivacyIncident {
-  id                            String                @id @default(cuid())
+  id                            String                  @id @default(cuid())
   organizationId                String?
   severity                      PrivacyIncidentSeverity
   affectedDataCategories        Json
@@ -1791,21 +1887,21 @@ model PrivacyIncident {
   containedAt                   DateTime?
   rootCause                     String?
   mitigationSteps               String?
-  requiresAuthorityNotification Boolean               @default(false)
-  requiresUserNotification      Boolean               @default(false)
-  status                        PrivacyIncidentStatus @default(OPEN)
+  requiresAuthorityNotification Boolean                 @default(false)
+  requiresUserNotification      Boolean                 @default(false)
+  status                        PrivacyIncidentStatus   @default(OPEN)
   createdById                   String?
-  createdAt                     DateTime              @default(now())
-  updatedAt                     DateTime              @updatedAt
-  organization                  Organization?         @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  createdBy                     User?                 @relation("PrivacyIncidentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt                     DateTime                @default(now())
+  updatedAt                     DateTime                @updatedAt
+  organization                  Organization?           @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  createdBy                     User?                   @relation("PrivacyIncidentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([organizationId, severity, createdAt(sort: Desc)])
   @@index([status, discoveredAt(sort: Desc)])
 }
 
 model DataProduct {
-  id                         String          @id @default(cuid())
+  id                         String               @id @default(cuid())
   organizationId             String?
   productName                String
   productType                DataProductType
@@ -1813,21 +1909,21 @@ model DataProduct {
   sourceTables               Json
   outputFields               Json
   aggregationLevel           String?
-  minimumCohortSize          Int             @default(100)
-  privacyRiskScore           Int             @default(0)
-  exportAllowed              Boolean         @default(false)
-  requiresLegalReview        Boolean         @default(true)
-  requiresDpoApproval        Boolean         @default(true)
-  contractRequired           Boolean         @default(true)
-  reidentificationProhibited Boolean         @default(true)
-  approvalStatus             ApprovalStatus  @default(PENDING)
+  minimumCohortSize          Int                  @default(100)
+  privacyRiskScore           Int                  @default(0)
+  exportAllowed              Boolean              @default(false)
+  requiresLegalReview        Boolean              @default(true)
+  requiresDpoApproval        Boolean              @default(true)
+  contractRequired           Boolean              @default(true)
+  reidentificationProhibited Boolean              @default(true)
+  approvalStatus             ApprovalStatus       @default(PENDING)
   approvedAt                 DateTime?
   approvedById               String?
-  buyerContractAccepted      Boolean         @default(false)
-  createdAt                  DateTime        @default(now())
-  updatedAt                  DateTime        @updatedAt
-  organization               Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  approvedBy                 User?           @relation("DataProductApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  buyerContractAccepted      Boolean              @default(false)
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  organization               Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  approvedBy                 User?                @relation("DataProductApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   exportManifests            DataExportManifest[]
 
   @@index([organizationId, createdAt(sort: Desc)])
@@ -1857,7 +1953,7 @@ model DataExportManifest {
 }
 
 model PrivacyAuditLog {
-  id             String          @id @default(cuid())
+  id             String           @id @default(cuid())
   organizationId String?
   actorId        String?
   actorRole      String?
@@ -1867,9 +1963,9 @@ model PrivacyAuditLog {
   decision       PrivacyDecision?
   reason         String?
   metadata       Json?
-  createdAt      DateTime        @default(now())
-  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  actor          User?           @relation("PrivacyAuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime         @default(now())
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor          User?            @relation("PrivacyAuditLogActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt(sort: Desc)])
   @@index([actorId, createdAt(sort: Desc)])
@@ -1917,21 +2013,21 @@ model ProjectArtAnalysis {
 }
 
 model ProjectArtAsset {
-  id           String   @id @default(cuid())
-  projectId    String
-  uploadedById String
-  kind         String   @default("reference")
-  storagePath  String
-  originalName String
-  mimeType     String
-  sizeBytes    Int
-  width        Int?
-  height       Int?
+  id            String   @id @default(cuid())
+  projectId     String
+  uploadedById  String
+  kind          String   @default("reference")
+  storagePath   String
+  originalName  String
+  mimeType      String
+  sizeBytes     Int
+  width         Int?
+  height        Int?
   visualMetrics Json?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt(sort: Desc)])
   @@index([uploadedById, createdAt(sort: Desc)])
