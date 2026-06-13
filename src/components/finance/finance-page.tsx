@@ -19,7 +19,6 @@ import { useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { AccountsPayableSection } from "@/components/finance/accounts-payable-section";
-import { ExportActions } from "@/components/export/export-actions";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,8 +51,6 @@ export function FinancePage({
   canAccessContractsRoyalties,
   canAccessFinanceWorkspace,
   canAccessInvoiceOps,
-  organizationName,
-  planLabel,
   canManage,
   data
 }: {
@@ -316,33 +313,7 @@ export function FinancePage({
   if (!canAccessFinanceWorkspace || !data) {
     return (
       <div className="space-y-6">
-        <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-          <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-            <div className="space-y-4">
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t("finance.pageTitle")}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  {t("finance.pageDescription", { organizationName })}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
-                  {t("finance.erpLayer")}
-                </Badge>
-                <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
-                  Current plan: {planLabel}
-                </Badge>
-              </div>
-            </div>
-            <div className="rounded-[1.5rem] border border-amber-400/25 bg-amber-500/10 p-4 text-sm">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">Upgrade required</p>
-              <p className="mt-2 font-medium text-foreground">Finance Workspace starts on Plus.</p>
-              <p className="mt-2 text-muted-foreground">
-                Upgrade to unlock budgets, revenue, expenses, and the operating finance layer for the studio.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("finance.pageTitle")}</h1>
       </div>
     );
   }
@@ -417,56 +388,11 @@ export function FinancePage({
 
   return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Finance</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Run the commercial layer of {organizationName}: budgets, project spending, receipts, and a working cash view tied back to the game portfolio.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <ExportActions
-                label="Export finance"
-                xlsxHref="/api/exports/finance?format=xlsx"
-                csvHref="/api/exports/finance?format=csv"
-                googleSheetsEndpoint="/api/exports/finance"
-              />
-              <Badge variant="secondary" className="border-white/10 bg-white/55 backdrop-blur dark:bg-white/[0.05]">
-                ERP finance layer
-              </Badge>
-            </div>
-            {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("finance.netCashPosition")}</span>
-                <span className="font-medium">{formatCurrency(data.summary.netCashCents)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">{t("finance.pendingReceivables")}</span>
-                <span className="font-medium">{formatCurrency(data.summary.pendingRevenueCents)}</span>
-              </div>
-              {canAccessInvoiceOps ? (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("finance.pendingPayables")}</span>
-                  <span className="font-medium">{formatCurrency(data.summary.payableOpenCents)}</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{t("finance.invoiceOps")}</span>
-                  <span className="font-medium">Pro</span>
-                </div>
-              )}
-              <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("finance.liveOperatingView")}</p>
-                <p className="mt-2 font-medium">{t("finance.liveOperatingCopy")}</p>
-              </div>
-            </div>
-          </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Finance</h1>
+        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <KpiCard label={t("finance.activeBudgets")} value={formatNumber(data.summary.activeBudgetsCount)} />
