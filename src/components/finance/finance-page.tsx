@@ -125,6 +125,7 @@ export function FinancePage({
   });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [financeView, setFinanceView] = useState<"dashboard" | "receivables" | "payables" | "budget" | "contracts" | "invoices" | "approvals">("dashboard");
   const data = overviewQuery.data;
 
   if (!canAccessFinanceWorkspace || !summary) {
@@ -244,9 +245,30 @@ export function FinancePage({
 
       {data ? (
         <>
+          <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-muted/25 p-1">
+            {[
+              ["dashboard", "Dashboard"],
+              ["receivables", "Contas a receber"],
+              ["payables", "Contas a pagar"],
+              ["budget", "Orçamento"],
+              ["contracts", "Contratos"],
+              ["invoices", "Notas"],
+              ["approvals", "Aprovações"]
+            ].map(([value, label]) => (
+              <Button
+                key={value}
+                type="button"
+                size="sm"
+                variant={financeView === value ? "default" : "ghost"}
+                onClick={() => setFinanceView(value as typeof financeView)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
 
-      {canAccessInvoiceOps ? (
-        <>
+      {financeView === "receivables" ? (
+        canAccessInvoiceOps ? (
           <AccountsReceivableSection
             canManage={canManage}
             projects={data.projects}
@@ -257,6 +279,21 @@ export function FinancePage({
               overdueReceivablesCount: data.summary.overdueReceivablesCount
             }}
           />
+        ) : (
+          <Card className="overflow-hidden border-amber-400/20">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader>
+              <CardTitle>Contas a receber</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>Accounts receivable, invoices, and payment tracking start on Pro.</p>
+            </CardContent>
+          </Card>
+        )
+      ) : null}
+
+      {financeView === "payables" ? (
+        canAccessInvoiceOps ? (
           <AccountsPayableSection
             canManage={canManage}
             costCenters={data.costCenters}
@@ -268,20 +305,21 @@ export function FinancePage({
               overduePayablesCount: data.summary.overduePayablesCount
             }}
           />
-        </>
-      ) : (
-        <Card className="overflow-hidden border-amber-400/20">
-          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-          <CardHeader>
-            <CardTitle>Invoices & payables</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Accounts receivable, accounts payable, invoices, and payment tracking start on Pro.</p>
-            <p>Your current plan can still run budgets, revenue, expenses, and project finance snapshots.</p>
-          </CardContent>
-        </Card>
-      )}
+        ) : (
+          <Card className="overflow-hidden border-amber-400/20">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader>
+              <CardTitle>Contas a pagar</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>Accounts payable, approvals, and payment tracking start on Pro.</p>
+            </CardContent>
+          </Card>
+        )
+      ) : null}
 
+      {financeView === "dashboard" ? (
+        <>
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
@@ -401,7 +439,11 @@ export function FinancePage({
           </CardContent>
         </Card>
       </div>
+        </>
+      ) : null}
 
+      {financeView === "budget" ? (
+        <>
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-1 overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -924,8 +966,11 @@ export function FinancePage({
           </CardContent>
           </Card>
       </div>
+        </>
+      ) : null}
 
-      {canAccessContractsRoyalties ? (
+      {financeView === "contracts" ? (
+      canAccessContractsRoyalties ? (
         <div className="grid gap-6 xl:grid-cols-2">
           <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -1170,9 +1215,11 @@ export function FinancePage({
             <p>That keeps the deeper commercial operations layer distinct from the core finance workspace.</p>
           </CardContent>
         </Card>
-      )}
+      )
+      ) : null}
 
-      {canAccessInvoiceOps ? (
+      {financeView === "invoices" ? (
+      canAccessInvoiceOps ? (
         <div className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -1320,9 +1367,21 @@ export function FinancePage({
           </CardContent>
           </Card>
         </div>
+      ) : (
+        <Card className="overflow-hidden border-amber-400/20">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Notas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Issued and received invoices are part of Pro.</p>
+          </CardContent>
+        </Card>
+      )
       ) : null}
 
-      {canAccessApprovalsAudit ? (
+      {financeView === "approvals" ? (
+      canAccessApprovalsAudit ? (
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
@@ -1377,7 +1436,8 @@ export function FinancePage({
             <p>Upgrade when the studio needs formal finance governance across contracts, invoices, payables, and large entries.</p>
           </CardContent>
         </Card>
-      )}
+      )
+      ) : null}
 
         </>
       ) : null}
