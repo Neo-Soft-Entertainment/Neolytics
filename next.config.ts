@@ -15,6 +15,49 @@ const csp = [
   "upgrade-insecure-requests"
 ].join("; ");
 
+const noStoreHeaders = [
+  {
+    key: "Cache-Control",
+    value: "no-store, max-age=0"
+  },
+  {
+    key: "Pragma",
+    value: "no-cache"
+  },
+  {
+    key: "Expires",
+    value: "0"
+  }
+];
+
+const sensitiveSources = [
+  "/api/auth/:path*",
+  "/api/company/:path*",
+  "/api/commerce/:path*",
+  "/api/community/:path*",
+  "/api/exports/projects/:path*",
+  "/api/finance/:path*",
+  "/api/invitations/:path*",
+  "/api/organizations/:path*",
+  "/api/privacy/:path*",
+  "/api/projects/:path*",
+  "/api/signup",
+  "/api/users/:path*",
+  "/api/workspaces/:path*",
+  "/company/:path*",
+  "/commerce/:path*",
+  "/community/:path*",
+  "/dashboard",
+  "/finance/:path*",
+  "/invite/:path*",
+  "/login",
+  "/privacy/:path*",
+  "/projects/:path*",
+  "/settings/:path*",
+  "/setup",
+  "/signup/:path*"
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -27,7 +70,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Strict-Transport-Security",
-            value: "max-age=31536000; includeSubDomains; preload"
+            value: "max-age=63072000; includeSubDomains; preload"
           },
           {
             key: "X-Content-Type-Options",
@@ -46,7 +89,11 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=()"
           }
         ]
-      }
+      },
+      ...sensitiveSources.map((source) => ({
+        source,
+        headers: noStoreHeaders
+      }))
     ];
   }
 };
