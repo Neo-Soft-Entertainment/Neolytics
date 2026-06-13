@@ -11,9 +11,9 @@ export default async function HomePage() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0 hero-grid opacity-50" />
-      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-sky-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-blue-600/15 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-10 right-20 h-72 w-72 rounded-full bg-cyan-300/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-sky-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-20 h-72 w-72 rounded-full bg-sky-300/10 blur-3xl" />
       <div className="container relative space-y-12 py-12 lg:py-20">
         <header className="glass-surface animate-rise-in flex flex-col gap-4 rounded-[2rem] px-5 py-4 md:flex-row md:items-center md:justify-between">
           <NeolyticsBrand />
@@ -39,7 +39,7 @@ export default async function HomePage() {
             <div className="space-y-4">
               <h1 className="animate-rise-in text-5xl font-bold tracking-[-0.07em] sm:text-7xl">
                 Find the right market
-                <span className="block bg-gradient-to-r from-blue-700 via-blue-500 to-sky-400 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-cyan-500 via-sky-500 to-sky-300 bg-clip-text text-transparent">
                   before you build the wrong game.
                 </span>
               </h1>
@@ -84,8 +84,8 @@ export default async function HomePage() {
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.75rem] border border-white/10 bg-[#02062c] p-5 text-slate-50 shadow-[0_30px_60px_rgba(2,6,23,0.24)]">
-                <p className="text-xs uppercase tracking-[0.25em] text-sky-200/80">Operating thesis</p>
+              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950 p-5 text-slate-50 shadow-[0_30px_60px_rgba(2,6,23,0.24)]">
+                <p className="text-xs uppercase tracking-[0.25em] text-cyan-200/80">Operating thesis</p>
                 <p className="mt-3 text-lg font-semibold">Commercial intelligence should feed production, finance, and execution directly.</p>
               </div>
               <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
@@ -98,7 +98,7 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          <Card className="animate-rise-in-delay relative overflow-hidden border-white/10 bg-[#02062c] text-slate-50 shadow-[0_30px_80px_rgba(4,11,46,0.42)]">
+          <Card className="animate-rise-in-delay relative overflow-hidden border-white/10 bg-slate-950 text-slate-50 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
             <div className="pointer-events-none absolute inset-x-6 top-0 h-px shimmer-divider opacity-80" />
             <CardHeader>
               <CardTitle>What teams do in Neolytics</CardTitle>
@@ -116,7 +116,7 @@ export default async function HomePage() {
                 <p className="font-medium text-white">3. Build the watchlist</p>
                 <p className="mt-1">Track launches, revenue leaders, and fast movers from one workspace.</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500/20 to-sky-300/12 p-4">
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-500/15 to-sky-300/10 p-4">
                 <p className="font-medium text-white">4. Validate the project</p>
                 <p className="mt-1">Turn a concept into market analysis, an automated GDD, and a customizable delivery board.</p>
               </div>

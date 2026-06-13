@@ -54,7 +54,7 @@ function AvatarPreview({
   }
 
   return (
-    <div className={cn("flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-sky-500/15 text-sm font-semibold text-sky-100", className)}>
+    <div className={cn("flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-cyan-500/15 text-sm font-semibold text-cyan-100", className)}>
       {getInitials(name, email)}
     </div>
   );

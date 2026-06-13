@@ -60,7 +60,7 @@ export function MobileNav({
             </p>
             {navItems.filter((item) => item.section === section.key).map((item) => (
               <DropdownMenuItem key={item.href} asChild>
-                <Link className={cn("min-h-10 rounded-xl px-3", pathname === item.href && "bg-sky-500/10 font-semibold text-blue-700 dark:text-sky-200")} href={item.href}>
+                <Link className={cn("min-h-10 rounded-xl px-3", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
                   {t(item.labelKey)}
                 </Link>
               </DropdownMenuItem>
