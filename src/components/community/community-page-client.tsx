@@ -57,13 +57,20 @@ export function CommunityPageClient({
   const isPro = subscriptionPlan === SubscriptionPlan.PRO;
   const feed = query.data?.feed ?? [];
   const deferredSearch = useDeferredValue(search);
+  const canPublishPost = form.title.trim().length >= 2 && form.content.trim().length > 0;
 
   async function createPost() {
     setFeedback(null);
+
+    if (!canPublishPost) {
+      setFeedback("Add a title and write something before publishing.");
+      return;
+    }
+
     setIsSubmitting(true);
     const payload = new FormData();
-    payload.append("title", form.title);
-    payload.append("content", form.content);
+    payload.append("title", form.title.trim());
+    payload.append("content", form.content.trim());
     payload.append("type", form.type);
     payload.append("projectId", form.projectId);
     payload.append("tags", form.tags);
@@ -403,7 +410,7 @@ export function CommunityPageClient({
                 />
               </div>
               {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
-              <Button disabled={isSubmitting} onClick={createPost}>
+              <Button disabled={isSubmitting || !canPublishPost} onClick={createPost}>
                 {isSubmitting ? "Publishing..." : "Publish update"}
               </Button>
             </CardContent>

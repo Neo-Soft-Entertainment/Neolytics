@@ -10,8 +10,8 @@ import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
-  title: z.string().min(2),
-  content: z.string().min(10),
+  title: z.string().trim().min(2, "Add a title with at least 2 characters."),
+  content: z.string().trim().min(1, "Write something before publishing."),
   type: z.nativeEnum(CommunityPostType).optional(),
   projectId: z.string().cuid().nullable().optional(),
   tags: z.array(z.string().min(1)).max(8).optional()
