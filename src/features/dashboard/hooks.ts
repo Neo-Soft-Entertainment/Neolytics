@@ -15,26 +15,6 @@ export function useDashboard() {
         averageReviewScore: number;
         trackedGamesCount: number;
       };
-      guidedJourney: {
-        tierLabel: string;
-        completedSteps: number;
-        totalSteps: number;
-        progressPercent: number;
-        nextStep: {
-          id: string;
-          title: string;
-          description: string;
-          href: string;
-          completed: boolean;
-        } | null;
-        steps: Array<{
-          id: string;
-          title: string;
-          description: string;
-          href: string;
-          completed: boolean;
-        }>;
-      };
       portfolioReadiness: {
         averageOpportunityScore: number;
         averageRiskScore: number;

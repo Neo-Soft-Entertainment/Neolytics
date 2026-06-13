@@ -6,7 +6,6 @@ export type FeatureKey =
   | "revenueCalculator"
   | "communityFeed"
   | "communityRanking"
-  | "guidedJourney"
   | "pdfExport"
   | "earlyAccess"
   | "steamXray"
@@ -52,7 +51,6 @@ export type SubscriptionCapability =
   | "gameBoardProjects"
   | "gdds"
   | "communityRanking"
-  | "guidedJourney"
   | "pdfExport"
   | "commerceOps"
   | "financeWorkspace"
@@ -77,7 +75,6 @@ export const subscriptionFeatureRows: Array<{
   { key: "gameBoardProjects", label: "Game Board Projects" },
   { key: "gdds", label: "GDDs" },
   { key: "communityRanking", label: "Community Ranking" },
-  { key: "guidedJourney", label: "Guided Journey" },
   { key: "pdfExport", label: "PDF Export" },
   { key: "commerceOps", label: "Commerce Operations" },
   { key: "financeWorkspace", label: "Finance Workspace" },
@@ -90,7 +87,7 @@ export const subscriptionFeatureRows: Array<{
 ];
 
 export const subscriptionTruthNotes = [
-  "Steam Radar, Market Research, Revenue Calculator, Community, Steam X-Ray, and Guided Journey are live across all plans today.",
+  "Steam Radar, Market Research, Revenue Calculator, Community, and Steam X-Ray are live across all plans today.",
   "PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and ERP access layers are enforced in the product now.",
   "Commerce Operations, Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
   "Paid plans start with a 7-day free Stripe trial.",
@@ -109,8 +106,7 @@ export const subscriptionPlans = {
       "1 seat and 1 workspace",
       "3 active Game Board projects",
       "10 viability analyses per month",
-      "10 GDDs per month",
-      "Guided onboarding journey"
+      "10 GDDs per month"
     ],
     featureAccess: {
       steamRadar: "Included",
@@ -123,7 +119,6 @@ export const subscriptionPlans = {
       gameBoardProjects: "3 active",
       gdds: "10 / month",
       communityRanking: "Included",
-      guidedJourney: "Included",
       pdfExport: "Not included",
       commerceOps: "Not included",
       financeWorkspace: "Not included",
@@ -172,7 +167,6 @@ export const subscriptionPlans = {
       gameBoardProjects: "20 active",
       gdds: "100 / month",
       communityRanking: "Included",
-      guidedJourney: "Included",
       pdfExport: "Included",
       commerceOps: "Included",
       financeWorkspace: "Included",
@@ -221,7 +215,6 @@ export const subscriptionPlans = {
       gameBoardProjects: "Unlimited",
       gdds: "Unlimited",
       communityRanking: "Included",
-      guidedJourney: "Included",
       pdfExport: "Included",
       commerceOps: "Included",
       financeWorkspace: "Included",
@@ -290,7 +283,6 @@ const featureCapabilityMap: Record<FeatureKey, SubscriptionCapability> = {
   revenueCalculator: "revenueCalculator",
   communityFeed: "communityFeed",
   communityRanking: "communityRanking",
-  guidedJourney: "guidedJourney",
   pdfExport: "pdfExport",
   earlyAccess: "earlyAccess",
   steamXray: "steamXray",
@@ -319,7 +311,6 @@ export function getEntitlementPolicyForPlan(plan: SubscriptionPlan): Entitlement
       revenueCalculator: hasSubscriptionCapability(plan, featureCapabilityMap.revenueCalculator),
       communityFeed: hasSubscriptionCapability(plan, featureCapabilityMap.communityFeed),
       communityRanking: hasSubscriptionCapability(plan, featureCapabilityMap.communityRanking),
-      guidedJourney: hasSubscriptionCapability(plan, featureCapabilityMap.guidedJourney),
       pdfExport: hasSubscriptionCapability(plan, featureCapabilityMap.pdfExport),
       earlyAccess: hasSubscriptionCapability(plan, featureCapabilityMap.earlyAccess),
       steamXray: hasSubscriptionCapability(plan, featureCapabilityMap.steamXray),

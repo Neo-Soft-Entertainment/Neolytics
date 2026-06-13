@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import { PageHero } from "@/components/app-shell/page-hero";
@@ -11,10 +12,45 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { useDashboard } from "@/features/dashboard/hooks";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
+const tourSteps = [
+  {
+    title: "Market radar",
+    description: "Use Games, Opportunities, and Compare to read demand, pricing, competitors, launches, and player signals.",
+    href: "/games",
+    action: "Open games"
+  },
+  {
+    title: "Project command",
+    description: "Turn a thesis into a project, run viability and art analysis, manage milestones, GDDs, and the production board.",
+    href: "/projects",
+    action: "Open projects"
+  },
+  {
+    title: "Studio operations",
+    description: "Manage finance, company records, documents, contracts, invoices, approvals, and audit trails from the operating layer.",
+    href: "/finance",
+    action: "Open finance"
+  },
+  {
+    title: "Community and reports",
+    description: "Share signals with the organization or global feed, discuss posts, export dashboards, and build market reports.",
+    href: "/community",
+    action: "Open community"
+  }
+];
+
 export function DashboardClient() {
+  const [isTourOpen, setIsTourOpen] = useState(false);
   const query = useDashboard();
 
   if (query.isLoading) {
@@ -57,6 +93,9 @@ export function DashboardClient() {
             </Button>
             <Button asChild variant="outline">
               <Link href="/compare">Compare games</Link>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setIsTourOpen(true)}>
+              Optional tour
             </Button>
             <ExportActions
               label="Export"
@@ -105,52 +144,29 @@ export function DashboardClient() {
           <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignals.length)} />
         </div>
       ) : null}
-        <Card className="overflow-hidden">
-          <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
-          <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-2">
-              <CardTitle>Guided journey</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {data.guidedJourney.completedSteps} of {data.guidedJourney.totalSteps} milestones complete.
-              </p>
-            </div>
-            <div className="space-y-2 lg:text-right">
-            <Badge variant="secondary">{data.guidedJourney.tierLabel}</Badge>
-            <p className="text-2xl font-semibold">{data.guidedJourney.progressPercent}%</p>
-            {data.guidedJourney.nextStep ? (
-              <Button asChild size="sm">
-                <Link href={data.guidedJourney.nextStep.href}>
-                  Continue: {data.guidedJourney.nextStep.title}
-                </Link>
-              </Button>
-            ) : (
-              <Badge variant="secondary">Journey complete</Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 lg:grid-cols-2">
-          {data.guidedJourney.steps.map((step) => (
-            <div key={step.id} className="rounded-2xl border border-white/10 bg-white/55 p-4 backdrop-blur dark:bg-white/[0.03]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium">{step.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
-                </div>
-                <Badge variant={step.completed ? "default" : "secondary"}>
-                  {step.completed ? "Done" : "Next"}
-                </Badge>
+      <Dialog open={isTourOpen} onOpenChange={setIsTourOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Optional tour</DialogTitle>
+            <DialogDescription>
+              A quick map of the main operating areas. Nothing here changes your workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {tourSteps.map((step) => (
+              <div key={step.title} className="rounded-lg border bg-card p-4">
+                <p className="font-medium">{step.title}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                <Button asChild className="mt-4" size="sm" variant="outline">
+                  <Link href={step.href} onClick={() => setIsTourOpen(false)}>
+                    {step.action}
+                  </Link>
+                </Button>
               </div>
-              {!step.completed ? (
-                <div className="mt-3">
-                  <Button asChild size="sm" variant="outline">
-                    <Link href={step.href}>Open step</Link>
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />

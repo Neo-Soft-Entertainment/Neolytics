@@ -875,94 +875,26 @@ export async function getDashboardData(workspaceId: string) {
     })
   ]);
 
-  const [
-    competitorSetsCount,
-    projectsCount,
-    analyzedProjectsCount,
-    gddsCount,
-    reportsCount,
-    projectAnalyses
-  ] = await Promise.all([
-    db.competitorSet.count({
-      where: {
+  const projectAnalyses = await db.projectAnalysis.findMany({
+    where: {
+      project: {
         workspaceId
       }
-    }),
-    db.project.count({
-      where: {
-        workspaceId
-      }
-    }),
-    db.projectAnalysis.count({
-      where: {
-        project: {
-          workspaceId
+    },
+    include: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+          stage: true
         }
       }
-    }),
-    db.projectGdd.count({
-      where: {
-        project: {
-          workspaceId
-        }
-      }
-    }),
-    db.aiReport.count({
-      where: {
-        workspaceId
-      }
-    }),
-    db.projectAnalysis.findMany({
-      where: {
-        project: {
-          workspaceId
-        }
-      },
-      include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-            stage: true
-          }
-        }
-      },
-      orderBy: {
-        analyzedAt: "desc"
-      },
-      take: 12
-    })
-  ]);
-
-  const [
-    budgetsCount,
-    communityPostsCount,
-    legalEntitiesCount,
-    companyDocumentsCount
-  ] = await Promise.all([
-    db.budget.count({
-      where: {
-        organizationId: workspace.organizationId
-      }
-    }),
-    db.communityPost.count({
-      where: {
-        organizationId: workspace.organizationId
-      }
-    }),
-    db.legalEntity.count({
-      where: {
-        organizationId: workspace.organizationId
-      }
-    }),
-    db.companyDocument.count({
-      where: {
-        legalEntity: {
-          organizationId: workspace.organizationId
-        }
-      }
-    })
-  ]);
+    },
+    orderBy: {
+      analyzedAt: "desc"
+    },
+    take: 12
+  });
   const financeOverview = await getFinanceOverview(workspace.organizationId);
   const topRevenue = topRevenueGames
     .flatMap((game) => {
@@ -994,123 +926,6 @@ export async function getDashboardData(workspaceId: string) {
     }
   });
 
-  const guidedJourneySteps = [
-    {
-      id: "save-game",
-      title: "Build your first shortlist",
-      description: "Save at least one Steam game into the current workspace.",
-      href: "/games",
-      completed: trackedGames.length > 0
-    },
-    {
-      id: "competitor-set",
-      title: "Create a competitor set",
-      description: "Bundle a group of Steam comps you want to monitor together.",
-      href: "/compare",
-      completed: competitorSetsCount > 0
-    },
-    {
-      id: "project",
-      title: "Open a project thesis",
-      description: "Turn a game idea into a working concept inside Game Board.",
-      href: "/projects",
-      completed: projectsCount > 0
-    },
-    {
-      id: "analysis",
-      title: "Run market analysis",
-      description: "Generate the first viability pass for one project.",
-      href: "/projects",
-      completed: analyzedProjectsCount > 0
-    },
-    {
-      id: "gdd",
-      title: "Generate a GDD",
-      description: "Create the first automated GDD from your project data.",
-      href: "/projects",
-      completed: gddsCount > 0
-    }
-  ];
-
-  if (hasSubscriptionCapability(subscriptionPlan, "communityFeed")) {
-    guidedJourneySteps.push({
-      id: "community",
-      title: "Publish a community signal",
-      description: "Turn one market or project insight into shared studio memory.",
-      href: "/community",
-      completed: communityPostsCount > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "financeWorkspace")) {
-    guidedJourneySteps.push({
-      id: "finance",
-      title: "Open the finance layer",
-      description: "Create the first budget or commercial entry for the studio.",
-      href: "/finance",
-      completed: budgetsCount > 0 || financeOverview.revenueEntries.length > 0 || financeOverview.expenseEntries.length > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "companyHub")) {
-    guidedJourneySteps.push({
-      id: "company",
-      title: "Set up your company hub",
-      description: "Register the legal entity that will own operations and reporting.",
-      href: "/company",
-      completed: legalEntitiesCount > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "documentVault")) {
-    guidedJourneySteps.push({
-      id: "documents",
-      title: "Upload operating documents",
-      description: "Start the document vault with at least one corporate file.",
-      href: "/company",
-      completed: companyDocumentsCount > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "contractsRoyalties")) {
-    guidedJourneySteps.push({
-      id: "contracts",
-      title: "Create a contract or royalty record",
-      description: "Move from planning into commercial operations.",
-      href: "/finance",
-      completed: financeOverview.contracts.length > 0 || financeOverview.royaltyAgreements.length > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "invoiceOps")) {
-    guidedJourneySteps.push({
-      id: "payables",
-      title: "Register your first payable",
-      description: "Start the real accounts payable trail for the studio.",
-      href: "/finance",
-      completed: financeOverview.payableTitles.length > 0 || financeOverview.issuedInvoices.length > 0 || financeOverview.receivedInvoices.length > 0
-    });
-  }
-
-  if (hasSubscriptionCapability(subscriptionPlan, "approvalsAudit")) {
-    guidedJourneySteps.push({
-      id: "approvals",
-      title: "Clear the first approval flow",
-      description: "Run at least one finance approval to activate governance.",
-      href: "/finance",
-      completed: financeOverview.approvalRequests.length > 0
-    });
-  }
-
-  guidedJourneySteps.push({
-    id: "report",
-    title: "Export a market report",
-    description: "Generate a report and share it with your team.",
-    href: "/reports",
-    completed: reportsCount > 0
-  });
-
-  const completedJourneySteps = guidedJourneySteps.filter((step) => step.completed).length;
   const thesisSignals = projectAnalyses.map((analysis) => {
     const metadata = (analysis.metadata ?? {}) as {
       opportunityLayer?: {
@@ -1157,19 +972,6 @@ export async function getDashboardData(workspaceId: string) {
       totalGames: totals._count._all,
       averageReviewScore: totals._avg.reviewScore ?? 0,
       trackedGamesCount: trackedGames.length
-    },
-    guidedJourney: {
-      tierLabel:
-        subscriptionPlan === SubscriptionPlan.FREE
-          ? "Core validation track"
-          : subscriptionPlan === SubscriptionPlan.PLUS
-            ? "Studio operating track"
-            : "Executive operating track",
-      completedSteps: completedJourneySteps,
-      totalSteps: guidedJourneySteps.length,
-      progressPercent: Math.round((completedJourneySteps / guidedJourneySteps.length) * 100),
-      nextStep: guidedJourneySteps.find((step) => !step.completed) ?? null,
-      steps: guidedJourneySteps
     },
     projectSignals: thesisSignals,
     portfolioReadiness,
