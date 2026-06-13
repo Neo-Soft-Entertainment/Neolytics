@@ -40,11 +40,6 @@ export function AppSidebar() {
           showWordmark={!isCollapsed}
           className={cn("animate-rise-in", isCollapsed && "justify-center")}
         />
-        {!isCollapsed ? (
-          <p className="mt-2 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-            {t("shell.sidebarTagline")}
-          </p>
-        ) : null}
       </div>
       <nav className={cn("flex flex-col gap-3 p-3", isCollapsed && "items-center")}>
         {navSections.map((section) => (

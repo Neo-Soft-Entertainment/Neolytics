@@ -30,9 +30,6 @@ export function NeolyticsBrand({
           <span className="bg-gradient-to-r from-slate-950 via-cyan-700 to-blue-500 bg-clip-text text-lg font-bold tracking-[-0.06em] text-transparent dark:from-white dark:via-cyan-200 dark:to-blue-300 sm:text-xl">
             Neolytics
           </span>
-          <span className="mt-1 hidden text-[10px] uppercase tracking-[0.28em] text-muted-foreground sm:block">
-            Studio ERP + Market OS
-          </span>
         </span>
       ) : null}
     </Link>

@@ -19,6 +19,7 @@ import { useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { AccountsPayableSection } from "@/components/finance/accounts-payable-section";
+import { AccountsReceivableSection } from "@/components/finance/accounts-receivable-section";
 import { KpiCard } from "@/components/dashboard/kpi-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -159,6 +160,37 @@ export function FinancePage({
         amountPaidCents: number;
       }>;
     }>;
+    receivableTitles: Array<{
+      id: string;
+      projectId: string | null;
+      prefix: string;
+      titleNumber: string;
+      documentType: string;
+      sourceDescription: string;
+      customerIdentifier: string;
+      customerName: string;
+      issueDate: string;
+      dueDate: string;
+      actualDueDate: string;
+      titleAmountCents: number;
+      receivedAmountCents: number;
+      currencyCode: string;
+      status: PayableTitleStatus;
+      notes: string | null;
+      project: { id: string; name: string } | null;
+      receipts: Array<{
+        id: string;
+        paymentType: PayablePaymentType;
+        bank: string | null;
+        branch: string | null;
+        account: string | null;
+        receivedAt: string;
+        history: string | null;
+        discountCents: number;
+        interestCents: number;
+        amountReceivedCents: number;
+      }>;
+    }>;
     contracts: Array<{
       id: string;
       projectId: string | null;
@@ -262,7 +294,9 @@ export function FinancePage({
       pendingRevenueCents: number;
       pendingExpenseCents: number;
       payableOpenCents: number;
+      receivableOpenCents: number;
       overduePayablesCount: number;
+      overdueReceivablesCount: number;
       royaltiesDueCents: number;
       pendingApprovalsCount: number;
       netCashCents: number;
@@ -399,22 +433,35 @@ export function FinancePage({
         <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
         <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(data.summary.totalRevenueNetCents)} />
         <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(data.summary.totalExpensesPaidCents)} />
+        {canAccessInvoiceOps ? <KpiCard label="Contas a receber" value={formatCurrency(data.summary.receivableOpenCents)} /> : null}
         {canAccessInvoiceOps ? <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(data.summary.payableOpenCents)} /> : null}
         {canAccessInvoiceOps ? <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(data.summary.overduePayablesCount)} /> : null}
       </div>
 
       {canAccessInvoiceOps ? (
-        <AccountsPayableSection
-          canManage={canManage}
-          costCenters={data.costCenters}
-          payableTitles={data.payableTitles}
-          projects={data.projects}
-          submitJson={submitJson}
-          summary={{
-            payableOpenCents: data.summary.payableOpenCents,
-            overduePayablesCount: data.summary.overduePayablesCount
-          }}
-        />
+        <>
+          <AccountsReceivableSection
+            canManage={canManage}
+            projects={data.projects}
+            receivableTitles={data.receivableTitles}
+            submitJson={submitJson}
+            summary={{
+              receivableOpenCents: data.summary.receivableOpenCents,
+              overdueReceivablesCount: data.summary.overdueReceivablesCount
+            }}
+          />
+          <AccountsPayableSection
+            canManage={canManage}
+            costCenters={data.costCenters}
+            payableTitles={data.payableTitles}
+            projects={data.projects}
+            submitJson={submitJson}
+            summary={{
+              payableOpenCents: data.summary.payableOpenCents,
+              overduePayablesCount: data.summary.overduePayablesCount
+            }}
+          />
+        </>
       ) : (
         <Card className="overflow-hidden border-amber-400/20">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -422,7 +469,7 @@ export function FinancePage({
             <CardTitle>Invoices & payables</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>Accounts payable, issued invoices, received invoices, and payment tracking start on Pro.</p>
+            <p>Accounts receivable, accounts payable, invoices, and payment tracking start on Pro.</p>
             <p>Your current plan can still run budgets, revenue, expenses, and project finance snapshots.</p>
           </CardContent>
         </Card>

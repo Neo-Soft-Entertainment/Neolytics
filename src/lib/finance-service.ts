@@ -57,6 +57,30 @@ function decryptPayableTitle<T extends {
   } as T;
 }
 
+function decryptReceivableTitle<T extends {
+  organizationId: string;
+  sourceDescription: string;
+  customerIdentifier: string;
+  customerName: string;
+  notes?: string | null;
+  receipts?: Array<{ bank?: string | null; branch?: string | null; account?: string | null; history?: string | null }>;
+}>(title: T) {
+  return {
+    ...title,
+    sourceDescription: decryptFinanceField(title.sourceDescription, title.organizationId, "receivableTitle.sourceDescription") ?? title.sourceDescription,
+    customerIdentifier: decryptFinanceField(title.customerIdentifier, title.organizationId, "receivableTitle.customerIdentifier") ?? title.customerIdentifier,
+    customerName: decryptFinanceField(title.customerName, title.organizationId, "receivableTitle.customerName") ?? title.customerName,
+    notes: decryptFinanceField(title.notes, title.organizationId, "receivableTitle.notes"),
+    receipts: title.receipts?.map((receipt) => ({
+      ...receipt,
+      bank: decryptFinanceField(receipt.bank, title.organizationId, "receivablePayment.bank"),
+      branch: decryptFinanceField(receipt.branch, title.organizationId, "receivablePayment.branch"),
+      account: decryptFinanceField(receipt.account, title.organizationId, "receivablePayment.account"),
+      history: decryptFinanceField(receipt.history, title.organizationId, "receivablePayment.history")
+    }))
+  } as T;
+}
+
 function decryptContract<T extends { organizationId: string; counterpartyName: string; notes?: string | null }>(contract: T) {
   return {
     ...contract,
@@ -282,7 +306,7 @@ export async function getFinanceOverview(organizationId: string) {
     })
   ]);
 
-  const [budgets, revenueEntries, expenseEntries, payableTitles] = await Promise.all([
+  const [budgets, revenueEntries, expenseEntries, payableTitles, receivableTitles] = await Promise.all([
     db.budget.findMany({
       where: {
         organizationId
@@ -372,6 +396,28 @@ export async function getFinanceOverview(organizationId: string) {
         payments: {
           orderBy: {
             paymentDate: "desc"
+          }
+        }
+      },
+      orderBy: [
+        { actualDueDate: "asc" },
+        { createdAt: "desc" }
+      ]
+    }),
+    db.receivableTitle.findMany({
+      where: {
+        organizationId
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        receipts: {
+          orderBy: {
+            receivedAt: "desc"
           }
         }
       },
@@ -549,7 +595,17 @@ export async function getFinanceOverview(organizationId: string) {
   const payableOpenCents = payableTitles
     .filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED)
     .reduce((sum, title) => sum + Math.max(toNumber(title.totalAmountCents) - toNumber(title.paidAmountCents), 0), 0);
+  const receivableOpenCents = receivableTitles
+    .filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED)
+    .reduce((sum, title) => sum + Math.max(toNumber(title.titleAmountCents) - toNumber(title.receivedAmountCents), 0), 0);
   const overduePayablesCount = payableTitles.filter((title) => {
+    if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
+      return false;
+    }
+
+    return title.actualDueDate < new Date();
+  }).length;
+  const overdueReceivablesCount = receivableTitles.filter((title) => {
     if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
       return false;
     }
@@ -731,6 +787,7 @@ export async function getFinanceOverview(organizationId: string) {
     revenueEntries,
     expenseEntries,
     payableTitles: payableTitles.map(decryptPayableTitle),
+    receivableTitles: receivableTitles.map(decryptReceivableTitle),
     contracts: contracts.map(decryptContract),
     royaltyAgreements: royaltyAgreements.map(decryptRoyaltyAgreement),
     royaltyStatements: royaltyStatements.map(decryptRoyaltyStatement),
@@ -746,7 +803,9 @@ export async function getFinanceOverview(organizationId: string) {
       pendingRevenueCents,
       pendingExpenseCents,
       payableOpenCents,
+      receivableOpenCents,
       overduePayablesCount,
+      overdueReceivablesCount,
       royaltiesDueCents,
       pendingApprovalsCount,
       netCashCents: totalRevenueNetCents - totalExpensesPaidCents
@@ -1707,6 +1766,159 @@ export async function createPayablePayment(params: {
     actionLabel: "Accounts payable payment review",
     amountCents: payment.amountPaidCents,
     reason: "Accounts payable payment above review threshold."
+  });
+
+  return payment;
+}
+
+export async function createReceivableTitle(params: {
+  organizationId: string;
+  userId: string;
+  projectId?: string;
+  prefix: string;
+  titleNumber: string;
+  documentType: string;
+  sourceDescription: string;
+  customerIdentifier: string;
+  customerName: string;
+  issueDate: Date;
+  dueDate: Date;
+  titleAmountCents: number;
+  currencyCode?: string;
+  notes?: string;
+}) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
+  const title = await db.receivableTitle.create({
+    data: {
+      organizationId: params.organizationId,
+      projectId: params.projectId || null,
+      prefix: params.prefix.trim().toUpperCase(),
+      titleNumber: params.titleNumber.trim(),
+      documentType: params.documentType.trim(),
+      sourceDescription: encryptFinanceField(params.sourceDescription, params.organizationId, "receivableTitle.sourceDescription") ?? params.sourceDescription.trim(),
+      customerIdentifier: encryptFinanceField(params.customerIdentifier, params.organizationId, "receivableTitle.customerIdentifier") ?? params.customerIdentifier.trim(),
+      customerName: encryptFinanceField(params.customerName, params.organizationId, "receivableTitle.customerName") ?? params.customerName.trim(),
+      issueDate: params.issueDate,
+      dueDate: params.dueDate,
+      actualDueDate: getNextBusinessDay(params.dueDate),
+      titleAmountCents: BigInt(params.titleAmountCents),
+      currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
+      notes: encryptFinanceField(params.notes, params.organizationId, "receivableTitle.notes")
+    }
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "receivable_title",
+    entityId: title.id,
+    action: "receivable_title.created",
+    metadata: {
+      prefix: title.prefix,
+      titleNumber: title.titleNumber,
+      protectedFields: ["customerIdentifier", "customerName"]
+    }
+  });
+
+  await ensureApprovalRequest({
+    organizationId: params.organizationId,
+    projectId: title.projectId,
+    requestedById: params.userId,
+    entityType: "receivable_title",
+    entityId: title.id,
+    actionLabel: "Accounts receivable title review",
+    amountCents: title.titleAmountCents,
+    reason: "Accounts receivable title above review threshold."
+  });
+
+  return title;
+}
+
+export async function createReceivablePayment(params: {
+  organizationId: string;
+  userId: string;
+  titleId: string;
+  paymentType: PayablePaymentType;
+  bank?: string;
+  branch?: string;
+  account?: string;
+  receivedAt: Date;
+  history?: string;
+  discountCents?: number;
+  interestCents?: number;
+  amountReceivedCents: number;
+}) {
+  await enforceSubscriptionCapability(params.organizationId, "invoiceOps");
+
+  const title = await db.receivableTitle.findFirst({
+    where: {
+      id: params.titleId,
+      organizationId: params.organizationId
+    }
+  });
+
+  if (!title) {
+    throw new Error("Accounts receivable title not found.");
+  }
+
+  const payment = await db.$transaction(async (tx) => {
+    const created = await tx.receivablePayment.create({
+      data: {
+        organizationId: params.organizationId,
+        receivableTitleId: title.id,
+        paymentType: params.paymentType,
+        bank: encryptFinanceField(params.bank, params.organizationId, "receivablePayment.bank"),
+        branch: encryptFinanceField(params.branch, params.organizationId, "receivablePayment.branch"),
+        account: encryptFinanceField(params.account, params.organizationId, "receivablePayment.account"),
+        receivedAt: params.receivedAt,
+        history: encryptFinanceField(params.history, params.organizationId, "receivablePayment.history"),
+        discountCents: BigInt(params.discountCents ?? 0),
+        interestCents: BigInt(params.interestCents ?? 0),
+        amountReceivedCents: BigInt(params.amountReceivedCents)
+      }
+    });
+
+    const aggregate = await tx.receivablePayment.aggregate({
+      where: {
+        receivableTitleId: title.id
+      },
+      _sum: {
+        amountReceivedCents: true
+      }
+    });
+
+    const receivedAmountCents = aggregate._sum.amountReceivedCents ?? BigInt(0);
+    const nextStatus = receivedAmountCents >= title.titleAmountCents
+      ? PayableTitleStatus.PAID
+      : receivedAmountCents > BigInt(0)
+        ? PayableTitleStatus.PARTIALLY_PAID
+        : PayableTitleStatus.OPEN;
+
+    await tx.receivableTitle.update({
+      where: {
+        id: title.id
+      },
+      data: {
+        receivedAmountCents,
+        status: nextStatus
+      }
+    });
+
+    return created;
+  });
+
+  await createAuditEvent(db, {
+    organizationId: params.organizationId,
+    userId: params.userId,
+    entityType: "receivable_payment",
+    entityId: payment.id,
+    action: "receivable_payment.created",
+    metadata: {
+      titleId: title.id,
+      paymentType: payment.paymentType,
+      amountReceivedCents: Number(payment.amountReceivedCents)
+    }
   });
 
   return payment;

@@ -654,6 +654,8 @@ model Organization {
   costCenters                    CostCenter[]
   payableTitles                  PayableTitle[]
   payablePayments                PayablePayment[]
+  receivableTitles               ReceivableTitle[]
+  receivablePayments             ReceivablePayment[]
   commerceChannels               CommerceChannel[]
   commerceOrders                 CommerceOrder[]
   marketingCampaigns             MarketingCampaign[]
@@ -1098,6 +1100,7 @@ model Project {
   milestones         ProjectMilestone[]
   approvalRequests   ApprovalRequest[]
   payableTitles      PayableTitle[]
+  receivableTitles   ReceivableTitle[]
   demoPlans          DemoPlan[]
   commerceOrders     CommerceOrder[]
   marketingCampaigns MarketingCampaign[]
@@ -1448,6 +1451,61 @@ model PayablePayment {
 
   @@index([organizationId, paymentDate(sort: Desc)])
   @@index([payableTitleId, paymentDate(sort: Desc)])
+}
+
+model ReceivableTitle {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  projectId          String?
+  prefix             String
+  titleNumber        String
+  documentType       String
+  sourceDescription  String
+  customerIdentifier String
+  customerName       String
+  issueDate          DateTime
+  dueDate            DateTime
+  actualDueDate      DateTime
+  titleAmountCents   BigInt
+  receivedAmountCents BigInt           @default(0)
+  currencyCode       String             @default("USD")
+  status             PayableTitleStatus @default(OPEN)
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project            Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  receipts           ReceivablePayment[]
+
+  @@unique([organizationId, prefix, titleNumber])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, status, actualDueDate])
+  @@index([projectId, actualDueDate])
+  @@index([customerIdentifier])
+  @@index([customerName])
+  @@index([sourceDescription])
+}
+
+model ReceivablePayment {
+  id                  String             @id @default(cuid())
+  organizationId      String
+  receivableTitleId   String
+  paymentType         PayablePaymentType
+  bank                String?
+  branch              String?
+  account             String?
+  receivedAt          DateTime
+  history             String?
+  discountCents       BigInt             @default(0)
+  interestCents       BigInt             @default(0)
+  amountReceivedCents BigInt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  receivableTitle     ReceivableTitle    @relation(fields: [receivableTitleId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, receivedAt(sort: Desc)])
+  @@index([receivableTitleId, receivedAt(sort: Desc)])
 }
 
 model CommerceChannel {
