@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
-  title: z.string().trim().min(2, "Add a title with at least 2 characters."),
+  title: z.string().trim().optional(),
   content: z.string().trim().min(1, "Write something before publishing."),
   type: z.nativeEnum(CommunityPostType).optional(),
   projectId: z.string().cuid().nullable().optional(),
@@ -33,7 +33,7 @@ async function parseCommunityPostRequest(request: Request) {
     .map((item) => item.trim())
     .filter(Boolean);
   const body = schema.parse({
-    title: String(formData.get("title") ?? ""),
+    title: String(formData.get("title") ?? "") || undefined,
     content: String(formData.get("content") ?? ""),
     type: formData.get("type") || undefined,
     projectId: formData.get("projectId") === "none" ? null : formData.get("projectId") || null,
@@ -108,11 +108,12 @@ export async function POST(request: Request) {
     }, "communityFeed");
 
     const { body, mediaFiles } = await parseCommunityPostRequest(request);
+    const title = body.title || body.content.split("\n")[0]?.slice(0, 80) || "Community post";
     const post = await createCommunityPost({
       organizationId: context.organizationId,
       workspaceId: context.workspace.id,
       authorId: context.userId,
-      title: body.title,
+      title,
       content: body.content,
       type: body.type,
       projectId: body.projectId ?? null,

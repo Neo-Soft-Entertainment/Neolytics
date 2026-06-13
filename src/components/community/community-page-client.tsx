@@ -24,6 +24,16 @@ const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
   { value: CommunityPostType.HELP, label: "Help" }
 ];
 
+function getPostPreview(content: string) {
+  const trimmed = content.trim();
+
+  if (trimmed.length <= 90) {
+    return trimmed || "Community post";
+  }
+
+  return `${trimmed.slice(0, 90)}...`;
+}
+
 export function CommunityPageClient({
   canAccessFeed,
   canAccessRanking,
@@ -42,13 +52,11 @@ export function CommunityPageClient({
   const [sortMode, setSortMode] = useState<"recent" | "liked">("recent");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [form, setForm] = useState<{
-    title: string;
     content: string;
     type: CommunityPostType;
     projectId: string;
     tags: string;
   }>({
-    title: "",
     content: "",
     type: CommunityPostType.GENERAL,
     projectId: "none",
@@ -57,19 +65,18 @@ export function CommunityPageClient({
   const isPro = subscriptionPlan === SubscriptionPlan.PRO;
   const feed = query.data?.feed ?? [];
   const deferredSearch = useDeferredValue(search);
-  const canPublishPost = form.title.trim().length >= 2 && form.content.trim().length > 0;
+  const canPublishPost = form.content.trim().length > 0;
 
   async function createPost() {
     setFeedback(null);
 
     if (!canPublishPost) {
-      setFeedback("Add a title and write something before publishing.");
+      setFeedback("Write something before publishing.");
       return;
     }
 
     setIsSubmitting(true);
     const payload = new FormData();
-    payload.append("title", form.title.trim());
     payload.append("content", form.content.trim());
     payload.append("type", form.type);
     payload.append("projectId", form.projectId);
@@ -93,7 +100,6 @@ export function CommunityPageClient({
     }
 
     setForm({
-      title: "",
       content: "",
       type: CommunityPostType.GENERAL,
       projectId: "none",
@@ -286,7 +292,7 @@ export function CommunityPageClient({
                   id="community-search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search titles, tags, authors, or projects"
+                  placeholder="Search captions, tags, authors, or projects"
                 />
               </div>
               <div className="space-y-2">
@@ -326,18 +332,9 @@ export function CommunityPageClient({
           <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/20 shadow-[0_28px_90px_rgba(8,145,178,0.12)]">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
-              <CardTitle>Create a studio post</CardTitle>
+              <CardTitle>Create a post</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="community-title">Title</Label>
-                <Input
-                  id="community-title"
-                  value={form.title}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                  placeholder="What changed this week?"
-                />
-              </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Category</Label>
@@ -372,12 +369,12 @@ export function CommunityPageClient({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="community-content">Post</Label>
+                <Label htmlFor="community-content">Caption</Label>
                 <Textarea
                   id="community-content"
                   value={form.content}
                   onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
-                  placeholder="Share the signal, context, and next action."
+                  placeholder="Write a caption..."
                 />
               </div>
               <div className="space-y-2 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4">
@@ -429,9 +426,9 @@ export function CommunityPageClient({
                       </div>
                     )}
                     <div className="min-w-0">
-                      <CardTitle className="truncate text-lg">{post.title}</CardTitle>
+                      <p className="font-medium leading-none">{post.author.name || post.author.email}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {post.author.name || post.author.email} · {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
+                        {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -457,7 +454,10 @@ export function CommunityPageClient({
                     ) : null)}
                   </div>
                 ) : null}
-                <p className="whitespace-pre-wrap text-muted-foreground">{post.content}</p>
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  <span className="font-semibold text-foreground">{post.author.name || post.author.email}</span>{" "}
+                  {post.content}
+                </p>
                 {post.project ? (
                   <div className="rounded-2xl border border-white/10 bg-white/45 p-3 text-muted-foreground dark:bg-white/[0.03]">
                     Linked project: <span className="font-medium text-foreground">{post.project.name}</span>
@@ -528,7 +528,7 @@ export function CommunityPageClient({
             <CardContent className="space-y-3">
               {query.data.ranking.topPosts.length > 0 ? query.data.ranking.topPosts.map((post) => (
                 <div key={post.id} className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                  <p className="font-medium">{post.title}</p>
+                  <p className="font-medium">{getPostPreview(post.content)}</p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {post.likeCount} likes · {post.author.name || post.author.email}
                   </p>
@@ -563,7 +563,7 @@ export function CommunityPageClient({
                 </div>
                 <div className="rounded-[1rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
                   <p className="text-sm text-muted-foreground">Hottest post right now</p>
-                  <p className="mt-1 font-medium">{signalBoard.hottestPost?.title ?? "No standout post yet"}</p>
+                  <p className="mt-1 font-medium">{signalBoard.hottestPost ? getPostPreview(signalBoard.hottestPost.content) : "No standout post yet"}</p>
                 </div>
               </CardContent>
             </Card>
