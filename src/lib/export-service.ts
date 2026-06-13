@@ -422,6 +422,48 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
         }))
       },
       {
+        name: "Revenue Channels",
+        rows: data.commercialOperations.revenueChannels.map((channel) => ({
+          sourceType: channel.sourceType,
+          sourceName: channel.sourceName,
+          entriesCount: channel.entriesCount,
+          linkedProjectsCount: channel.linkedProjectsCount,
+          grossUsd: formatCurrency(channel.grossCents),
+          receivedUsd: formatCurrency(channel.receivedCents),
+          pendingUsd: formatCurrency(channel.pendingCents),
+          lastReceivedAt: formatDate(channel.lastReceivedAt)
+        }))
+      },
+      {
+        name: "Commercial Reconciliation",
+        rows: [
+          {
+            metric: "Unlinked revenue entries",
+            value: data.commercialOperations.reconciliation.unlinkedRevenueEntriesCount
+          },
+          {
+            metric: "Open issued invoices",
+            value: data.commercialOperations.reconciliation.openIssuedInvoicesCount
+          },
+          {
+            metric: "Open issued invoice value",
+            value: formatCurrency(data.commercialOperations.reconciliation.openIssuedInvoicesCents)
+          },
+          {
+            metric: "Overdue issued invoices",
+            value: data.commercialOperations.reconciliation.overdueIssuedInvoicesCount
+          },
+          {
+            metric: "Pending royalty statements",
+            value: data.commercialOperations.reconciliation.pendingRoyaltyStatementsCount
+          },
+          {
+            metric: "Royalties due",
+            value: formatCurrency(data.commercialOperations.reconciliation.royaltiesDueCents)
+          }
+        ]
+      },
+      {
         name: "Expenses",
         rows: data.expenseEntries.map((entry) => ({
           project: entry.project?.name ?? "Organization-wide",

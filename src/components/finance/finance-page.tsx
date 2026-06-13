@@ -276,6 +276,26 @@ export function FinancePage({
       outflowCents: number;
       netCents: number;
     }>;
+    commercialOperations: {
+      revenueChannels: Array<{
+        sourceType: RevenueSourceType;
+        sourceName: string;
+        entriesCount: number;
+        grossCents: number;
+        receivedCents: number;
+        pendingCents: number;
+        linkedProjectsCount: number;
+        lastReceivedAt: string | null;
+      }>;
+      reconciliation: {
+        unlinkedRevenueEntriesCount: number;
+        openIssuedInvoicesCount: number;
+        openIssuedInvoicesCents: number;
+        overdueIssuedInvoicesCount: number;
+        pendingRoyaltyStatementsCount: number;
+        royaltiesDueCents: number;
+      };
+    };
     projectSnapshots: Array<{
       projectId: string;
       projectName: string;
@@ -481,6 +501,63 @@ export function FinancePage({
           </CardContent>
         </Card>
       )}
+
+      <Card className="overflow-hidden">
+        <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+        <CardHeader>
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <CardTitle>Commercial operations</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Track revenue channels, store partners, receivable gaps, and royalty obligations from the same finance source of truth.
+              </p>
+            </div>
+            <Badge variant="secondary">Channel reconciliation</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+            <KpiCard label="Revenue channels" value={formatNumber(data.commercialOperations.revenueChannels.length)} />
+            <KpiCard label="Unlinked revenue" value={formatNumber(data.commercialOperations.reconciliation.unlinkedRevenueEntriesCount)} />
+            <KpiCard label="Open invoices" value={formatNumber(data.commercialOperations.reconciliation.openIssuedInvoicesCount)} />
+            <KpiCard label="Open invoice value" value={formatCurrency(data.commercialOperations.reconciliation.openIssuedInvoicesCents)} />
+            <KpiCard label="Overdue invoices" value={formatNumber(data.commercialOperations.reconciliation.overdueIssuedInvoicesCount)} />
+            <KpiCard label="Royalties due" value={formatCurrency(data.commercialOperations.reconciliation.royaltiesDueCents)} />
+          </div>
+          {data.commercialOperations.revenueChannels.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No revenue channels yet. Add revenue entries for Steam, publishers, grants, services, or other commercial sources to start reconciliation.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Channel</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Entries</TableHead>
+                  <TableHead>Projects</TableHead>
+                  <TableHead>Received</TableHead>
+                  <TableHead>Pending</TableHead>
+                  <TableHead>Last activity</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.commercialOperations.revenueChannels.map((channel) => (
+                  <TableRow key={`${channel.sourceType}:${channel.sourceName}`}>
+                    <TableCell className="font-medium">{channel.sourceName}</TableCell>
+                    <TableCell>{channel.sourceType}</TableCell>
+                    <TableCell>{formatNumber(channel.entriesCount)}</TableCell>
+                    <TableCell>{formatNumber(channel.linkedProjectsCount)}</TableCell>
+                    <TableCell>{formatCurrency(channel.receivedCents)}</TableCell>
+                    <TableCell>{formatCurrency(channel.pendingCents)}</TableCell>
+                    <TableCell>{channel.lastReceivedAt ? new Date(channel.lastReceivedAt).toLocaleDateString() : "N/A"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Card className="overflow-hidden">

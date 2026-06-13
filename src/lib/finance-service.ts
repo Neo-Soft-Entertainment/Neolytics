@@ -666,6 +666,64 @@ export async function getFinanceOverview(organizationId: string) {
     snapshot.netCents -= toNumber(entry.amountCents);
   }
 
+  const revenueChannelMap = new Map<string, {
+    sourceType: RevenueSourceType;
+    sourceName: string;
+    entriesCount: number;
+    grossCents: number;
+    receivedCents: number;
+    pendingCents: number;
+    linkedProjectIds: Set<string>;
+    lastReceivedAt: Date | null;
+  }>();
+
+  for (const entry of revenueEntries) {
+    const sourceName = entry.sourceName.trim() || entry.sourceType;
+    const key = `${entry.sourceType}:${sourceName.toLowerCase()}`;
+    const channel = revenueChannelMap.get(key) ?? {
+      sourceType: entry.sourceType,
+      sourceName,
+      entriesCount: 0,
+      grossCents: 0,
+      receivedCents: 0,
+      pendingCents: 0,
+      linkedProjectIds: new Set<string>(),
+      lastReceivedAt: null
+    };
+
+    channel.entriesCount += 1;
+    channel.grossCents += toNumber(entry.grossCents);
+
+    if (entry.status === FinanceEntryStatus.RECEIVED) {
+      channel.receivedCents += toNumber(entry.netCents);
+    }
+
+    if (entry.status !== FinanceEntryStatus.RECEIVED && entry.status !== FinanceEntryStatus.CANCELED) {
+      channel.pendingCents += toNumber(entry.netCents);
+    }
+
+    if (entry.projectId) {
+      channel.linkedProjectIds.add(entry.projectId);
+    }
+
+    if (!channel.lastReceivedAt || entry.receivedAt > channel.lastReceivedAt) {
+      channel.lastReceivedAt = entry.receivedAt;
+    }
+
+    revenueChannelMap.set(key, channel);
+  }
+
+  const openIssuedInvoices = issuedInvoices.filter((invoice) =>
+    invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELED
+  );
+  const overdueIssuedInvoicesCount = openIssuedInvoices.filter((invoice) => {
+    if (!invoice.dueAt) {
+      return false;
+    }
+
+    return invoice.dueAt < new Date();
+  }).length;
+
   return {
     projects,
     costCenters,
@@ -694,6 +752,28 @@ export async function getFinanceOverview(organizationId: string) {
       netCashCents: totalRevenueNetCents - totalExpensesPaidCents
     },
     cashflow: Array.from(monthlyByKey.values()),
+    commercialOperations: {
+      revenueChannels: Array.from(revenueChannelMap.values())
+        .map((channel) => ({
+          sourceType: channel.sourceType,
+          sourceName: channel.sourceName,
+          entriesCount: channel.entriesCount,
+          grossCents: channel.grossCents,
+          receivedCents: channel.receivedCents,
+          pendingCents: channel.pendingCents,
+          linkedProjectsCount: channel.linkedProjectIds.size,
+          lastReceivedAt: channel.lastReceivedAt
+        }))
+        .sort((left, right) => (right.receivedCents + right.pendingCents) - (left.receivedCents + left.pendingCents)),
+      reconciliation: {
+        unlinkedRevenueEntriesCount: revenueEntries.filter((entry) => !entry.projectId && entry.status !== FinanceEntryStatus.CANCELED).length,
+        openIssuedInvoicesCount: openIssuedInvoices.length,
+        openIssuedInvoicesCents: openIssuedInvoices.reduce((sum, invoice) => sum + toNumber(invoice.amountCents), 0),
+        overdueIssuedInvoicesCount,
+        pendingRoyaltyStatementsCount: royaltyStatements.filter((statement) => !statement.paidAt).length,
+        royaltiesDueCents
+      }
+    },
     projectSnapshots: Array.from(projectMap.values())
       .filter((item) => item.budgetPlannedCents > 0 || item.revenueNetCents > 0 || item.expensesPaidCents > 0)
       .sort((left, right) => right.netCents - left.netCents)
