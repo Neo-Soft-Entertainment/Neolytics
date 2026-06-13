@@ -9,13 +9,16 @@ import { ExportActions } from "@/components/export/export-actions";
 import { ChartCard } from "@/components/charts/chart-card";
 import { HistoryLineChart } from "@/components/charts/history-line-chart";
 import { useGameDatabaseProfile, useGameDetails, useGameHistory, useGameSnapshots } from "@/features/games/hooks";
+import { useProgressiveLoad } from "@/hooks/use-progressive-load";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export function GameDetailClient({ appId }: { appId: number }) {
+  const databaseLoad = useProgressiveLoad<HTMLDivElement>();
+  const historyLoad = useProgressiveLoad<HTMLDivElement>();
   const detailsQuery = useGameDetails(appId);
-  const historyQuery = useGameHistory(appId);
-  const databaseProfileQuery = useGameDatabaseProfile(appId);
-  const snapshotsQuery = useGameSnapshots(appId, Boolean(detailsQuery.data?.steamXrayAccess.rawSnapshotsBetaAvailable));
+  const historyQuery = useGameHistory(appId, historyLoad.shouldLoad);
+  const databaseProfileQuery = useGameDatabaseProfile(appId, databaseLoad.shouldLoad);
+  const snapshotsQuery = useGameSnapshots(appId, historyLoad.shouldLoad && Boolean(detailsQuery.data?.steamXrayAccess.rawSnapshotsBetaAvailable));
 
   if (detailsQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading game details...</p>;
@@ -84,6 +87,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </CardContent>
         </Card>
       </div>
+      <div ref={databaseLoad.ref}>
       {databaseProfile ? (
         <Card className="overflow-hidden border-cyan-400/20 bg-gradient-to-br from-card via-card to-cyan-500/10">
           <CardHeader className="space-y-3">
@@ -200,7 +204,21 @@ export function GameDetailClient({ appId }: { appId: number }) {
             </div>
           </CardContent>
         </Card>
-      ) : null}
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Neolytics Steam Database</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {databaseProfileQuery.isError
+              ? "Unable to load the database profile right now."
+              : databaseProfileQuery.isFetching
+                ? "Loading database profile in background..."
+                : "Advanced database profile will load as you continue."}
+          </CardContent>
+        </Card>
+      )}
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -227,7 +245,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div ref={historyLoad.ref} className="grid gap-6 xl:grid-cols-3">
         <ChartCard title="Price history">
           {history?.priceHistory?.length ? (
             <HistoryLineChart

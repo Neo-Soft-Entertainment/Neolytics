@@ -1,7 +1,7 @@
 import { Prisma, SubscriptionPlan } from "@prisma/client";
 
 import { db } from "@/lib/db";
-import { getFinanceOverview } from "@/lib/finance-service";
+import { getFinanceSummary } from "@/lib/finance-service";
 import { buildGameOpportunityProfile, buildSegmentIntelligence } from "@/lib/market-intelligence";
 import { fetchSteamCatalogAppIds, fetchSteamSearchAppIds } from "@/lib/steam/client";
 import { syncSteamApp } from "@/lib/steam/ingest";
@@ -792,7 +792,55 @@ export async function compareGames(appIds: number[]) {
   });
 }
 
-export async function getDashboardData(workspaceId: string) {
+function getPortfolioReadiness(projectAnalyses: Array<{
+  project: {
+    id: string;
+    name: string;
+    stage: string;
+  };
+  metadata: Prisma.JsonValue;
+}>) {
+  const thesisSignals = projectAnalyses.map((analysis) => {
+    const metadata = (analysis.metadata ?? {}) as {
+      opportunityLayer?: {
+        opportunityScore: number;
+        riskScore: number;
+      };
+      projectFitLayer?: {
+        overallFitScore: number;
+      };
+      marketDepth?: {
+        confidenceScore: number;
+      };
+    };
+
+    return {
+      projectId: analysis.project.id,
+      projectName: analysis.project.name,
+      stage: analysis.project.stage,
+      opportunityScore: metadata.opportunityLayer?.opportunityScore ?? null,
+      riskScore: metadata.opportunityLayer?.riskScore ?? null,
+      fitScore: metadata.projectFitLayer?.overallFitScore ?? null,
+      confidenceScore: metadata.marketDepth?.confidenceScore ?? null
+    };
+  });
+  const scoredSignals = thesisSignals.filter((item) => item.opportunityScore !== null);
+  const portfolioReadiness = scoredSignals.length > 0
+    ? {
+        averageOpportunityScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.opportunityScore ?? 0), 0) / scoredSignals.length),
+        averageRiskScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.riskScore ?? 0), 0) / scoredSignals.length),
+        averageFitScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.fitScore ?? 0), 0) / scoredSignals.length),
+        topThesis: [...scoredSignals].sort((left, right) => (right.opportunityScore ?? 0) - (left.opportunityScore ?? 0))[0] ?? null
+      }
+    : null;
+
+  return {
+    thesisSignals,
+    portfolioReadiness
+  };
+}
+
+export async function getDashboardSummary(workspaceId: string) {
   const workspace = await db.workspace.findUniqueOrThrow({
     where: {
       id: workspaceId
@@ -808,6 +856,81 @@ export async function getDashboardData(workspaceId: string) {
   });
   const subscriptionPlan = workspace.organization.subscriptionPlan;
 
+  const [
+    trackedGamesCount,
+    recentLaunchesCount,
+    totals,
+    projectAnalyses,
+    financeSummary
+  ] = await Promise.all([
+    db.savedGame.count({
+      where: { workspaceId }
+    }),
+    db.steamGame.count({
+      where: {
+        releaseDate: {
+          not: null
+        }
+      }
+    }),
+    db.steamGame.aggregate({
+      _count: {
+        _all: true
+      },
+      _avg: {
+        reviewScore: true
+      }
+    }),
+    db.projectAnalysis.findMany({
+      where: {
+        project: {
+          workspaceId
+        }
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            stage: true
+          }
+        }
+      },
+      orderBy: {
+        analyzedAt: "desc"
+      },
+      take: 12
+    }),
+    getFinanceSummary(workspace.organizationId)
+  ]);
+  const portfolio = getPortfolioReadiness(projectAnalyses);
+
+  return {
+    planLabel:
+      subscriptionPlan === SubscriptionPlan.FREE
+        ? "Explorer"
+        : subscriptionPlan === SubscriptionPlan.PLUS
+          ? "Operating"
+          : "Executive",
+    canAccessFinanceWorkspace: hasSubscriptionCapability(subscriptionPlan, "financeWorkspace"),
+    marketOverview: {
+      totalGames: totals._count._all,
+      averageReviewScore: totals._avg.reviewScore ?? 0,
+      trackedGamesCount
+    },
+    projectSignalsCount: portfolio.thesisSignals.length,
+    portfolioReadiness: portfolio.portfolioReadiness,
+    financeSnapshot: {
+      netCashCents: financeSummary.netCashCents,
+      pendingRevenueCents: financeSummary.pendingRevenueCents,
+      pendingExpenseCents: financeSummary.pendingExpenseCents,
+      activeBudgetsCount: financeSummary.activeBudgetsCount
+    },
+    recentLaunchesCount: Math.min(recentLaunchesCount, 10)
+  };
+}
+
+export async function getDashboardDetails(workspaceId: string) {
   const [
     trackedGames,
     recentLaunches,
@@ -895,7 +1018,6 @@ export async function getDashboardData(workspaceId: string) {
     },
     take: 12
   });
-  const financeOverview = await getFinanceOverview(workspace.organizationId);
   const topRevenue = topRevenueGames
     .flatMap((game) => {
       const estimate = game.revenueEstimates[0];
@@ -917,74 +1039,26 @@ export async function getDashboardData(workspaceId: string) {
     .sort((a, b) => b.medianNetRevenueCents - a.medianNetRevenueCents)
     .slice(0, 10);
 
-  const totals = await db.steamGame.aggregate({
-    _count: {
-      _all: true
-    },
-    _avg: {
-      reviewScore: true
-    }
-  });
-
-  const thesisSignals = projectAnalyses.map((analysis) => {
-    const metadata = (analysis.metadata ?? {}) as {
-      opportunityLayer?: {
-        opportunityScore: number;
-        riskScore: number;
-      };
-      projectFitLayer?: {
-        overallFitScore: number;
-      };
-      marketDepth?: {
-        confidenceScore: number;
-      };
-    };
-
-    return {
-      projectId: analysis.project.id,
-      projectName: analysis.project.name,
-      stage: analysis.project.stage,
-      opportunityScore: metadata.opportunityLayer?.opportunityScore ?? null,
-      riskScore: metadata.opportunityLayer?.riskScore ?? null,
-      fitScore: metadata.projectFitLayer?.overallFitScore ?? null,
-      confidenceScore: metadata.marketDepth?.confidenceScore ?? null
-    };
-  });
-  const scoredSignals = thesisSignals.filter((item) => item.opportunityScore !== null);
-  const portfolioReadiness = scoredSignals.length > 0
-    ? {
-        averageOpportunityScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.opportunityScore ?? 0), 0) / scoredSignals.length),
-        averageRiskScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.riskScore ?? 0), 0) / scoredSignals.length),
-        averageFitScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.fitScore ?? 0), 0) / scoredSignals.length),
-        topThesis: [...scoredSignals].sort((left, right) => (right.opportunityScore ?? 0) - (left.opportunityScore ?? 0))[0] ?? null
-      }
-    : null;
+  const portfolio = getPortfolioReadiness(projectAnalyses);
 
   return {
-    planLabel:
-      subscriptionPlan === SubscriptionPlan.FREE
-        ? "Explorer"
-        : subscriptionPlan === SubscriptionPlan.PLUS
-          ? "Operating"
-          : "Executive",
-    canAccessFinanceWorkspace: hasSubscriptionCapability(subscriptionPlan, "financeWorkspace"),
-    marketOverview: {
-      totalGames: totals._count._all,
-      averageReviewScore: totals._avg.reviewScore ?? 0,
-      trackedGamesCount: trackedGames.length
-    },
-    projectSignals: thesisSignals,
-    portfolioReadiness,
-    financeSnapshot: {
-      netCashCents: financeOverview.summary.netCashCents,
-      pendingRevenueCents: financeOverview.summary.pendingRevenueCents,
-      pendingExpenseCents: financeOverview.summary.pendingExpenseCents,
-      activeBudgetsCount: financeOverview.summary.activeBudgetsCount
-    },
+    projectSignals: portfolio.thesisSignals,
     trackedGames,
     recentLaunches,
     topRevenue,
     fastestGrowing
+  };
+}
+
+export async function getDashboardData(workspaceId: string) {
+  const [summary, details] = await Promise.all([
+    getDashboardSummary(workspaceId),
+    getDashboardDetails(workspaceId)
+  ]);
+
+  return {
+    ...summary,
+    ...details
   };
 }
 

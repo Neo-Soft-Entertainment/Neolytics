@@ -19,7 +19,8 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import { useDashboard } from "@/features/dashboard/hooks";
+import { useDashboardDetails, useDashboardSummary } from "@/features/dashboard/hooks";
+import { useProgressiveLoad } from "@/hooks/use-progressive-load";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 const tourSteps = [
@@ -51,7 +52,9 @@ const tourSteps = [
 
 export function DashboardClient() {
   const [isTourOpen, setIsTourOpen] = useState(false);
-  const query = useDashboard();
+  const progressive = useProgressiveLoad<HTMLDivElement>();
+  const query = useDashboardSummary();
+  const detailsQuery = useDashboardDetails(progressive.shouldLoad);
 
   if (query.isLoading) {
     return <p className="text-sm text-muted-foreground">Loading dashboard...</p>;
@@ -62,6 +65,7 @@ export function DashboardClient() {
   }
 
   const data = query.data;
+  const details = detailsQuery.data;
 
   if (!data) {
     return (
@@ -113,7 +117,7 @@ export function DashboardClient() {
           value={`${data.marketOverview.averageReviewScore.toFixed(1)}%`}
         />
         <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
-        <KpiCard label="Recent launches" value={formatNumber(data.recentLaunches.length)} />
+        <KpiCard label="Recent launches" value={formatNumber(data.recentLaunchesCount)} />
       </div>
       {data.canAccessFinanceWorkspace ? (
         <div className="grid gap-4 md:grid-cols-4">
@@ -141,7 +145,7 @@ export function DashboardClient() {
           <KpiCard label="Portfolio opportunity" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
           <KpiCard label="Portfolio risk" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
           <KpiCard label="Portfolio fit" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
-          <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignals.length)} />
+          <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignalsCount)} />
         </div>
       ) : null}
       <Dialog open={isTourOpen} onOpenChange={setIsTourOpen}>
@@ -167,14 +171,16 @@ export function DashboardClient() {
           </div>
         </DialogContent>
       </Dialog>
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div ref={progressive.ref} className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
             <CardTitle>Project board</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.projectSignals.length === 0 ? (
+            {!details ? (
+              <p className="text-sm text-muted-foreground">Loading project signals in background...</p>
+            ) : details.projectSignals.length === 0 ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">Run market analysis on one project to start the board.</p>
                 <Button asChild size="sm" variant="outline">
@@ -193,7 +199,7 @@ export function DashboardClient() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.projectSignals.map((item) => (
+                  {details.projectSignals.map((item) => (
                     <TableRow key={item.projectId}>
                       <TableCell>
                         <Link className="font-medium hover:underline" href={`/projects/${item.projectId}`}>
@@ -217,7 +223,9 @@ export function DashboardClient() {
             <CardTitle>Tracked games</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.trackedGames.length === 0 ? (
+            {!details ? (
+              <p className="text-sm text-muted-foreground">Loading saved games in background...</p>
+            ) : details.trackedGames.length === 0 ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">No games saved yet. Start with a shortlist.</p>
                 <Button asChild size="sm" variant="outline">
@@ -233,7 +241,7 @@ export function DashboardClient() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.trackedGames.map((item) => (
+                  {details.trackedGames.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
                         <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
@@ -254,6 +262,9 @@ export function DashboardClient() {
             <CardTitle>Recent launches</CardTitle>
           </CardHeader>
           <CardContent>
+            {!details ? (
+              <p className="text-sm text-muted-foreground">Loading recent launches in background...</p>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -262,7 +273,7 @@ export function DashboardClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.recentLaunches.map((game) => (
+                {details.recentLaunches.map((game) => (
                   <TableRow key={game.id}>
                     <TableCell>
                       <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
@@ -274,6 +285,7 @@ export function DashboardClient() {
                 ))}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -303,6 +315,9 @@ export function DashboardClient() {
             <CardTitle>Top revenue</CardTitle>
           </CardHeader>
           <CardContent>
+            {!details ? (
+              <p className="text-sm text-muted-foreground">Loading revenue ranking in background...</p>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -311,7 +326,7 @@ export function DashboardClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.topRevenue.map((item) => (
+                {details.topRevenue.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
                       <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
@@ -323,6 +338,7 @@ export function DashboardClient() {
                 ))}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
@@ -331,6 +347,9 @@ export function DashboardClient() {
             <CardTitle>Fastest review growth</CardTitle>
           </CardHeader>
           <CardContent>
+            {!details ? (
+              <p className="text-sm text-muted-foreground">Loading growth signals in background...</p>
+            ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -339,7 +358,7 @@ export function DashboardClient() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.fastestGrowing.map((game) => (
+                {details.fastestGrowing.map((game) => (
                   <TableRow key={game.id}>
                     <TableCell>
                       <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
@@ -351,6 +370,7 @@ export function DashboardClient() {
                 ))}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
       </div>

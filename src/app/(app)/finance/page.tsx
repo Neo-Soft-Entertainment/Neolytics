@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { FinancePage } from "@/components/finance/finance-page";
 import { getCurrentOrganization } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
-import { getFinanceOverview } from "@/lib/finance-service";
+import { getFinanceSummary } from "@/lib/finance-service";
 import { getSubscriptionPlanLabel, hasSubscriptionCapability } from "@/lib/subscription-plans";
 
 export default async function FinanceRoute() {
@@ -22,10 +22,10 @@ export default async function FinanceRoute() {
           }
         })
       : null,
-    canAccessFinanceWorkspace ? getFinanceOverview(organization.id) : null
+    canAccessFinanceWorkspace ? getFinanceSummary(organization.id) : null
   ]);
 
-  const data = overview
+  const summary = overview
     ? JSON.parse(
         JSON.stringify(overview, (_, value) => (typeof value === "bigint" ? Number(value) : value))
       )
@@ -38,9 +38,9 @@ export default async function FinanceRoute() {
       canAccessFinanceWorkspace={canAccessFinanceWorkspace}
       canAccessInvoiceOps={canAccessInvoiceOps}
       canManage={membership?.role === "OWNER" || membership?.role === "ADMIN"}
-      data={data}
       organizationName={organization.name}
       planLabel={getSubscriptionPlanLabel(organization.subscriptionPlan)}
+      summary={summary}
     />
   );
 }

@@ -1,6 +1,6 @@
 import { ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
-import { getDashboardSummary } from "@/lib/game-service";
+import { getDashboardDetails } from "@/lib/game-service";
 
 export async function GET() {
   const context = await getApiContext();
@@ -9,5 +9,5 @@ export async function GET() {
     return unauthorized();
   }
 
-  return ok(await getDashboardSummary(context.workspace.id));
+  return ok(await getDashboardDetails(context.workspace.id));
 }

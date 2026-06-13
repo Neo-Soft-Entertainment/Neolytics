@@ -839,6 +839,135 @@ export async function getFinanceOverview(organizationId: string) {
   };
 }
 
+export async function getFinanceSummary(organizationId: string) {
+  const [
+    budgets,
+    revenueEntries,
+    expenseEntries,
+    payableTitles,
+    receivableTitles,
+    royaltyStatements,
+    approvalRequests
+  ] = await Promise.all([
+    db.budget.findMany({
+      where: { organizationId },
+      select: {
+        status: true,
+        totalPlannedCents: true,
+        lines: {
+          select: {
+            actualCents: true
+          }
+        }
+      }
+    }),
+    db.revenueEntry.findMany({
+      where: { organizationId },
+      select: {
+        status: true,
+        netCents: true
+      }
+    }),
+    db.expenseEntry.findMany({
+      where: { organizationId },
+      select: {
+        status: true,
+        amountCents: true
+      }
+    }),
+    db.payableTitle.findMany({
+      where: { organizationId },
+      select: {
+        status: true,
+        actualDueDate: true,
+        totalAmountCents: true,
+        paidAmountCents: true
+      }
+    }),
+    db.receivableTitle.findMany({
+      where: { organizationId },
+      select: {
+        status: true,
+        actualDueDate: true,
+        titleAmountCents: true,
+        receivedAmountCents: true
+      }
+    }),
+    db.royaltyStatement.findMany({
+      where: { organizationId },
+      select: {
+        paidAt: true,
+        royaltyDueCents: true
+      }
+    }),
+    db.approvalRequest.findMany({
+      where: { organizationId },
+      select: {
+        status: true
+      }
+    })
+  ]);
+  const totalBudgetPlannedCents = budgets.reduce((sum, budget) => sum + toNumber(budget.totalPlannedCents), 0);
+  const totalBudgetActualCents = budgets.reduce(
+    (sum, budget) => sum + budget.lines.reduce((lineSum, line) => lineSum + toNumber(line.actualCents), 0),
+    0
+  );
+  const totalRevenueNetCents = revenueEntries
+    .filter((entry) => entry.status === FinanceEntryStatus.RECEIVED)
+    .reduce((sum, entry) => sum + toNumber(entry.netCents), 0);
+  const totalExpensesPaidCents = expenseEntries
+    .filter((entry) => entry.status === FinanceEntryStatus.PAID)
+    .reduce((sum, entry) => sum + toNumber(entry.amountCents), 0);
+  const pendingRevenueCents = revenueEntries
+    .filter((entry) => entry.status !== FinanceEntryStatus.RECEIVED && entry.status !== FinanceEntryStatus.CANCELED)
+    .reduce((sum, entry) => sum + toNumber(entry.netCents), 0);
+  const pendingExpenseCents = expenseEntries
+    .filter((entry) => entry.status !== FinanceEntryStatus.PAID && entry.status !== FinanceEntryStatus.CANCELED)
+    .reduce((sum, entry) => sum + toNumber(entry.amountCents), 0);
+  const payableOpenCents = payableTitles
+    .filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED)
+    .reduce((sum, title) => sum + Math.max(toNumber(title.totalAmountCents) - toNumber(title.paidAmountCents), 0), 0);
+  const receivableOpenCents = receivableTitles
+    .filter((title) => title.status !== PayableTitleStatus.PAID && title.status !== PayableTitleStatus.CANCELED)
+    .reduce((sum, title) => sum + Math.max(toNumber(title.titleAmountCents) - toNumber(title.receivedAmountCents), 0), 0);
+  const now = new Date();
+  const overduePayablesCount = payableTitles.filter((title) => {
+    if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
+      return false;
+    }
+
+    return title.actualDueDate < now;
+  }).length;
+  const overdueReceivablesCount = receivableTitles.filter((title) => {
+    if (title.status === PayableTitleStatus.PAID || title.status === PayableTitleStatus.CANCELED) {
+      return false;
+    }
+
+    return title.actualDueDate < now;
+  }).length;
+  const royaltiesDueCents = royaltyStatements
+    .filter((statement) => !statement.paidAt)
+    .reduce((sum, statement) => sum + toNumber(statement.royaltyDueCents), 0);
+  const pendingApprovalsCount = approvalRequests.filter((request) => request.status === ApprovalStatus.PENDING).length;
+
+  return {
+    activeBudgetsCount: budgets.filter((budget) => budget.status === BudgetStatus.ACTIVE).length,
+    totalBudgetPlannedCents,
+    totalBudgetActualCents,
+    totalRevenueNetCents,
+    totalExpensesPaidCents,
+    pendingRevenueCents,
+    pendingExpenseCents,
+    payableOpenCents,
+    receivableOpenCents,
+    overduePayablesCount,
+    overdueReceivablesCount,
+    royaltiesDueCents,
+    pendingApprovalsCount,
+    netCashCents: totalRevenueNetCents - totalExpensesPaidCents
+  };
+}
+
 export async function createBudget(params: {
   organizationId: string;
   userId: string;

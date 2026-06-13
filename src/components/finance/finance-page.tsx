@@ -13,6 +13,7 @@ import {
   RevenueSourceType,
   RoyaltyStatus
 } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,6 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { useProgressiveLoad } from "@/hooks/use-progressive-load";
+import { apiClient } from "@/lib/api-client";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
 const budgetStatuses = Object.values(BudgetStatus);
@@ -38,6 +41,53 @@ const contractStatuses = Object.values(ContractStatus);
 const contractCounterpartyTypes = Object.values(ContractCounterpartyType);
 const royaltyStatuses = Object.values(RoyaltyStatus);
 const invoiceStatuses = Object.values(InvoiceStatus);
+
+type FinanceSummary = {
+  activeBudgetsCount: number;
+  totalBudgetPlannedCents: number;
+  totalBudgetActualCents: number;
+  totalRevenueNetCents: number;
+  totalExpensesPaidCents: number;
+  pendingRevenueCents: number;
+  pendingExpenseCents: number;
+  payableOpenCents: number;
+  receivableOpenCents: number;
+  overduePayablesCount: number;
+  overdueReceivablesCount: number;
+  royaltiesDueCents: number;
+  pendingApprovalsCount: number;
+  netCashCents: number;
+};
+
+type FinanceOverview = {
+  projects: any[];
+  costCenters: any[];
+  budgets: any[];
+  revenueEntries: any[];
+  expenseEntries: any[];
+  payableTitles: any[];
+  receivableTitles: any[];
+  contracts: any[];
+  royaltyAgreements: any[];
+  royaltyStatements: any[];
+  issuedInvoices: any[];
+  receivedInvoices: any[];
+  approvalRequests: any[];
+  summary: FinanceSummary;
+  cashflow: any[];
+  commercialOperations: {
+    revenueChannels: any[];
+    reconciliation: {
+      unlinkedRevenueEntriesCount: number;
+      openIssuedInvoicesCount: number;
+      openIssuedInvoicesCents: number;
+      overdueIssuedInvoicesCount: number;
+      pendingRoyaltyStatementsCount: number;
+      royaltiesDueCents: number;
+    };
+  };
+  projectSnapshots: any[];
+};
 
 function formatDateInput(value?: string | null) {
   if (!value) {
@@ -53,7 +103,7 @@ export function FinancePage({
   canAccessFinanceWorkspace,
   canAccessInvoiceOps,
   canManage,
-  data
+  summary
 }: {
   canAccessApprovalsAudit: boolean;
   canAccessContractsRoyalties: boolean;
@@ -62,289 +112,22 @@ export function FinancePage({
   organizationName: string;
   planLabel: string;
   canManage: boolean;
-  data: {
-    projects: Array<{ id: string; name: string; stage: string }>;
-    costCenters: Array<{
-      id: string;
-      code: string;
-      name: string;
-      active: boolean;
-    }>;
-    budgets: Array<{
-      id: string;
-      projectId: string | null;
-      name: string;
-      status: BudgetStatus;
-      currencyCode: string;
-      startsAt: string | null;
-      endsAt: string | null;
-      totalPlannedCents: number;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      lines: Array<{
-        id: string;
-        category: string;
-        description: string;
-        vendorName: string | null;
-        plannedCents: number;
-        actualCents: number;
-        dueAt: string | null;
-        paidAt: string | null;
-      }>;
-    }>;
-    revenueEntries: Array<{
-      id: string;
-      projectId: string | null;
-      sourceType: RevenueSourceType;
-      sourceName: string;
-      status: FinanceEntryStatus;
-      grossCents: number;
-      netCents: number;
-      currencyCode: string;
-      receivedAt: string;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-    }>;
-    expenseEntries: Array<{
-      id: string;
-      projectId: string | null;
-      category: ExpenseCategory;
-      vendorName: string;
-      status: FinanceEntryStatus;
-      amountCents: number;
-      currencyCode: string;
-      occurredAt: string;
-      dueAt: string | null;
-      paidAt: string | null;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-    }>;
-    payableTitles: Array<{
-      id: string;
-      projectId: string | null;
-      costCenterId: string;
-      prefix: string;
-      titleNumber: string;
-      documentType: string;
-      natureDescription: string;
-      supplierIdentifier: string;
-      supplierName: string;
-      issueDate: string;
-      dueDate: string;
-      actualDueDate: string;
-      titleAmountCents: number;
-      additionalAmountCents: number;
-      totalAmountCents: number;
-      paidAmountCents: number;
-      currencyCode: string;
-      status: PayableTitleStatus;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      costCenter: { id: string; code: string; name: string };
-      allocations: Array<{
-        id: string;
-        natureDescription: string;
-        amountCents: number;
-        costCenter: { id: string; code: string; name: string };
-      }>;
-      payments: Array<{
-        id: string;
-        paymentType: PayablePaymentType;
-        bank: string | null;
-        branch: string | null;
-        account: string | null;
-        paymentDate: string;
-        history: string | null;
-        fineCents: number;
-        interestCents: number;
-        amountPaidCents: number;
-      }>;
-    }>;
-    receivableTitles: Array<{
-      id: string;
-      projectId: string | null;
-      prefix: string;
-      titleNumber: string;
-      documentType: string;
-      sourceDescription: string;
-      customerIdentifier: string;
-      customerName: string;
-      issueDate: string;
-      dueDate: string;
-      actualDueDate: string;
-      titleAmountCents: number;
-      receivedAmountCents: number;
-      currencyCode: string;
-      status: PayableTitleStatus;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      receipts: Array<{
-        id: string;
-        paymentType: PayablePaymentType;
-        bank: string | null;
-        branch: string | null;
-        account: string | null;
-        receivedAt: string;
-        history: string | null;
-        discountCents: number;
-        interestCents: number;
-        amountReceivedCents: number;
-      }>;
-    }>;
-    contracts: Array<{
-      id: string;
-      projectId: string | null;
-      title: string;
-      counterpartyName: string;
-      counterpartyType: ContractCounterpartyType;
-      status: ContractStatus;
-      currencyCode: string;
-      totalValueCents: number | null;
-      startsAt: string | null;
-      endsAt: string | null;
-      signedAt: string | null;
-      autoRenews: boolean;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-    }>;
-    royaltyAgreements: Array<{
-      id: string;
-      projectId: string | null;
-      contractId: string | null;
-      name: string;
-      partnerName: string;
-      status: RoyaltyStatus;
-      basisPoints: number;
-      recoupable: boolean;
-      recoupCapCents: number | null;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      contract: { id: string; title: string } | null;
-    }>;
-    royaltyStatements: Array<{
-      id: string;
-      projectId: string | null;
-      royaltyAgreementId: string;
-      periodLabel: string;
-      grossRevenueCents: number;
-      deductibleCents: number;
-      netRevenueCents: number;
-      royaltyDueCents: number;
-      paidAt: string | null;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      royaltyAgreement: { id: string; name: string; partnerName: string };
-    }>;
-    issuedInvoices: Array<{
-      id: string;
-      projectId: string | null;
-      contractId: string | null;
-      invoiceNumber: string;
-      customerName: string;
-      status: InvoiceStatus;
-      amountCents: number;
-      currencyCode: string;
-      issuedAt: string | null;
-      dueAt: string | null;
-      paidAt: string | null;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      contract: { id: string; title: string } | null;
-    }>;
-    receivedInvoices: Array<{
-      id: string;
-      projectId: string | null;
-      contractId: string | null;
-      invoiceNumber: string;
-      vendorName: string;
-      status: InvoiceStatus;
-      amountCents: number;
-      currencyCode: string;
-      issuedAt: string | null;
-      dueAt: string | null;
-      paidAt: string | null;
-      notes: string | null;
-      project: { id: string; name: string } | null;
-      contract: { id: string; title: string } | null;
-    }>;
-    approvalRequests: Array<{
-      id: string;
-      projectId: string | null;
-      contractId: string | null;
-      entityType: string;
-      entityId: string;
-      actionLabel: string;
-      status: ApprovalStatus;
-      amountCents: number | null;
-      reason: string | null;
-      decisionNotes: string | null;
-      createdAt: string;
-      decidedAt: string | null;
-      project: { id: string; name: string } | null;
-      contract: { id: string; title: string } | null;
-      requestedBy: { id: string; name: string | null; email: string };
-      decidedBy: { id: string; name: string | null; email: string } | null;
-    }>;
-    summary: {
-      activeBudgetsCount: number;
-      totalBudgetPlannedCents: number;
-      totalBudgetActualCents: number;
-      totalRevenueNetCents: number;
-      totalExpensesPaidCents: number;
-      pendingRevenueCents: number;
-      pendingExpenseCents: number;
-      payableOpenCents: number;
-      receivableOpenCents: number;
-      overduePayablesCount: number;
-      overdueReceivablesCount: number;
-      royaltiesDueCents: number;
-      pendingApprovalsCount: number;
-      netCashCents: number;
-    };
-    cashflow: Array<{
-      month: string;
-      inflowCents: number;
-      outflowCents: number;
-      netCents: number;
-    }>;
-    commercialOperations: {
-      revenueChannels: Array<{
-        sourceType: RevenueSourceType;
-        sourceName: string;
-        entriesCount: number;
-        grossCents: number;
-        receivedCents: number;
-        pendingCents: number;
-        linkedProjectsCount: number;
-        lastReceivedAt: string | null;
-      }>;
-      reconciliation: {
-        unlinkedRevenueEntriesCount: number;
-        openIssuedInvoicesCount: number;
-        openIssuedInvoicesCents: number;
-        overdueIssuedInvoicesCount: number;
-        pendingRoyaltyStatementsCount: number;
-        royaltiesDueCents: number;
-      };
-    };
-    projectSnapshots: Array<{
-      projectId: string;
-      projectName: string;
-      stage: string;
-      budgetPlannedCents: number;
-      budgetActualCents: number;
-      revenueNetCents: number;
-      expensesPaidCents: number;
-      netCents: number;
-    }>;
-  } | null;
+  summary: FinanceSummary | null;
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const t = useI18n();
+  const progressive = useProgressiveLoad<HTMLDivElement>();
+  const overviewQuery = useQuery({
+    queryKey: ["finance", "overview"],
+    queryFn: () => apiClient<FinanceOverview>("/api/finance/overview"),
+    enabled: canAccessFinanceWorkspace && progressive.shouldLoad
+  });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const data = overviewQuery.data;
 
-  if (!canAccessFinanceWorkspace || !data) {
+  if (!canAccessFinanceWorkspace || !summary) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("finance.pageTitle")}</h1>
@@ -371,6 +154,7 @@ export function FinancePage({
     }
 
     setMessage(successMessage);
+    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
     router.refresh();
   }
 
@@ -393,6 +177,7 @@ export function FinancePage({
     }
 
     setMessage(successMessage);
+    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
     router.refresh();
   }
 
@@ -417,6 +202,7 @@ export function FinancePage({
     }
 
     setMessage(`Approval ${status.toLowerCase()}.`);
+    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
     router.refresh();
   }
 
@@ -429,14 +215,35 @@ export function FinancePage({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <KpiCard label={t("finance.activeBudgets")} value={formatNumber(data.summary.activeBudgetsCount)} />
-        <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(data.summary.totalBudgetPlannedCents)} />
-        <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(data.summary.totalRevenueNetCents)} />
-        <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(data.summary.totalExpensesPaidCents)} />
-        {canAccessInvoiceOps ? <KpiCard label="Contas a receber" value={formatCurrency(data.summary.receivableOpenCents)} /> : null}
-        {canAccessInvoiceOps ? <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(data.summary.payableOpenCents)} /> : null}
-        {canAccessInvoiceOps ? <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(data.summary.overduePayablesCount)} /> : null}
+        <KpiCard label={t("finance.activeBudgets")} value={formatNumber(summary.activeBudgetsCount)} />
+        <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(summary.totalBudgetPlannedCents)} />
+        <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(summary.totalRevenueNetCents)} />
+        <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(summary.totalExpensesPaidCents)} />
+        {canAccessInvoiceOps ? <KpiCard label="Contas a receber" value={formatCurrency(summary.receivableOpenCents)} /> : null}
+        {canAccessInvoiceOps ? <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(summary.payableOpenCents)} /> : null}
+        {canAccessInvoiceOps ? <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(summary.overduePayablesCount)} /> : null}
       </div>
+
+      <div ref={progressive.ref}>
+        {!data ? (
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader>
+              <CardTitle>Operational records</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              {overviewQuery.isError
+                ? "Unable to load the full finance workspace right now."
+                : overviewQuery.isFetching
+                  ? "Loading the full finance workspace in background..."
+                  : "Finance KPIs are ready. Detailed records will load as you continue."}
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
+
+      {data ? (
+        <>
 
       {canAccessInvoiceOps ? (
         <>
@@ -899,7 +706,7 @@ export function FinancePage({
                     <div className="flex flex-wrap gap-2 text-sm">
                       <Badge variant="secondary">Planned {formatCurrency(budget.totalPlannedCents)}</Badge>
                       <Badge variant="secondary">
-                        Actual {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}
+                        Actual {formatCurrency(budget.lines.reduce((sum: number, line: any) => sum + line.actualCents, 0))}
                       </Badge>
                     </div>
                   </div>
@@ -919,7 +726,7 @@ export function FinancePage({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {budget.lines.map((line) => (
+                      {budget.lines.map((line: any) => (
                         <TableRow key={line.id}>
                           <TableCell colSpan={7} className="p-0">
                             <form
@@ -1571,6 +1378,9 @@ export function FinancePage({
           </CardContent>
         </Card>
       )}
+
+        </>
+      ) : null}
     </div>
   );
 }

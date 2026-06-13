@@ -194,7 +194,7 @@ export function useGameDetails(appId: number) {
   });
 }
 
-export function useGameHistory(appId: number) {
+export function useGameHistory(appId: number, enabled = true) {
   return useQuery({
     queryKey: ["games", appId, "history"],
     queryFn: async () => {
@@ -211,7 +211,8 @@ export function useGameHistory(appId: number) {
         playerHistory,
         estimates
       };
-    }
+    },
+    enabled
   });
 }
 
@@ -223,10 +224,11 @@ export function useGameSnapshots(appId: number, enabled: boolean) {
   });
 }
 
-export function useGameDatabaseProfile(appId: number) {
+export function useGameDatabaseProfile(appId: number, enabled = true) {
   return useQuery({
     queryKey: ["games", appId, "database-profile"],
-    queryFn: () => apiClient<SteamDatabaseProfile>(`/api/games/${appId}/database-profile`)
+    queryFn: () => apiClient<SteamDatabaseProfile>(`/api/games/${appId}/database-profile`),
+    enabled
   });
 }
 
