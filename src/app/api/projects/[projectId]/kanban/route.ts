@@ -10,6 +10,7 @@ import {
   deleteKanbanColumn,
   moveKanbanCard,
   moveKanbanColumn,
+  reorderKanbanCard,
   updateKanbanCard,
   updateKanbanColumn
 } from "@/lib/project-service";
@@ -61,6 +62,12 @@ const schema = z.discriminatedUnion("type", [
     type: z.literal("moveCard"),
     cardId: z.string().min(1),
     direction: z.enum(["up", "down"])
+  }),
+  z.object({
+    type: z.literal("reorderCard"),
+    cardId: z.string().min(1),
+    columnId: z.string().min(1),
+    targetIndex: z.coerce.number().int().nonnegative()
   }),
   z.object({
     type: z.literal("deleteCard"),
@@ -150,6 +157,16 @@ export async function PATCH(
         projectId,
         workspaceId: context.workspace.id,
         cardId: body.cardId
+      }));
+    }
+
+    if (body.type === "reorderCard") {
+      return ok(await reorderKanbanCard({
+        projectId,
+        workspaceId: context.workspace.id,
+        cardId: body.cardId,
+        columnId: body.columnId,
+        targetIndex: body.targetIndex
       }));
     }
 

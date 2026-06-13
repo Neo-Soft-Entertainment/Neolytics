@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { ProjectKanbanBoard } from "@/components/projects/project-kanban-board";
 import { DemoManagerPageClient } from "@/features/demo-manager/demo-manager-page-client";
 import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
 import { useProject } from "@/features/projects/hooks";
@@ -85,18 +86,17 @@ export function ProjectDetailClient({
     dueDate: string;
     labels: string;
   }>>({});
-  const [columnEdits, setColumnEdits] = useState<Record<string, { name: string; color: string }>>({});
   const [cardEdits, setCardEdits] = useState<Record<string, {
     title: string;
     description: string;
     assigneeLabel: string;
     dueDate: string;
     labels: string;
+    columnId: string;
   }>>({});
   const [kanbanSearch, setKanbanSearch] = useState("");
   const [kanbanAssigneeFilter, setKanbanAssigneeFilter] = useState("all");
   const [kanbanLabelFilter, setKanbanLabelFilter] = useState("all");
-  const [kanbanViewMode, setKanbanViewMode] = useState<"detailed" | "compact">("detailed");
   const [artAssetForm, setArtAssetForm] = useState({
     kind: "capsule",
     notes: ""
@@ -123,25 +123,13 @@ export function ProjectDetailClient({
       stage: query.data.stage
     });
 
-    const nextColumnEdits: Record<string, { name: string; color: string }> = {};
-
-    for (const boardItem of query.data.kanbanBoards) {
-      for (const column of boardItem.columns) {
-        nextColumnEdits[column.id] = {
-          name: column.name,
-          color: column.color ?? ""
-        };
-      }
-    }
-
-    setColumnEdits(nextColumnEdits);
-
     const nextCardEdits: Record<string, {
       title: string;
       description: string;
       assigneeLabel: string;
       dueDate: string;
       labels: string;
+      columnId: string;
     }> = {};
 
     for (const boardItem of query.data.kanbanBoards) {
@@ -152,7 +140,8 @@ export function ProjectDetailClient({
             description: card.description ?? "",
             assigneeLabel: card.assigneeLabel ?? "",
             dueDate: card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "",
-            labels: Array.isArray(card.labels) ? card.labels.join(", ") : ""
+            labels: Array.isArray(card.labels) ? card.labels.join(", ") : "",
+            columnId: column.id
           };
         }
       }
@@ -186,58 +175,6 @@ export function ProjectDetailClient({
   }, [query.data]);
 
   const board = query.data?.kanbanBoards[0] ?? null;
-  const columnOptions = useMemo(
-    () => board?.columns.map((column) => ({ id: column.id, name: column.name })) ?? [],
-    [board]
-  );
-  const kanbanLabels = useMemo(() => {
-    const labels = new Set<string>();
-
-    for (const column of board?.columns ?? []) {
-      for (const card of column.cards) {
-        for (const label of getKanbanCardLabels(card.labels)) {
-          labels.add(label);
-        }
-      }
-    }
-
-    return Array.from(labels).sort((first, second) => first.localeCompare(second));
-  }, [board]);
-  const kanbanAssignees = useMemo(() => {
-    const assignees = new Set<string>();
-
-    for (const column of board?.columns ?? []) {
-      for (const card of column.cards) {
-        if (card.assigneeLabel) {
-          assignees.add(card.assigneeLabel);
-        }
-      }
-    }
-
-    return Array.from(assignees).sort((first, second) => first.localeCompare(second));
-  }, [board]);
-  const filteredKanbanColumns = useMemo(() => {
-    const search = kanbanSearch.trim().toLowerCase();
-
-    return board?.columns.map((column) => ({
-      ...column,
-      cards: column.cards.filter((card) => {
-        const labels = getKanbanCardLabels(card.labels);
-        const matchesSearch =
-          !search ||
-          card.title.toLowerCase().includes(search) ||
-          (card.description ?? "").toLowerCase().includes(search) ||
-          (card.assigneeLabel ?? "").toLowerCase().includes(search) ||
-          labels.some((label) => label.toLowerCase().includes(search));
-        const matchesAssignee = kanbanAssigneeFilter === "all" || card.assigneeLabel === kanbanAssigneeFilter;
-        const matchesLabel = kanbanLabelFilter === "all" || labels.includes(kanbanLabelFilter);
-
-        return matchesSearch && matchesAssignee && matchesLabel;
-      })
-    })) ?? [];
-  }, [board, kanbanAssigneeFilter, kanbanLabelFilter, kanbanSearch]);
-  const totalKanbanCards = board?.columns.reduce((sum, column) => sum + column.cards.length, 0) ?? 0;
-  const visibleKanbanCards = filteredKanbanColumns.reduce((sum, column) => sum + column.cards.length, 0);
   const latestGdd = query.data?.gdds[0] ?? null;
   const canRunViabilityAnalysis = entitlements.canUse("viabilityAnalysis");
   const canRunArtAnalysis = entitlements.canUse("artAnalysis");
@@ -577,6 +514,7 @@ export function ProjectDetailClient({
         type: "updateCard",
         cardId,
         title: cardState.title,
+        columnId: cardState.columnId,
         description: cardState.description,
         assigneeLabel: cardState.assigneeLabel,
         dueDate: cardState.dueDate ? new Date(cardState.dueDate).toISOString() : null,
@@ -629,6 +567,29 @@ export function ProjectDetailClient({
         type: "moveCard",
         cardId,
         direction
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
+      return;
+    }
+
+    await query.refetch();
+  }
+
+  async function reorderCard(cardId: string, columnId: string, targetIndex: number) {
+    const response = await fetch(`/api/projects/${projectId}/kanban`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        type: "reorderCard",
+        cardId,
+        columnId,
+        targetIndex
       })
     });
 
@@ -2048,352 +2009,35 @@ export function ProjectDetailClient({
             showHeader={false}
           />
         </TabsContent>
-        <TabsContent value="kanban" className="space-y-6">
-          <DemoManagerPageClient
-            projectId={projectId}
-            sections={["Linha Jogável", "Linha Emocional", "Mecânicas"]}
-            showHeader={false}
+        <TabsContent value="kanban">
+          <ProjectKanbanBoard
+            projectName={project.name}
+            board={board}
+            search={kanbanSearch}
+            setSearch={setKanbanSearch}
+            assigneeFilter={kanbanAssigneeFilter}
+            setAssigneeFilter={setKanbanAssigneeFilter}
+            labelFilter={kanbanLabelFilter}
+            setLabelFilter={setKanbanLabelFilter}
+            newColumn={newColumn}
+            setNewColumn={setNewColumn}
+            createColumn={createColumn}
+            updateColumn={updateColumn}
+            moveColumn={moveColumn}
+            deleteColumn={deleteColumn}
+            newCards={newCards}
+            setNewCards={setNewCards}
+            cardEdits={cardEdits}
+            setCardEdits={setCardEdits}
+            createCard={createCard}
+            saveCard={saveCard}
+            moveCard={moveCard}
+            moveCardInColumn={moveCardInColumn}
+            deleteCard={deleteCard}
+            reorderCard={reorderCard}
           />
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>Board controls</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_180px_190px]">
-              <Input
-                value={kanbanSearch}
-                onChange={(event) => setKanbanSearch(event.target.value)}
-                placeholder="Search title, description, owner or labels"
-              />
-              <Select value={kanbanAssigneeFilter} onValueChange={setKanbanAssigneeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Owner" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All owners</SelectItem>
-                  {kanbanAssignees.map((assignee) => (
-                    <SelectItem key={assignee} value={assignee}>
-                      {assignee}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={kanbanLabelFilter} onValueChange={setKanbanLabelFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Label" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All labels</SelectItem>
-                  {kanbanLabels.map((label) => (
-                    <SelectItem key={label} value={label}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={kanbanViewMode} onValueChange={(value) => setKanbanViewMode(value as "detailed" | "compact")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="detailed">Detailed cards</SelectItem>
-                  <SelectItem value="compact">Compact cards</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground lg:col-span-4">
-                Showing {formatNumber(visibleKanbanCards)} of {formatNumber(totalKanbanCards)} cards. Use labels as custom fields like priority, discipline, sprint, risk or platform.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>{t("projectDetail.customizeBoard")}</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 lg:grid-cols-[minmax(260px,1fr)_160px_140px]">
-              <Input
-                value={newColumn.name}
-                onChange={(event) => setNewColumn((current) => ({ ...current, name: event.target.value }))}
-                placeholder={t("projectDetail.newColumnName")}
-              />
-              <Input
-                value={newColumn.color}
-                onChange={(event) => setNewColumn((current) => ({ ...current, color: event.target.value }))}
-                placeholder="#0ea5e9"
-              />
-              <Button onClick={createColumn}>{t("projectDetail.addColumn")}</Button>
-            </CardContent>
-          </Card>
-          <div className="-mx-4 overflow-x-auto px-4 pb-4">
-            <div className="flex min-w-max gap-4">
-              {filteredKanbanColumns.map((column, index) => (
-                <Card key={column.id} className="h-fit w-[320px] shrink-0 overflow-hidden sm:w-[360px] 2xl:w-[390px]">
-                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-                <CardHeader className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: column.color || "#64748b" }} />
-                    <Input
-                      value={columnEdits[column.id]?.name ?? column.name}
-                      onChange={(event) => setColumnEdits((current) => ({
-                        ...current,
-                        [column.id]: {
-                          name: event.target.value,
-                          color: current[column.id]?.color ?? column.color ?? ""
-                        }
-                      }))}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {formatNumber(column.cards.length)} visible card{column.cards.length === 1 ? "" : "s"}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Input
-                      className="min-w-[120px] flex-1"
-                      value={columnEdits[column.id]?.color ?? column.color ?? ""}
-                      onChange={(event) => setColumnEdits((current) => ({
-                        ...current,
-                        [column.id]: {
-                          name: current[column.id]?.name ?? column.name,
-                          color: event.target.value
-                        }
-                      }))}
-                      placeholder="#64748b"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => updateColumn(
-                        column.id,
-                        columnEdits[column.id]?.name ?? column.name,
-                        columnEdits[column.id]?.color ?? column.color,
-                        index
-                      )}
-                    >
-                      {t("common.save")}
-                    </Button>
-                    <Button size="sm" type="button" variant="outline" onClick={() => moveColumn(column.id, "left")}>
-                      ←
-                    </Button>
-                    <Button size="sm" type="button" variant="outline" onClick={() => moveColumn(column.id, "right")}>
-                      →
-                    </Button>
-                    <Button size="sm" type="button" variant="destructive" onClick={() => deleteColumn(column.id)}>
-                      {t("common.delete")}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {column.cards.map((card) => (
-                    <div key={card.id} className="rounded-[1.25rem] border border-white/10 bg-white/45 p-3 backdrop-blur dark:bg-white/[0.03]">
-                      <div className="grid gap-3">
-                        <Input
-                          value={cardEdits[card.id]?.title ?? card.title}
-                          onChange={(event) => setCardEdits((current) => ({
-                            ...current,
-                            [card.id]: {
-                              title: event.target.value,
-                              description: current[card.id]?.description ?? card.description ?? "",
-                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
-                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
-                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
-                            }
-                          }))}
-                        />
-                        {getKanbanCardLabels(card.labels).length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {getKanbanCardLabels(card.labels).map((label) => (
-                              <span key={label} className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[11px] font-medium text-cyan-700 dark:text-cyan-200">
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-                        {kanbanViewMode === "detailed" ? (
-                          <>
-                        <Textarea
-                          value={cardEdits[card.id]?.description ?? card.description ?? ""}
-                          onChange={(event) => setCardEdits((current) => ({
-                            ...current,
-                            [card.id]: {
-                              title: current[card.id]?.title ?? card.title,
-                              description: event.target.value,
-                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
-                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
-                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
-                            }
-                          }))}
-                          placeholder={t("common.description")}
-                        />
-                        <Input
-                          value={cardEdits[card.id]?.assigneeLabel ?? card.assigneeLabel ?? ""}
-                          onChange={(event) => setCardEdits((current) => ({
-                            ...current,
-                            [card.id]: {
-                              title: current[card.id]?.title ?? card.title,
-                              description: current[card.id]?.description ?? card.description ?? "",
-                              assigneeLabel: event.target.value,
-                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
-                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
-                            }
-                          }))}
-                          placeholder={t("common.owner")}
-                        />
-                        <Input
-                          type="date"
-                          value={cardEdits[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "")}
-                          onChange={(event) => setCardEdits((current) => ({
-                            ...current,
-                            [card.id]: {
-                              title: current[card.id]?.title ?? card.title,
-                              description: current[card.id]?.description ?? card.description ?? "",
-                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
-                              dueDate: event.target.value,
-                              labels: current[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")
-                            }
-                          }))}
-                        />
-                        <Input
-                          value={cardEdits[card.id]?.labels ?? (Array.isArray(card.labels) ? card.labels.join(", ") : "")}
-                          onChange={(event) => setCardEdits((current) => ({
-                            ...current,
-                            [card.id]: {
-                              title: current[card.id]?.title ?? card.title,
-                              description: current[card.id]?.description ?? card.description ?? "",
-                              assigneeLabel: current[card.id]?.assigneeLabel ?? card.assigneeLabel ?? "",
-                              dueDate: current[card.id]?.dueDate ?? (card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : ""),
-                              labels: event.target.value
-                            }
-                          }))}
-                          placeholder={t("projectDetail.labelsPlaceholder")}
-                        />
-                          </>
-                        ) : (
-                          <div className="grid gap-1 text-xs text-muted-foreground">
-                            {card.assigneeLabel ? <span>Owner: {card.assigneeLabel}</span> : null}
-                            {card.dueDate ? <span>Due: {new Date(card.dueDate).toLocaleDateString()}</span> : null}
-                            {card.description ? <span className="line-clamp-2">{card.description}</span> : null}
-                          </div>
-                        )}
-                        <Select value={column.id} onValueChange={(value) => moveCard(card.id, value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {columnOptions.map((option) => (
-                              <SelectItem key={option.id} value={option.id}>
-                                {option.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" type="button" variant="outline" onClick={() => moveCardInColumn(card.id, "up")}>
-                            ↑
-                          </Button>
-                          <Button size="sm" type="button" variant="outline" onClick={() => moveCardInColumn(card.id, "down")}>
-                            ↓
-                          </Button>
-                          <Button size="sm" type="button" variant="outline" onClick={() => saveCard(card.id)}>
-                            {t("projectDetail.saveCard")}
-                          </Button>
-                          <Button size="sm" type="button" variant="destructive" onClick={() => deleteCard(card.id)}>
-                            {t("common.delete")}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="rounded-[1.25rem] border border-dashed border-white/15 bg-white/30 p-3 dark:bg-white/[0.02]">
-                    <div className="grid gap-2">
-                      <Input
-                        value={newCards[column.id]?.title ?? ""}
-                        onChange={(event) => setNewCards((current) => ({
-                          ...current,
-                          [column.id]: {
-                            title: event.target.value,
-                            description: current[column.id]?.description ?? "",
-                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
-                            dueDate: current[column.id]?.dueDate ?? "",
-                            labels: current[column.id]?.labels ?? ""
-                          }
-                        }))}
-                        placeholder={t("projectDetail.newCardTitle")}
-                      />
-                      <Textarea
-                        value={newCards[column.id]?.description ?? ""}
-                        onChange={(event) => setNewCards((current) => ({
-                          ...current,
-                          [column.id]: {
-                            title: current[column.id]?.title ?? "",
-                            description: event.target.value,
-                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
-                            dueDate: current[column.id]?.dueDate ?? "",
-                            labels: current[column.id]?.labels ?? ""
-                          }
-                        }))}
-                        placeholder={t("projectDetail.cardDescription")}
-                      />
-                      <Input
-                        value={newCards[column.id]?.assigneeLabel ?? ""}
-                        onChange={(event) => setNewCards((current) => ({
-                          ...current,
-                          [column.id]: {
-                            title: current[column.id]?.title ?? "",
-                            description: current[column.id]?.description ?? "",
-                            assigneeLabel: event.target.value,
-                            dueDate: current[column.id]?.dueDate ?? "",
-                            labels: current[column.id]?.labels ?? ""
-                          }
-                        }))}
-                        placeholder={t("common.owner")}
-                      />
-                      <Input
-                        type="date"
-                        value={newCards[column.id]?.dueDate ?? ""}
-                        onChange={(event) => setNewCards((current) => ({
-                          ...current,
-                          [column.id]: {
-                            title: current[column.id]?.title ?? "",
-                            description: current[column.id]?.description ?? "",
-                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
-                            dueDate: event.target.value,
-                            labels: current[column.id]?.labels ?? ""
-                          }
-                        }))}
-                      />
-                      <Input
-                        value={newCards[column.id]?.labels ?? ""}
-                        onChange={(event) => setNewCards((current) => ({
-                          ...current,
-                          [column.id]: {
-                            title: current[column.id]?.title ?? "",
-                            description: current[column.id]?.description ?? "",
-                            assigneeLabel: current[column.id]?.assigneeLabel ?? "",
-                            dueDate: current[column.id]?.dueDate ?? "",
-                            labels: event.target.value
-                          }
-                        }))}
-                        placeholder={t("projectDetail.labelsPlaceholder")}
-                      />
-                      <Button variant="outline" onClick={() => createCard(column.id)}>
-                        {t("projectDetail.addCard")}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
   );
-}
-
-function getKanbanCardLabels(labels: unknown) {
-  if (!Array.isArray(labels)) {
-    return [];
-  }
-
-  return labels.filter((label): label is string => typeof label === "string" && label.trim().length > 0);
 }
