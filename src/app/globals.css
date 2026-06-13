@@ -3,45 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --background: 210 20% 97%;
-  --foreground: 222 22% 10%;
+  --background: 218 48% 97%;
+  --foreground: 229 84% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 222 22% 10%;
-  --primary: 176 76% 32%;
+  --card-foreground: 229 84% 10%;
+  --primary: 221 94% 50%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 14% 92%;
-  --secondary-foreground: 222 22% 12%;
-  --muted: 210 16% 93%;
-  --muted-foreground: 218 12% 42%;
-  --accent: 42 82% 92%;
-  --accent-foreground: 38 74% 24%;
+  --secondary: 218 58% 92%;
+  --secondary-foreground: 229 84% 12%;
+  --muted: 218 44% 93%;
+  --muted-foreground: 222 32% 37%;
+  --accent: 193 96% 84%;
+  --accent-foreground: 226 94% 19%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214 14% 84%;
-  --input: 214 14% 84%;
-  --ring: 176 76% 32%;
+  --border: 219 38% 82%;
+  --input: 219 38% 82%;
+  --ring: 196 100% 50%;
   --radius: 0.5rem;
-  --panel-highlight: 176 76% 32%;
+  --panel-highlight: 196 100% 50%;
 }
 
 .dark {
-  --background: 220 14% 8%;
-  --foreground: 210 18% 94%;
-  --card: 220 13% 11%;
-  --card-foreground: 210 18% 94%;
-  --primary: 174 64% 42%;
-  --primary-foreground: 210 24% 8%;
-  --secondary: 220 10% 16%;
-  --secondary-foreground: 210 18% 94%;
-  --muted: 220 10% 16%;
-  --muted-foreground: 216 10% 68%;
-  --accent: 38 42% 18%;
-  --accent-foreground: 42 88% 82%;
+  --background: 232 84% 7%;
+  --foreground: 204 100% 95%;
+  --card: 230 72% 10%;
+  --card-foreground: 204 100% 95%;
+  --primary: 216 100% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 226 64% 16%;
+  --secondary-foreground: 204 100% 94%;
+  --muted: 228 54% 15%;
+  --muted-foreground: 210 34% 72%;
+  --accent: 191 100% 50%;
+  --accent-foreground: 232 88% 8%;
   --destructive: 0 63% 43%;
   --destructive-foreground: 210 40% 98%;
-  --border: 220 10% 22%;
-  --input: 220 10% 22%;
-  --ring: 174 64% 42%;
+  --border: 226 52% 22%;
+  --input: 226 52% 22%;
+  --ring: 191 100% 50%;
 }
 
 * {
@@ -60,7 +60,7 @@ body {
   position: relative;
   isolation: isolate;
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(242, 244, 246, 0.72), rgba(236, 239, 242, 0.84));
+    linear-gradient(180deg, rgba(248, 251, 255, 0.9), rgba(232, 241, 255, 0.78), rgba(222, 237, 255, 0.86));
 }
 
 body::before {
@@ -79,7 +79,7 @@ a {
 
 .dark body {
   background-image:
-    linear-gradient(180deg, rgba(20, 24, 31, 0.96), rgba(12, 14, 18, 0.98));
+    linear-gradient(180deg, rgba(4, 11, 46, 0.98), rgba(2, 6, 28, 0.99));
 }
 
 .dark body::before {
@@ -87,7 +87,7 @@ a {
 }
 
 ::selection {
-  background: rgba(14, 165, 233, 0.28);
+  background: rgba(0, 195, 255, 0.32);
 }
 
 @keyframes rise-in {

@@ -126,7 +126,7 @@ export function OrganizationSwitcher({
                     {organization.role} · {getSubscriptionPlanLabel(organization.subscriptionPlan)}
                   </p>
                 </div>
-                {isCurrent ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" /> : null}
+                {isCurrent ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" /> : null}
               </DropdownMenuItem>
             );
           })}
