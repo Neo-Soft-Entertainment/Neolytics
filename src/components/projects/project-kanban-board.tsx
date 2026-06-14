@@ -3,12 +3,14 @@
 import {
   closestCorners,
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useDroppable,
   useSensor,
   useSensors,
-  type DragEndEvent
+  type DragEndEvent,
+  type DragStartEvent
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -132,6 +134,7 @@ export function ProjectKanbanBoard({
   assigneeOptions?: ProjectAssigneeOption[];
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null);
   const columns = board?.columns ?? [];
   const columnOptions = columns.map((column) => ({ id: column.id, name: column.name }));
   const cardsById = new Map(columns.flatMap((column) => column.cards.map((card) => [card.id, { card, column }])));
@@ -177,9 +180,15 @@ export function ProjectKanbanBoard({
   const visibleCards = filteredColumns.reduce((sum, column) => sum + column.cards.length, 0);
   const totalCards = columns.reduce((sum, column) => sum + column.cards.length, 0);
   const activeCard = drawer?.mode === "edit" ? cardsById.get(drawer.cardId) : null;
+  const activeDragCard = activeDragCardId ? cardsById.get(activeDragCardId) : null;
   const createColumnId = drawer?.mode === "create" ? drawer.columnId : columns[0]?.id ?? "";
 
+  function onDragStart(event: DragStartEvent) {
+    setActiveDragCardId(String(event.active.id));
+  }
+
   async function onDragEnd(event: DragEndEvent) {
+    setActiveDragCardId(null);
     const activeCardId = String(event.active.id);
 
     if (!event.over) {
@@ -213,6 +222,10 @@ export function ProjectKanbanBoard({
     const targetIndex = overIndex >= 0 ? overIndex : targetCards.length;
 
     await reorderCard(activeCardId, targetColumnId, targetIndex);
+  }
+
+  function onDragCancel() {
+    setActiveDragCardId(null);
   }
 
   function openEditDrawer(card: KanbanCard, columnId: string) {
@@ -339,7 +352,14 @@ export function ProjectKanbanBoard({
         </div>
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        autoScroll={{ enabled: true, threshold: { x: 0.18, y: 0.18 }, acceleration: 12 }}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={onDragCancel}
+      >
         <div className="h-[calc(100vh-22rem)] min-h-[520px] overflow-x-auto bg-[#0f1317] p-5">
           <div className="flex h-full min-w-max gap-3">
             {filteredColumns.map((column, index) => (
@@ -362,6 +382,11 @@ export function ProjectKanbanBoard({
             ))}
           </div>
         </div>
+        <DragOverlay dropAnimation={null}>
+          {activeDragCard ? (
+            <KanbanCardDragPreview card={activeDragCard.card} columnIndex={columns.findIndex((column) => column.id === activeDragCard.column.id)} />
+          ) : null}
+        </DragOverlay>
       </DndContext>
 
       <KanbanCardDrawer
@@ -521,31 +546,33 @@ function KanbanCardView({
   return (
     <article
       ref={setNodeRef}
+      {...attributes}
+      {...listeners}
       style={{
         transform: CSS.Transform.toString(transform),
         transition
       }}
       className={cn(
-        "group rounded-md border border-slate-700 bg-[#22272d] p-3 text-sm shadow-sm transition hover:border-slate-600 hover:bg-[#282e35]",
+        "group cursor-grab rounded-md border border-slate-700 bg-[#22272d] p-3 text-sm shadow-sm transition hover:border-slate-600 hover:bg-[#282e35] active:cursor-grabbing",
         isDragging && "opacity-60"
       )}
     >
       <div className="flex items-start gap-2">
-        <button
-          className="mt-0.5 cursor-grab text-slate-500 active:cursor-grabbing"
-          type="button"
-          aria-label="Arrastar card"
-          {...attributes}
-          {...listeners}
-        >
+        <span className="mt-0.5 text-slate-500" aria-hidden="true">
           <GripVertical className="h-4 w-4" />
-        </button>
+        </span>
         <button className="min-w-0 flex-1 text-left" type="button" onClick={onOpen}>
           <p className="line-clamp-2 font-medium leading-5 text-slate-200">{card.title}</p>
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 opacity-0 hover:bg-slate-700 hover:text-slate-100 group-hover:opacity-100">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-slate-500 opacity-0 hover:bg-slate-700 hover:text-slate-100 group-hover:opacity-100"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -591,6 +618,39 @@ function KanbanCardView({
             <User2 className="h-4 w-4 text-slate-600" />
           )}
         </div>
+      </div>
+    </article>
+  );
+}
+
+function KanbanCardDragPreview({
+  card,
+  columnIndex
+}: {
+  card: KanbanCard;
+  columnIndex: number;
+}) {
+  const labels = getKanbanCardLabels(card.labels);
+
+  return (
+    <article className="w-[260px] rotate-1 rounded-md border border-sky-500/60 bg-[#22272d] p-3 text-sm text-slate-200 shadow-2xl">
+      <p className="line-clamp-2 font-medium leading-5">{card.title}</p>
+      {labels.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {labels.slice(0, 3).map((label) => (
+            <span key={label} className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", getLabelClass(label))}>
+              {label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+        <span className="font-medium text-slate-500">NLY-{columnIndex + 1}{String(card.sortOrder + 1).padStart(2, "0")}</span>
+        {card.assigneeLabel ? (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-[10px] font-semibold text-white">
+            {card.assigneeLabel.slice(0, 1).toUpperCase()}
+          </span>
+        ) : null}
       </div>
     </article>
   );

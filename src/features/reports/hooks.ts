@@ -24,6 +24,12 @@ export interface ReportItem {
         confidenceScore: number;
         revenueConcentrationPercent: number;
       };
+      decisionBrief?: {
+        recommendation: string;
+        marketThesis: string;
+        mainRisk: string;
+        nextMoves: string[];
+      };
       operatingBrief?: {
         boardDirective: string;
         commercialDirective: string;

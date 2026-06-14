@@ -139,6 +139,30 @@ export function ReportsPageClient({
                     {report.title}
                   </summary>
                   <div className="mt-3 space-y-3 text-sm">
+                    {report.metadata?.decisionBrief ? (
+                      <div className="grid gap-3 lg:grid-cols-2">
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Decisão</p>
+                          <p className="mt-2 text-sm text-foreground">{report.metadata.decisionBrief.recommendation}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Tese de mercado</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{report.metadata.decisionBrief.marketThesis}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Risco real</p>
+                          <p className="mt-2 text-sm text-muted-foreground">{report.metadata.decisionBrief.mainRisk}</p>
+                        </div>
+                        <div className="rounded-2xl border p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Próximos testes</p>
+                          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                            {report.metadata.decisionBrief.nextMoves.slice(0, 4).map((move) => (
+                              <li key={move}>- {move}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ) : null}
                     {report.metadata?.segment ? (
                       <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-2xl border p-3">
@@ -177,8 +201,8 @@ export function ReportsPageClient({
                         </div>
                       </div>
                     ) : null}
-                    <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-3 text-xs">
-                      {(report.content ?? "").split("\n").slice(0, 14).join("\n")}
+                    <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-3 text-xs">
+                      {report.content ?? ""}
                     </pre>
                   </div>
                 </details>
