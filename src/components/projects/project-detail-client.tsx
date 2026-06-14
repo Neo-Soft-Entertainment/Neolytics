@@ -148,9 +148,9 @@ export function ProjectDetailClient({
       columnId: string;
     }> = {};
 
-    for (const boardItem of query.data.kanbanBoards) {
-      for (const column of boardItem.columns) {
-        for (const card of column.cards) {
+    for (const boardItem of query.data.kanbanBoards ?? []) {
+      for (const column of boardItem.columns ?? []) {
+        for (const card of column.cards ?? []) {
           nextCardEdits[card.id] = {
             title: card.title,
             description: card.description ?? "",
@@ -175,7 +175,7 @@ export function ProjectDetailClient({
       expectedRevenueCents: string;
     }> = {};
 
-    for (const milestone of query.data.milestones) {
+    for (const milestone of query.data.milestones ?? []) {
       nextMilestoneEdits[milestone.id] = {
         title: milestone.title,
         description: milestone.description ?? "",
@@ -190,8 +190,6 @@ export function ProjectDetailClient({
     setMilestoneEdits(nextMilestoneEdits);
   }, [query.data]);
 
-  const board = query.data?.kanbanBoards[0] ?? null;
-  const latestGdd = query.data?.gdds[0] ?? null;
   const canRunViabilityAnalysis = entitlements.canUse("viabilityAnalysis");
   const canRunArtAnalysis = entitlements.canUse("artAnalysis");
   const canGenerateGdd = entitlements.canUse("gdd");
@@ -199,7 +197,6 @@ export function ProjectDetailClient({
   const viabilityLimit = entitlements.getLimit("viabilityAnalysesPerMonth");
   const artLimit = entitlements.getLimit("artAnalysesPerMonth");
   const gddLimit = entitlements.getLimit("gdds");
-  const assigneeOptions = query.data?.assigneeOptions ?? [];
 
   async function saveProject() {
     setFeedback(null);
@@ -518,7 +515,39 @@ export function ProjectDetailClient({
     return <ErrorState title={t("projectDetail.unavailable")} description={t("projectDetail.unavailableDescription")} />;
   }
 
-  const project = query.data;
+  const project = {
+    ...query.data,
+    assigneeOptions: query.data.assigneeOptions ?? [],
+    gdds: query.data.gdds ?? [],
+    milestones: query.data.milestones ?? [],
+    budgets: (query.data.budgets ?? []).map((budget) => ({
+      ...budget,
+      lines: budget.lines ?? []
+    })),
+    revenueEntries: query.data.revenueEntries ?? [],
+    expenseEntries: query.data.expenseEntries ?? [],
+    approvalRequests: query.data.approvalRequests ?? [],
+    artAssets: query.data.artAssets ?? [],
+    competitorGames: (query.data.competitorGames ?? []).map((item) => ({
+      ...item,
+      steamGame: {
+        ...item.steamGame,
+        revenueEstimates: item.steamGame.revenueEstimates ?? [],
+        genres: item.steamGame.genres ?? [],
+        tags: item.steamGame.tags ?? []
+      }
+    })),
+    kanbanBoards: (query.data.kanbanBoards ?? []).map((kanbanBoard) => ({
+      ...kanbanBoard,
+      columns: (kanbanBoard.columns ?? []).map((column) => ({
+        ...column,
+        cards: column.cards ?? []
+      }))
+    }))
+  };
+  const board = project.kanbanBoards[0] ?? null;
+  const latestGdd = project.gdds[0] ?? null;
+  const assigneeOptions = project.assigneeOptions;
   const marketDepth = project.analysis?.metadata?.marketDepth ?? null;
   const competitionLayer = project.analysis?.metadata?.competitionLayer ?? null;
   const opportunityLayer = project.analysis?.metadata?.opportunityLayer ?? null;
