@@ -2884,36 +2884,58 @@ export async function reorderKanbanCard(params: {
   }
 
   const sourceCards = sourceColumn.cards.filter((item) => item.id !== card.id);
-  const targetCards = (sourceColumn.id === targetColumn.id ? sourceCards : targetColumn.cards.filter((item) => item.id !== card.id));
-  const nextIndex = Math.min(params.targetIndex, targetCards.length);
+  let targetCards = targetColumn.cards.filter((item) => item.id !== card.id);
+
+  if (sourceColumn.id === targetColumn.id) {
+    targetCards = sourceCards;
+  }
+
+  let nextIndex = params.targetIndex;
+
+  if (nextIndex > targetCards.length) {
+    nextIndex = targetCards.length;
+  }
 
   targetCards.splice(nextIndex, 0, card);
 
-  const updates = targetCards.map((item, index) => db.kanbanCard.update({
-    where: {
-      id: item.id
-    },
-    data: {
-      columnId: targetColumn.id,
-      sortOrder: index
-    }
-  }));
+  const updates: Prisma.PrismaPromise<unknown>[] = [];
 
-  if (sourceColumn.id !== targetColumn.id) {
-    updates.push(...sourceCards.map((item, index) => db.kanbanCard.update({
+  for (const [index, item] of targetCards.entries()) {
+    if (item.columnId === targetColumn.id && item.sortOrder === index) {
+      continue;
+    }
+
+    updates.push(db.kanbanCard.update({
       where: {
         id: item.id
       },
       data: {
-        columnId: sourceColumn.id,
+        columnId: targetColumn.id,
         sortOrder: index
       }
-    })));
+    }));
   }
 
-  await db.$transaction(updates);
+  if (sourceColumn.id !== targetColumn.id) {
+    for (const [index, item] of sourceCards.entries()) {
+      if (item.sortOrder === index) {
+        continue;
+      }
 
-  return getProjectById(params.projectId, params.workspaceId);
+      updates.push(db.kanbanCard.update({
+        where: {
+          id: item.id
+        },
+        data: {
+          sortOrder: index
+        }
+      }));
+    }
+  }
+
+  if (updates.length > 0) {
+    await db.$transaction(updates);
+  }
 }
 
 export async function deleteKanbanCard(params: {

@@ -194,7 +194,7 @@ export async function PATCH(
     }
 
     if (body.type === "reorderCard") {
-      const project = await reorderKanbanCard({
+      await reorderKanbanCard({
         projectId,
         workspaceId: context.workspace.id,
         cardId: body.cardId,
@@ -203,7 +203,7 @@ export async function PATCH(
       });
 
       invalidateProjectReadCaches(context.workspace.id, projectId);
-      return ok(project);
+      return ok({ updated: true });
     }
 
     let dueDate: Date | null = null;

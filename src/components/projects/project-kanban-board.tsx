@@ -187,7 +187,7 @@ export function ProjectKanbanBoard({
     setActiveDragCardId(String(event.active.id));
   }
 
-  async function onDragEnd(event: DragEndEvent) {
+  function onDragEnd(event: DragEndEvent) {
     setActiveDragCardId(null);
     const activeCardId = String(event.active.id);
 
@@ -202,9 +202,11 @@ export function ProjectKanbanBoard({
     }
 
     const overData = event.over.data.current as { type?: string; cardId?: string; columnId?: string } | undefined;
-    const targetColumnId = overData?.type === "column"
-      ? overData.columnId
-      : overData?.columnId;
+    let targetColumnId = overData?.columnId;
+
+    if (overData?.type === "column") {
+      targetColumnId = overData.columnId;
+    }
 
     if (!targetColumnId) {
       return;
@@ -217,11 +219,25 @@ export function ProjectKanbanBoard({
     }
 
     const targetCards = targetColumn.cards.filter((card) => card.id !== activeCardId);
-    const overCardId = overData?.type === "card" ? overData.cardId : null;
-    const overIndex = overCardId ? targetCards.findIndex((card) => card.id === overCardId) : -1;
-    const targetIndex = overIndex >= 0 ? overIndex : targetCards.length;
+    let overCardId: string | undefined;
 
-    await reorderCard(activeCardId, targetColumnId, targetIndex);
+    if (overData?.type === "card") {
+      overCardId = overData.cardId;
+    }
+
+    let overIndex = -1;
+
+    if (overCardId) {
+      overIndex = targetCards.findIndex((card) => card.id === overCardId);
+    }
+
+    let targetIndex = targetCards.length;
+
+    if (overIndex >= 0) {
+      targetIndex = overIndex;
+    }
+
+    void reorderCard(activeCardId, targetColumnId, targetIndex);
   }
 
   function onDragCancel() {
