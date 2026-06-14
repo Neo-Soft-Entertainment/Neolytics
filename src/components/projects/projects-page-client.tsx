@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
@@ -12,11 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useProjects } from "@/features/projects/hooks";
+import { useProjects, type ProjectListItem } from "@/features/projects/hooks";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export function ProjectsPageClient() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const t = useI18n();
   const query = useProjects();
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +36,8 @@ export function ProjectsPageClient() {
   async function createProject() {
     setError(null);
     setIsSubmitting(true);
+    const temporaryId = `optimistic-project:${Date.now()}`;
+    const previousProjects = queryClient.getQueryData<ProjectListItem[]>(["projects"]);
 
         let resolvedValue0: any;
     if (form.pricePointCents) {
@@ -41,28 +45,71 @@ export function ProjectsPageClient() {
     } else {
       resolvedValue0 = null;
     }
-const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        ...form,
-        pricePointCents: resolvedValue0
-      })
+    const optimisticProject = {
+      id: temporaryId,
+      name: form.name.trim(),
+      slug: temporaryId,
+      elevatorPitch: form.elevatorPitch.trim() || null,
+      stage: "DISCOVERY",
+      createdAt: new Date().toISOString(),
+      analysis: null,
+      gdds: [],
+      optimistic: true
+    } as ProjectListItem & { optimistic: boolean };
+
+    queryClient.setQueryData<ProjectListItem[]>(["projects"], (current: any) => {
+      if (!current) {
+        return [optimisticProject];
+      }
+
+      return [optimisticProject, ...current];
     });
 
-    setIsSubmitting(false);
+    let response: Response;
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? t("projects.createProjectError"));
+    try {
+      response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...form,
+          pricePointCents: resolvedValue0
+        })
+      });
+    } catch {
+      queryClient.setQueryData(["projects"], previousProjects);
+      setError(t("projects.createProjectError"));
+      setIsSubmitting(false);
       return;
     }
 
-    const project = (await response.json()) as { id: string };
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      queryClient.setQueryData(["projects"], previousProjects);
+      setError(payload?.message ?? t("projects.createProjectError"));
+      setIsSubmitting(false);
+      return;
+    }
+
+    const project = (await response.json()) as ProjectListItem;
+    queryClient.setQueryData<ProjectListItem[]>(["projects"], (current: any) => {
+      if (!current) {
+        return [project];
+      }
+
+      return current.map((item: any) => {
+        if (item.id === temporaryId) {
+          return project;
+        }
+
+        return item;
+      });
+    });
+    setIsSubmitting(false);
+    void queryClient.invalidateQueries({ queryKey: ["projects"] });
     router.push(`/projects/${project.id}`);
-    router.refresh();
   }
 
     let resolvedValue1: any;
@@ -81,6 +128,19 @@ const response = await fetch("/api/projects", {
       if (query.data && query.data.length > 0) {
         resolvedValue5 = (
             query.data.map((project) => {
+              const isOptimistic = Boolean((project as any).optimistic);
+              let projectTitle: any;
+              if (isOptimistic) {
+                projectTitle = (
+                  <span className="text-muted-foreground">{project.name}</span>
+                );
+              } else {
+                projectTitle = (
+                  <Link className="hover:underline" href={`/projects/${project.id}`}>
+                    {project.name}
+                  </Link>
+                );
+              }
               let resolvedValue6: any;
               if (project.analysis?.averageReviewScore) {
                 resolvedValue6 = formatPercent(project.analysis.averageReviewScore, 1);
@@ -99,9 +159,7 @@ const response = await fetch("/api/projects", {
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                   <div className="space-y-1">
                     <CardTitle className="text-lg">
-                      <Link className="hover:underline" href={`/projects/${project.id}`}>
-                        {project.name}
-                      </Link>
+                      {projectTitle}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">{project.elevatorPitch || t("projects.noPitchYet")}</p>
                   </div>

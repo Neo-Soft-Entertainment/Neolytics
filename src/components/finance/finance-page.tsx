@@ -15,7 +15,7 @@ import {
 } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { AccountsPayableSection } from "@/components/finance/accounts-payable-section";
@@ -96,6 +96,334 @@ function formatDateInput(value?: string | null) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
+const financeOverviewQueryKey = ["finance", "overview"];
+
+function makeTemporaryFinanceId(url: string) {
+  return `optimistic:${url}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+}
+
+function getBodyString(body: Record<string, unknown>, key: string, fallback = "") {
+  const value = body[key];
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return fallback;
+}
+
+function getBodyNumber(body: Record<string, unknown>, key: string) {
+  const value = body[key];
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
+}
+
+function getBodyDate(body: Record<string, unknown>, key: string) {
+  const value = body[key];
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  return new Date().toISOString();
+}
+
+function getBodyStatus(body: Record<string, unknown>, key: string, fallback: string) {
+  const value = body[key];
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return fallback;
+}
+
+function appendFinanceRecord(list: any[], record: any) {
+  return [record, ...list];
+}
+
+function replaceTemporaryRecord(list: any[], temporaryId: string, serverRecord: any) {
+  return list.map((item: any) => {
+    if (item.id === temporaryId) {
+      return serverRecord;
+    }
+
+    return item;
+  });
+}
+
+function reconcileFinanceRecord(current: FinanceOverview, temporaryId: string, serverRecord: any) {
+  return {
+    ...current,
+    budgets: replaceTemporaryRecord(current.budgets, temporaryId, serverRecord),
+    revenueEntries: replaceTemporaryRecord(current.revenueEntries, temporaryId, serverRecord),
+    expenseEntries: replaceTemporaryRecord(current.expenseEntries, temporaryId, serverRecord),
+    costCenters: replaceTemporaryRecord(current.costCenters, temporaryId, serverRecord),
+    payableTitles: replaceTemporaryRecord(current.payableTitles, temporaryId, serverRecord),
+    receivableTitles: replaceTemporaryRecord(current.receivableTitles, temporaryId, serverRecord),
+    contracts: replaceTemporaryRecord(current.contracts, temporaryId, serverRecord),
+    royaltyAgreements: replaceTemporaryRecord(current.royaltyAgreements, temporaryId, serverRecord),
+    royaltyStatements: replaceTemporaryRecord(current.royaltyStatements, temporaryId, serverRecord),
+    issuedInvoices: replaceTemporaryRecord(current.issuedInvoices, temporaryId, serverRecord),
+    receivedInvoices: replaceTemporaryRecord(current.receivedInvoices, temporaryId, serverRecord)
+  };
+}
+
+function applyOptimisticFinanceCreate(current: FinanceOverview, url: string, body: Record<string, unknown>, temporaryId: string) {
+  const now = new Date().toISOString();
+  const next: FinanceOverview = {
+    ...current,
+    summary: {
+      ...current.summary
+    }
+  };
+
+  if (url === "/api/finance/budgets") {
+    const status = getBodyStatus(body, "status", BudgetStatus.DRAFT);
+    next.budgets = appendFinanceRecord(current.budgets, {
+      id: temporaryId,
+      name: getBodyString(body, "name", "Novo orçamento"),
+      projectId: getBodyString(body, "projectId", ""),
+      status,
+      currencyCode: getBodyString(body, "currencyCode", "USD"),
+      startsAt: getBodyDate(body, "startsAt"),
+      endsAt: getBodyDate(body, "endsAt"),
+      notes: getBodyString(body, "notes", ""),
+      lines: [],
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+
+    if (status === BudgetStatus.ACTIVE) {
+      next.summary.activeBudgetsCount += 1;
+    }
+
+    return next;
+  }
+
+  if (url === "/api/finance/revenue") {
+    const status = getBodyStatus(body, "status", FinanceEntryStatus.PENDING);
+    const netCents = getBodyNumber(body, "netCents");
+    next.revenueEntries = appendFinanceRecord(current.revenueEntries, {
+      id: temporaryId,
+      projectId: getBodyString(body, "projectId", ""),
+      sourceType: getBodyString(body, "sourceType", RevenueSourceType.OTHER),
+      sourceName: getBodyString(body, "sourceName", "Receita"),
+      status,
+      grossCents: getBodyNumber(body, "grossCents"),
+      netCents,
+      currencyCode: getBodyString(body, "currencyCode", "USD"),
+      receivedAt: getBodyDate(body, "receivedAt"),
+      notes: getBodyString(body, "notes", ""),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+
+    if (status === FinanceEntryStatus.RECEIVED) {
+      next.summary.totalRevenueNetCents += netCents;
+      next.summary.netCashCents += netCents;
+      return next;
+    }
+
+    if (status !== FinanceEntryStatus.CANCELED) {
+      next.summary.pendingRevenueCents += netCents;
+    }
+
+    return next;
+  }
+
+  if (url === "/api/finance/expenses") {
+    const status = getBodyStatus(body, "status", FinanceEntryStatus.PENDING);
+    const netCents = getBodyNumber(body, "netCents");
+    next.expenseEntries = appendFinanceRecord(current.expenseEntries, {
+      id: temporaryId,
+      projectId: getBodyString(body, "projectId", ""),
+      category: getBodyString(body, "category", ExpenseCategory.OTHER),
+      vendorName: getBodyString(body, "vendorName", "Despesa"),
+      description: getBodyString(body, "description", ""),
+      status,
+      grossCents: getBodyNumber(body, "grossCents"),
+      netCents,
+      currencyCode: getBodyString(body, "currencyCode", "USD"),
+      paidAt: getBodyDate(body, "paidAt"),
+      notes: getBodyString(body, "notes", ""),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+
+    if (status === FinanceEntryStatus.PAID) {
+      next.summary.totalExpensesPaidCents += netCents;
+      next.summary.netCashCents -= netCents;
+      return next;
+    }
+
+    if (status !== FinanceEntryStatus.CANCELED) {
+      next.summary.pendingExpenseCents += netCents;
+    }
+
+    return next;
+  }
+
+  if (url === "/api/finance/cost-centers") {
+    next.costCenters = appendFinanceRecord(current.costCenters, {
+      id: temporaryId,
+      name: getBodyString(body, "name", "Centro de custo"),
+      code: getBodyString(body, "code", ""),
+      description: getBodyString(body, "description", ""),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    return next;
+  }
+
+  if (url === "/api/finance/payables") {
+    const totalAmountCents = getBodyNumber(body, "totalAmountCents");
+    next.payableTitles = appendFinanceRecord(current.payableTitles, {
+      id: temporaryId,
+      status: PayableTitleStatus.OPEN,
+      titleNumber: getBodyString(body, "titleNumber", "Novo título"),
+      supplierName: getBodyString(body, "supplierName", ""),
+      totalAmountCents,
+      paidAmountCents: 0,
+      dueDate: getBodyDate(body, "dueDate"),
+      actualDueDate: getBodyDate(body, "dueDate"),
+      payments: [],
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    next.summary.payableOpenCents += totalAmountCents;
+    return next;
+  }
+
+  if (url === "/api/finance/receivables") {
+    const totalAmountCents = getBodyNumber(body, "totalAmountCents");
+    next.receivableTitles = appendFinanceRecord(current.receivableTitles, {
+      id: temporaryId,
+      status: PayableTitleStatus.OPEN,
+      titleNumber: getBodyString(body, "titleNumber", "Novo recebível"),
+      customerName: getBodyString(body, "customerName", ""),
+      totalAmountCents,
+      receivedAmountCents: 0,
+      dueDate: getBodyDate(body, "dueDate"),
+      actualDueDate: getBodyDate(body, "dueDate"),
+      payments: [],
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    next.summary.receivableOpenCents += totalAmountCents;
+    return next;
+  }
+
+  if (url === "/api/finance/contracts") {
+    next.contracts = appendFinanceRecord(current.contracts, {
+      id: temporaryId,
+      title: getBodyString(body, "title", "Contrato"),
+      status: getBodyStatus(body, "status", ContractStatus.DRAFT),
+      counterpartyType: getBodyString(body, "counterpartyType", ContractCounterpartyType.OTHER),
+      counterpartyName: getBodyString(body, "counterpartyName", ""),
+      totalValueCents: getBodyNumber(body, "totalValueCents"),
+      signedAt: getBodyDate(body, "signedAt"),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    return next;
+  }
+
+  if (url === "/api/finance/royalties") {
+    next.royaltyAgreements = appendFinanceRecord(current.royaltyAgreements, {
+      id: temporaryId,
+      partnerName: getBodyString(body, "partnerName", "Royalty"),
+      status: getBodyStatus(body, "status", RoyaltyStatus.DRAFT),
+      rateBps: getBodyNumber(body, "rateBps"),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    return next;
+  }
+
+  if (url === "/api/finance/royalty-statements") {
+    const amountDueCents = getBodyNumber(body, "amountDueCents");
+    next.royaltyStatements = appendFinanceRecord(current.royaltyStatements, {
+      id: temporaryId,
+      status: getBodyStatus(body, "status", RoyaltyStatus.DRAFT),
+      amountDueCents,
+      periodStart: getBodyDate(body, "periodStart"),
+      periodEnd: getBodyDate(body, "periodEnd"),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    next.summary.royaltiesDueCents += amountDueCents;
+    return next;
+  }
+
+  if (url === "/api/finance/issued-invoices") {
+    next.issuedInvoices = appendFinanceRecord(current.issuedInvoices, {
+      id: temporaryId,
+      status: getBodyStatus(body, "status", InvoiceStatus.ISSUED),
+      invoiceNumber: getBodyString(body, "invoiceNumber", "Nova invoice"),
+      customerName: getBodyString(body, "customerName", ""),
+      totalAmountCents: getBodyNumber(body, "totalAmountCents"),
+      issuedAt: getBodyDate(body, "issuedAt"),
+      dueAt: getBodyDate(body, "dueAt"),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    return next;
+  }
+
+  if (url === "/api/finance/received-invoices") {
+    next.receivedInvoices = appendFinanceRecord(current.receivedInvoices, {
+      id: temporaryId,
+      status: getBodyStatus(body, "status", InvoiceStatus.PENDING),
+      invoiceNumber: getBodyString(body, "invoiceNumber", "Invoice recebida"),
+      supplierName: getBodyString(body, "supplierName", ""),
+      totalAmountCents: getBodyNumber(body, "totalAmountCents"),
+      issuedAt: getBodyDate(body, "issuedAt"),
+      dueAt: getBodyDate(body, "dueAt"),
+      createdAt: now,
+      updatedAt: now,
+      optimistic: true
+    });
+    return next;
+  }
+
+  return current;
+}
+
+function getFinanceRequestKey(method: string, url: string, body: Record<string, unknown>) {
+  return JSON.stringify({
+    method,
+    url,
+    body
+  });
+}
+
 export function FinancePage({
   canAccessApprovalsAudit,
   canAccessContractsRoyalties,
@@ -114,10 +442,11 @@ export function FinancePage({
   summary: FinanceSummary | null;
 }) {
   const queryClient = useQueryClient();
+  const pendingRequestKeys = useRef(new Set<string>());
   const t = useI18n();
   const progressive = useProgressiveLoad<HTMLDivElement>();
   const overviewQuery = useQuery({
-    queryKey: ["finance", "overview"],
+    queryKey: financeOverviewQueryKey,
     queryFn: () => apiClient<FinanceOverview>("/api/finance/overview"),
     enabled: canAccessFinanceWorkspace && progressive.shouldLoad
   });
@@ -135,71 +464,162 @@ export function FinancePage({
   }
 
   async function submitJson(url: string, body: Record<string, unknown>, successMessage: string) {
-    setMessage(null);
-    setError(null);
+    const requestKey = getFinanceRequestKey("POST", url, body);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-
-    if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível salvar os dados financeiros.");
+    if (pendingRequestKeys.current.has(requestKey)) {
       return;
     }
 
-    setMessage(successMessage);
-    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
+    pendingRequestKeys.current.add(requestKey);
+    setMessage(null);
+    setError(null);
+    setMessage("Salvando...");
+    const previousData = queryClient.getQueryData<FinanceOverview>(financeOverviewQueryKey);
+    const temporaryId = makeTemporaryFinanceId(url);
+
+    queryClient.setQueryData<FinanceOverview>(financeOverviewQueryKey, (current: any) => {
+      if (!current) {
+        return current;
+      }
+
+      return applyOptimisticFinanceCreate(current, url, body, temporaryId);
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | Record<string, unknown> | null;
+
+      if (!response.ok) {
+        let errorMessage = "Não foi possível salvar os dados financeiros.";
+
+        if (payload && typeof payload.message === "string") {
+          errorMessage = payload.message;
+        }
+
+        queryClient.setQueryData(financeOverviewQueryKey, previousData);
+        setMessage(null);
+        setError(errorMessage);
+        return;
+      }
+
+      if (payload) {
+        queryClient.setQueryData<FinanceOverview>(financeOverviewQueryKey, (current: any) => {
+          if (!current) {
+            return current;
+          }
+
+          return reconcileFinanceRecord(current, temporaryId, payload);
+        });
+      }
+
+      setMessage(successMessage);
+      void queryClient.invalidateQueries({ queryKey: financeOverviewQueryKey });
+    } finally {
+      pendingRequestKeys.current.delete(requestKey);
+    }
   }
 
   async function patchJson(url: string, body: Record<string, unknown>, successMessage: string) {
-    setMessage(null);
-    setError(null);
+    const requestKey = getFinanceRequestKey("PATCH", url, body);
 
-    const response = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-
-    if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível atualizar os dados financeiros.");
+    if (pendingRequestKeys.current.has(requestKey)) {
       return;
     }
 
-    setMessage(successMessage);
-    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
+    pendingRequestKeys.current.add(requestKey);
+    setMessage(null);
+    setError(null);
+    setMessage("Atualizando...");
+    const previousData = queryClient.getQueryData<FinanceOverview>(financeOverviewQueryKey);
+
+    try {
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        queryClient.setQueryData(financeOverviewQueryKey, previousData);
+        setMessage(null);
+        setError(payload?.message ?? "Não foi possível atualizar os dados financeiros.");
+        return;
+      }
+
+      setMessage(successMessage);
+      void queryClient.invalidateQueries({ queryKey: financeOverviewQueryKey });
+    } finally {
+      pendingRequestKeys.current.delete(requestKey);
+    }
   }
 
   async function patchApproval(approvalRequestId: string, status: ApprovalStatus) {
-    setMessage(null);
-    setError(null);
+    const requestKey = getFinanceRequestKey("PATCH", `/api/finance/approvals/${approvalRequestId}`, { status });
 
-    const response = await fetch(`/api/finance/approvals/${approvalRequestId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        status
-      })
-    });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-
-    if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível atualizar a aprovação.");
+    if (pendingRequestKeys.current.has(requestKey)) {
       return;
     }
 
-    setMessage(`Aprovação ${status.toLowerCase()}.`);
-    void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
+    pendingRequestKeys.current.add(requestKey);
+    setMessage(null);
+    setError(null);
+    setMessage("Atualizando aprovação...");
+    const previousData = queryClient.getQueryData<FinanceOverview>(financeOverviewQueryKey);
+
+    queryClient.setQueryData<FinanceOverview>(financeOverviewQueryKey, (current: any) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        approvalRequests: current.approvalRequests.map((request: any) => {
+          if (request.id !== approvalRequestId) {
+            return request;
+          }
+
+          return {
+            ...request,
+            status,
+            optimistic: true
+          };
+        })
+      };
+    });
+
+    try {
+      const response = await fetch(`/api/finance/approvals/${approvalRequestId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          status
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        queryClient.setQueryData(financeOverviewQueryKey, previousData);
+        setMessage(null);
+        setError(payload?.message ?? "Não foi possível atualizar a aprovação.");
+        return;
+      }
+
+      setMessage(`Aprovação ${status.toLowerCase()}.`);
+      void queryClient.invalidateQueries({ queryKey: financeOverviewQueryKey });
+    } finally {
+      pendingRequestKeys.current.delete(requestKey);
+    }
   }
 
     let resolvedValue0: any;

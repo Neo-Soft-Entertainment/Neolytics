@@ -2,257 +2,201 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { NeolyticsBrand } from "@/components/brand/neolytics-brand";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+const operatingLayers = [
+  {
+    title: "Mercado",
+    description: "Compare jogos reais, histórico de receita, preço, reviews e janelas de lançamento antes de comprometer produção."
+  },
+  {
+    title: "Projeto",
+    description: "Transforme uma tese em GDD, board, milestones, owners, prioridades e plano de execução dentro do mesmo contexto."
+  },
+  {
+    title: "Operação",
+    description: "Conecte orçamento, contratos, contas a pagar, contas a receber e governança ao portfólio do estúdio."
+  }
+];
+
+const metrics = [
+  { label: "Camada", value: "ERP de estúdio" },
+  { label: "Fonte", value: "Steam + operação" },
+  { label: "Foco", value: "Decisão executável" }
+];
 
 export default async function HomePage() {
   const session = await auth();
+  let primaryHref = "/login";
+  let primaryLabel = "Entrar";
+  let secondaryHref = "/games";
+  let secondaryLabel = "Explorar jogos";
 
-    let resolvedValue0: any;
   if (session) {
-    resolvedValue0 = "/dashboard";
-  } else {
-    resolvedValue0 = "/login";
+    primaryHref = "/dashboard";
+    primaryLabel = "Abrir painel";
+    secondaryHref = "/projects";
+    secondaryLabel = "Abrir projetos";
   }
-  let resolvedValue1: any;
-  if (session) {
-    resolvedValue1 = "Abrir painel";
-  } else {
-    resolvedValue1 = "Entrar";
-  }
-  let resolvedValue2: any;
-  if (session) {
-    resolvedValue2 = "/dashboard";
-  } else {
-    resolvedValue2 = "/login";
-  }
-  let resolvedValue3: any;
-  if (session) {
-    resolvedValue3 = "Abrir painel";
-  } else {
-    resolvedValue3 = "Entrar";
-  }
-  let resolvedValue4: any;
+
+  let signupAction = null;
+
   if (!session) {
-    resolvedValue4 = (
-                <Button asChild size="lg" variant="secondary">
-                  <Link href="/signup">Criar conta</Link>
-                </Button>
-              );
-  } else {
-    resolvedValue4 = null;
+    signupAction = (
+      <Button asChild size="lg" variant="outline">
+        <Link href="/signup">Criar conta</Link>
+      </Button>
+    );
   }
-  let resolvedValue5: any;
-  if (session) {
-    resolvedValue5 = "/projects";
-  } else {
-    resolvedValue5 = "/games";
-  }
-  let resolvedValue6: any;
-  if (session) {
-    resolvedValue6 = "Abrir projetos";
-  } else {
-    resolvedValue6 = "Explorar jogos";
-  }
-return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 hero-grid opacity-50" />
-      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-sky-500/15 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-10 right-20 h-72 w-72 rounded-full bg-sky-300/10 blur-3xl" />
-      <div className="container relative space-y-12 py-12 lg:py-20">
-        <header className="glass-surface animate-rise-in flex flex-col gap-4 rounded-[2rem] px-5 py-4 md:flex-row md:items-center md:justify-between">
+
+  return (
+    <main className="min-h-screen bg-[#07111f] text-slate-50">
+      <section className="border-b border-white/10 bg-[#081625]">
+        <div className="container flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
           <NeolyticsBrand />
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="ghost">
+          <nav className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white">
               <Link href="/games">Jogos</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="text-slate-300 hover:bg-white/10 hover:text-white">
               <Link href="/opportunities">Oportunidades</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href={resolvedValue0}>
-                {resolvedValue1}
-              </Link>
+            <Button asChild>
+              <Link href={primaryHref}>{primaryLabel}</Link>
             </Button>
-          </div>
-        </header>
-        <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
-          <div className="max-w-4xl space-y-6">
-            <span className="glass-surface animate-rise-in inline-flex rounded-full px-3 py-1 text-sm text-muted-foreground">
-              ERP de estúdio com foco em Steam, sistema operacional de mercado e camada de inteligência comercial
-            </span>
-            <div className="space-y-4">
-              <h1 className="animate-rise-in text-5xl font-bold tracking-[-0.07em] sm:text-7xl">
-                Encontre o mercado certo
-                <span className="block bg-gradient-to-r from-cyan-500 via-sky-500 to-sky-300 bg-clip-text text-transparent">
-                  antes de criar o jogo errado.
-                </span>
+          </nav>
+        </div>
+      </section>
+
+      <section className="bg-[#09192a]">
+        <div className="container grid min-h-[calc(100vh-76px)] gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-center lg:py-16">
+          <div className="max-w-4xl space-y-8">
+            <div className="inline-flex rounded-full border border-sky-400/25 bg-sky-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-100">
+              Centro operacional para game studios
+            </div>
+            <div className="space-y-5">
+              <h1 className="max-w-4xl text-4xl font-semibold leading-[1.04] tracking-tight text-white sm:text-6xl">
+                Decida o que construir, financiar e lançar com o estúdio inteiro no mesmo sistema.
               </h1>
-              <p className="animate-rise-in-delay max-w-2xl text-lg leading-8 text-muted-foreground">
-                A Neolytics transforma inteligência da Steam em um sistema operacional de estúdio:
-                pesquise o mercado, valide o conceito, teste o caso de negócio e avance para projetos, financeiro, contratos e operações da empresa sem trocar de contexto.
+              <p className="max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+                Neolytics une inteligência de mercado, execução de projeto e ERP financeiro para transformar sinal comercial em operação real: GDD, board, orçamento, contratos e acompanhamento.
               </p>
             </div>
-            <div className="animate-rise-in-delay flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link href={resolvedValue2}>
-                  {resolvedValue3}
-                </Link>
+                <Link href={primaryHref}>{primaryLabel}</Link>
               </Button>
-              {resolvedValue4}
-              <Button asChild size="lg" variant="outline">
-                <Link href={resolvedValue5}>
-                  {resolvedValue6}
-                </Link>
+              {signupAction}
+              <Button asChild size="lg" variant="secondary">
+                <Link href={secondaryHref}>{secondaryLabel}</Link>
               </Button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-4">
-              <div className="glass-surface animate-rise-in rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Sinal</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Mercado Steam</p>
-              </div>
-              <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Camada</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Sistema operacional</p>
-              </div>
-              <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Saída</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">GDD + quadro</p>
-              </div>
-              <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Modo</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Da pesquisa ao lançamento</p>
-              </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950 p-5 text-slate-50 shadow-[0_30px_60px_rgba(2,6,23,0.24)]">
-                <p className="text-xs uppercase tracking-[0.25em] text-cyan-200/80">Tese operacional</p>
-                <p className="mt-3 text-lg font-semibold">Inteligência comercial deve alimentar produção, financeiro e execução diretamente.</p>
+              {metrics.map((item) => (
+                <div key={item.label} className="rounded-md border border-white/10 bg-white/[0.04] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-[#101b2a] shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div>
+                <p className="text-sm font-semibold text-white">Studio command center</p>
+                <p className="text-xs text-slate-500">Resumo operacional ao vivo</p>
               </div>
-              <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Para quem serve</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Estúdios, publishers, investidores</p>
+              <span className="rounded-full bg-sky-400/15 px-3 py-1 text-xs font-medium text-sky-100">Pro</span>
+            </div>
+            <div className="grid gap-3 p-5">
+              <div className="rounded-md border border-white/10 bg-[#0b1320] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Projeto</p>
+                    <p className="mt-2 text-xl font-semibold text-white">Apex Legends-like market test</p>
+                  </div>
+                  <span className="rounded bg-sky-400 px-2 py-1 text-xs font-semibold text-slate-950">62 oportunidade</span>
+                </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <div className="rounded bg-white/[0.04] p-3">
+                    <p className="text-[11px] text-slate-500">Board</p>
+                    <p className="mt-1 font-semibold">18 cards</p>
+                  </div>
+                  <div className="rounded bg-white/[0.04] p-3">
+                    <p className="text-[11px] text-slate-500">Budget</p>
+                    <p className="mt-1 font-semibold">$128k</p>
+                  </div>
+                  <div className="rounded bg-white/[0.04] p-3">
+                    <p className="text-[11px] text-slate-500">Cash</p>
+                    <p className="mt-1 font-semibold">+24%</p>
+                  </div>
+                </div>
               </div>
-              <div className="glass-surface animate-rise-in-delay rounded-[1.5rem] p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Estilo de decisão</p>
-                <p className="mt-2 text-2xl font-bold tracking-[-0.05em]">Explicável, histórico, prático</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-white/10 bg-[#0b1320] p-4">
+                  <p className="text-sm font-semibold">Sinais de mercado</p>
+                  <div className="mt-4 space-y-3">
+                    <div className="h-2 rounded bg-sky-300" />
+                    <div className="h-2 w-10/12 rounded bg-sky-500/70" />
+                    <div className="h-2 w-7/12 rounded bg-sky-700/70" />
+                  </div>
+                </div>
+                <div className="rounded-md border border-white/10 bg-[#0b1320] p-4">
+                  <p className="text-sm font-semibold">Execução</p>
+                  <div className="mt-4 grid gap-2">
+                    <div className="rounded bg-white/[0.04] px-3 py-2 text-xs text-slate-300">Milestone: Vertical slice</div>
+                    <div className="rounded bg-white/[0.04] px-3 py-2 text-xs text-slate-300">Owner: Production</div>
+                    <div className="rounded bg-white/[0.04] px-3 py-2 text-xs text-slate-300">Risk: pricing gap</div>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-md border border-sky-300/20 bg-sky-300/10 p-4 text-sm leading-6 text-slate-200">
+                Diretriz: validar posicionamento e custo antes de escalar produção.
               </div>
             </div>
           </div>
-          <Card className="animate-rise-in-delay relative overflow-hidden border-white/10 bg-slate-950 text-slate-50 shadow-[0_30px_80px_rgba(15,23,42,0.35)]">
-            <div className="pointer-events-none absolute inset-x-6 top-0 h-px shimmer-divider opacity-80" />
-            <CardHeader>
-              <CardTitle>O que equipes fazem na Neolytics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-slate-300">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="font-medium text-white">1. Dimensionam o mercado</p>
-                <p className="mt-1">Veja volume de avaliações, preço, janela de lançamento e faixas de receita em comparáveis reais da Steam.</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="font-medium text-white">2. Testam a pressão do nicho</p>
-                <p className="mt-1">Compare tags, gêneros e tração para encontrar espaços saturados antes da produção começar.</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="font-medium text-white">3. Montam a lista de acompanhamento</p>
-                <p className="mt-1">Acompanhe lançamentos, líderes de receita e jogos em crescimento em uma única área de trabalho.</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-cyan-500/15 to-sky-300/10 p-4">
-                <p className="font-medium text-white">4. Validam o projeto</p>
-                <p className="mt-1">Transforme um conceito em análise de mercado, GDD automatizado e quadro de entrega customizável.</p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 pt-2 text-center">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Mercado</p>
-                  <p className="mt-2 font-semibold text-white">Sinais</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Projeto</p>
-                  <p className="mt-2 font-semibold text-white">Execução</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">ERP</p>
-                  <p className="mt-2 font-semibold text-white">Operações</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-        <section className="grid gap-4 md:grid-cols-3">
-          <Card className="animate-rise-in bg-white/65 dark:bg-white/[0.03]">
-            <CardHeader>
-              <CardTitle className="text-base">Descoberta de mercado</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Pesquise títulos da Steam, recorte por gênero e tag e avance rapidamente da ideia ampla para um conjunto comparável.
-            </CardContent>
-          </Card>
-          <Card className="animate-rise-in-delay bg-white/65 dark:bg-white/[0.03]">
-            <CardHeader>
-              <CardTitle className="text-base">Estimativas explicáveis</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Modelos de receita e vendas permanecem transparentes, com faixas e confiança em vez de números de caixa-preta.
-            </CardContent>
-          </Card>
-          <Card className="animate-rise-in-delay bg-white/65 dark:bg-white/[0.03]">
-            <CardHeader>
-              <CardTitle className="text-base">Sistema operacional de projetos</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Rode análise de conceito, preencha hipóteses de mercado, gere GDDs, gerencie execução e avance para financeiro e fluxos da empresa em uma área de trabalho.
-            </CardContent>
-          </Card>
-        </section>
-        <section className="grid gap-4 lg:grid-cols-[1.3fr_0.9fr]">
-          <Card className="aurora-panel overflow-hidden border-white/10">
-            <CardHeader>
-              <CardTitle>Por que parece diferente</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/50 p-5 backdrop-blur dark:bg-white/[0.04]">
-                <p className="text-sm font-semibold">Uma cadeia de sinal</p>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  Um insight de mercado pode virar uma tese de projeto, depois um GDD, depois um quadro, depois um orçamento e fluxo da empresa.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/50 p-5 backdrop-blur dark:bg-white/[0.04]">
-                <p className="text-sm font-semibold">Sem chute de caixa-preta</p>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  As estimativas continuam explicáveis, a confiança fica explícita e a equipe consegue rastrear por que o sistema está dizendo o que diz.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden border-white/10 bg-slate-950 text-slate-50">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-80" />
-            <CardHeader>
-              <CardTitle>Construído para decisões sob pressão</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-slate-300">
-              <p>Quando um estúdio está decidindo o que construir, cortar, precificar ou apresentar, a interface precisa ser objetiva, calma e operacional.</p>
-              <p className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white">
-                Essa é a direção do produto: menos enfeite de painel, mais densidade de sinal com melhor gosto.
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-[#07111f] py-14">
+        <div className="container grid gap-4 md:grid-cols-3">
+          {operatingLayers.map((item) => (
+            <article key={item.title} className="rounded-lg border border-white/10 bg-[#0d1827] p-6">
+              <p className="text-lg font-semibold text-white">{item.title}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-400">{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-[#09192a] py-14">
+        <div className="container grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-200">Produto, não template</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-white">Uma interface pública com a mesma linguagem do dashboard.</h2>
+            <p className="text-sm leading-7 text-slate-400">
+              Menos efeitos genéricos, mais superfícies sólidas, dados escaneáveis e decisões visíveis. O site apresenta o mesmo produto que a equipe usa por dentro.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/10 bg-[#101b2a] p-5">
+              <p className="font-semibold text-white">Operacional por padrão</p>
+              <p className="mt-2 text-sm leading-7 text-slate-400">A landing explica como mercado, produção e financeiro conversam sem depender de discurso genérico.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#101b2a] p-5">
+              <p className="font-semibold text-white">Densa sem ruído</p>
+              <p className="mt-2 text-sm leading-7 text-slate-400">O visual privilegia cards simples, bordas sutis, tipografia direta e um preview de produto que parece usável.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-[#101b2a] p-5 sm:col-span-2">
+              <p className="font-semibold text-white">Fluxo completo</p>
+              <p className="mt-2 text-sm leading-7 text-slate-400">
+                Começa em análise de mercado, passa por projeto e termina em operação de estúdio: o argumento comercial vira workflow.
               </p>
-            </CardContent>
-          </Card>
-        </section>
-        <section className="glass-surface grid gap-4 rounded-[2rem] p-6 md:grid-cols-3">
-          <div className="animate-rise-in">
-            <p className="text-sm text-muted-foreground">Construído para</p>
-            <p className="mt-2 text-xl font-semibold">Times indie e publishers</p>
+            </div>
           </div>
-          <div className="animate-rise-in-delay">
-            <p className="text-sm text-muted-foreground">Modelo de dados</p>
-            <p className="mt-2 text-xl font-semibold">Snapshots históricos da Steam</p>
-          </div>
-          <div className="animate-rise-in-delay">
-            <p className="text-sm text-muted-foreground">Saída</p>
-            <p className="mt-2 text-xl font-semibold">Pesquisa, comparação, projetos, relatórios</p>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   );
 }

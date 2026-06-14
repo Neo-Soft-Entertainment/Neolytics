@@ -29,6 +29,7 @@ type DemoStage =
 type DemoDependencyEntityType = DemoElementKind | "PLAYABLE_STEP" | "EMOTIONAL_BEAT" | "BUG" | "BLOCKER";
 type DemoBugSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 type DemoBugStatus = "OPEN" | "IN_REVIEW" | "FIXING" | "RESOLVED" | "IGNORED" | "DEFERRED";
+type DemoMutationInput = { path: string; method: string; body?: unknown };
 
 type DemoPlan = {
   id: string;
@@ -217,6 +218,281 @@ const bugStatusLabels: Record<DemoBugStatus, string> = {
   DEFERRED: "Adiado"
 };
 
+function makeDemoTemporaryId(path: string) {
+  return `optimistic:${path}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+}
+
+function getBodyObject(body: unknown) {
+  if (body && typeof body === "object") {
+    return body as Record<string, any>;
+  }
+
+  return {};
+}
+
+function getLastPathSegment(path: string) {
+  const parts = path.split("/");
+  return parts[parts.length - 1] ?? "";
+}
+
+function updateDemoList<T extends { id: string }>(items: T[], id: string, body: Record<string, any>) {
+  return items.map((item) => {
+    if (item.id !== id) {
+      return item;
+    }
+
+    return {
+      ...item,
+      ...body,
+      optimistic: true
+    };
+  });
+}
+
+function deleteDemoListItem<T extends { id: string }>(items: T[], id: string) {
+  return items.filter((item) => item.id !== id);
+}
+
+function reorderDemoList<T extends { id: string; sortOrder?: number }>(items: T[], orderedIds: string[]) {
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const orderedItems: T[] = [];
+
+  for (const [index, id] of orderedIds.entries()) {
+    const item = itemById.get(id);
+
+    if (!item) {
+      continue;
+    }
+
+    orderedItems.push({
+      ...item,
+      sortOrder: index
+    });
+  }
+
+  return orderedItems;
+}
+
+function applyOptimisticDemoMutation(current: DemoManagerData, mutation: DemoMutationInput) {
+  const body = getBodyObject(mutation.body);
+  const path = mutation.path;
+  const method = mutation.method;
+  const id = getLastPathSegment(path);
+  const optimisticId = makeDemoTemporaryId(path);
+
+  if (path.endsWith("/demo-manager") && method === "PATCH") {
+    return {
+      ...current,
+      plan: {
+        ...current.plan,
+        ...body
+      }
+    };
+  }
+
+  if (path.endsWith("/elements") && method === "POST") {
+    const element = {
+      id: optimisticId,
+      kind: body.kind ?? "MECHANIC",
+      name: body.name ?? "Novo item",
+      description: body.description ?? null,
+      status: body.status ?? "IDEA",
+      priority: body.priority ?? "IMPORTANT",
+      tags: body.tags ?? [],
+      notes: body.notes ?? null,
+      optimistic: true
+    } as DemoElement;
+
+    return {
+      ...current,
+      elements: [element, ...current.elements]
+    };
+  }
+
+  if (path.includes("/elements/") && method === "PATCH") {
+    return {
+      ...current,
+      elements: updateDemoList(current.elements, id, body)
+    };
+  }
+
+  if (path.includes("/elements/") && method === "DELETE") {
+    return {
+      ...current,
+      elements: deleteDemoListItem(current.elements, id)
+    };
+  }
+
+  if (path.endsWith("/playable-steps") && method === "POST") {
+    const step = {
+      id: optimisticId,
+      sortOrder: current.playableSteps.length,
+      title: body.title ?? "Novo passo",
+      description: body.description ?? null,
+      playerAction: body.playerAction ?? null,
+      playerObjective: body.playerObjective ?? null,
+      expectedResult: body.expectedResult ?? null,
+      relatedLocationId: body.relatedLocationId ?? null,
+      relatedCharacterIds: body.relatedCharacterIds ?? [],
+      relatedItemIds: body.relatedItemIds ?? [],
+      relatedMechanicIds: body.relatedMechanicIds ?? [],
+      relatedQuestIds: body.relatedQuestIds ?? [],
+      relatedDialogueIds: body.relatedDialogueIds ?? [],
+      status: body.status ?? "PLANNED",
+      priority: body.priority ?? "IMPORTANT",
+      notes: body.notes ?? null,
+      optimistic: true
+    } as PlayableStep;
+
+    return {
+      ...current,
+      playableSteps: [...current.playableSteps, step]
+    };
+  }
+
+  if (path.includes("/playable-steps/") && method === "PATCH") {
+    return {
+      ...current,
+      playableSteps: updateDemoList(current.playableSteps, id, body)
+    };
+  }
+
+  if (path.includes("/playable-steps/") && method === "DELETE") {
+    return {
+      ...current,
+      playableSteps: deleteDemoListItem(current.playableSteps, id)
+    };
+  }
+
+  if (path.endsWith("/playable-steps/reorder") && method === "PATCH" && Array.isArray(body.orderedIds)) {
+    return {
+      ...current,
+      playableSteps: reorderDemoList(current.playableSteps, body.orderedIds)
+    };
+  }
+
+  if (path.endsWith("/emotional-beats") && method === "POST") {
+    const beat = {
+      id: optimisticId,
+      sortOrder: current.emotionalBeats.length,
+      playableStepId: body.playableStepId ?? null,
+      momentName: body.momentName ?? "Novo beat",
+      desiredEmotion: body.desiredEmotion ?? "Curiosidade",
+      intensity: body.intensity ?? 3,
+      triggerElements: body.triggerElements ?? [],
+      notes: body.notes ?? null,
+      optimistic: true
+    } as EmotionalBeat;
+
+    return {
+      ...current,
+      emotionalBeats: [...current.emotionalBeats, beat]
+    };
+  }
+
+  if (path.includes("/emotional-beats/") && method === "PATCH") {
+    return {
+      ...current,
+      emotionalBeats: updateDemoList(current.emotionalBeats, id, body)
+    };
+  }
+
+  if (path.includes("/emotional-beats/") && method === "DELETE") {
+    return {
+      ...current,
+      emotionalBeats: deleteDemoListItem(current.emotionalBeats, id)
+    };
+  }
+
+  if (path.endsWith("/emotional-beats/reorder") && method === "PATCH" && Array.isArray(body.orderedIds)) {
+    return {
+      ...current,
+      emotionalBeats: reorderDemoList(current.emotionalBeats, body.orderedIds)
+    };
+  }
+
+  if (path.endsWith("/dependencies") && method === "POST") {
+    const dependency = {
+      id: optimisticId,
+      sourceType: body.sourceType,
+      sourceId: body.sourceId,
+      targetType: body.targetType,
+      targetId: body.targetId,
+      dependencyType: body.dependencyType ?? "Requer",
+      description: body.description ?? null,
+      isCritical: Boolean(body.isCritical),
+      optimistic: true
+    } as DemoDependency;
+
+    return {
+      ...current,
+      dependencies: [dependency, ...current.dependencies]
+    };
+  }
+
+  if (path.includes("/dependencies/") && method === "DELETE") {
+    return {
+      ...current,
+      dependencies: deleteDemoListItem(current.dependencies, id)
+    };
+  }
+
+  if (path.endsWith("/bugs") && method === "POST") {
+    const bug = {
+      id: optimisticId,
+      title: body.title ?? "Bug",
+      description: body.description ?? null,
+      severity: body.severity ?? "MEDIUM",
+      status: body.status ?? "OPEN",
+      affectedEntityType: body.affectedEntityType ?? null,
+      affectedEntityId: body.affectedEntityId ?? null,
+      affectedPlayableStepId: body.affectedPlayableStepId ?? null,
+      optimistic: true
+    } as DemoBug;
+
+    return {
+      ...current,
+      bugs: [bug, ...current.bugs]
+    };
+  }
+
+  if (path.includes("/bugs/") && method === "DELETE") {
+    return {
+      ...current,
+      bugs: deleteDemoListItem(current.bugs, id)
+    };
+  }
+
+  if (path.endsWith("/blockers") && method === "POST") {
+    const blocker = {
+      id: optimisticId,
+      title: body.title ?? "Bloqueio",
+      description: body.description ?? null,
+      blockedEntityType: body.blockedEntityType ?? null,
+      blockedEntityId: body.blockedEntityId ?? null,
+      cause: body.cause ?? null,
+      possibleSolution: body.possibleSolution ?? null,
+      status: body.status ?? "OPEN",
+      priority: body.priority ?? "IMPORTANT",
+      optimistic: true
+    } as DemoBlocker;
+
+    return {
+      ...current,
+      blockers: [blocker, ...current.blockers]
+    };
+  }
+
+  if (path.includes("/blockers/") && method === "DELETE") {
+    return {
+      ...current,
+      blockers: deleteDemoListItem(current.blockers, id)
+    };
+  }
+
+  return current;
+}
+
 export function DemoManagerPageClient({
   projectId: fixedProjectId,
   sections: visibleSections = sections,
@@ -251,7 +527,7 @@ export function DemoManagerPageClient({
   });
 
   const mutation = useMutation({
-    mutationFn: async ({ path, method, body }: { path: string; method: string; body?: unknown }) =>
+    mutationFn: async ({ path, method, body }: DemoMutationInput) =>
       {
       let resolvedValue0: any;
       if (body) {
@@ -264,7 +540,30 @@ export function DemoManagerPageClient({
         body: resolvedValue0
       });
     },
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: ["demo-manager", projectId] });
+      const previousData = queryClient.getQueryData<DemoManagerData>(["demo-manager", projectId]);
+
+      queryClient.setQueryData<DemoManagerData>(["demo-manager", projectId], (current: any) => {
+        if (!current) {
+          return current;
+        }
+
+        return applyOptimisticDemoMutation(current, variables);
+      });
+
+      return {
+        previousData
+      };
+    },
+    onError: (_error, _variables, context) => {
+      if (!context?.previousData) {
+        return;
+      }
+
+      queryClient.setQueryData(["demo-manager", projectId], context.previousData);
+    },
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ["demo-manager", projectId] });
     }
   });
