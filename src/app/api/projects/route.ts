@@ -7,6 +7,7 @@ import { canWriteOrganization } from "@/lib/authorization";
 import { EntitlementError, entitlementErrorResponse } from "@/lib/entitlements";
 import { createProject, listProjects } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
+import { invalidateServerCache, readServerCache } from "@/lib/server-memory-cache";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
@@ -32,7 +33,13 @@ export async function GET() {
     return unauthorized();
   }
 
-  return ok(await listProjects(context.workspace.id));
+  const projects = await readServerCache(
+    `projects:list:${context.workspace.id}`,
+    1000 * 60,
+    () => listProjects(context.workspace.id)
+  );
+
+  return ok(projects);
 }
 
 export async function POST(request: Request) {
@@ -56,6 +63,7 @@ export async function POST(request: Request) {
       stage: body.stage
     });
 
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
     return ok(project, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

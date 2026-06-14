@@ -7,6 +7,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { updateApprovalRequest } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   status: z.nativeEnum(ApprovalStatus),
@@ -38,6 +39,7 @@ export async function PATCH(
       decisionNotes: body.decisionNotes
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(approval);
   } catch (error) {
     if (error instanceof z.ZodError) {

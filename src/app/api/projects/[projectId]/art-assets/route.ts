@@ -4,6 +4,7 @@ import { canWriteOrganization } from "@/lib/authorization";
 import { EntitlementError, entitlementErrorResponse } from "@/lib/entitlements";
 import { uploadProjectArtAsset } from "@/lib/project-service";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 export async function POST(
   request: Request,
@@ -37,6 +38,8 @@ export async function POST(
       notes: String(formData.get("notes") ?? "")
     });
 
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
+    invalidateServerCache(`projects:detail:${context.workspace.id}:${projectId}`);
     return ok(asset, { status: 201 });
   } catch (error) {
     if (error instanceof EntitlementError) {

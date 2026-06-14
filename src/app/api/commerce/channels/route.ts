@@ -7,6 +7,7 @@ import { canManageCommerce } from "@/lib/authorization";
 import { createCommerceChannel } from "@/lib/commerce-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       notes: body.notes
     });
 
+    invalidateServerCache(`commerce:overview:${context.organizationId}`);
     return ok(channel, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

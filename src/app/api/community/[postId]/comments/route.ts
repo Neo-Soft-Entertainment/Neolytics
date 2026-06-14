@@ -6,6 +6,7 @@ import { canWriteOrganization } from "@/lib/authorization";
 import { createCommunityPostComment } from "@/lib/community-service";
 import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { parseJsonBody } from "@/lib/request";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
@@ -39,6 +40,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
       content: body.content
     });
 
+    invalidateServerCache(`community:${context.organizationId}:`);
     return ok(comment, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

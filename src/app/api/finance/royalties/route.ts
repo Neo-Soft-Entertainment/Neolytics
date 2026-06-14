@@ -7,6 +7,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { createRoyaltyAgreement } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   projectId: z.string().optional(),
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
       notes: body.notes
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(agreement, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

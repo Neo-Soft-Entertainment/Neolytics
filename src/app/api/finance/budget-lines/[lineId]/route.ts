@@ -6,6 +6,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { updateBudgetLine } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const optionalDate = z.preprocess((value) => {
   if (!value) {
@@ -55,6 +56,7 @@ export async function PATCH(
       paidAt: body.paidAt
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(line);
   } catch (error) {
     if (error instanceof z.ZodError) {

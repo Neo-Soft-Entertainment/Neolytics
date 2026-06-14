@@ -7,6 +7,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { updateRevenueEntry } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   projectId: z.string().optional(),
@@ -52,6 +53,7 @@ export async function PATCH(
       notes: body.notes
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(entry);
   } catch (error) {
     if (error instanceof z.ZodError) {

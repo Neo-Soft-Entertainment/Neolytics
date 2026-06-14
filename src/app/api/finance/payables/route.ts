@@ -6,6 +6,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { createPayableTitle } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const allocationSchema = z.object({
   costCenterId: z.string().min(1),
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       allocations: body.allocations
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(title, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

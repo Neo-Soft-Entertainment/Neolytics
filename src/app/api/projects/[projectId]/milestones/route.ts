@@ -7,6 +7,7 @@ import { createProjectMilestone } from "@/lib/finance-service";
 import { getProjectById } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const optionalDate = z.preprocess((value) => {
   if (!value) {
@@ -54,6 +55,8 @@ export async function POST(
     });
 
     const project = await getProjectById(projectId, context.workspace.id);
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
+    invalidateServerCache(`projects:detail:${context.workspace.id}:${projectId}`);
     return ok(project);
   } catch (error) {
     if (error instanceof z.ZodError) {

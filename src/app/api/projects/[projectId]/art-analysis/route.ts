@@ -3,6 +3,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { EntitlementError, entitlementErrorResponse } from "@/lib/entitlements";
 import { analyzeProjectArt } from "@/lib/project-service";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 export async function POST(
@@ -28,6 +29,8 @@ export async function POST(
       return notFound("Projeto não encontrado.");
     }
 
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
+    invalidateServerCache(`projects:detail:${context.workspace.id}:${projectId}`);
     return ok(project);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {

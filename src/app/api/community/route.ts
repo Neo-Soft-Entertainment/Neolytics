@@ -7,6 +7,7 @@ import { canManageCommunity, canWriteOrganization } from "@/lib/authorization";
 import { createCommunityPost, getCommunityRanking, listCommunityFeed } from "@/lib/community-service";
 import { EntitlementError, assertCanUseFeature, entitlementErrorResponse } from "@/lib/entitlements";
 import { parseJsonBody } from "@/lib/request";
+import { invalidateServerCache, readServerCache } from "@/lib/server-memory-cache";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
@@ -69,19 +70,32 @@ export async function GET(request: Request) {
     await assertCanUseFeature(entitlementContext, "communityRanking");
 
     const scopeParam = new URL(request.url).searchParams.get("scope");
-    const scope = scopeParam === CommunityPostScope.GLOBAL ? CommunityPostScope.GLOBAL : CommunityPostScope.ORGANIZATION;
-    const [feed, ranking] = await Promise.all([
-      listCommunityFeed(context.organizationId, context.userId, scope),
-      getCommunityRanking(context.organizationId, scope)
-    ]);
+    let scope: CommunityPostScope = CommunityPostScope.ORGANIZATION;
 
-    return ok({
-      feed: feed.map((post) => ({
-        ...post,
-        canDelete: post.authorId === context.userId || canManageCommunity(context.organizationRole, context.organizationPermissions)
-      })),
-      ranking
-    });
+    if (scopeParam === CommunityPostScope.GLOBAL) {
+      scope = CommunityPostScope.GLOBAL;
+    }
+
+    const response = await readServerCache(
+      `community:${context.organizationId}:${context.userId}:${scope}`,
+      1000 * 30,
+      async () => {
+        const [feed, ranking] = await Promise.all([
+          listCommunityFeed(context.organizationId, context.userId, scope),
+          getCommunityRanking(context.organizationId, scope)
+        ]);
+
+        return {
+          feed: feed.map((post) => ({
+            ...post,
+            canDelete: post.authorId === context.userId || canManageCommunity(context.organizationRole, context.organizationPermissions)
+          })),
+          ranking
+        };
+      }
+    );
+
+    return ok(response);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
@@ -129,6 +143,7 @@ export async function POST(request: Request) {
       mediaFiles
     });
 
+    invalidateServerCache(`community:${context.organizationId}:`);
     return ok(post, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

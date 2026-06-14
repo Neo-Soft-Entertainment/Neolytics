@@ -15,6 +15,7 @@ import {
   updateKanbanColumn
 } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.discriminatedUnion("type", [
   z.object({
@@ -75,6 +76,11 @@ const schema = z.discriminatedUnion("type", [
   })
 ]);
 
+function invalidateProjectReadCaches(workspaceId: string, projectId: string) {
+  invalidateServerCache(`projects:list:${workspaceId}`);
+  invalidateServerCache(`projects:detail:${workspaceId}:${projectId}`);
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> }
@@ -94,83 +100,119 @@ export async function PATCH(
     const { projectId } = await params;
 
     if (body.type === "createColumn") {
-      return ok(await createKanbanColumn({
+      const project = await createKanbanColumn({
         projectId,
         workspaceId: context.workspace.id,
         name: body.name,
         color: body.color
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "updateColumn") {
-      return ok(await updateKanbanColumn({
+      const project = await updateKanbanColumn({
         projectId,
         workspaceId: context.workspace.id,
         columnId: body.columnId,
         name: body.name,
         color: body.color,
         sortOrder: body.sortOrder
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "createCard") {
-      return ok(await createKanbanCard({
+      let dueDate: Date | null = null;
+
+      if (body.dueDate) {
+        dueDate = new Date(body.dueDate);
+      }
+
+      const project = await createKanbanCard({
         projectId,
         workspaceId: context.workspace.id,
         columnId: body.columnId,
         title: body.title,
         description: body.description,
         assigneeLabel: body.assigneeLabel,
-        dueDate: body.dueDate ? new Date(body.dueDate) : null,
+        dueDate,
         labels: body.labels
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "moveColumn") {
-      return ok(await moveKanbanColumn({
+      const project = await moveKanbanColumn({
         projectId,
         workspaceId: context.workspace.id,
         columnId: body.columnId,
         direction: body.direction
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "deleteColumn") {
-      return ok(await deleteKanbanColumn({
+      const project = await deleteKanbanColumn({
         projectId,
         workspaceId: context.workspace.id,
         columnId: body.columnId
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "moveCard") {
-      return ok(await moveKanbanCard({
+      const project = await moveKanbanCard({
         projectId,
         workspaceId: context.workspace.id,
         cardId: body.cardId,
         direction: body.direction
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "deleteCard") {
-      return ok(await deleteKanbanCard({
+      const project = await deleteKanbanCard({
         projectId,
         workspaceId: context.workspace.id,
         cardId: body.cardId
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
     if (body.type === "reorderCard") {
-      return ok(await reorderKanbanCard({
+      const project = await reorderKanbanCard({
         projectId,
         workspaceId: context.workspace.id,
         cardId: body.cardId,
         columnId: body.columnId,
         targetIndex: body.targetIndex
-      }));
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
     }
 
-    return ok(await updateKanbanCard({
+    let dueDate: Date | null = null;
+
+    if (body.dueDate) {
+      dueDate = new Date(body.dueDate);
+    }
+
+    const project = await updateKanbanCard({
       projectId,
       workspaceId: context.workspace.id,
       cardId: body.cardId,
@@ -178,10 +220,13 @@ export async function PATCH(
       title: body.title,
       description: body.description,
       assigneeLabel: body.assigneeLabel,
-      dueDate: body.dueDate ? new Date(body.dueDate) : null,
+      dueDate,
       sortOrder: body.sortOrder,
       labels: body.labels
-    }));
+    });
+
+    invalidateProjectReadCaches(context.workspace.id, projectId);
+    return ok(project);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return badRequest(error.issues[0]?.message ?? "Invalid kanban payload.");

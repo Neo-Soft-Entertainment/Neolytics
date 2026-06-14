@@ -3,6 +3,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { deleteProjectArtAsset } from "@/lib/project-service";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 export async function DELETE(
   request: Request,
@@ -27,6 +28,8 @@ export async function DELETE(
       workspaceId: context.workspace.id
     });
 
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
+    invalidateServerCache(`projects:detail:${context.workspace.id}:${projectId}`);
     return ok(result);
   } catch (error) {
     return serverError(getErrorMessage(error, "Não foi possível excluir o asset de arte."));

@@ -2,6 +2,7 @@ import { badRequest, forbidden, ok, serverError, unauthorized } from "@/lib/api-
 import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCommunity } from "@/lib/authorization";
 import { deleteCommunityPost } from "@/lib/community-service";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 export async function DELETE(
@@ -24,6 +25,7 @@ export async function DELETE(
       canManage: canManageCommunity(context.organizationRole, context.organizationPermissions)
     });
 
+    invalidateServerCache(`community:${context.organizationId}:`);
     return ok(result);
   } catch (error) {
     if (error instanceof SubscriptionLimitError) {

@@ -7,6 +7,7 @@ import { canManageFinance } from "@/lib/authorization";
 import { createPayablePayment } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
+import { invalidateServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   paymentType: z.nativeEnum(PayablePaymentType),
@@ -52,6 +53,7 @@ export async function POST(
       amountPaidCents: body.amountPaidCents
     });
 
+    invalidateServerCache(`finance:overview:${context.organizationId}`);
     return ok(payment, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

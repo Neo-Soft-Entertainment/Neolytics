@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { getProjectById, updateProject } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
+import { invalidateServerCache, readServerCache } from "@/lib/server-memory-cache";
 
 const schema = z.object({
   name: z.string().min(2).optional(),
@@ -35,7 +36,11 @@ export async function GET(
   }
 
   const { projectId } = await params;
-  const project = await getProjectById(projectId, context.workspace.id);
+  const project = await readServerCache(
+    `projects:detail:${context.workspace.id}:${projectId}`,
+    1000 * 30,
+    () => getProjectById(projectId, context.workspace.id)
+  );
 
   if (!project) {
     return notFound("Projeto não encontrado.");
@@ -67,6 +72,8 @@ export async function PATCH(
       ...body
     });
 
+    invalidateServerCache(`projects:list:${context.workspace.id}`);
+    invalidateServerCache(`projects:detail:${context.workspace.id}:${projectId}`);
     return ok(project);
   } catch (error) {
     if (error instanceof z.ZodError) {
