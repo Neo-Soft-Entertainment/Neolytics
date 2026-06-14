@@ -111,7 +111,7 @@ export function ProjectsPageClient() {
                     <p className="text-sm text-muted-foreground">{project.elevatorPitch || t("projects.noPitchYet")}</p>
                   </div>
                   <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs font-medium text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                    {project.stage.replaceAll("_", " ")}
+                    {(project.stage ?? "DISCOVERY").replaceAll("_", " ")}
                   </span>
                 </CardHeader>
                 <CardContent className="grid gap-3 md:grid-cols-3">

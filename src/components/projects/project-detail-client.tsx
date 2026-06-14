@@ -136,7 +136,7 @@ export function ProjectDetailClient({
       artDirection: query.data.artDirection ?? "",
       playerFantasy: query.data.playerFantasy ?? "",
       pricePointCents: query.data.pricePointCents ? String(query.data.pricePointCents) : "",
-      stage: query.data.stage
+      stage: query.data.stage ?? "DISCOVERY"
     });
 
     const nextCardEdits: Record<string, {
@@ -517,6 +517,7 @@ export function ProjectDetailClient({
 
   const project = {
     ...query.data,
+    stage: query.data.stage ?? "DISCOVERY",
     assigneeOptions: query.data.assigneeOptions ?? [],
     gdds: query.data.gdds ?? [],
     milestones: query.data.milestones ?? [],
@@ -527,7 +528,12 @@ export function ProjectDetailClient({
     revenueEntries: query.data.revenueEntries ?? [],
     expenseEntries: query.data.expenseEntries ?? [],
     approvalRequests: query.data.approvalRequests ?? [],
-    artAssets: query.data.artAssets ?? [],
+    artAssets: (query.data.artAssets ?? []).map((asset) => ({
+      ...asset,
+      kind: asset.kind ?? "asset",
+      originalName: asset.originalName ?? "Asset",
+      sizeBytes: asset.sizeBytes ?? 0
+    })),
     competitorGames: (query.data.competitorGames ?? []).filter((item) => item?.steamGame).map((item) => ({
       ...item,
       steamGame: {
@@ -653,7 +659,7 @@ export function ProjectDetailClient({
           <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("projectDetail.stageLabel")}</span>
-              <span className="font-medium">{project.stage.replaceAll("_", " ")}</span>
+              <span className="font-medium">{(project.stage ?? "DISCOVERY").replaceAll("_", " ")}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("projectDetail.milestonesLabel")}</span>
@@ -1245,7 +1251,7 @@ export function ProjectDetailClient({
                           <div className="space-y-2 p-4 text-sm">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="font-medium">{asset.kind.replaceAll("_", " ")}</p>
+                                <p className="font-medium">{(asset.kind ?? "asset").replaceAll("_", " ")}</p>
                                 <p className="text-muted-foreground">{asset.originalName}</p>
                               </div>
                               <Button size="sm" variant="ghost" onClick={() => deleteArtAsset(asset.id)}>
