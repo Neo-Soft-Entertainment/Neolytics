@@ -1,7 +1,7 @@
 "use client";
 
 import { SubscriptionPlan } from "@prisma/client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
@@ -16,79 +16,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { ProjectKanbanBoard } from "@/components/projects/project-kanban-board";
 import { DemoManagerPageClient } from "@/features/demo-manager/demo-manager-page-client";
 import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
+import { ProjectAssigneeSelect } from "@/features/projects/components/project-assignee-select";
+import { ProjectOverviewForm } from "@/features/projects/components/project-overview-form";
 import { useProject } from "@/features/projects/hooks";
+import {
+  createProjectKanbanCard,
+  createProjectKanbanColumn,
+  createProjectMilestone,
+  deleteProjectArtAsset,
+  deleteProjectKanbanCard,
+  deleteProjectKanbanColumn,
+  generateProjectGdd,
+  moveProjectKanbanCard,
+  moveProjectKanbanCardInColumn,
+  moveProjectKanbanColumn,
+  reorderProjectKanbanCard,
+  runProjectAnalysis,
+  runProjectArtAnalysis,
+  saveProjectKanbanCard,
+  updateProjectKanbanColumn,
+  saveProjectMilestone,
+  saveProjectOverview,
+  uploadProjectArtAsset
+} from "@/features/projects/services/project-detail-api";
+import type { ProjectOverviewFormState } from "@/features/projects/types";
 import { getLimitLabel } from "@/lib/subscription-plans";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
-
-const stageOptions = [
-  "DISCOVERY",
-  "PRE_PRODUCTION",
-  "PRODUCTION",
-  "LIVE",
-  "ARCHIVED"
-] as const;
-
-function ProjectDescriptionEditor({
-  value,
-  onChange
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const textarea = textareaRef.current;
-
-    if (!textarea) {
-      return;
-    }
-
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.max(textarea.scrollHeight, 560)}px`;
-  }, [value]);
-
-  function insertText(before: string, after = "", fallback = "") {
-    const textarea = textareaRef.current;
-
-    if (!textarea) {
-      onChange(`${value}${before}${fallback}${after}`);
-      return;
-    }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = value.slice(start, end) || fallback;
-    const nextValue = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`;
-    const cursor = start + before.length + selected.length + after.length;
-
-    onChange(nextValue);
-    requestAnimationFrame(() => {
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg border bg-background">
-      <div className="flex flex-wrap items-center gap-2 border-b bg-muted/30 px-3 py-2">
-        <Button type="button" size="sm" variant="outline" onClick={() => insertText("# ", "", "Título")}>
-          Título
-        </Button>
-        <Button type="button" size="sm" variant="outline" onClick={() => insertText("**", "**", "texto em negrito")}>
-          Negrito
-        </Button>
-      </div>
-      <Textarea
-        ref={textareaRef}
-        className="min-h-[560px] resize-none rounded-none border-0 bg-transparent px-5 py-5 text-base leading-7 shadow-none focus-visible:ring-0"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={"# Visão do negócio\n\nEscreva livremente. Use **negrito** para decisões importantes, riscos e critérios."}
-      />
-    </div>
-  );
-}
 
 export function ProjectDetailClient({
   projectId,
@@ -107,7 +60,7 @@ export function ProjectDetailClient({
   const [isAnalyzingArt, setIsAnalyzingArt] = useState(false);
   const [isUploadingArtAsset, setIsUploadingArtAsset] = useState(false);
   const [isGeneratingGdd, setIsGeneratingGdd] = useState(false);
-  const [projectForm, setProjectForm] = useState({
+  const [projectForm, setProjectForm] = useState<ProjectOverviewFormState>({
     name: "",
     elevatorPitch: "",
     description: "",
@@ -246,27 +199,18 @@ export function ProjectDetailClient({
   const viabilityLimit = entitlements.getLimit("viabilityAnalysesPerMonth");
   const artLimit = entitlements.getLimit("artAnalysesPerMonth");
   const gddLimit = entitlements.getLimit("gdds");
+  const assigneeOptions = query.data?.assigneeOptions ?? [];
 
   async function saveProject() {
     setFeedback(null);
     setIsSaving(true);
 
-    const response = await fetch(`/api/projects/${projectId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        ...projectForm,
-        pricePointCents: projectForm.pricePointCents ? Number(projectForm.pricePointCents) : null
-      })
-    });
+    const result = await saveProjectOverview(projectId, projectForm);
 
     setIsSaving(false);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.saveProjectError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.saveProjectError"));
       return;
     }
 
@@ -278,15 +222,12 @@ export function ProjectDetailClient({
     setFeedback(null);
     setIsAnalyzing(true);
 
-    const response = await fetch(`/api/projects/${projectId}/analysis`, {
-      method: "POST"
-    });
+    const result = await runProjectAnalysis(projectId);
 
     setIsAnalyzing(false);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.analyzeProjectError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.analyzeProjectError"));
       return;
     }
 
@@ -298,15 +239,12 @@ export function ProjectDetailClient({
     setFeedback(null);
     setIsGeneratingGdd(true);
 
-    const response = await fetch(`/api/projects/${projectId}/gdd`, {
-      method: "POST"
-    });
+    const result = await generateProjectGdd(projectId);
 
     setIsGeneratingGdd(false);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.generateGddError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.generateGddError"));
       return;
     }
 
@@ -318,15 +256,12 @@ export function ProjectDetailClient({
     setFeedback(null);
     setIsAnalyzingArt(true);
 
-    const response = await fetch(`/api/projects/${projectId}/art-analysis`, {
-      method: "POST"
-    });
+    const result = await runProjectArtAnalysis(projectId);
 
     setIsAnalyzingArt(false);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.artAnalysisError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.artAnalysisError"));
       return;
     }
 
@@ -347,21 +282,12 @@ export function ProjectDetailClient({
     }
 
     setIsUploadingArtAsset(true);
-    const payload = new FormData();
-    payload.append("file", file);
-    payload.append("kind", artAssetForm.kind);
-    payload.append("notes", artAssetForm.notes);
-
-    const response = await fetch(`/api/projects/${projectId}/art-assets`, {
-      method: "POST",
-      body: payload
-    });
+    const result = await uploadProjectArtAsset(projectId, file, artAssetForm.kind, artAssetForm.notes);
 
     setIsUploadingArtAsset(false);
 
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(errorPayload?.message ?? "Não foi possível enviar o asset de arte.");
+    if (!result.ok) {
+      setFeedback(result.message ?? "Não foi possível enviar o asset de arte.");
       return;
     }
 
@@ -376,13 +302,10 @@ export function ProjectDetailClient({
   async function deleteArtAsset(assetId: string) {
     setFeedback(null);
 
-    const response = await fetch(`/api/projects/${projectId}/art-assets/${assetId}`, {
-      method: "DELETE"
-    });
+    const result = await deleteProjectArtAsset(projectId, assetId);
 
-    if (!response.ok) {
-      const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(errorPayload?.message ?? "Não foi possível excluir o asset de arte.");
+    if (!result.ok) {
+      setFeedback(result.message ?? "Não foi possível excluir o asset de arte.");
       return;
     }
 
@@ -393,25 +316,10 @@ export function ProjectDetailClient({
   async function createMilestone() {
     setFeedback(null);
 
-    const response = await fetch(`/api/projects/${projectId}/milestones`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: newMilestone.title,
-        description: newMilestone.description,
-        ownerLabel: newMilestone.ownerLabel,
-        status: newMilestone.status,
-        dueAt: newMilestone.dueAt ? new Date(newMilestone.dueAt).toISOString() : undefined,
-        budgetedCostCents: Number(newMilestone.budgetedCostCents || 0),
-        expectedRevenueCents: Number(newMilestone.expectedRevenueCents || 0)
-      })
-    });
+    const result = await createProjectMilestone(projectId, newMilestone);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.createMilestoneError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.createMilestoneError"));
       return;
     }
 
@@ -436,25 +344,10 @@ export function ProjectDetailClient({
       return;
     }
 
-    const response = await fetch(`/api/projects/${projectId}/milestones/${milestoneId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: milestone.title,
-        description: milestone.description,
-        ownerLabel: milestone.ownerLabel,
-        status: milestone.status,
-        dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString() : undefined,
-        budgetedCostCents: Number(milestone.budgetedCostCents || 0),
-        expectedRevenueCents: Number(milestone.expectedRevenueCents || 0)
-      })
-    });
+    const result = await saveProjectMilestone(projectId, milestoneId, milestone);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.saveMilestoneError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.saveMilestoneError"));
       return;
     }
 
@@ -465,21 +358,10 @@ export function ProjectDetailClient({
   async function createColumn() {
     setFeedback(null);
 
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "createColumn",
-        name: newColumn.name,
-        color: newColumn.color
-      })
-    });
+    const result = await createProjectKanbanColumn(projectId, newColumn.name, newColumn.color);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.createColumnError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.createColumnError"));
       return;
     }
 
@@ -489,23 +371,10 @@ export function ProjectDetailClient({
   }
 
   async function updateColumn(columnId: string, name: string, color: string | null, sortOrder: number) {
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "updateColumn",
-        columnId,
-        name,
-        color,
-        sortOrder
-      })
-    });
+    const result = await updateProjectKanbanColumn(projectId, columnId, name, color, sortOrder);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.updateColumnError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.updateColumnError"));
       return;
     }
 
@@ -521,28 +390,10 @@ export function ProjectDetailClient({
       return;
     }
 
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "createCard",
-        columnId,
-        title: cardState.title,
-        description: cardState.description,
-        assigneeLabel: cardState.assigneeLabel,
-        dueDate: cardState.dueDate ? new Date(cardState.dueDate).toISOString() : undefined,
-        labels: cardState.labels
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      })
-    });
+    const result = await createProjectKanbanCard(projectId, columnId, cardState);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.createCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.createCardError"));
       return;
     }
 
@@ -568,29 +419,10 @@ export function ProjectDetailClient({
       return;
     }
 
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "updateCard",
-        cardId,
-        title: cardState.title,
-        columnId: cardState.columnId,
-        description: cardState.description,
-        assigneeLabel: cardState.assigneeLabel,
-        dueDate: cardState.dueDate ? new Date(cardState.dueDate).toISOString() : null,
-        labels: cardState.labels
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      })
-    });
+    const result = await saveProjectKanbanCard(projectId, cardId, cardState);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.saveCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.saveCardError"));
       return;
     }
 
@@ -599,21 +431,10 @@ export function ProjectDetailClient({
   }
 
   async function moveCard(cardId: string, columnId: string) {
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "updateCard",
-        cardId,
-        columnId
-      })
-    });
+    const result = await moveProjectKanbanCard(projectId, cardId, columnId);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
@@ -621,21 +442,10 @@ export function ProjectDetailClient({
   }
 
   async function moveCardInColumn(cardId: string, direction: "up" | "down") {
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "moveCard",
-        cardId,
-        direction
-      })
-    });
+    const result = await moveProjectKanbanCardInColumn(projectId, cardId, direction);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
@@ -643,22 +453,10 @@ export function ProjectDetailClient({
   }
 
   async function reorderCard(cardId: string, columnId: string, targetIndex: number) {
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "reorderCard",
-        cardId,
-        columnId,
-        targetIndex
-      })
-    });
+    const result = await reorderProjectKanbanCard(projectId, cardId, columnId, targetIndex);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.moveCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
@@ -672,20 +470,10 @@ export function ProjectDetailClient({
       return;
     }
 
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "deleteCard",
-        cardId
-      })
-    });
+    const result = await deleteProjectKanbanCard(projectId, cardId);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.deleteCardError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.deleteCardError"));
       return;
     }
 
@@ -694,21 +482,10 @@ export function ProjectDetailClient({
   }
 
   async function moveColumn(columnId: string, direction: "left" | "right") {
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "moveColumn",
-        columnId,
-        direction
-      })
-    });
+    const result = await moveProjectKanbanColumn(projectId, columnId, direction);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.moveColumnError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.moveColumnError"));
       return;
     }
 
@@ -722,20 +499,10 @@ export function ProjectDetailClient({
       return;
     }
 
-    const response = await fetch(`/api/projects/${projectId}/kanban`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        type: "deleteColumn",
-        columnId
-      })
-    });
+    const result = await deleteProjectKanbanColumn(projectId, columnId);
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? t("projectDetail.deleteColumnError"));
+    if (!result.ok) {
+      setFeedback(result.message ?? t("projectDetail.deleteColumnError"));
       return;
     }
 
@@ -867,82 +634,14 @@ export function ProjectDetailClient({
           {t("projectDetail.sectionsHelp")}
         </p>
         <TabsContent value="overview" className="space-y-6">
-          <Card className="overflow-hidden">
-            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-            <CardHeader>
-              <CardTitle>Definição do projeto</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-5 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="detail-name">Nome do projeto</Label>
-                <Input id="detail-name" value={projectForm.name} onChange={(event) => setProjectForm((current) => ({ ...current, name: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Estágio</Label>
-                <Select value={projectForm.stage} onValueChange={(value) => setProjectForm((current) => ({ ...current, stage: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stageOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option.replaceAll("_", " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-genres">Gêneros</Label>
-                <Input id="detail-genres" value={projectForm.genreInput} onChange={(event) => setProjectForm((current) => ({ ...current, genreInput: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-tags">Tags</Label>
-                <Input id="detail-tags" value={projectForm.tagInput} onChange={(event) => setProjectForm((current) => ({ ...current, tagInput: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-monetization">Monetização</Label>
-                <Input id="detail-monetization" value={projectForm.monetizationModel} onChange={(event) => setProjectForm((current) => ({ ...current, monetizationModel: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-price">Preço alvo (centavos)</Label>
-                <Input id="detail-price" value={projectForm.pricePointCents} onChange={(event) => setProjectForm((current) => ({ ...current, pricePointCents: event.target.value }))} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-pitch">Pitch curto</Label>
-                <Textarea id="detail-pitch" className="min-h-24" value={projectForm.elevatorPitch} onChange={(event) => setProjectForm((current) => ({ ...current, elevatorPitch: event.target.value }))} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Descrição do negócio</Label>
-                <ProjectDescriptionEditor value={projectForm.description} onChange={(description) => setProjectForm((current) => ({ ...current, description }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-audience">Público-alvo</Label>
-                <Textarea id="detail-audience" value={projectForm.targetAudience} onChange={(event) => setProjectForm((current) => ({ ...current, targetAudience: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-core-loop">Loop principal</Label>
-                <Textarea id="detail-core-loop" value={projectForm.coreLoop} onChange={(event) => setProjectForm((current) => ({ ...current, coreLoop: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-differentiator">Diferencial</Label>
-                <Textarea id="detail-differentiator" value={projectForm.differentiator} onChange={(event) => setProjectForm((current) => ({ ...current, differentiator: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-fantasy">Fantasia do jogador</Label>
-                <Textarea id="detail-fantasy" value={projectForm.playerFantasy} onChange={(event) => setProjectForm((current) => ({ ...current, playerFantasy: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-art">Direção de arte</Label>
-                <Input id="detail-art" value={projectForm.artDirection} onChange={(event) => setProjectForm((current) => ({ ...current, artDirection: event.target.value }))} />
-              </div>
-              <div className="md:col-span-2">
-                <Button disabled={isSaving} onClick={saveProject}>
-                  {isSaving ? t("projectDetail.saving") : t("projectDetail.saveProject")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ProjectOverviewForm
+            form={projectForm}
+            isSaving={isSaving}
+            savingLabel={t("projectDetail.saving")}
+            saveLabel={t("projectDetail.saveProject")}
+            onChange={setProjectForm}
+            onSave={saveProject}
+          />
           <DemoManagerPageClient
             projectId={projectId}
             sections={["Overview", "Etapa Atual", "Prioridades", "Exportar / Importar"]}
@@ -1863,7 +1562,7 @@ export function ProjectDetailClient({
               moveCardInColumn={moveCardInColumn}
               deleteCard={deleteCard}
               reorderCard={reorderCard}
-              assigneeOptions={project.assigneeOptions}
+              assigneeOptions={assigneeOptions}
             />
           ) : (
             <>
@@ -1913,17 +1612,11 @@ export function ProjectDetailClient({
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
-                  <Select value={newMilestone.ownerLabel || "none"} onValueChange={(value) => setNewMilestone((current) => ({ ...current, ownerLabel: value === "none" ? "" : value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Responsável" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem responsável</SelectItem>
-                      {project.assigneeOptions.map((option) => (
-                        <SelectItem key={option.id} value={option.label}>{option.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ProjectAssigneeSelect
+                    value={newMilestone.ownerLabel}
+                    onChange={(ownerLabel) => setNewMilestone((current) => ({ ...current, ownerLabel }))}
+                    assigneeOptions={assigneeOptions}
+                  />
                   <Select value={newMilestone.status} onValueChange={(value) => setNewMilestone((current) => ({ ...current, status: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -1968,31 +1661,22 @@ export function ProjectDetailClient({
                               }
                             }))}
                           />
-                          <Select
-                            value={(milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "") || "none"}
-                            onValueChange={(value) => setMilestoneEdits((current) => ({
+                          <ProjectAssigneeSelect
+                            value={milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? ""}
+                            onChange={(ownerLabel) => setMilestoneEdits((current) => ({
                               ...current,
                               [milestone.id]: {
                                 title: current[milestone.id]?.title ?? milestone.title,
                                 description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: value === "none" ? "" : value,
+                                ownerLabel,
                                 status: current[milestone.id]?.status ?? milestone.status,
                                 dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
                                 budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
                                 expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
                               }
                             }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Responsável" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Sem responsável</SelectItem>
-                              {project.assigneeOptions.map((option) => (
-                                <SelectItem key={option.id} value={option.label}>{option.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            assigneeOptions={assigneeOptions}
+                          />
                           <Select
                             value={milestoneEdits[milestone.id]?.status ?? milestone.status}
                             onValueChange={(value) => setMilestoneEdits((current) => ({

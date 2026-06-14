@@ -52,12 +52,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProjectDetailResponse } from "@/features/projects/hooks";
+import { ProjectAssigneeSelect } from "@/features/projects/components/project-assignee-select";
+import type { ProjectAssigneeOption } from "@/features/projects/types";
+import { getKanbanCardLabels } from "@/features/projects/utils/kanban";
 import { cn, formatNumber } from "@/lib/utils";
 
 type KanbanBoard = ProjectDetailResponse["kanbanBoards"][number];
 type KanbanColumn = KanbanBoard["columns"][number];
 type KanbanCard = KanbanColumn["cards"][number];
-type AssigneeOption = ProjectDetailResponse["assigneeOptions"][number];
 
 type CardDraft = {
   title: string;
@@ -101,7 +103,7 @@ export function ProjectKanbanBoard({
   moveCardInColumn,
   deleteCard,
   reorderCard,
-  assigneeOptions
+  assigneeOptions = []
 }: {
   projectName: string;
   board: KanbanBoard | null;
@@ -127,7 +129,7 @@ export function ProjectKanbanBoard({
   moveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
   reorderCard: (cardId: string, columnId: string, targetIndex: number) => Promise<void>;
-  assigneeOptions: AssigneeOption[];
+  assigneeOptions?: ProjectAssigneeOption[];
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const columns = board?.columns ?? [];
@@ -614,7 +616,7 @@ function KanbanCardDrawer({
   columns: KanbanColumn[];
   activeCard: KanbanCard | null;
   activeCardColumnId: string;
-  assigneeOptions: AssigneeOption[];
+  assigneeOptions: ProjectAssigneeOption[];
   createColumnId: string;
   newCards: Record<string, CardDraft>;
   setNewCards: Dispatch<SetStateAction<Record<string, CardDraft>>>;
@@ -634,7 +636,6 @@ function KanbanCardDrawer({
     labels: ""
   };
   const selectedAssigneeLabel = isEdit ? editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "" : createState.assigneeLabel;
-  const hasLegacyAssignee = selectedAssigneeLabel && assigneeOptions.every((option) => option.label !== selectedAssigneeLabel);
 
   async function submit() {
     if (drawer?.mode === "create") {
@@ -737,27 +738,12 @@ function KanbanCardDrawer({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Responsável</Label>
-              <Select
-                value={selectedAssigneeLabel || "none"}
-                onValueChange={(value) => isEdit ? updateEdit("assigneeLabel", value === "none" ? "" : value) : updateCreate("assigneeLabel", value === "none" ? "" : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar usuário" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem responsável</SelectItem>
-                  {assigneeOptions.map((option) => (
-                    <SelectItem key={option.id} value={option.label}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                  {hasLegacyAssignee ? (
-                    <SelectItem value={selectedAssigneeLabel}>
-                      {selectedAssigneeLabel} (legado)
-                    </SelectItem>
-                  ) : null}
-                </SelectContent>
-              </Select>
+              <ProjectAssigneeSelect
+                value={selectedAssigneeLabel}
+                onChange={(value) => isEdit ? updateEdit("assigneeLabel", value) : updateCreate("assigneeLabel", value)}
+                assigneeOptions={assigneeOptions}
+                placeholder="Selecionar usuário"
+              />
             </div>
             <div className="space-y-2">
               <Label>Vencimento</Label>
@@ -784,14 +770,6 @@ function KanbanCardDrawer({
       </DialogContent>
     </Dialog>
   );
-}
-
-function getKanbanCardLabels(labels: unknown) {
-  if (!Array.isArray(labels)) {
-    return [];
-  }
-
-  return labels.filter((label): label is string => typeof label === "string" && label.trim().length > 0);
 }
 
 function getLabelClass(label: string) {
