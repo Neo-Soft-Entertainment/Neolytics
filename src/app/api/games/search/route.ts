@@ -38,10 +38,22 @@ export async function GET(request: Request) {
     }, "radarSteam");
 
     const parsed = parseSearchParams(new URL(request.url), schema);
-    const result = await searchGames({
+        let resolvedValue0: any;
+    if (parsed.fromReleaseDate) {
+      resolvedValue0 = new Date(parsed.fromReleaseDate);
+    } else {
+      resolvedValue0 = undefined;
+    }
+    let resolvedValue1: any;
+    if (parsed.toReleaseDate) {
+      resolvedValue1 = new Date(parsed.toReleaseDate);
+    } else {
+      resolvedValue1 = undefined;
+    }
+const result = await searchGames({
       ...parsed,
-      fromReleaseDate: parsed.fromReleaseDate ? new Date(parsed.fromReleaseDate) : undefined,
-      toReleaseDate: parsed.toReleaseDate ? new Date(parsed.toReleaseDate) : undefined
+      fromReleaseDate: resolvedValue0,
+      toReleaseDate: resolvedValue1
     });
 
     return ok(result);

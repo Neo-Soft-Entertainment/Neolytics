@@ -70,7 +70,7 @@ async function hydrateCommunityPost<T extends {
   comments?: Array<{ organizationId: string; content: string }>;
 }>(post: T) {
   const media = await createCommunityImageSignedUrls(getPostMedia(post.media));
-  const comments = post.comments?.map((comment) => ({
+  const comments = post.comments?.map((comment: any) => ({
     ...comment,
     content: decryptNullableString(comment.content, `communityPostComment:${comment.organizationId}:content`) ?? comment.content
   }));
@@ -87,8 +87,14 @@ async function hydrateCommunityPost<T extends {
 export async function listCommunityFeed(organizationId: string, userId: string, scope: CommunityPostScope) {
   await enforceSubscriptionCapability(organizationId, "communityFeed");
 
-  const posts = await db.communityPost.findMany({
-    where: scope === CommunityPostScope.GLOBAL ? { scope } : { organizationId, scope: CommunityPostScope.ORGANIZATION },
+    let resolvedValue0: any;
+  if (scope === CommunityPostScope.GLOBAL) {
+    resolvedValue0 = { scope };
+  } else {
+    resolvedValue0 = { organizationId, scope: CommunityPostScope.ORGANIZATION };
+  }
+const posts = await db.communityPost.findMany({
+    where: resolvedValue0,
     include: {
       ...communityPostInclude,
       likes: {
@@ -106,7 +112,7 @@ export async function listCommunityFeed(organizationId: string, userId: string, 
     take: 50
   });
 
-  return Promise.all(posts.map(async (post) => ({
+  return Promise.all(posts.map(async (post: any) => ({
     ...await hydrateCommunityPost(post),
     viewerHasLiked: post.likes.length > 0,
     likes: undefined
@@ -115,7 +121,13 @@ export async function listCommunityFeed(organizationId: string, userId: string, 
 
 export async function getCommunityRanking(organizationId: string, scope: CommunityPostScope) {
   await enforceSubscriptionCapability(organizationId, "communityRanking");
-  const where = scope === CommunityPostScope.GLOBAL ? { scope } : { organizationId, scope: CommunityPostScope.ORGANIZATION };
+    let resolvedValue1: any;
+  if (scope === CommunityPostScope.GLOBAL) {
+    resolvedValue1 = { scope };
+  } else {
+    resolvedValue1 = { organizationId, scope: CommunityPostScope.ORGANIZATION };
+  }
+const where = resolvedValue1;
 
   const contributors = await db.communityPost.groupBy({
     by: ["authorId"],
@@ -134,11 +146,12 @@ export async function getCommunityRanking(organizationId: string, scope: Communi
     take: 10
   });
 
-  const users = contributors.length > 0
-    ? await db.user.findMany({
+    let resolvedValue2: any;
+  if (contributors.length > 0) {
+    resolvedValue2 = await db.user.findMany({
         where: {
           id: {
-            in: contributors.map((item) => item.authorId)
+            in: contributors.map((item: any) => item.authorId)
           }
         },
         select: {
@@ -147,9 +160,12 @@ export async function getCommunityRanking(organizationId: string, scope: Communi
           email: true,
           image: true
         }
-      })
-    : [];
-  const userById = new Map(users.map((user) => [user.id, user]));
+      });
+  } else {
+    resolvedValue2 = [];
+  }
+const users = resolvedValue2 as Array<{ id: string; name: string | null; email: string | null; image: string | null }>;
+  const userById = new Map(users.map((user: any) => [user.id, user]));
   const topPosts = await db.communityPost.findMany({
     where,
     include: communityPostInclude,
@@ -195,7 +211,13 @@ export async function createCommunityPost(params: {
 }) {
   await enforceSubscriptionCapability(params.organizationId, "communityFeed");
   const scope = params.scope ?? CommunityPostScope.ORGANIZATION;
-  const projectId = scope === CommunityPostScope.GLOBAL ? null : params.projectId ?? null;
+    let resolvedValue3: any;
+  if (scope === CommunityPostScope.GLOBAL) {
+    resolvedValue3 = null;
+  } else {
+    resolvedValue3 = params.projectId ?? null;
+  }
+const projectId = resolvedValue3;
 
   if (projectId) {
     await db.project.findFirstOrThrow({

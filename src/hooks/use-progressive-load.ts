@@ -19,13 +19,17 @@ export function useProgressiveLoad<T extends HTMLElement>() {
 
       load();
     };
-    const observer = ref.current && "IntersectionObserver" in window
-      ? new IntersectionObserver((entries) => {
+        let resolvedValue0: any;
+    if (ref.current && "IntersectionObserver" in window) {
+      resolvedValue0 = new IntersectionObserver((entries) => {
           if (entries.some((entry) => entry.isIntersecting)) {
             load();
           }
-        }, { rootMargin: "240px" })
-      : null;
+        }, { rootMargin: "240px" });
+    } else {
+      resolvedValue0 = null;
+    }
+const observer = resolvedValue0;
 
     if (observer && ref.current) {
       observer.observe(ref.current);

@@ -60,7 +60,7 @@ export function ProjectDescriptionEditor({
         ref={textareaRef}
         className="min-h-[560px] resize-none rounded-none border-0 bg-transparent px-5 py-5 text-base leading-7 shadow-none focus-visible:ring-0"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event: any) => onChange(event.target.value)}
         placeholder={"# Visão do negócio\n\nEscreva livremente. Use **negrito** para decisões importantes, riscos e critérios."}
       />
     </div>

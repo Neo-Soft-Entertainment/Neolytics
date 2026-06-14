@@ -155,7 +155,25 @@ export async function buildDataProductExport(params: {
   rows: Array<Record<string, unknown>>;
   client?: DataProductClient;
 }) {
-  const evaluation = evaluatePrivacyRules({
+    let resolvedValue0: any;
+  if (params.product.privacyRiskScore >= 90) {
+    resolvedValue0 = PrivacyRiskLevel.CRITICAL;
+  } else {
+        let resolvedValue4: any;
+    if (params.product.privacyRiskScore >= 70) {
+      resolvedValue4 = PrivacyRiskLevel.HIGH;
+    } else {
+            let resolvedValue6: any;
+      if (params.product.privacyRiskScore >= 40) {
+        resolvedValue6 = PrivacyRiskLevel.MEDIUM;
+      } else {
+        resolvedValue6 = PrivacyRiskLevel.LOW;
+      }
+resolvedValue4 = resolvedValue6;
+    }
+resolvedValue0 = resolvedValue4;
+  }
+const evaluation = evaluatePrivacyRules({
     purposeId: params.purposeId,
     fieldNames: params.product.outputFields,
     productType: params.product.productType,
@@ -164,33 +182,39 @@ export async function buildDataProductExport(params: {
     cohortSize: params.cohortSize ?? null,
     minimumCohortSize: params.product.minimumCohortSize,
     privacyRiskLevel:
-      params.product.privacyRiskScore >= 90
-        ? PrivacyRiskLevel.CRITICAL
-        : params.product.privacyRiskScore >= 70
-          ? PrivacyRiskLevel.HIGH
-          : params.product.privacyRiskScore >= 40
-            ? PrivacyRiskLevel.MEDIUM
-            : PrivacyRiskLevel.LOW,
+      resolvedValue0,
     requiresDpoApproval: params.product.requiresDpoApproval,
     approvalStatus: params.product.approvalStatus,
     allowAutoTransformation: true
   });
 
-  const transformedRows =
-    evaluation.decision === PrivacyDecision.ALLOW
-      ? params.rows
-      : evaluation.decision === PrivacyDecision.BLOCK || evaluation.decision === PrivacyDecision.REQUIRE_REVIEW
-        ? []
-      : transformRowsForPrivacy(
+    let resolvedValue1: any;
+  if (evaluation.decision === PrivacyDecision.ALLOW) {
+    resolvedValue1 = params.rows;
+  } else {
+        let resolvedValue5: any;
+    if (evaluation.decision === PrivacyDecision.BLOCK || evaluation.decision === PrivacyDecision.REQUIRE_REVIEW) {
+      resolvedValue5 = [];
+    } else {
+      resolvedValue5 = transformRowsForPrivacy(
           params.rows,
           params.product.outputFields,
           params.product.minimumCohortSize
         );
+    }
+resolvedValue1 = resolvedValue5;
+  }
+const transformedRows =
+    resolvedValue1;
 
-  const exportRows =
-    params.product.productType === DataProductType.SYNTHETIC_DATASET
-      ? generateSyntheticDataset(transformedRows, evaluation.exportableFields)
-      : transformedRows;
+    let resolvedValue2: any;
+  if (params.product.productType === DataProductType.SYNTHETIC_DATASET) {
+    resolvedValue2 = generateSyntheticDataset(transformedRows, evaluation.exportableFields);
+  } else {
+    resolvedValue2 = transformedRows;
+  }
+const exportRows =
+    resolvedValue2;
 
   const manifest = {
     productId: params.product.id,
@@ -207,14 +231,20 @@ export async function buildDataProductExport(params: {
   };
 
   const productClient = getDataProductClient(params.client);
-  const savedManifest = await productClient.dataExportManifest.create({
+    let resolvedValue3: any;
+  if (params.buyerHasContract) {
+    resolvedValue3 = new Date();
+  } else {
+    resolvedValue3 = null;
+  }
+const savedManifest = await productClient.dataExportManifest.create({
     data: {
       organizationId: params.organizationId ?? null,
       productId: params.product.id,
       requestedById: params.actorId,
       buyerName: params.buyerName,
       buyerEmail: params.buyerEmail ?? null,
-      contractAcceptedAt: params.buyerHasContract ? new Date() : null,
+      contractAcceptedAt: resolvedValue3,
       decision: evaluation.decision,
       reason: evaluation.reason,
       manifest

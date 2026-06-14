@@ -190,7 +190,7 @@ function getRgbSaturation(red: number, green: number, blue: number) {
 }
 
 function toHexColor(red: number, green: number, blue: number) {
-  return `#${[red, green, blue].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
+  return `#${[red, green, blue].map((value: any) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0")).join("")}`;
 }
 
 async function analyzeImageVisualMetrics(buffer: Buffer) {
@@ -253,13 +253,31 @@ async function analyzeImageVisualMetrics(buffer: Buffer) {
     const contrast = Math.sqrt(Math.max(0, variance));
     const saturation = (totalSaturation / pixelCount) * 100;
     const edgeDensity = (edgeCount / Math.max(1, info.height * Math.max(1, info.width - 1))) * 100;
-    const readabilityScore = Math.max(0, Math.min(100, Math.round(
+        let resolvedValue0: any;
+    if (brightness < 34 || brightness > 222) {
+      resolvedValue0 = 16;
+    } else {
+      resolvedValue0 = 0;
+    }
+const readabilityScore = Math.max(0, Math.min(100, Math.round(
       contrast * 1.25
       + Math.min(24, saturation * 0.18)
       - Math.max(0, edgeDensity - 28) * 0.7
-      - (brightness < 34 || brightness > 222 ? 16 : 0)
+      - (resolvedValue0)
     )));
-    const legibilityRisk = readabilityScore < 45 ? "high" : readabilityScore < 68 ? "medium" : "low";
+        let resolvedValue1: any;
+    if (readabilityScore < 45) {
+      resolvedValue1 = "high";
+    } else {
+            let resolvedValue2: any;
+      if (readabilityScore < 68) {
+        resolvedValue2 = "medium";
+      } else {
+        resolvedValue2 = "low";
+      }
+resolvedValue1 = resolvedValue2;
+    }
+const legibilityRisk = resolvedValue1;
 
     return {
       width: metadata.width ?? null,

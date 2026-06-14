@@ -59,7 +59,7 @@ export function CompanyCompliancePanel({
   const [typeFilter, setTypeFilter] = useState("ALL");
 
   const filteredItems = useMemo(() => {
-    return complianceItems.filter((item) => {
+    return complianceItems.filter((item: any) => {
       if (statusFilter !== "ALL" && item.status !== statusFilter) {
         return false;
       }
@@ -129,7 +129,31 @@ export function CompanyCompliancePanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isCreating) {
+    resolvedValue0 = "Criando...";
+  } else {
+    resolvedValue0 = "Criar item de conformidade";
+  }
+  let resolvedValue1: any;
+  if (error) {
+    resolvedValue1 = <p className="mt-3 text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (filteredItems.length === 0) {
+    resolvedValue2 = (
+                <TableRow>
+                  <TableCell className="text-muted-foreground" colSpan={6}>
+                    Nenhum item de conformidade corresponde aos filtros atuais.
+                  </TableCell>
+                </TableRow>
+              );
+  } else {
+    resolvedValue2 = null;
+  }
+return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
@@ -143,14 +167,14 @@ export function CompanyCompliancePanel({
           <div className="rounded-xl border p-3">
             <p className="text-muted-foreground">Itens abertos</p>
             <p className="mt-1 text-2xl font-semibold">
-              {complianceItems.filter((item) => item.status === "PENDING" || item.status === "IN_PROGRESS").length}
+              {complianceItems.filter((item: any) => item.status === "PENDING" || item.status === "IN_PROGRESS").length}
             </p>
           </div>
           <div className="rounded-xl border p-3">
             <p className="text-muted-foreground">Vencidos</p>
             <p className="mt-1 text-2xl font-semibold">
               {
-                complianceItems.filter((item) => {
+                complianceItems.filter((item: any) => {
                   if (!item.dueAt) {
                     return false;
                   }
@@ -163,7 +187,7 @@ export function CompanyCompliancePanel({
           <div className="rounded-xl border p-3">
             <p className="text-muted-foreground">Concluídos</p>
             <p className="mt-1 text-2xl font-semibold">
-              {complianceItems.filter((item) => item.status === "COMPLETED").length}
+              {complianceItems.filter((item: any) => item.status === "COMPLETED").length}
             </p>
           </div>
         </CardContent>
@@ -177,7 +201,7 @@ export function CompanyCompliancePanel({
           <form
             id="create-compliance-item-form"
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            onSubmit={(event) => {
+            onSubmit={(event: any) => {
               event.preventDefault();
               void createItem(new FormData(event.currentTarget));
             }}
@@ -262,7 +286,7 @@ export function CompanyCompliancePanel({
                 name="sourceDocumentId"
               >
                 <option value="">Nenhum</option>
-                {documents.map((document) => (
+                {documents.map((document: any) => (
                   <option key={document.id} value={document.id}>
                     {document.title}
                   </option>
@@ -275,11 +299,11 @@ export function CompanyCompliancePanel({
             </div>
             <div className="md:col-span-2 xl:col-span-3">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Criando..." : "Criar item de conformidade"}
+                {resolvedValue0}
               </Button>
             </div>
           </form>
-          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+          {resolvedValue1}
         </CardContent>
       </Card>
 
@@ -293,7 +317,7 @@ export function CompanyCompliancePanel({
               <Label htmlFor="compliance-query">Pesquisar</Label>
               <Input
                 id="compliance-query"
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event: any) => setQuery(event.target.value)}
                 placeholder="Pesquisar por título, responsável, entidade, projeto ou observações"
                 value={query}
               />
@@ -303,7 +327,7 @@ export function CompanyCompliancePanel({
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 id="compliance-status-filter"
-                onChange={(event) => setStatusFilter(event.target.value)}
+                onChange={(event: any) => setStatusFilter(event.target.value)}
                 value={statusFilter}
               >
                 <option value="ALL">Todos</option>
@@ -319,7 +343,7 @@ export function CompanyCompliancePanel({
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 id="compliance-type-filter"
-                onChange={(event) => setTypeFilter(event.target.value)}
+                onChange={(event: any) => setTypeFilter(event.target.value)}
                 value={typeFilter}
               >
                 <option value="ALL">Todos</option>
@@ -343,16 +367,10 @@ export function CompanyCompliancePanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.map((item) => (
+              {filteredItems.map((item: any) => (
                 <ComplianceRow key={item.id} canManage={canManage} item={item} />
               ))}
-              {filteredItems.length === 0 ? (
-                <TableRow>
-                  <TableCell className="text-muted-foreground" colSpan={6}>
-                    Nenhum item de conformidade corresponde aos filtros atuais.
-                  </TableCell>
-                </TableRow>
-              ) : null}
+              {resolvedValue2}
             </TableBody>
           </Table>
         </CardContent>
@@ -404,15 +422,39 @@ function ComplianceRow({
     router.refresh();
   }
 
-  return (
+    let resolvedValue3: any;
+  if (item.sourceDocument) {
+    resolvedValue3 = ` · ${item.sourceDocument.title}`;
+  } else {
+    resolvedValue3 = "";
+  }
+  let resolvedValue4: any;
+  if (message) {
+    resolvedValue4 = <p className="mt-1 text-xs text-muted-foreground">{message}</p>;
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (item.dueAt) {
+    resolvedValue5 = new Date(item.dueAt).toLocaleDateString();
+  } else {
+    resolvedValue5 = "—";
+  }
+  let resolvedValue6: any;
+  if (isSaving) {
+    resolvedValue6 = "...";
+  } else {
+    resolvedValue6 = "Salvar";
+  }
+return (
     <TableRow>
       <TableCell>
         <div>
           <p className="font-medium">{item.title}</p>
           <p className="text-xs text-muted-foreground">
-            {item.legalEntity?.name || item.project?.name || "Org-level"}{item.sourceDocument ? ` · ${item.sourceDocument.title}` : ""}
+            {item.legalEntity?.name || item.project?.name || "Org-level"}{resolvedValue3}
           </p>
-          {message ? <p className="mt-1 text-xs text-muted-foreground">{message}</p> : null}
+          {resolvedValue4}
         </div>
       </TableCell>
       <TableCell>
@@ -420,13 +462,13 @@ function ComplianceRow({
       </TableCell>
       <TableCell>{item.project?.name || item.legalEntity?.name || "Organização"}</TableCell>
       <TableCell>{item.ownerUser?.name || item.ownerUser?.email || "Unassigned"}</TableCell>
-      <TableCell>{item.dueAt ? new Date(item.dueAt).toLocaleDateString() : "—"}</TableCell>
+      <TableCell>{resolvedValue5}</TableCell>
       <TableCell>
         <div className="flex min-w-[190px] items-center gap-2">
           <select
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             disabled={!canManage || isSaving}
-            onChange={(event) => setStatus(event.target.value as typeof status)}
+            onChange={(event: any) => setStatus(event.target.value as typeof status)}
             value={status}
           >
             {complianceStatuses.map((statusOption) => (
@@ -436,7 +478,7 @@ function ComplianceRow({
             ))}
           </select>
           <Button disabled={!canManage || isSaving} onClick={saveStatus} size="sm" type="button">
-            {isSaving ? "..." : "Salvar"}
+            {resolvedValue6}
           </Button>
         </div>
       </TableCell>

@@ -8,7 +8,7 @@ import { parseJsonBody } from "@/lib/request";
 import { getErrorMessage } from "@/lib/error-message";
 import { invalidateServerCache } from "@/lib/server-memory-cache";
 
-const optionalDate = z.preprocess((value) => {
+const optionalDate = z.preprocess((value: any) => {
   if (!value) {
     return undefined;
   }

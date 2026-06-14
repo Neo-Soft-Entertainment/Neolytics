@@ -1,7 +1,24 @@
 import pino from "pino";
 
+let resolvedValue0: any;
+if (process.env.NODE_ENV === "development") {
+  resolvedValue0 = "debug";
+} else {
+  resolvedValue0 = "info";
+}
+let resolvedValue1: any;
+if (process.env.NODE_ENV === "development") {
+  resolvedValue1 = {
+          target: "pino-pretty",
+          options: {
+            colorize: true
+          }
+        };
+} else {
+  resolvedValue1 = undefined;
+}
 export const logger = pino({
-  level: process.env.NODE_ENV === "development" ? "debug" : "info",
+  level: resolvedValue0,
   redact: {
     paths: [
       "*.authorization",
@@ -31,12 +48,5 @@ export const logger = pino({
     censor: "[redacted]"
   },
   transport:
-    process.env.NODE_ENV === "development"
-      ? {
-          target: "pino-pretty",
-          options: {
-            colorize: true
-          }
-        }
-      : undefined
+    resolvedValue1
 });

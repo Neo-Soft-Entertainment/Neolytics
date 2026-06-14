@@ -56,7 +56,13 @@ export function OrganizationMembershipsPanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue4: any;
+  if (error) {
+    resolvedValue4 = <p className="text-destructive">{error}</p>;
+  } else {
+    resolvedValue4 = null;
+  }
+return (
     <Card className="overflow-hidden">
       <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
       <CardHeader>
@@ -64,10 +70,40 @@ export function OrganizationMembershipsPanel({
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="grid gap-3 lg:grid-cols-2">
-          {memberships.map((membership) => {
+          {memberships.map((membership: any) => {
             const isCurrent = membership.organizationId === currentOrganizationId;
 
-            return (
+                        let resolvedValue0: any;
+            if (isCurrent) {
+              resolvedValue0 = "default";
+            } else {
+              resolvedValue0 = "secondary";
+            }
+            let resolvedValue1: any;
+            if (isCurrent) {
+              resolvedValue1 = "Atual";
+            } else {
+              resolvedValue1 = membership.role;
+            }
+            let resolvedValue2: any;
+            if (isCurrent) {
+              resolvedValue2 = "secondary";
+            } else {
+              resolvedValue2 = "outline";
+            }
+            let resolvedValue3: any;
+            if (isCurrent) {
+              resolvedValue3 = "Ativa";
+            } else {
+                            let resolvedValue5: any;
+              if (switchingId === membership.organizationId) {
+                resolvedValue5 = "Trocando...";
+              } else {
+                resolvedValue5 = "Trocar";
+              }
+resolvedValue3 = resolvedValue5;
+            }
+return (
               <div key={membership.organizationId} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -77,8 +113,8 @@ export function OrganizationMembershipsPanel({
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <Badge variant={isCurrent ? "default" : "secondary"}>
-                      {isCurrent ? "Atual" : membership.role}
+                    <Badge variant={resolvedValue0}>
+                      {resolvedValue1}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {getSubscriptionPlanLabel(membership.organization.subscriptionPlan)}
@@ -93,19 +129,19 @@ export function OrganizationMembershipsPanel({
                     disabled={isCurrent || switchingId === membership.organizationId}
                     size="sm"
                     type="button"
-                    variant={isCurrent ? "secondary" : "outline"}
+                    variant={resolvedValue2}
                     onClick={() => {
                       void switchOrganization(membership.organizationId);
                     }}
                   >
-                    {isCurrent ? "Ativa" : switchingId === membership.organizationId ? "Trocando..." : "Trocar"}
+                    {resolvedValue3}
                   </Button>
                 </div>
               </div>
             );
           })}
         </div>
-        {error ? <p className="text-destructive">{error}</p> : null}
+        {resolvedValue4}
       </CardContent>
     </Card>
   );

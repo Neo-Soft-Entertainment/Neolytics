@@ -124,13 +124,21 @@ export function normalizeSteamApp(params: {
     return null;
   }
 
-  const genres = (detail.genres ?? []).map((genre) => ({
-    steamGenreId: genre.id ? Number(genre.id) : null,
+  const genres = (detail.genres ?? []).map((genre: any) => {
+    let resolvedValue0: any;
+    if (genre.id) {
+      resolvedValue0 = Number(genre.id);
+    } else {
+      resolvedValue0 = null;
+    }
+    return ({
+    steamGenreId: resolvedValue0,
     name: sanitizeSteamText(genre.description) ?? genre.description,
     slug: slugify(sanitizeSteamText(genre.description) ?? genre.description)
-  }));
+  });
+  });
 
-  const developers = (detail.developers ?? []).map((value) => {
+  const developers = (detail.developers ?? []).map((value: any) => {
     const name = sanitizeSteamText(value) ?? value;
 
     return {
@@ -139,7 +147,7 @@ export function normalizeSteamApp(params: {
     };
   });
 
-  const publishers = (detail.publishers ?? []).map((value) => {
+  const publishers = (detail.publishers ?? []).map((value: any) => {
     const name = sanitizeSteamText(value) ?? value;
 
     return {
@@ -153,9 +161,13 @@ export function normalizeSteamApp(params: {
   const totalReviews = params.reviewSummary.query_summary?.total_reviews ?? 0;
   const totalPositiveReviews = params.reviewSummary.query_summary?.total_positive ?? 0;
   const totalNegativeReviews = params.reviewSummary.query_summary?.total_negative ?? 0;
-  const reviewScore = totalReviews > 0
-    ? Number(((totalPositiveReviews / totalReviews) * 100).toFixed(1))
-    : null;
+    let resolvedValue1: any;
+  if (totalReviews > 0) {
+    resolvedValue1 = Number(((totalPositiveReviews / totalReviews) * 100).toFixed(1));
+  } else {
+    resolvedValue1 = null;
+  }
+const reviewScore = resolvedValue1;
 
   return {
     appId: detail.steam_appid,

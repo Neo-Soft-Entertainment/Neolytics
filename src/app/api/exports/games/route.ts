@@ -22,10 +22,22 @@ function getInput(request: Request) {
   const url = new URL(request.url);
   const parsed = parseSearchParams(url, schema);
 
-  return {
+    let resolvedValue0: any;
+  if (parsed.fromReleaseDate) {
+    resolvedValue0 = new Date(parsed.fromReleaseDate);
+  } else {
+    resolvedValue0 = undefined;
+  }
+  let resolvedValue1: any;
+  if (parsed.toReleaseDate) {
+    resolvedValue1 = new Date(parsed.toReleaseDate);
+  } else {
+    resolvedValue1 = undefined;
+  }
+return {
     ...parsed,
-    fromReleaseDate: parsed.fromReleaseDate ? new Date(parsed.fromReleaseDate) : undefined,
-    toReleaseDate: parsed.toReleaseDate ? new Date(parsed.toReleaseDate) : undefined
+    fromReleaseDate: resolvedValue0,
+    toReleaseDate: resolvedValue1
   };
 }
 

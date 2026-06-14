@@ -14,7 +14,90 @@ export function OpportunitiesPageClient() {
   const t = useI18n();
   const query = useOpportunities();
 
-  return (
+    let resolvedValue0: any;
+  if (query.data?.[0]) {
+    resolvedValue0 = formatNumber(query.data[0].score);
+  } else {
+    resolvedValue0 = "N/A";
+  }
+  let resolvedValue1: any;
+  if (query.data && query.data.length > 0) {
+    resolvedValue1 = (
+            <div className="mb-4 grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topOpportunity")}</p>
+                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.score ?? null)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topConfidence")}</p>
+                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.confidenceScore ?? null)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.medianRisk")}</p>
+                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[Math.floor(query.data.length / 2)]?.riskScore ?? null)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.bestMarketSize")}</p>
+                <p className="mt-2 text-2xl font-semibold">{query.data[0]?.marketSizeLabel ?? t("common.na")}</p>
+              </div>
+            </div>
+          );
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (query.isLoading) {
+    resolvedValue2 = (
+            <p className="text-sm text-muted-foreground">{t("opportunities.loading")}</p>
+          );
+  } else {
+    resolvedValue2 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("games.game")}</TableHead>
+                  <TableHead>{t("opportunities.opportunityScore")}</TableHead>
+                  <TableHead>{t("opportunities.risk")}</TableHead>
+                  <TableHead>{t("opportunities.revenuePotential")}</TableHead>
+                  <TableHead>{t("games.reviewScore")}</TableHead>
+                  <TableHead>{t("opportunities.competition")}</TableHead>
+                  <TableHead>{t("opportunities.confidence")}</TableHead>
+                  <TableHead>{t("compare.medianNetRevenue")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {query.data?.map((item: any) => {
+                  let resolvedValue3: any;
+                  if (item.reviewScore) {
+                    resolvedValue3 = `${item.reviewScore.toFixed(1)}%`;
+                  } else {
+                    resolvedValue3 = t("common.na");
+                  }
+                  return (
+                  <TableRow key={item.appId}>
+                    <TableCell>
+                      <Link className="font-medium hover:underline" href={`/games/${item.appId}`}>
+                        {item.name}
+                      </Link>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("opportunities.marketPremium", { label: item.marketSizeLabel, percent: item.premiumSharePercent })}
+                      </p>
+                    </TableCell>
+                    <TableCell>{item.score}</TableCell>
+                    <TableCell>{item.riskScore}</TableCell>
+                    <TableCell>{item.revenuePotentialScore}</TableCell>
+                    <TableCell>{resolvedValue3}</TableCell>
+                    <TableCell>{item.competitionCount}</TableCell>
+                    <TableCell>{item.confidenceScore}</TableCell>
+                    <TableCell>{formatCurrency(item.medianNetRevenueCents)}</TableCell>
+                  </TableRow>
+                );
+                })}
+              </TableBody>
+            </Table>
+          );
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title={t("opportunities.pageTitle")}
@@ -37,7 +120,7 @@ export function OpportunitiesPageClient() {
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-muted-foreground">{t("opportunities.topOpportunity")}</span>
-              <span className="font-medium">{query.data?.[0] ? formatNumber(query.data[0].score) : "N/A"}</span>
+              <span className="font-medium">{resolvedValue0}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("opportunities.readingMode")}</p>
@@ -58,65 +141,8 @@ export function OpportunitiesPageClient() {
           />
         </CardHeader>
         <CardContent>
-          {query.data && query.data.length > 0 ? (
-            <div className="mb-4 grid gap-3 md:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topOpportunity")}</p>
-                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.score ?? null)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.topConfidence")}</p>
-                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[0]?.confidenceScore ?? null)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.medianRisk")}</p>
-                <p className="mt-2 text-2xl font-semibold">{formatNumber(query.data[Math.floor(query.data.length / 2)]?.riskScore ?? null)}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("opportunities.bestMarketSize")}</p>
-                <p className="mt-2 text-2xl font-semibold">{query.data[0]?.marketSizeLabel ?? t("common.na")}</p>
-              </div>
-            </div>
-          ) : null}
-          {query.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("opportunities.loading")}</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("games.game")}</TableHead>
-                  <TableHead>{t("opportunities.opportunityScore")}</TableHead>
-                  <TableHead>{t("opportunities.risk")}</TableHead>
-                  <TableHead>{t("opportunities.revenuePotential")}</TableHead>
-                  <TableHead>{t("games.reviewScore")}</TableHead>
-                  <TableHead>{t("opportunities.competition")}</TableHead>
-                  <TableHead>{t("opportunities.confidence")}</TableHead>
-                  <TableHead>{t("compare.medianNetRevenue")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {query.data?.map((item) => (
-                  <TableRow key={item.appId}>
-                    <TableCell>
-                      <Link className="font-medium hover:underline" href={`/games/${item.appId}`}>
-                        {item.name}
-                      </Link>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("opportunities.marketPremium", { label: item.marketSizeLabel, percent: item.premiumSharePercent })}
-                      </p>
-                    </TableCell>
-                    <TableCell>{item.score}</TableCell>
-                    <TableCell>{item.riskScore}</TableCell>
-                    <TableCell>{item.revenuePotentialScore}</TableCell>
-                    <TableCell>{item.reviewScore ? `${item.reviewScore.toFixed(1)}%` : t("common.na")}</TableCell>
-                    <TableCell>{item.competitionCount}</TableCell>
-                    <TableCell>{item.confidenceScore}</TableCell>
-                    <TableCell>{formatCurrency(item.medianNetRevenueCents)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {resolvedValue1}
+          {resolvedValue2}
         </CardContent>
       </Card>
     </div>

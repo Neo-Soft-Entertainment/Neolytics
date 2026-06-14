@@ -11,7 +11,13 @@ function secureAccount(account: AdapterAccount) {
 
   for (const field of accountSecretFields) {
     const value = account[field];
-    secured[field] = encryptNullableString(typeof value === "string" ? value : undefined, `account:${account.provider}:${account.providerAccountId}`) ?? undefined;
+        let resolvedValue0: any;
+    if (typeof value === "string") {
+      resolvedValue0 = value;
+    } else {
+      resolvedValue0 = undefined;
+    }
+secured[field] = encryptNullableString(resolvedValue0, `account:${account.provider}:${account.providerAccountId}`) ?? undefined;
   }
 
   return secured as AdapterAccount;
@@ -26,7 +32,13 @@ function revealAccount(account: AdapterAccount | null) {
 
   for (const field of accountSecretFields) {
     const value = account[field];
-    revealed[field] = decryptNullableString(typeof value === "string" ? value : undefined, `account:${account.provider}:${account.providerAccountId}`) ?? undefined;
+        let resolvedValue1: any;
+    if (typeof value === "string") {
+      resolvedValue1 = value;
+    } else {
+      resolvedValue1 = undefined;
+    }
+revealed[field] = decryptNullableString(resolvedValue1, `account:${account.provider}:${account.providerAccountId}`) ?? undefined;
   }
 
   return revealed as AdapterAccount;

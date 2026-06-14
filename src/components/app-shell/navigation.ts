@@ -46,9 +46,9 @@ export const navItems: AppNavItem[] = [
 ];
 
 export function getCurrentNavItem(pathname: string) {
-  return navItems.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ?? null;
+  return navItems.find((item: any) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ?? null;
 }
 
 export function getNavSection(section: AppNavSection | undefined) {
-  return navSections.find((item) => item.key === section) ?? null;
+  return navSections.find((item: any) => item.key === section) ?? null;
 }

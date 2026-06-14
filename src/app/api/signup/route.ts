@@ -12,13 +12,19 @@ import { createOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
 import { canUseStripeCheckout } from "@/lib/stripe";
 
-const optionalNonEmptyString = z.preprocess((value) => {
+const optionalNonEmptyString = z.preprocess((value: any) => {
   if (typeof value !== "string") {
     return value;
   }
 
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+    let resolvedValue0: any;
+  if (trimmed.length > 0) {
+    resolvedValue0 = trimmed;
+  } else {
+    resolvedValue0 = undefined;
+  }
+return resolvedValue0;
 }, z.string().trim().min(2).max(80).optional());
 
 const schema = z.object({
@@ -39,9 +45,13 @@ export async function POST(request: Request) {
 
     const body = await parseJsonBody(request, schema);
     const email = body.email.toLowerCase();
-    const invitation = body.inviteToken
-      ? await getOrganizationInvitationByToken(body.inviteToken)
-      : null;
+        let resolvedValue1: any;
+    if (body.inviteToken) {
+      resolvedValue1 = await getOrganizationInvitationByToken(body.inviteToken);
+    } else {
+      resolvedValue1 = null;
+    }
+const invitation = resolvedValue1;
 
     if (body.inviteToken) {
       if (!invitation || invitation.revokedAt || invitation.acceptedAt || invitation.expiresAt <= new Date()) {

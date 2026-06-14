@@ -122,7 +122,51 @@ export function CompanyProfilePanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isSavingDefaults) {
+    resolvedValue0 = "Salvando...";
+  } else {
+    resolvedValue0 = "Salvar padrões da organização";
+  }
+  let resolvedValue1: any;
+  if (defaultsMessage) {
+    resolvedValue1 = <p className="mt-3 text-sm text-muted-foreground">{defaultsMessage}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (isCreating) {
+    resolvedValue2 = "Criando...";
+  } else {
+    resolvedValue2 = "Criar entidade legal";
+  }
+  let resolvedValue3: any;
+  if (createError) {
+    resolvedValue3 = <p className="mt-3 text-sm text-destructive">{createError}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (!canManage) {
+    resolvedValue4 = (
+            <p className="mt-3 text-sm text-muted-foreground">Apenas administradores da organização podem criar ou editar registros da empresa.</p>
+          );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (legalEntities.length === 0) {
+    resolvedValue5 = (
+        <Card>
+          <CardContent className="py-8 text-sm text-muted-foreground">
+            Ainda não há entidades legais. Crie o registro principal da empresa para iniciar o fluxo de cadastro e documentos.
+          </CardContent>
+        </Card>
+      );
+  } else {
+    resolvedValue5 = null;
+  }
+return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
@@ -131,7 +175,7 @@ export function CompanyProfilePanel({
         <CardContent>
           <form
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-            onSubmit={(event) => {
+            onSubmit={(event: any) => {
               event.preventDefault();
               void saveDefaults(new FormData(event.currentTarget));
             }}
@@ -174,11 +218,11 @@ export function CompanyProfilePanel({
             </div>
             <div className="md:col-span-2 xl:col-span-4">
               <Button disabled={!canManage || isSavingDefaults} type="submit">
-                {isSavingDefaults ? "Salvando..." : "Salvar padrões da organização"}
+                {resolvedValue0}
               </Button>
             </div>
           </form>
-          {defaultsMessage ? <p className="mt-3 text-sm text-muted-foreground">{defaultsMessage}</p> : null}
+          {resolvedValue1}
         </CardContent>
       </Card>
 
@@ -220,7 +264,7 @@ export function CompanyProfilePanel({
           <form
             id="create-legal-entity-form"
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            onSubmit={(event) => {
+            onSubmit={(event: any) => {
               event.preventDefault();
               void createEntity(new FormData(event.currentTarget));
             }}
@@ -249,7 +293,7 @@ export function CompanyProfilePanel({
                 disabled={!canManage || isCreating}
                 id="entity-country"
                 name="countryCode"
-                onChange={(event) => setCreateCountryCode(event.target.value)}
+                onChange={(event: any) => setCreateCountryCode(event.target.value)}
                 value={createCountryCode}
               >
                 {countryOptions.map((option) => (
@@ -310,24 +354,16 @@ export function CompanyProfilePanel({
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Criando..." : "Criar entidade legal"}
+                {resolvedValue2}
               </Button>
             </div>
           </form>
-          {createError ? <p className="mt-3 text-sm text-destructive">{createError}</p> : null}
-          {!canManage ? (
-            <p className="mt-3 text-sm text-muted-foreground">Apenas administradores da organização podem criar ou editar registros da empresa.</p>
-          ) : null}
+          {resolvedValue3}
+          {resolvedValue4}
         </CardContent>
       </Card>
 
-      {legalEntities.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            Ainda não há entidades legais. Crie o registro principal da empresa para iniciar o fluxo de cadastro e documentos.
-          </CardContent>
-        </Card>
-      ) : null}
+      {resolvedValue5}
 
       {legalEntities.map((entity) => (
         <LegalEntityCard
@@ -427,7 +463,55 @@ function LegalEntityCard({
     router.refresh();
   }
 
-  return (
+    let resolvedValue6: any;
+  if (isSaving) {
+    resolvedValue6 = "Salvando...";
+  } else {
+    resolvedValue6 = "Salvar perfil da empresa";
+  }
+  let resolvedValue7: any;
+  if (message) {
+    resolvedValue7 = <p className="text-sm text-muted-foreground">{message}</p>;
+  } else {
+    resolvedValue7 = null;
+  }
+  let resolvedValue8: any;
+  if (entity.branches.length === 0) {
+    resolvedValue8 = (
+                    <TableRow>
+                      <TableCell className="text-muted-foreground" colSpan={3}>
+                        Nenhuma filial registrada.
+                      </TableCell>
+                    </TableRow>
+                  );
+  } else {
+    resolvedValue8 = null;
+  }
+  let resolvedValue10: any;
+  if (entity.shareholders.length === 0) {
+    resolvedValue10 = (
+                    <TableRow>
+                      <TableCell className="text-muted-foreground" colSpan={3}>
+                        Nenhum sócio registrado.
+                      </TableCell>
+                    </TableRow>
+                  );
+  } else {
+    resolvedValue10 = null;
+  }
+  let resolvedValue11: any;
+  if (entity.officers.length === 0) {
+    resolvedValue11 = (
+                    <TableRow>
+                      <TableCell className="text-muted-foreground" colSpan={3}>
+                        Nenhum diretor registrado.
+                      </TableCell>
+                    </TableRow>
+                  );
+  } else {
+    resolvedValue11 = null;
+  }
+return (
     <Card>
       <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -441,7 +525,7 @@ function LegalEntityCard({
       <CardContent className="space-y-6">
         <form
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-          onSubmit={(event) => {
+          onSubmit={(event: any) => {
             event.preventDefault();
             void saveProfile(new FormData(event.currentTarget));
           }}
@@ -469,7 +553,7 @@ function LegalEntityCard({
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               disabled={!canManage || isSaving}
               name="countryCode"
-              onChange={(event) => setCountryCode(event.target.value)}
+              onChange={(event: any) => setCountryCode(event.target.value)}
               value={countryCode}
             >
               {countryOptions.map((option) => (
@@ -545,12 +629,12 @@ function LegalEntityCard({
           </div>
           <div className="md:col-span-2 xl:col-span-3">
             <Button disabled={!canManage || isSaving} type="submit">
-              {isSaving ? "Salvando..." : "Salvar perfil da empresa"}
+              {resolvedValue6}
             </Button>
           </div>
         </form>
 
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+        {resolvedValue7}
 
         <div className="grid gap-4 xl:grid-cols-3">
           <Card>
@@ -574,18 +658,12 @@ function LegalEntityCard({
                       <TableCell>{[branch.city, branch.state].filter(Boolean).join(" / ") || "—"}</TableCell>
                     </TableRow>
                   ))}
-                  {entity.branches.length === 0 ? (
-                    <TableRow>
-                      <TableCell className="text-muted-foreground" colSpan={3}>
-                        Nenhuma filial registrada.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
+                  {resolvedValue8}
                 </TableBody>
               </Table>
               <form
                 className="grid gap-2"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/branches`,
@@ -621,25 +699,27 @@ function LegalEntityCard({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entity.shareholders.map((shareholder) => (
+                  {entity.shareholders.map((shareholder) => {
+                    let resolvedValue9: any;
+                    if (shareholder.ownershipPercent) {
+                      resolvedValue9 = `${shareholder.ownershipPercent}%`;
+                    } else {
+                      resolvedValue9 = "—";
+                    }
+                    return (
                     <TableRow key={shareholder.id}>
                       <TableCell>{shareholder.name}</TableCell>
                       <TableCell>{shareholder.role || "—"}</TableCell>
-                      <TableCell>{shareholder.ownershipPercent ? `${shareholder.ownershipPercent}%` : "—"}</TableCell>
+                      <TableCell>{resolvedValue9}</TableCell>
                     </TableRow>
-                  ))}
-                  {entity.shareholders.length === 0 ? (
-                    <TableRow>
-                      <TableCell className="text-muted-foreground" colSpan={3}>
-                        Nenhum sócio registrado.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
+                  );
+                  })}
+                  {resolvedValue10}
                 </TableBody>
               </Table>
               <form
                 className="grid gap-2"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/shareholders`,
@@ -682,18 +762,12 @@ function LegalEntityCard({
                       <TableCell>{officer.email || "—"}</TableCell>
                     </TableRow>
                   ))}
-                  {entity.officers.length === 0 ? (
-                    <TableRow>
-                      <TableCell className="text-muted-foreground" colSpan={3}>
-                        Nenhum diretor registrado.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
+                  {resolvedValue11}
                 </TableBody>
               </Table>
               <form
                 className="grid gap-2"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/officers`,

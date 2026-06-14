@@ -44,7 +44,13 @@ export function OrganizationSwitcher({
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
   const activeOrganizationName = currentOrganization?.name ?? fallbackOrganizationName ?? t("shell.organization");
-  const activeRoleLabel = currentOrganization ? `Acesso ${currentOrganization.role}` : t("shell.activeOrganization");
+    let resolvedValue0: any;
+  if (currentOrganization) {
+    resolvedValue0 = `Acesso ${currentOrganization.role}`;
+  } else {
+    resolvedValue0 = t("shell.activeOrganization");
+  }
+const activeRoleLabel = resolvedValue0;
 
   async function onOrganizationSelect(organizationId: string) {
     if (organizationId === selectedOrganizationId) {
@@ -75,18 +81,36 @@ export function OrganizationSwitcher({
   }
 
   if (organizations.length <= 1) {
-    return (
+        let resolvedValue1: any;
+    if (error) {
+      resolvedValue1 = <p className="text-xs text-destructive">{error}</p>;
+    } else {
+      resolvedValue1 = null;
+    }
+return (
       <div className="min-w-0 space-y-1.5">
         <div className="flex min-h-11 items-center rounded-xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
           <span className="truncate">{activeOrganizationName}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">{activeRoleLabel}</p>
-        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        {resolvedValue1}
       </div>
     );
   }
 
-  return (
+    let resolvedValue2: any;
+  if (isSubmitting) {
+    resolvedValue2 = t("shell.switchingOrganization");
+  } else {
+    resolvedValue2 = activeRoleLabel;
+  }
+  let resolvedValue4: any;
+  if (error) {
+    resolvedValue4 = <p className="text-xs text-destructive">{error}</p>;
+  } else {
+    resolvedValue4 = null;
+  }
+return (
     <div className="min-w-0 space-y-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -98,7 +122,7 @@ export function OrganizationSwitcher({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{activeOrganizationName}</p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {isSubmitting ? t("shell.switchingOrganization") : activeRoleLabel}
+                {resolvedValue2}
               </p>
             </div>
             <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
@@ -110,12 +134,18 @@ export function OrganizationSwitcher({
           {organizations.map((organization) => {
             const isCurrent = organization.id === selectedOrganizationId;
 
-            return (
+                        let resolvedValue3: any;
+            if (isCurrent) {
+              resolvedValue3 = <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" />;
+            } else {
+              resolvedValue3 = null;
+            }
+return (
               <DropdownMenuItem
                 key={organization.id}
                 className="flex items-start justify-between gap-3 rounded-xl px-3 py-3"
                 disabled={isCurrent || isSubmitting}
-                onSelect={(event) => {
+                onSelect={(event: any) => {
                   event.preventDefault();
                   void onOrganizationSelect(organization.id);
                 }}
@@ -126,14 +156,14 @@ export function OrganizationSwitcher({
                     {organization.role} · {getSubscriptionPlanLabel(organization.subscriptionPlan)}
                   </p>
                 </div>
-                {isCurrent ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" /> : null}
+                {resolvedValue3}
               </DropdownMenuItem>
             );
           })}
         </DropdownMenuContent>
       </DropdownMenu>
       <p className="truncate text-xs text-muted-foreground">{activeRoleLabel}</p>
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {resolvedValue4}
     </div>
   );
 }

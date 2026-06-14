@@ -7,11 +7,17 @@ interface ChartCardProps {
 }
 
 export function ChartCard({ title, description, children }: ChartCardProps) {
-  return (
+    let resolvedValue0: any;
+  if (description) {
+    resolvedValue0 = <CardDescription>{description}</CardDescription>;
+  } else {
+    resolvedValue0 = null;
+  }
+return (
     <Card className="h-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
+        {resolvedValue0}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>

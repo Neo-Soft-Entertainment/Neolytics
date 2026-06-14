@@ -8,8 +8,8 @@ function getAppIds(request: Request) {
 
   return (url.searchParams.get("appIds") ?? "")
     .split(",")
-    .map((value) => Number(value))
-    .filter((value) => Number.isInteger(value) && value > 0);
+    .map((value: any) => Number(value))
+    .filter((value: any) => Number.isInteger(value) && value > 0);
 }
 
 export async function GET(request: Request) {

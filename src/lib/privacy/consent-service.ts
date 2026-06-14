@@ -68,7 +68,31 @@ export async function grantConsent(params: {
   }
 
   const consentClient = getConsentClient(params.client);
-  const consent = await consentClient.userConsent.upsert({
+    let resolvedValue0: any;
+  if (params.ipAddress) {
+    resolvedValue0 = hashPrivacyValue(params.ipAddress);
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (params.userAgent) {
+    resolvedValue1 = hashPrivacyValue(params.userAgent);
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (params.ipAddress) {
+    resolvedValue2 = hashPrivacyValue(params.ipAddress);
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (params.userAgent) {
+    resolvedValue3 = hashPrivacyValue(params.userAgent);
+  } else {
+    resolvedValue3 = null;
+  }
+const consent = await consentClient.userConsent.upsert({
     where: {
       userId_purposeId: {
         userId: params.userId,
@@ -82,8 +106,8 @@ export async function grantConsent(params: {
       status: ConsentStatus.GRANTED,
       grantedAt: new Date(),
       source: params.source,
-      ipHash: params.ipAddress ? hashPrivacyValue(params.ipAddress) : null,
-      userAgentHash: params.userAgent ? hashPrivacyValue(params.userAgent) : null
+      ipHash: resolvedValue0,
+      userAgentHash: resolvedValue1
     },
     update: {
       consentTextVersion: params.consentTextVersion,
@@ -91,8 +115,8 @@ export async function grantConsent(params: {
       grantedAt: new Date(),
       revokedAt: null,
       source: params.source,
-      ipHash: params.ipAddress ? hashPrivacyValue(params.ipAddress) : null,
-      userAgentHash: params.userAgent ? hashPrivacyValue(params.userAgent) : null
+      ipHash: resolvedValue2,
+      userAgentHash: resolvedValue3
     }
   });
 

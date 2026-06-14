@@ -42,7 +42,13 @@ export async function POST(
       }
     });
 
-    const result = await buildDataProductExport({
+        let resolvedValue0: any;
+    if (Array.isArray(product.outputFields)) {
+      resolvedValue0 = product.outputFields.map((field) => String(field));
+    } else {
+      resolvedValue0 = [];
+    }
+const result = await buildDataProductExport({
       organizationId: context.organizationId,
       actorId: context.userId,
       actorRole: context.organizationRole,
@@ -56,9 +62,7 @@ export async function POST(
         id: product.id,
         productName: product.productName,
         productType: product.productType as DataProductType,
-        outputFields: Array.isArray(product.outputFields)
-          ? product.outputFields.map((field) => String(field))
-          : [],
+        outputFields: resolvedValue0,
         minimumCohortSize: product.minimumCohortSize,
         approvalStatus: product.approvalStatus as ApprovalStatus,
         privacyRiskScore: product.privacyRiskScore,

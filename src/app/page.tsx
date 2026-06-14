@@ -8,7 +8,53 @@ import { Button } from "@/components/ui/button";
 export default async function HomePage() {
   const session = await auth();
 
-  return (
+    let resolvedValue0: any;
+  if (session) {
+    resolvedValue0 = "/dashboard";
+  } else {
+    resolvedValue0 = "/login";
+  }
+  let resolvedValue1: any;
+  if (session) {
+    resolvedValue1 = "Abrir painel";
+  } else {
+    resolvedValue1 = "Entrar";
+  }
+  let resolvedValue2: any;
+  if (session) {
+    resolvedValue2 = "/dashboard";
+  } else {
+    resolvedValue2 = "/login";
+  }
+  let resolvedValue3: any;
+  if (session) {
+    resolvedValue3 = "Abrir painel";
+  } else {
+    resolvedValue3 = "Entrar";
+  }
+  let resolvedValue4: any;
+  if (!session) {
+    resolvedValue4 = (
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/signup">Criar conta</Link>
+                </Button>
+              );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (session) {
+    resolvedValue5 = "/projects";
+  } else {
+    resolvedValue5 = "/games";
+  }
+  let resolvedValue6: any;
+  if (session) {
+    resolvedValue6 = "Abrir projetos";
+  } else {
+    resolvedValue6 = "Explorar jogos";
+  }
+return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0 hero-grid opacity-50" />
       <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
@@ -25,8 +71,8 @@ export default async function HomePage() {
               <Link href="/opportunities">Oportunidades</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={session ? "/dashboard" : "/login"}>
-                {session ? "Abrir painel" : "Entrar"}
+              <Link href={resolvedValue0}>
+                {resolvedValue1}
               </Link>
             </Button>
           </div>
@@ -50,18 +96,14 @@ export default async function HomePage() {
             </div>
             <div className="animate-rise-in-delay flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link href={session ? "/dashboard" : "/login"}>
-                  {session ? "Abrir painel" : "Entrar"}
+                <Link href={resolvedValue2}>
+                  {resolvedValue3}
                 </Link>
               </Button>
-              {!session ? (
-                <Button asChild size="lg" variant="secondary">
-                  <Link href="/signup">Criar conta</Link>
-                </Button>
-              ) : null}
+              {resolvedValue4}
               <Button asChild size="lg" variant="outline">
-                <Link href={session ? "/projects" : "/games"}>
-                  {session ? "Abrir projetos" : "Explorar jogos"}
+                <Link href={resolvedValue5}>
+                  {resolvedValue6}
                 </Link>
               </Button>
             </div>

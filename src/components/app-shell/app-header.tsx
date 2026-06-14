@@ -61,7 +61,19 @@ export function AppHeader({
   const currentItem = getCurrentNavItem(pathname);
   const currentSection = getNavSection(currentItem?.section);
 
-  return (
+    let resolvedValue0: any;
+  if (currentSection) {
+    resolvedValue0 = t(currentSection.labelKey);
+  } else {
+    resolvedValue0 = t("shell.navOverview");
+  }
+  let resolvedValue1: any;
+  if (currentItem) {
+    resolvedValue1 = t(currentItem.labelKey);
+  } else {
+    resolvedValue1 = "Neolytics";
+  }
+return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 px-4 shadow-sm lg:px-8 relative">
       <div className="flex flex-col gap-3 py-3 lg:hidden">
         <div className="flex items-center justify-between gap-3">
@@ -110,10 +122,10 @@ export function AppHeader({
         <div className="flex min-w-0 max-w-4xl flex-1 items-center gap-3">
           <div className="min-w-[132px] px-1">
             <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
-              {currentSection ? t(currentSection.labelKey) : t("shell.navOverview")}
+              {resolvedValue0}
             </p>
             <p className="mt-1 truncate text-sm font-semibold">
-              {currentItem ? t(currentItem.labelKey) : "Neolytics"}
+              {resolvedValue1}
             </p>
           </div>
           <div className="min-w-0 min-w-[240px] max-w-[320px] px-1">

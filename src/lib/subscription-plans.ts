@@ -302,9 +302,29 @@ export const limitLabels: Record<LimitKey, string> = {
 
 export function getEntitlementPolicyForPlan(plan: SubscriptionPlan): EntitlementPolicy {
   const config = getSubscriptionPlanConfig(plan);
-  const limitValue = (value: number | null): LimitValue => value === null ? "unlimited" : value;
+  const limitValue = (value: number | null): LimitValue => {
+    let resolvedValue0: any;
+    if (value === null) {
+      resolvedValue0 = "unlimited";
+    } else {
+      resolvedValue0 = value;
+    }
+    return resolvedValue0;
+  };
 
-  return {
+    let resolvedValue1: any;
+  if (plan === SubscriptionPlan.PRO) {
+    resolvedValue1 = "unlimited";
+  } else {
+        let resolvedValue3: any;
+    if (plan === SubscriptionPlan.PLUS) {
+      resolvedValue3 = 100;
+    } else {
+      resolvedValue3 = 10;
+    }
+resolvedValue1 = resolvedValue3;
+  }
+return {
     features: {
       radarSteam: hasSubscriptionCapability(plan, featureCapabilityMap.radarSteam),
       marketResearch: hasSubscriptionCapability(plan, featureCapabilityMap.marketResearch),
@@ -320,7 +340,7 @@ export function getEntitlementPolicyForPlan(plan: SubscriptionPlan): Entitlement
       gdd: hasSubscriptionCapability(plan, featureCapabilityMap.gdd)
     },
     limits: {
-      steamXrayPerMonth: plan === SubscriptionPlan.PRO ? "unlimited" : plan === SubscriptionPlan.PLUS ? 100 : 10,
+      steamXrayPerMonth: resolvedValue1,
       viabilityAnalysesPerMonth: limitValue(config.limits.projectAnalysesRun),
       artAnalysesPerMonth: limitValue(config.limits.artAnalysesRun),
       gameBoardProjects: limitValue(config.limits.projects),
@@ -338,7 +358,13 @@ export function getPlanLimit(plan: SubscriptionPlan, limitKey: LimitKey) {
 }
 
 export function getLimitLabel(limit: LimitValue) {
-  return limit === "unlimited" ? "Ilimitado" : String(limit);
+    let resolvedValue2: any;
+  if (limit === "unlimited") {
+    resolvedValue2 = "Ilimitado";
+  } else {
+    resolvedValue2 = String(limit);
+  }
+return resolvedValue2;
 }
 
 export function hasReachedLimit(currentUsage: number, limit: LimitValue) {

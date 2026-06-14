@@ -116,12 +116,18 @@ export async function createCommunityImageSignedUrls(media: CommunityMediaItem[]
 
   const { supabase, bucket } = await ensureBucket();
 
-  return Promise.all(media.map(async (item) => {
+  return Promise.all(media.map(async (item: any) => {
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(item.storagePath, 60 * 30);
 
-    return {
+        let resolvedValue0: any;
+    if (error) {
+      resolvedValue0 = undefined;
+    } else {
+      resolvedValue0 = data?.signedUrl;
+    }
+return {
       ...item,
-      signedUrl: error ? undefined : data?.signedUrl
+      signedUrl: resolvedValue0
     };
   }));
 }
@@ -132,7 +138,7 @@ export async function deleteCommunityImages(media: CommunityMediaItem[]) {
   }
 
   const { supabase, bucket } = await ensureBucket();
-  const paths = media.map((item) => item.storagePath).filter(Boolean);
+  const paths = media.map((item: any) => item.storagePath).filter(Boolean);
 
   if (paths.length === 0) {
     return;

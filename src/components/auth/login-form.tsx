@@ -94,7 +94,13 @@ export function LoginForm({
 
   async function onSubmit(values: FormValues) {
     setError(null);
-    const callbackUrl = inviteToken ? `/invite/${inviteToken}` : "/dashboard";
+        let resolvedValue0: any;
+    if (inviteToken) {
+      resolvedValue0 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue0 = "/dashboard";
+    }
+const callbackUrl = resolvedValue0;
 
     try {
       const isAvailable = await checkAuthAvailability();
@@ -134,7 +140,13 @@ export function LoginForm({
           return;
         }
 
-        setError(result.error === "CredentialsSignin" ? t("auth.invalidCredentials") : t("auth.authFailed"));
+                let resolvedValue1: any;
+        if (result.error === "CredentialsSignin") {
+          resolvedValue1 = t("auth.invalidCredentials");
+        } else {
+          resolvedValue1 = t("auth.authFailed");
+        }
+setError(resolvedValue1);
         return;
       }
 
@@ -159,8 +171,14 @@ export function LoginForm({
     }
 
     setIsSocialLoading("google");
-    await signIn("google", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+        let resolvedValue2: any;
+    if (inviteToken) {
+      resolvedValue2 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue2 = "/dashboard";
+    }
+await signIn("google", {
+      callbackUrl: resolvedValue2
     });
     setIsSocialLoading(null);
   }
@@ -174,8 +192,14 @@ export function LoginForm({
     }
 
     setIsSocialLoading("discord");
-    await signIn("discord", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+        let resolvedValue3: any;
+    if (inviteToken) {
+      resolvedValue3 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue3 = "/dashboard";
+    }
+await signIn("discord", {
+      callbackUrl: resolvedValue3
     });
     setIsSocialLoading(null);
   }
@@ -189,29 +213,40 @@ export function LoginForm({
     }
 
     setIsSocialLoading("apple");
-    await signIn("apple", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/dashboard"
+        let resolvedValue4: any;
+    if (inviteToken) {
+      resolvedValue4 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue4 = "/dashboard";
+    }
+await signIn("apple", {
+      callbackUrl: resolvedValue4
     });
     setIsSocialLoading(null);
   }
 
-  return (
-    <>
-      {recaptchaSiteKey ? (
+    let resolvedValue5: any;
+  if (recaptchaSiteKey) {
+    resolvedValue5 = (
         <Script
           src={`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(recaptchaSiteKey)}`}
           strategy="afterInteractive"
         />
-      ) : null}
-      <Card className="w-full max-w-sm border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-        <CardHeader className="space-y-1 pb-4">
-          <CardTitle>{t("auth.signInTitle")}</CardTitle>
-          <CardDescription>{t("auth.signInDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {hasSocialLogin ? (
-            <div className="space-y-2.5">
-              {hasGoogleLogin ? (
+      );
+  } else {
+    resolvedValue5 = null;
+  }
+  let resolvedValue6: any;
+  if (hasSocialLogin) {
+        let resolvedValue13: any;
+    if (hasGoogleLogin) {
+            let resolvedValue16: any;
+      if (isSocialLoading === "google") {
+        resolvedValue16 = t("auth.redirectGoogle");
+      } else {
+        resolvedValue16 = t("auth.continueGoogle");
+      }
+resolvedValue13 = (
                 <Button
                   className="w-full"
                   disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -219,10 +254,21 @@ export function LoginForm({
                   variant="outline"
                   onClick={onGoogleSignIn}
                 >
-                  {isSocialLoading === "google" ? t("auth.redirectGoogle") : t("auth.continueGoogle")}
+                  {resolvedValue16}
                 </Button>
-              ) : null}
-              {hasDiscordLogin ? (
+              );
+    } else {
+      resolvedValue13 = null;
+    }
+    let resolvedValue14: any;
+    if (hasDiscordLogin) {
+            let resolvedValue17: any;
+      if (isSocialLoading === "discord") {
+        resolvedValue17 = t("auth.redirectDiscord");
+      } else {
+        resolvedValue17 = t("auth.continueDiscord");
+      }
+resolvedValue14 = (
                 <Button
                   className="w-full"
                   disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -230,10 +276,21 @@ export function LoginForm({
                   variant="outline"
                   onClick={onDiscordSignIn}
                 >
-                  {isSocialLoading === "discord" ? t("auth.redirectDiscord") : t("auth.continueDiscord")}
+                  {resolvedValue17}
                 </Button>
-              ) : null}
-              {hasAppleLogin ? (
+              );
+    } else {
+      resolvedValue14 = null;
+    }
+    let resolvedValue15: any;
+    if (hasAppleLogin) {
+            let resolvedValue18: any;
+      if (isSocialLoading === "apple") {
+        resolvedValue18 = t("auth.redirectApple");
+      } else {
+        resolvedValue18 = t("auth.continueApple");
+      }
+resolvedValue15 = (
                 <Button
                   className="w-full"
                   disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -241,9 +298,17 @@ export function LoginForm({
                   variant="outline"
                   onClick={onAppleSignIn}
                 >
-                  {isSocialLoading === "apple" ? t("auth.redirectApple") : t("auth.continueApple")}
+                  {resolvedValue18}
                 </Button>
-              ) : null}
+              );
+    } else {
+      resolvedValue15 = null;
+    }
+resolvedValue6 = (
+            <div className="space-y-2.5">
+              {resolvedValue13}
+              {resolvedValue14}
+              {resolvedValue15}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
@@ -253,14 +318,69 @@ export function LoginForm({
                 </div>
               </div>
             </div>
-          ) : null}
+          );
+  } else {
+    resolvedValue6 = null;
+  }
+  let resolvedValue7: any;
+  if (form.formState.errors.email) {
+    resolvedValue7 = (
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              );
+  } else {
+    resolvedValue7 = null;
+  }
+  let resolvedValue8: any;
+  if (form.formState.errors.password) {
+    resolvedValue8 = (
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              );
+  } else {
+    resolvedValue8 = null;
+  }
+  let resolvedValue9: any;
+  if (error) {
+    resolvedValue9 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue9 = null;
+  }
+  let resolvedValue10: any;
+  if (form.formState.isSubmitting) {
+    resolvedValue10 = t("auth.signingIn");
+  } else {
+    resolvedValue10 = t("auth.signIn");
+  }
+  let resolvedValue11: any;
+  if (inviteToken) {
+    resolvedValue11 = (
+              <p className="text-center text-xs text-muted-foreground">
+                {t("auth.inviteHint")}
+              </p>
+            );
+  } else {
+    resolvedValue11 = null;
+  }
+  let resolvedValue12: any;
+  if (inviteToken) {
+    resolvedValue12 = `/signup?inviteToken=${inviteToken}`;
+  } else {
+    resolvedValue12 = "/signup";
+  }
+return (
+    <>
+      {resolvedValue5}
+      <Card className="w-full max-w-sm border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle>{t("auth.signInTitle")}</CardTitle>
+          <CardDescription>{t("auth.signInDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {resolvedValue6}
           <form className="space-y-3.5" onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
               <Input id="email" type="email" autoComplete="email" {...form.register("email")} />
-              {form.formState.errors.email ? (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-              ) : null}
+              {resolvedValue7}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>
@@ -270,24 +390,18 @@ export function LoginForm({
                 autoComplete="current-password"
                 {...form.register("password")}
               />
-              {form.formState.errors.password ? (
-                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
-              ) : null}
+              {resolvedValue8}
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {resolvedValue9}
             <Button className="w-full" disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
-              {form.formState.isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
+              {resolvedValue10}
             </Button>
-            {inviteToken ? (
-              <p className="text-center text-xs text-muted-foreground">
-                {t("auth.inviteHint")}
-              </p>
-            ) : null}
+            {resolvedValue11}
             <p className="text-center text-sm text-muted-foreground">
               {t("auth.newHere")}{" "}
               <Link
                 className="underline underline-offset-4"
-                href={inviteToken ? `/signup?inviteToken=${inviteToken}` : "/signup"}
+                href={resolvedValue12}
               >
                 {t("auth.createAccount")}
               </Link>

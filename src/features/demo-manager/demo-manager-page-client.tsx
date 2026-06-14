@@ -252,17 +252,127 @@ export function DemoManagerPageClient({
 
   const mutation = useMutation({
     mutationFn: async ({ path, method, body }: { path: string; method: string; body?: unknown }) =>
-      apiClient(path, {
+      {
+      let resolvedValue0: any;
+      if (body) {
+        resolvedValue0 = JSON.stringify(body);
+      } else {
+        resolvedValue0 = undefined;
+      }
+      return apiClient(path, {
         method,
-        body: body ? JSON.stringify(body) : undefined
-      }),
+        body: resolvedValue0
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["demo-manager", projectId] });
     }
   });
 
   const rawData = dataQuery.data as Partial<DemoManagerData> | undefined;
-  const data: DemoManagerData | null = rawData ? {
+    let resolvedValue1: any;
+  if (rawData) {
+        let resolvedValue11: any;
+    if (Array.isArray(rawData.elements)) {
+      resolvedValue11 = rawData.elements.filter((item): item is DemoElement => Boolean(item)).map((item: any) => {
+        let resolvedValue18: any;
+        if (Array.isArray(item.tags)) {
+          resolvedValue18 = item.tags;
+        } else {
+          resolvedValue18 = [];
+        }
+        return ({ ...item, tags: resolvedValue18 });
+      });
+    } else {
+      resolvedValue11 = [];
+    }
+    let resolvedValue12: any;
+    if (Array.isArray(rawData.playableSteps)) {
+      resolvedValue12 = rawData.playableSteps.filter((item): item is PlayableStep => Boolean(item)).map((item: any) => {
+        let resolvedValue19: any;
+        if (Array.isArray(item.relatedCharacterIds)) {
+          resolvedValue19 = item.relatedCharacterIds;
+        } else {
+          resolvedValue19 = [];
+        }
+        let resolvedValue20: any;
+        if (Array.isArray(item.relatedItemIds)) {
+          resolvedValue20 = item.relatedItemIds;
+        } else {
+          resolvedValue20 = [];
+        }
+        let resolvedValue21: any;
+        if (Array.isArray(item.relatedMechanicIds)) {
+          resolvedValue21 = item.relatedMechanicIds;
+        } else {
+          resolvedValue21 = [];
+        }
+        let resolvedValue22: any;
+        if (Array.isArray(item.relatedQuestIds)) {
+          resolvedValue22 = item.relatedQuestIds;
+        } else {
+          resolvedValue22 = [];
+        }
+        let resolvedValue23: any;
+        if (Array.isArray(item.relatedDialogueIds)) {
+          resolvedValue23 = item.relatedDialogueIds;
+        } else {
+          resolvedValue23 = [];
+        }
+        return ({
+      ...item,
+      relatedCharacterIds: resolvedValue19,
+      relatedItemIds: resolvedValue20,
+      relatedMechanicIds: resolvedValue21,
+      relatedQuestIds: resolvedValue22,
+      relatedDialogueIds: resolvedValue23
+    });
+      });
+    } else {
+      resolvedValue12 = [];
+    }
+    let resolvedValue13: any;
+    if (Array.isArray(rawData.emotionalBeats)) {
+      resolvedValue13 = rawData.emotionalBeats.filter((item): item is EmotionalBeat => Boolean(item)).map((item: any) => {
+        let resolvedValue24: any;
+        if (Array.isArray(item.triggerElements)) {
+          resolvedValue24 = item.triggerElements;
+        } else {
+          resolvedValue24 = [];
+        }
+        return ({
+      ...item,
+      triggerElements: resolvedValue24
+    });
+      });
+    } else {
+      resolvedValue13 = [];
+    }
+    let resolvedValue14: any;
+    if (Array.isArray(rawData.dependencies)) {
+      resolvedValue14 = rawData.dependencies.filter((item): item is DemoDependency => Boolean(item));
+    } else {
+      resolvedValue14 = [];
+    }
+    let resolvedValue15: any;
+    if (Array.isArray(rawData.bugs)) {
+      resolvedValue15 = rawData.bugs.filter((item): item is DemoBug => Boolean(item));
+    } else {
+      resolvedValue15 = [];
+    }
+    let resolvedValue16: any;
+    if (Array.isArray(rawData.blockers)) {
+      resolvedValue16 = rawData.blockers.filter((item): item is DemoBlocker => Boolean(item));
+    } else {
+      resolvedValue16 = [];
+    }
+    let resolvedValue17: any;
+    if (Array.isArray(rawData.diagnostic?.blockedStepIds)) {
+      resolvedValue17 = rawData.diagnostic.blockedStepIds;
+    } else {
+      resolvedValue17 = [];
+    }
+resolvedValue1 = {
     plan: {
       id: rawData.plan?.id ?? "",
       demoGoal: rawData.plan?.demoGoal ?? null,
@@ -275,22 +385,12 @@ export function DemoManagerPageClient({
       stageExitCriteria: rawData.plan?.stageExitCriteria ?? null,
       activeProblems: rawData.plan?.activeProblems ?? null
     },
-    elements: Array.isArray(rawData.elements) ? rawData.elements.filter((item): item is DemoElement => Boolean(item)).map((item) => ({ ...item, tags: Array.isArray(item.tags) ? item.tags : [] })) : [],
-    playableSteps: Array.isArray(rawData.playableSteps) ? rawData.playableSteps.filter((item): item is PlayableStep => Boolean(item)).map((item) => ({
-      ...item,
-      relatedCharacterIds: Array.isArray(item.relatedCharacterIds) ? item.relatedCharacterIds : [],
-      relatedItemIds: Array.isArray(item.relatedItemIds) ? item.relatedItemIds : [],
-      relatedMechanicIds: Array.isArray(item.relatedMechanicIds) ? item.relatedMechanicIds : [],
-      relatedQuestIds: Array.isArray(item.relatedQuestIds) ? item.relatedQuestIds : [],
-      relatedDialogueIds: Array.isArray(item.relatedDialogueIds) ? item.relatedDialogueIds : []
-    })) : [],
-    emotionalBeats: Array.isArray(rawData.emotionalBeats) ? rawData.emotionalBeats.filter((item): item is EmotionalBeat => Boolean(item)).map((item) => ({
-      ...item,
-      triggerElements: Array.isArray(item.triggerElements) ? item.triggerElements : []
-    })) : [],
-    dependencies: Array.isArray(rawData.dependencies) ? rawData.dependencies.filter((item): item is DemoDependency => Boolean(item)) : [],
-    bugs: Array.isArray(rawData.bugs) ? rawData.bugs.filter((item): item is DemoBug => Boolean(item)) : [],
-    blockers: Array.isArray(rawData.blockers) ? rawData.blockers.filter((item): item is DemoBlocker => Boolean(item)) : [],
+    elements: resolvedValue11,
+    playableSteps: resolvedValue12,
+    emotionalBeats: resolvedValue13,
+    dependencies: resolvedValue14,
+    bugs: resolvedValue15,
+    blockers: resolvedValue16,
     diagnostic: {
       playable: Boolean(rawData.diagnostic?.playable),
       hasPlayableLine: Boolean(rawData.diagnostic?.hasPlayableLine),
@@ -300,10 +400,14 @@ export function DemoManagerPageClient({
       activeBlockers: rawData.diagnostic?.activeBlockers ?? 0,
       criticalDependencies: rawData.diagnostic?.criticalDependencies ?? 0,
       weakDependencyAlerts: rawData.diagnostic?.weakDependencyAlerts ?? 0,
-      blockedStepIds: Array.isArray(rawData.diagnostic?.blockedStepIds) ? rawData.diagnostic.blockedStepIds : [],
+      blockedStepIds: resolvedValue17,
       nextRecommendedStep: rawData.diagnostic?.nextRecommendedStep ?? "Defina o objetivo da demo e os primeiros itens essenciais."
     }
-  } : null;
+  };
+  } else {
+    resolvedValue1 = null;
+  }
+const data: DemoManagerData | null = resolvedValue1;
 
   if (!fixedProjectId && projects.isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Carregando projetos...</div>;
@@ -330,7 +434,7 @@ export function DemoManagerPageClient({
               <select
                 className="h-10 min-w-64 rounded-xl border border-border bg-background px-3 text-sm"
                 value={projectId}
-                onChange={(event) => setSelectedProjectId(event.target.value)}
+                onChange={(event: any) => setSelectedProjectId(event.target.value)}
               >
                 {projects.data?.map((project) => (
                   <option key={project.id} value={project.id}>
@@ -346,19 +450,27 @@ export function DemoManagerPageClient({
       <div className={cn("grid gap-5", visibleSections.length > 1 && "lg:grid-cols-[220px_1fr]")}>
         {visibleSections.length > 1 && (
           <nav className="flex gap-2 overflow-x-auto rounded-3xl border border-white/10 bg-card/60 p-3 lg:block lg:space-y-2 lg:overflow-visible">
-            {visibleSections.map((item) => (
+            {visibleSections.map((item: any) => {
+              let resolvedValue2: any;
+              if (section === item) {
+                resolvedValue2 = "bg-cyan-500 text-white shadow-sm";
+              } else {
+                resolvedValue2 = "text-muted-foreground hover:bg-white/10 hover:text-foreground";
+              }
+              return (
             <button
               key={item}
               className={cn(
                 "whitespace-nowrap rounded-2xl px-3 py-2 text-left text-sm transition lg:w-full",
-                section === item ? "bg-cyan-500 text-white shadow-sm" : "text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                resolvedValue2
               )}
               type="button"
               onClick={() => setSection(item)}
             >
               {item}
             </button>
-            ))}
+            );
+            })}
           </nav>
         )}
 
@@ -385,22 +497,40 @@ export function DemoManagerPageClient({
 }
 
 function Overview({ data, mutate, projectId }: { data: DemoManagerData; mutate: MutationFn; projectId: string }) {
-  const [form, setForm] = useState({
+    let resolvedValue3: any;
+  if (data.plan.targetBuildDate) {
+    resolvedValue3 = data.plan.targetBuildDate.slice(0, 10);
+  } else {
+    resolvedValue3 = "";
+  }
+const [form, setForm] = useState({
     demoGoal: data.plan.demoGoal ?? "",
     demoScope: data.plan.demoScope ?? "",
     targetPlatform: data.plan.targetPlatform ?? "",
-    targetBuildDate: data.plan.targetBuildDate ? data.plan.targetBuildDate.slice(0, 10) : "",
+    targetBuildDate: resolvedValue3,
     progressEstimate: String(data.plan.progressEstimate),
     notes: data.plan.notes ?? ""
   });
-  const essentialItems = data.elements.filter((item) => item.priority === "ESSENTIAL").length + data.playableSteps.filter((step) => step.priority === "ESSENTIAL").length;
+  const essentialItems = data.elements.filter((item: any) => item.priority === "ESSENTIAL").length + data.playableSteps.filter((step) => step.priority === "ESSENTIAL").length;
   const criticalBugs = data.bugs.filter((bug) => bug.severity === "CRITICAL" && ["OPEN", "IN_REVIEW", "FIXING"].includes(bug.status)).length;
   const activeBlockers = data.blockers.filter((blocker) => ["OPEN", "IN_REVIEW", "FIXING"].includes(blocker.status)).length;
 
-  return (
+    let resolvedValue4: any;
+  if (data.diagnostic.playable) {
+    resolvedValue4 = "border-emerald-500/30 bg-emerald-500/10";
+  } else {
+    resolvedValue4 = "border-amber-500/30 bg-amber-500/10";
+  }
+  let resolvedValue5: any;
+  if (data.diagnostic.playable) {
+    resolvedValue5 = "Demo jogável";
+  } else {
+    resolvedValue5 = "Demo ainda não jogável";
+  }
+return (
     <div className="grid gap-5">
-      <div className={cn("rounded-3xl border p-5", data.diagnostic.playable ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10")}>
-        <p className="text-sm font-semibold">{data.diagnostic.playable ? "Demo jogável" : "Demo ainda não jogável"}</p>
+      <div className={cn("rounded-3xl border p-5", resolvedValue4)}>
+        <p className="text-sm font-semibold">{resolvedValue5}</p>
         <p className="mt-2 text-sm text-muted-foreground">{data.diagnostic.nextRecommendedStep}</p>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
@@ -418,14 +548,14 @@ function Overview({ data, mutate, projectId }: { data: DemoManagerData; mutate: 
           <CardTitle>Objetivo e escopo da demo</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Input placeholder="Objetivo da demo" value={form.demoGoal} onChange={(event) => setForm({ ...form, demoGoal: event.target.value })} />
-          <Textarea placeholder="Escopo essencial" value={form.demoScope} onChange={(event) => setForm({ ...form, demoScope: event.target.value })} />
+          <Input placeholder="Objetivo da demo" value={form.demoGoal} onChange={(event: any) => setForm({ ...form, demoGoal: event.target.value })} />
+          <Textarea placeholder="Escopo essencial" value={form.demoScope} onChange={(event: any) => setForm({ ...form, demoScope: event.target.value })} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <Input placeholder="Plataforma alvo" value={form.targetPlatform} onChange={(event) => setForm({ ...form, targetPlatform: event.target.value })} />
-            <Input type="date" value={form.targetBuildDate} onChange={(event) => setForm({ ...form, targetBuildDate: event.target.value })} />
-            <Input type="number" min={0} max={100} value={form.progressEstimate} onChange={(event) => setForm({ ...form, progressEstimate: event.target.value })} />
+            <Input placeholder="Plataforma alvo" value={form.targetPlatform} onChange={(event: any) => setForm({ ...form, targetPlatform: event.target.value })} />
+            <Input type="date" value={form.targetBuildDate} onChange={(event: any) => setForm({ ...form, targetBuildDate: event.target.value })} />
+            <Input type="number" min={0} max={100} value={form.progressEstimate} onChange={(event: any) => setForm({ ...form, progressEstimate: event.target.value })} />
           </div>
-          <Textarea placeholder="Notas" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+          <Textarea placeholder="Notas" value={form.notes} onChange={(event: any) => setForm({ ...form, notes: event.target.value })} />
           <Button
             onClick={() =>
               mutate({
@@ -449,7 +579,7 @@ function Overview({ data, mutate, projectId }: { data: DemoManagerData; mutate: 
 
 function ElementScreen({ data, kind, mutate, projectId }: { data: DemoManagerData; kind: DemoElementKind; mutate: MutationFn; projectId: string }) {
   const [form, setForm] = useState({ name: "", description: "", status: "IDEA" as DemoEntityStatus, priority: "IMPORTANT" as DemoPriority, tags: "", notes: "" });
-  const items = data.elements.filter((item) => item.kind === kind);
+  const items = data.elements.filter((item: any) => item.kind === kind);
 
   return (
     <Card>
@@ -458,14 +588,14 @@ function ElementScreen({ data, kind, mutate, projectId }: { data: DemoManagerDat
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid gap-3 rounded-2xl border border-border p-3">
-          <Input placeholder="Nome" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
-          <Textarea placeholder="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+          <Input placeholder="Nome" value={form.name} onChange={(event: any) => setForm({ ...form, name: event.target.value })} />
+          <Textarea placeholder="Descrição" value={form.description} onChange={(event: any) => setForm({ ...form, description: event.target.value })} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <SelectEnum value={form.status} options={statusLabels} onChange={(value) => setForm({ ...form, status: value as DemoEntityStatus })} />
-            <SelectEnum value={form.priority} options={priorityLabels} onChange={(value) => setForm({ ...form, priority: value as DemoPriority })} />
-            <Input placeholder="Tags separadas por vírgula" value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} />
+            <SelectEnum value={form.status} options={statusLabels} onChange={(value: any) => setForm({ ...form, status: value as DemoEntityStatus })} />
+            <SelectEnum value={form.priority} options={priorityLabels} onChange={(value: any) => setForm({ ...form, priority: value as DemoPriority })} />
+            <Input placeholder="Tags separadas por vírgula" value={form.tags} onChange={(event: any) => setForm({ ...form, tags: event.target.value })} />
           </div>
-          <Textarea placeholder="Notas" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+          <Textarea placeholder="Notas" value={form.notes} onChange={(event: any) => setForm({ ...form, notes: event.target.value })} />
           <Button
             onClick={() => {
               mutate({
@@ -481,11 +611,11 @@ function ElementScreen({ data, kind, mutate, projectId }: { data: DemoManagerDat
           </Button>
         </div>
         <div className="grid gap-3">
-          {items.map((item) => (
+          {items.map((item: any) => (
             <ItemCard
               key={item.id}
               title={item.name}
-              subtitle={`${statusLabels[item.status]} · ${priorityLabels[item.priority]}`}
+              subtitle={`${statusLabels[item.status as DemoEntityStatus]} · ${priorityLabels[item.priority as DemoPriority]}`}
               details={item.description}
               onEdit={() => {
                 const name = window.prompt("Nome", item.name);
@@ -498,8 +628,8 @@ function ElementScreen({ data, kind, mutate, projectId }: { data: DemoManagerDat
               onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/elements/${item.id}`, method: "DELETE" })}
             >
               <div className="grid gap-2 sm:grid-cols-2">
-                <SelectEnum value={item.status} options={statusLabels} onChange={(value) => mutate({ path: `/api/projects/${projectId}/demo-manager/elements/${item.id}`, method: "PATCH", body: { status: value } })} />
-                <SelectEnum value={item.priority} options={priorityLabels} onChange={(value) => mutate({ path: `/api/projects/${projectId}/demo-manager/elements/${item.id}`, method: "PATCH", body: { priority: value } })} />
+                <SelectEnum value={item.status} options={statusLabels} onChange={(value: any) => mutate({ path: `/api/projects/${projectId}/demo-manager/elements/${item.id}`, method: "PATCH", body: { status: value } })} />
+                <SelectEnum value={item.priority} options={priorityLabels} onChange={(value: any) => mutate({ path: `/api/projects/${projectId}/demo-manager/elements/${item.id}`, method: "PATCH", body: { priority: value } })} />
               </div>
             </ItemCard>
           ))}
@@ -536,26 +666,26 @@ function PlayableLine({ data, mutate, projectId }: { data: DemoManagerData; muta
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid gap-3 rounded-2xl border border-border p-3">
-          <Input placeholder="Título do passo" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
-          <Textarea placeholder="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
+          <Input placeholder="Título do passo" value={form.title} onChange={(event: any) => setForm({ ...form, title: event.target.value })} />
+          <Textarea placeholder="Descrição" value={form.description} onChange={(event: any) => setForm({ ...form, description: event.target.value })} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <Input placeholder="Ação do jogador" value={form.playerAction} onChange={(event) => setForm({ ...form, playerAction: event.target.value })} />
-            <Input placeholder="Objetivo do jogador" value={form.playerObjective} onChange={(event) => setForm({ ...form, playerObjective: event.target.value })} />
-            <Input placeholder="Resultado esperado" value={form.expectedResult} onChange={(event) => setForm({ ...form, expectedResult: event.target.value })} />
+            <Input placeholder="Ação do jogador" value={form.playerAction} onChange={(event: any) => setForm({ ...form, playerAction: event.target.value })} />
+            <Input placeholder="Objetivo do jogador" value={form.playerObjective} onChange={(event: any) => setForm({ ...form, playerObjective: event.target.value })} />
+            <Input placeholder="Resultado esperado" value={form.expectedResult} onChange={(event: any) => setForm({ ...form, expectedResult: event.target.value })} />
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <SelectEnum value={form.status} options={statusLabels} onChange={(value) => setForm({ ...form, status: value as DemoEntityStatus })} />
-            <SelectEnum value={form.priority} options={priorityLabels} onChange={(value) => setForm({ ...form, priority: value as DemoPriority })} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.relatedLocationId} onChange={(event) => setForm({ ...form, relatedLocationId: event.target.value })}>
+            <SelectEnum value={form.status} options={statusLabels} onChange={(value: any) => setForm({ ...form, status: value as DemoEntityStatus })} />
+            <SelectEnum value={form.priority} options={priorityLabels} onChange={(value: any) => setForm({ ...form, priority: value as DemoPriority })} />
+            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.relatedLocationId} onChange={(event: any) => setForm({ ...form, relatedLocationId: event.target.value })}>
               <option value="">Local relacionado</option>
-              {elementsOf(data, "LOCATION").map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              {elementsOf(data, "LOCATION").map((item: any) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
           </div>
-          <RelationPicker label="Mecânicas" items={elementsOf(data, "MECHANIC")} value={form.relatedMechanicIds} onChange={(value) => setForm({ ...form, relatedMechanicIds: value })} />
-          <RelationPicker label="Personagens" items={elementsOf(data, "CHARACTER")} value={form.relatedCharacterIds} onChange={(value) => setForm({ ...form, relatedCharacterIds: value })} />
-          <RelationPicker label="Itens" items={elementsOf(data, "ITEM")} value={form.relatedItemIds} onChange={(value) => setForm({ ...form, relatedItemIds: value })} />
-          <RelationPicker label="Diálogos" items={elementsOf(data, "DIALOGUE")} value={form.relatedDialogueIds} onChange={(value) => setForm({ ...form, relatedDialogueIds: value })} />
-          <RelationPicker label="Missões" items={elementsOf(data, "QUEST")} value={form.relatedQuestIds} onChange={(value) => setForm({ ...form, relatedQuestIds: value })} />
+          <RelationPicker label="Mecânicas" items={elementsOf(data, "MECHANIC")} value={form.relatedMechanicIds} onChange={(value: any) => setForm({ ...form, relatedMechanicIds: value })} />
+          <RelationPicker label="Personagens" items={elementsOf(data, "CHARACTER")} value={form.relatedCharacterIds} onChange={(value: any) => setForm({ ...form, relatedCharacterIds: value })} />
+          <RelationPicker label="Itens" items={elementsOf(data, "ITEM")} value={form.relatedItemIds} onChange={(value: any) => setForm({ ...form, relatedItemIds: value })} />
+          <RelationPicker label="Diálogos" items={elementsOf(data, "DIALOGUE")} value={form.relatedDialogueIds} onChange={(value: any) => setForm({ ...form, relatedDialogueIds: value })} />
+          <RelationPicker label="Missões" items={elementsOf(data, "QUEST")} value={form.relatedQuestIds} onChange={(value: any) => setForm({ ...form, relatedQuestIds: value })} />
           <Button
             onClick={() => {
               mutate({ path: `/api/projects/${projectId}/demo-manager/playable-steps`, method: "POST", body: { ...form, relatedLocationId: form.relatedLocationId || null } });
@@ -572,11 +702,18 @@ function PlayableLine({ data, mutate, projectId }: { data: DemoManagerData; muta
           </div>
         )}
         <div className="grid gap-3">
-          {data.playableSteps.map((step, index) => (
+          {data.playableSteps.map((step, index) => {
+            let resolvedValue6: any;
+            if (blockedIds.has(step.id)) {
+              resolvedValue6 = " · Bloqueado";
+            } else {
+              resolvedValue6 = "";
+            }
+            return (
             <ItemCard
               key={step.id}
               title={`${index + 1}. ${step.title}`}
-              subtitle={`${statusLabels[step.status]} · ${priorityLabels[step.priority]}${blockedIds.has(step.id) ? " · Bloqueado" : ""}`}
+              subtitle={`${statusLabels[step.status]} · ${priorityLabels[step.priority]}${resolvedValue6}`}
               details={step.description}
               onEdit={() => {
                 const title = window.prompt("Título", step.title);
@@ -594,11 +731,12 @@ function PlayableLine({ data, mutate, projectId }: { data: DemoManagerData; muta
                 <Button variant="outline" size="sm" disabled={index === data.playableSteps.length - 1} onClick={() => reorder(data.playableSteps, index, index + 1, projectId, mutate, "playable-steps/reorder")}>
                   <ArrowDown className="h-3.5 w-3.5" /> Descer
                 </Button>
-                <SelectEnum value={step.status} options={statusLabels} onChange={(value) => mutate({ path: `/api/projects/${projectId}/demo-manager/playable-steps/${step.id}`, method: "PATCH", body: { status: value } })} compact />
-                <SelectEnum value={step.priority} options={priorityLabels} onChange={(value) => mutate({ path: `/api/projects/${projectId}/demo-manager/playable-steps/${step.id}`, method: "PATCH", body: { priority: value } })} compact />
+                <SelectEnum value={step.status} options={statusLabels} onChange={(value: any) => mutate({ path: `/api/projects/${projectId}/demo-manager/playable-steps/${step.id}`, method: "PATCH", body: { status: value } })} compact />
+                <SelectEnum value={step.priority} options={priorityLabels} onChange={(value: any) => mutate({ path: `/api/projects/${projectId}/demo-manager/playable-steps/${step.id}`, method: "PATCH", body: { priority: value } })} compact />
               </div>
             </ItemCard>
-          ))}
+          );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -613,19 +751,19 @@ function EmotionalLine({ data, mutate, projectId }: { data: DemoManagerData; mut
       <CardHeader><CardTitle>Linha Emocional</CardTitle></CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid gap-3 rounded-2xl border border-border p-3">
-          <Input placeholder="Nome do momento" value={form.momentName} onChange={(event) => setForm({ ...form, momentName: event.target.value })} />
+          <Input placeholder="Nome do momento" value={form.momentName} onChange={(event: any) => setForm({ ...form, momentName: event.target.value })} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.desiredEmotion} onChange={(event) => setForm({ ...form, desiredEmotion: event.target.value })}>
+            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.desiredEmotion} onChange={(event: any) => setForm({ ...form, desiredEmotion: event.target.value })}>
               {emotionOptions.map((emotion) => <option key={emotion} value={emotion}>{emotion}</option>)}
             </select>
-            <Input type="number" min={0} max={100} value={form.intensity} onChange={(event) => setForm({ ...form, intensity: event.target.value })} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.playableStepId} onChange={(event) => setForm({ ...form, playableStepId: event.target.value })}>
+            <Input type="number" min={0} max={100} value={form.intensity} onChange={(event: any) => setForm({ ...form, intensity: event.target.value })} />
+            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.playableStepId} onChange={(event: any) => setForm({ ...form, playableStepId: event.target.value })}>
               <option value="">Passo da linha jogável</option>
               {data.playableSteps.map((step) => <option key={step.id} value={step.id}>{step.title}</option>)}
             </select>
           </div>
-          <Input placeholder="Elementos de gatilho separados por vírgula" value={form.triggerElements} onChange={(event) => setForm({ ...form, triggerElements: event.target.value })} />
-          <Textarea placeholder="Notas" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+          <Input placeholder="Elementos de gatilho separados por vírgula" value={form.triggerElements} onChange={(event: any) => setForm({ ...form, triggerElements: event.target.value })} />
+          <Textarea placeholder="Notas" value={form.notes} onChange={(event: any) => setForm({ ...form, notes: event.target.value })} />
           <Button
             disabled={!form.momentName.trim()}
             onClick={() => {
@@ -663,7 +801,7 @@ function EmotionalLine({ data, mutate, projectId }: { data: DemoManagerData; mut
 
 function Priorities({ data }: { data: DemoManagerData }) {
   const items = [
-    ...data.elements.map((item) => ({ id: item.id, title: item.name, priority: item.priority, status: item.status, type: kindLabels[item.kind] })),
+    ...data.elements.map((item: any) => ({ id: item.id, title: item.name, priority: item.priority, status: item.status, type: kindLabels[item.kind as DemoElementKind] })),
     ...data.playableSteps.map((step) => ({ id: step.id, title: step.title, priority: step.priority, status: step.status, type: "Linha Jogável" }))
   ];
 
@@ -672,8 +810,8 @@ function Priorities({ data }: { data: DemoManagerData }) {
       <Card>
         <CardHeader><CardTitle>MVP da Demo</CardTitle></CardHeader>
         <CardContent className="grid gap-2">
-          {items.filter((item) => item.priority === "ESSENTIAL").map((item) => <CompactRow key={item.id} title={item.title} subtitle={`${item.type} · ${statusLabels[item.status]}`} />)}
-          {!items.some((item) => item.priority === "ESSENTIAL") && <p className="text-sm text-muted-foreground">Marque itens como essenciais para formar o MVP da demo.</p>}
+          {items.filter((item: any) => item.priority === "ESSENTIAL").map((item: any) => <CompactRow key={item.id} title={item.title} subtitle={`${item.type} · ${statusLabels[item.status as DemoEntityStatus]}`} />)}
+          {!items.some((item: any) => item.priority === "ESSENTIAL") && <p className="text-sm text-muted-foreground">Marque itens como essenciais para formar o MVP da demo.</p>}
         </CardContent>
       </Card>
       <div className="grid gap-4 md:grid-cols-2">
@@ -681,7 +819,7 @@ function Priorities({ data }: { data: DemoManagerData }) {
           <Card key={priority}>
             <CardHeader><CardTitle>{priorityLabels[priority]}</CardTitle></CardHeader>
             <CardContent className="grid gap-2">
-              {items.filter((item) => item.priority === priority).map((item) => <CompactRow key={item.id} title={item.title} subtitle={`${item.type} · ${statusLabels[item.status]}`} />)}
+              {items.filter((item: any) => item.priority === priority).map((item: any) => <CompactRow key={item.id} title={item.title} subtitle={`${item.type} · ${statusLabels[item.status as DemoEntityStatus]}`} />)}
             </CardContent>
           </Card>
         ))}
@@ -700,18 +838,26 @@ function Dependencies({ data, mutate, projectId }: { data: DemoManagerData; muta
       <CardContent className="grid gap-4">
         <div className="grid gap-3 rounded-2xl border border-border p-3">
           <div className="grid gap-3 md:grid-cols-2">
-            <EntitySelector label="Origem" type={form.sourceType} id={form.sourceId} options={options} onType={(value) => setForm({ ...form, sourceType: value, sourceId: "" })} onId={(value) => setForm({ ...form, sourceId: value })} />
-            <EntitySelector label="Depende de" type={form.targetType} id={form.targetId} options={options} onType={(value) => setForm({ ...form, targetType: value, targetId: "" })} onId={(value) => setForm({ ...form, targetId: value })} />
+            <EntitySelector label="Origem" type={form.sourceType} id={form.sourceId} options={options} onType={(value: any) => setForm({ ...form, sourceType: value, sourceId: "" })} onId={(value: any) => setForm({ ...form, sourceId: value })} />
+            <EntitySelector label="Depende de" type={form.targetType} id={form.targetId} options={options} onType={(value: any) => setForm({ ...form, targetType: value, targetId: "" })} onId={(value: any) => setForm({ ...form, targetId: value })} />
           </div>
-          <Input placeholder="Tipo de dependência" value={form.dependencyType} onChange={(event) => setForm({ ...form, dependencyType: event.target.value })} />
-          <Textarea placeholder="Descrição" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isCritical} onChange={(event) => setForm({ ...form, isCritical: event.target.checked })} /> Dependência crítica</label>
+          <Input placeholder="Tipo de dependência" value={form.dependencyType} onChange={(event: any) => setForm({ ...form, dependencyType: event.target.value })} />
+          <Textarea placeholder="Descrição" value={form.description} onChange={(event: any) => setForm({ ...form, description: event.target.value })} />
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isCritical} onChange={(event: any) => setForm({ ...form, isCritical: event.target.checked })} /> Dependência crítica</label>
           <Button disabled={!form.sourceId || !form.targetId} onClick={() => mutate({ path: `/api/projects/${projectId}/demo-manager/dependencies`, method: "POST", body: form })}>Criar dependência</Button>
         </div>
         {data.diagnostic.weakDependencyAlerts > 0 && <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Há dependências críticas de itens essenciais apontando para algo ainda fraco no status.</div>}
-        {data.dependencies.map((dependency) => (
-          <ItemCard key={dependency.id} title={`${dependency.dependencyType}: ${nameOf(options, dependency.sourceId)} -> ${nameOf(options, dependency.targetId)}`} subtitle={dependency.isCritical ? "Crítica" : "Normal"} details={dependency.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/dependencies/${dependency.id}`, method: "DELETE" })} />
-        ))}
+        {data.dependencies.map((dependency) => {
+          let resolvedValue7: any;
+          if (dependency.isCritical) {
+            resolvedValue7 = "Crítica";
+          } else {
+            resolvedValue7 = "Normal";
+          }
+          return (
+          <ItemCard key={dependency.id} title={`${dependency.dependencyType}: ${nameOf(options, dependency.sourceId)} -> ${nameOf(options, dependency.targetId)}`} subtitle={resolvedValue7} details={dependency.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/dependencies/${dependency.id}`, method: "DELETE" })} />
+        );
+        })}
       </CardContent>
     </Card>
   );
@@ -727,30 +873,30 @@ function BugsAndBlockers({ data, mutate, projectId }: { data: DemoManagerData; m
       <Card>
         <CardHeader><CardTitle>Bugs</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
-          <Input placeholder="Título do bug" value={bug.title} onChange={(event) => setBug({ ...bug, title: event.target.value })} />
-          <Textarea placeholder="Descrição" value={bug.description} onChange={(event) => setBug({ ...bug, description: event.target.value })} />
+          <Input placeholder="Título do bug" value={bug.title} onChange={(event: any) => setBug({ ...bug, title: event.target.value })} />
+          <Textarea placeholder="Descrição" value={bug.description} onChange={(event: any) => setBug({ ...bug, description: event.target.value })} />
           <div className="grid gap-3 sm:grid-cols-3">
-            <SelectEnum value={bug.severity} options={bugSeverityLabels} onChange={(value) => setBug({ ...bug, severity: value as DemoBugSeverity })} />
-            <SelectEnum value={bug.status} options={bugStatusLabels} onChange={(value) => setBug({ ...bug, status: value as DemoBugStatus })} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={bug.affectedPlayableStepId} onChange={(event) => setBug({ ...bug, affectedPlayableStepId: event.target.value })}>
+            <SelectEnum value={bug.severity} options={bugSeverityLabels} onChange={(value: any) => setBug({ ...bug, severity: value as DemoBugSeverity })} />
+            <SelectEnum value={bug.status} options={bugStatusLabels} onChange={(value: any) => setBug({ ...bug, status: value as DemoBugStatus })} />
+            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={bug.affectedPlayableStepId} onChange={(event: any) => setBug({ ...bug, affectedPlayableStepId: event.target.value })}>
               <option value="">Passo afetado</option>
               {data.playableSteps.map((step) => <option key={step.id} value={step.id}>{step.title}</option>)}
             </select>
           </div>
           <Button disabled={!bug.title.trim()} onClick={() => mutate({ path: `/api/projects/${projectId}/demo-manager/bugs`, method: "POST", body: { ...bug, affectedPlayableStepId: bug.affectedPlayableStepId || null } })}>Criar bug</Button>
-          {data.bugs.map((item) => <ItemCard key={item.id} title={item.title} subtitle={`${bugSeverityLabels[item.severity]} · ${bugStatusLabels[item.status]}`} details={item.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/bugs/${item.id}`, method: "DELETE" })} />)}
+          {data.bugs.map((item: any) => <ItemCard key={item.id} title={item.title} subtitle={`${bugSeverityLabels[item.severity as DemoBugSeverity]} · ${bugStatusLabels[item.status as DemoBugStatus]}`} details={item.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/bugs/${item.id}`, method: "DELETE" })} />)}
         </CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle>Bloqueios</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
-          <Input placeholder="Título do bloqueio" value={blocker.title} onChange={(event) => setBlocker({ ...blocker, title: event.target.value })} />
-          <Textarea placeholder="Descrição" value={blocker.description} onChange={(event) => setBlocker({ ...blocker, description: event.target.value })} />
-          <EntitySelector label="Item bloqueado" type={blocker.blockedEntityType} id={blocker.blockedEntityId} options={options} onType={(value) => setBlocker({ ...blocker, blockedEntityType: value, blockedEntityId: "" })} onId={(value) => setBlocker({ ...blocker, blockedEntityId: value })} />
-          <Input placeholder="Causa" value={blocker.cause} onChange={(event) => setBlocker({ ...blocker, cause: event.target.value })} />
-          <Input placeholder="Possível solução" value={blocker.possibleSolution} onChange={(event) => setBlocker({ ...blocker, possibleSolution: event.target.value })} />
+          <Input placeholder="Título do bloqueio" value={blocker.title} onChange={(event: any) => setBlocker({ ...blocker, title: event.target.value })} />
+          <Textarea placeholder="Descrição" value={blocker.description} onChange={(event: any) => setBlocker({ ...blocker, description: event.target.value })} />
+          <EntitySelector label="Item bloqueado" type={blocker.blockedEntityType} id={blocker.blockedEntityId} options={options} onType={(value: any) => setBlocker({ ...blocker, blockedEntityType: value, blockedEntityId: "" })} onId={(value: any) => setBlocker({ ...blocker, blockedEntityId: value })} />
+          <Input placeholder="Causa" value={blocker.cause} onChange={(event: any) => setBlocker({ ...blocker, cause: event.target.value })} />
+          <Input placeholder="Possível solução" value={blocker.possibleSolution} onChange={(event: any) => setBlocker({ ...blocker, possibleSolution: event.target.value })} />
           <Button disabled={!blocker.title.trim()} onClick={() => mutate({ path: `/api/projects/${projectId}/demo-manager/blockers`, method: "POST", body: { ...blocker, blockedEntityId: blocker.blockedEntityId || null } })}>Criar bloqueio</Button>
-          {data.blockers.map((item) => <ItemCard key={item.id} title={item.title} subtitle={`${bugStatusLabels[item.status]} · ${priorityLabels[item.priority]}`} details={item.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/blockers/${item.id}`, method: "DELETE" })} />)}
+          {data.blockers.map((item: any) => <ItemCard key={item.id} title={item.title} subtitle={`${bugStatusLabels[item.status as DemoBugStatus]} · ${priorityLabels[item.priority as DemoPriority]}`} details={item.description} onDelete={() => mutate({ path: `/api/projects/${projectId}/demo-manager/blockers/${item.id}`, method: "DELETE" })} />)}
         </CardContent>
       </Card>
     </div>
@@ -764,11 +910,11 @@ function CurrentStage({ data, mutate, projectId }: { data: DemoManagerData; muta
     <Card>
       <CardHeader><CardTitle>Etapa Atual</CardTitle></CardHeader>
       <CardContent className="grid gap-3">
-        <SelectEnum value={form.currentStage} options={stageLabels} onChange={(value) => setForm({ ...form, currentStage: value as DemoStage })} />
-        <Input type="number" min={0} max={100} value={form.progressEstimate} onChange={(event) => setForm({ ...form, progressEstimate: event.target.value })} />
-        <Textarea placeholder="Critérios para avançar" value={form.stageExitCriteria} onChange={(event) => setForm({ ...form, stageExitCriteria: event.target.value })} />
-        <Textarea placeholder="Problemas ativos" value={form.activeProblems} onChange={(event) => setForm({ ...form, activeProblems: event.target.value })} />
-        <Textarea placeholder="Notas da etapa" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+        <SelectEnum value={form.currentStage} options={stageLabels} onChange={(value: any) => setForm({ ...form, currentStage: value as DemoStage })} />
+        <Input type="number" min={0} max={100} value={form.progressEstimate} onChange={(event: any) => setForm({ ...form, progressEstimate: event.target.value })} />
+        <Textarea placeholder="Critérios para avançar" value={form.stageExitCriteria} onChange={(event: any) => setForm({ ...form, stageExitCriteria: event.target.value })} />
+        <Textarea placeholder="Problemas ativos" value={form.activeProblems} onChange={(event: any) => setForm({ ...form, activeProblems: event.target.value })} />
+        <Textarea placeholder="Notas da etapa" value={form.notes} onChange={(event: any) => setForm({ ...form, notes: event.target.value })} />
         <Button onClick={() => mutate({ path: `/api/projects/${projectId}/demo-manager`, method: "PATCH", body: { ...form, progressEstimate: Number(form.progressEstimate) } })}>Salvar etapa</Button>
       </CardContent>
     </Card>
@@ -778,7 +924,13 @@ function CurrentStage({ data, mutate, projectId }: { data: DemoManagerData; muta
 function ExportImport({ data, projectId, mutate }: { data: DemoManagerData; projectId: string; mutate: MutationFn }) {
   const [json, setJson] = useState("");
 
-  return (
+    let resolvedValue8: any;
+  if (data.diagnostic.playable) {
+    resolvedValue8 = "jogável";
+  } else {
+    resolvedValue8 = "não jogável";
+  }
+return (
     <Card>
       <CardHeader><CardTitle>Exportar / Importar</CardTitle></CardHeader>
       <CardContent className="grid gap-4">
@@ -790,7 +942,7 @@ function ExportImport({ data, projectId, mutate }: { data: DemoManagerData; proj
             </a>
           </Button>
         </div>
-        <Textarea className="min-h-56 font-mono text-xs" placeholder="Cole aqui o JSON do Demo Manager" value={json} onChange={(event) => setJson(event.target.value)} />
+        <Textarea className="min-h-56 font-mono text-xs" placeholder="Cole aqui o JSON do Demo Manager" value={json} onChange={(event: any) => setJson(event.target.value)} />
         <Button
           variant="outline"
           onClick={() => {
@@ -802,7 +954,7 @@ function ExportImport({ data, projectId, mutate }: { data: DemoManagerData; proj
         >
           <Upload className="h-4 w-4" /> Importar JSON
         </Button>
-        <p className="text-xs text-muted-foreground">Estado atual: {data.diagnostic.playable ? "jogável" : "não jogável"}.</p>
+        <p className="text-xs text-muted-foreground">Estado atual: {resolvedValue8}.</p>
       </CardContent>
     </Card>
   );
@@ -846,8 +998,14 @@ function CompactRow({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function SelectEnum({ value, options, onChange, compact = false }: { value: string; options: Record<string, string>; onChange: (value: string) => void; compact?: boolean }) {
-  return (
-    <select className={cn("rounded-md border border-input bg-background px-3 text-sm", compact ? "h-8" : "h-10 w-full")} value={value} onChange={(event) => onChange(event.target.value)}>
+    let resolvedValue9: any;
+  if (compact) {
+    resolvedValue9 = "h-8";
+  } else {
+    resolvedValue9 = "h-10 w-full";
+  }
+return (
+    <select className={cn("rounded-md border border-input bg-background px-3 text-sm", resolvedValue9)} value={value} onChange={(event: any) => onChange(event.target.value)}>
       {Object.entries(options).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
     </select>
   );
@@ -862,12 +1020,20 @@ function RelationPicker({ label, items, value, onChange }: { label: string; item
     <div className="rounded-xl border border-border p-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
       <div className="flex flex-wrap gap-2">
-        {items.map((item) => (
+        {items.map((item: any) => (
           <label key={item.id} className="flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs">
             <input
               type="checkbox"
               checked={value.includes(item.id)}
-              onChange={(event) => onChange(event.target.checked ? [...value, item.id] : value.filter((id) => id !== item.id))}
+              onChange={(event: any) => {
+                let resolvedValue10: any;
+                if (event.target.checked) {
+                  resolvedValue10 = [...value, item.id];
+                } else {
+                  resolvedValue10 = value.filter((id) => id !== item.id);
+                }
+                return onChange(resolvedValue10);
+              }}
             />
             {item.name}
           </label>
@@ -881,12 +1047,12 @@ function EntitySelector({ label, type, id, options, onType, onId }: { label: str
   return (
     <div className="grid gap-2">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-      <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={type} onChange={(event) => onType(event.target.value as DemoDependencyEntityType)}>
+      <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={type} onChange={(event: any) => onType(event.target.value as DemoDependencyEntityType)}>
         {Object.keys(options).map((key) => <option key={key} value={key}>{entityTypeLabel(key as DemoDependencyEntityType)}</option>)}
       </select>
-      <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={id} onChange={(event) => onId(event.target.value)}>
+      <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={id} onChange={(event: any) => onId(event.target.value)}>
         <option value="">Selecione</option>
-        {options[type].map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        {options[type].map((item: any) => <option key={item.id} value={item.id}>{item.name}</option>)}
       </select>
     </div>
   );
@@ -898,16 +1064,16 @@ function elementsOf(data: DemoManagerData, kind: DemoElementKind) {
 
 function entityOptions(data: DemoManagerData) {
   return {
-    MECHANIC: elementsOf(data, "MECHANIC").map((item) => ({ id: item.id, name: item.name })),
-    CHARACTER: elementsOf(data, "CHARACTER").map((item) => ({ id: item.id, name: item.name })),
-    ITEM: elementsOf(data, "ITEM").map((item) => ({ id: item.id, name: item.name })),
-    LOCATION: elementsOf(data, "LOCATION").map((item) => ({ id: item.id, name: item.name })),
-    DIALOGUE: elementsOf(data, "DIALOGUE").map((item) => ({ id: item.id, name: item.name })),
-    QUEST: elementsOf(data, "QUEST").map((item) => ({ id: item.id, name: item.name })),
-    PLAYABLE_STEP: data.playableSteps.map((item) => ({ id: item.id, name: item.title })),
-    EMOTIONAL_BEAT: data.emotionalBeats.map((item) => ({ id: item.id, name: item.momentName })),
-    BUG: data.bugs.map((item) => ({ id: item.id, name: item.title })),
-    BLOCKER: data.blockers.map((item) => ({ id: item.id, name: item.title }))
+    MECHANIC: elementsOf(data, "MECHANIC").map((item: any) => ({ id: item.id, name: item.name })),
+    CHARACTER: elementsOf(data, "CHARACTER").map((item: any) => ({ id: item.id, name: item.name })),
+    ITEM: elementsOf(data, "ITEM").map((item: any) => ({ id: item.id, name: item.name })),
+    LOCATION: elementsOf(data, "LOCATION").map((item: any) => ({ id: item.id, name: item.name })),
+    DIALOGUE: elementsOf(data, "DIALOGUE").map((item: any) => ({ id: item.id, name: item.name })),
+    QUEST: elementsOf(data, "QUEST").map((item: any) => ({ id: item.id, name: item.name })),
+    PLAYABLE_STEP: data.playableSteps.map((item: any) => ({ id: item.id, name: item.title })),
+    EMOTIONAL_BEAT: data.emotionalBeats.map((item: any) => ({ id: item.id, name: item.momentName })),
+    BUG: data.bugs.map((item: any) => ({ id: item.id, name: item.title })),
+    BLOCKER: data.blockers.map((item: any) => ({ id: item.id, name: item.title }))
   };
 }
 
@@ -930,7 +1096,7 @@ function isElementKind(type: DemoDependencyEntityType): type is DemoElementKind 
 
 function nameOf(options: Record<DemoDependencyEntityType, Array<{ id: string; name: string }>>, id: string) {
   for (const items of Object.values(options)) {
-    const found = items.find((item) => item.id === id);
+    const found = items.find((item: any) => item.id === id);
     if (found) {
       return found.name;
     }
@@ -947,7 +1113,7 @@ function reorder(items: Array<{ id: string }>, from: number, to: number, project
 }
 
 function toTags(value: string) {
-  return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return value.split(",").map((item: any) => item.trim()).filter(Boolean);
 }
 
 type MutationFn = (variables: { path: string; method: string; body?: unknown }) => void;

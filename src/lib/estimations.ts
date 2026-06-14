@@ -109,7 +109,19 @@ export function calculateSalesEstimate(game: NormalizedSteamApp, baseReviewMulti
       ageAdjustment
   );
   const confidenceScore = resolveConfidenceScore(game);
-  const rangeFactor = confidenceScore >= 80 ? 0.18 : confidenceScore >= 60 ? 0.28 : 0.4;
+    let resolvedValue0: any;
+  if (confidenceScore >= 80) {
+    resolvedValue0 = 0.18;
+  } else {
+        let resolvedValue1: any;
+    if (confidenceScore >= 60) {
+      resolvedValue1 = 0.28;
+    } else {
+      resolvedValue1 = 0.4;
+    }
+resolvedValue0 = resolvedValue1;
+  }
+const rangeFactor = resolvedValue0;
   const lowEstimate = Math.max(0, Math.round(medianEstimate * (1 - rangeFactor)));
   const highEstimate = Math.round(medianEstimate * (1 + rangeFactor));
 

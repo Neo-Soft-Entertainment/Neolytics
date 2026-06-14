@@ -223,12 +223,20 @@ export async function getUsageCount(context: EntitlementContext, limitKey: Limit
   }
 
   const periodKey = getCurrentSubscriptionPeriodKey();
-  const action =
-    limitKey === "steamXrayPerMonth"
-      ? "usage.steamXray"
-      : limitKey === "viabilityAnalysesPerMonth"
-        ? "usage.viabilityAnalysis"
-        : "usage.artAnalysis";
+    let resolvedValue0: any;
+  if (limitKey === "steamXrayPerMonth") {
+    resolvedValue0 = "usage.steamXray";
+  } else {
+        let resolvedValue1: any;
+    if (limitKey === "viabilityAnalysesPerMonth") {
+      resolvedValue1 = "usage.viabilityAnalysis";
+    } else {
+      resolvedValue1 = "usage.artAnalysis";
+    }
+resolvedValue0 = resolvedValue1;
+  }
+const action =
+    resolvedValue0;
 
   return db.auditEvent.count({
     where: {

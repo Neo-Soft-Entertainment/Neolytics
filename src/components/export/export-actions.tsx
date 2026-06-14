@@ -29,10 +29,20 @@ export function ExportActions({
   const [message, setMessage] = useState<string | null>(null);
   const entitlements = useEntitlements();
   const canExportPdf = entitlements.canUse("pdfExport");
-  const resolvedPdfHref = pdfHref
-    ?? (xlsxHref.includes("format=xlsx")
-      ? xlsxHref.replace("format=xlsx", "format=pdf")
-      : `${xlsxHref}${xlsxHref.includes("?") ? "&" : "?"}format=pdf`);
+    let resolvedValue0: any;
+  if (xlsxHref.includes("format=xlsx")) {
+    resolvedValue0 = xlsxHref.replace("format=xlsx", "format=pdf");
+  } else {
+        let resolvedValue4: any;
+    if (xlsxHref.includes("?")) {
+      resolvedValue4 = "&";
+    } else {
+      resolvedValue4 = "?";
+    }
+resolvedValue0 = `${xlsxHref}${resolvedValue4}format=pdf`;
+  }
+const resolvedPdfHref = pdfHref
+    ?? (resolvedValue0);
 
   async function publishGoogleSheet() {
     setMessage(null);
@@ -55,12 +65,30 @@ export function ExportActions({
     setMessage("Relatório do Google Sheets criado.");
   }
 
-  return (
+    let resolvedValue1: any;
+  if (isPublishing) {
+    resolvedValue1 = <Loader2 className="mr-2 h-4 w-4 animate-spin" />;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (canExportPdf) {
+    resolvedValue2 = resolvedPdfHref;
+  } else {
+    resolvedValue2 = undefined;
+  }
+  let resolvedValue3: any;
+  if (message) {
+    resolvedValue3 = <p className="text-xs text-muted-foreground">{message}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+return (
     <div className="space-y-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" disabled={isPublishing}>
-            {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {resolvedValue1}
             {label}
           </Button>
         </DropdownMenuTrigger>
@@ -79,14 +107,14 @@ export function ExportActions({
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={!canExportPdf}
-            onSelect={(event) => {
+            onSelect={(event: any) => {
               if (!canExportPdf) {
                 event.preventDefault();
                 setMessage("Seu acesso atual não inclui este recurso. Faça upgrade para continuar usando este recurso.");
               }
             }}
           >
-            <a href={canExportPdf ? resolvedPdfHref : undefined} className="flex items-center">
+            <a href={resolvedValue2} className="flex items-center">
               <FileText className="mr-2 h-4 w-4" />
               Baixar PDF
             </a>
@@ -97,7 +125,7 @@ export function ExportActions({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {message ? <p className="text-xs text-muted-foreground">{message}</p> : null}
+      {resolvedValue3}
     </div>
   );
 }

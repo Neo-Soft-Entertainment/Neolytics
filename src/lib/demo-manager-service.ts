@@ -631,13 +631,55 @@ export async function importDemoManager(workspaceId: string, projectId: string, 
     return null;
   }
 
-  const elements = Array.isArray(source.elements) ? source.elements : [];
-  const playableSteps = Array.isArray(source.playableSteps) ? source.playableSteps : [];
-  const emotionalBeats = Array.isArray(source.emotionalBeats) ? source.emotionalBeats : [];
-  const dependencies = Array.isArray(source.dependencies) ? source.dependencies : [];
-  const bugs = Array.isArray(source.bugs) ? source.bugs : [];
-  const blockers = Array.isArray(source.blockers) ? source.blockers : [];
-  const planInput = source.plan && typeof source.plan === "object" ? (source.plan as Record<string, unknown>) : {};
+    let resolvedValue0: any;
+  if (Array.isArray(source.elements)) {
+    resolvedValue0 = source.elements;
+  } else {
+    resolvedValue0 = [];
+  }
+const elements = resolvedValue0;
+    let resolvedValue1: any;
+  if (Array.isArray(source.playableSteps)) {
+    resolvedValue1 = source.playableSteps;
+  } else {
+    resolvedValue1 = [];
+  }
+const playableSteps = resolvedValue1;
+    let resolvedValue2: any;
+  if (Array.isArray(source.emotionalBeats)) {
+    resolvedValue2 = source.emotionalBeats;
+  } else {
+    resolvedValue2 = [];
+  }
+const emotionalBeats = resolvedValue2;
+    let resolvedValue3: any;
+  if (Array.isArray(source.dependencies)) {
+    resolvedValue3 = source.dependencies;
+  } else {
+    resolvedValue3 = [];
+  }
+const dependencies = resolvedValue3;
+    let resolvedValue4: any;
+  if (Array.isArray(source.bugs)) {
+    resolvedValue4 = source.bugs;
+  } else {
+    resolvedValue4 = [];
+  }
+const bugs = resolvedValue4;
+    let resolvedValue5: any;
+  if (Array.isArray(source.blockers)) {
+    resolvedValue5 = source.blockers;
+  } else {
+    resolvedValue5 = [];
+  }
+const blockers = resolvedValue5;
+    let resolvedValue6: any;
+  if (source.plan && typeof source.plan === "object") {
+    resolvedValue6 = (source.plan as Record<string, unknown>);
+  } else {
+    resolvedValue6 = {};
+  }
+const planInput = resolvedValue6;
   const idMap = new Map<string, string>();
 
   await db.$transaction(async (tx) => {
@@ -1015,7 +1057,13 @@ function stringOrNull(value: unknown) {
   }
 
   const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+    let resolvedValue7: any;
+  if (trimmed) {
+    resolvedValue7 = trimmed;
+  } else {
+    resolvedValue7 = null;
+  }
+return resolvedValue7;
 }
 
 function requiredString(value: unknown, fallback: string) {
@@ -1024,7 +1072,13 @@ function requiredString(value: unknown, fallback: string) {
   }
 
   const trimmed = value.trim();
-  return trimmed ? trimmed : fallback;
+    let resolvedValue8: any;
+  if (trimmed) {
+    resolvedValue8 = trimmed;
+  } else {
+    resolvedValue8 = fallback;
+  }
+return resolvedValue8;
 }
 
 function stringArray(value: unknown) {
@@ -1032,11 +1086,17 @@ function stringArray(value: unknown) {
     return [];
   }
 
-  return value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean);
+  return value.filter((item): item is string => typeof item === "string").map((item: any) => item.trim()).filter(Boolean);
 }
 
 function numberInRange(value: unknown, min: number, max: number, fallback: number) {
-  const numberValue = typeof value === "number" ? value : Number(value);
+    let resolvedValue9: any;
+  if (typeof value === "number") {
+    resolvedValue9 = value;
+  } else {
+    resolvedValue9 = Number(value);
+  }
+const numberValue = resolvedValue9;
 
   if (!Number.isFinite(numberValue)) {
     return fallback;
@@ -1051,15 +1111,33 @@ function dateOrNull(value: unknown) {
   }
 
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+    let resolvedValue10: any;
+  if (Number.isNaN(date.getTime())) {
+    resolvedValue10 = null;
+  } else {
+    resolvedValue10 = date;
+  }
+return resolvedValue10;
 }
 
 function enumOrDefault<T extends string>(value: unknown, values: T[], fallback: T) {
-  return typeof value === "string" && values.includes(value as T) ? (value as T) : fallback;
+    let resolvedValue11: any;
+  if (typeof value === "string" && values.includes(value as T)) {
+    resolvedValue11 = (value as T);
+  } else {
+    resolvedValue11 = fallback;
+  }
+return resolvedValue11;
 }
 
 function enumOrNull<T extends string>(value: unknown, values: T[]) {
-  return typeof value === "string" && values.includes(value as T) ? (value as T) : null;
+    let resolvedValue12: any;
+  if (typeof value === "string" && values.includes(value as T)) {
+    resolvedValue12 = (value as T);
+  } else {
+    resolvedValue12 = null;
+  }
+return resolvedValue12;
 }
 
 function mappedId(value: unknown, idMap: Map<string, string>) {
@@ -1075,5 +1153,5 @@ function mappedIdArray(value: unknown, idMap: Map<string, string>) {
     return [];
   }
 
-  return value.filter((item): item is string => typeof item === "string").map((item) => idMap.get(item) ?? item);
+  return value.filter((item): item is string => typeof item === "string").map((item: any) => idMap.get(item) ?? item);
 }

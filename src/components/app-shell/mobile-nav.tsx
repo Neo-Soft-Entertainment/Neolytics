@@ -34,7 +34,19 @@ export function MobileNav({
   const t = useI18n();
   const currentItem = getCurrentNavItem(pathname);
 
-  return (
+    let resolvedValue0: any;
+  if (currentOrganizationRole) {
+    resolvedValue0 = `Acesso ${currentOrganizationRole}`;
+  } else {
+    resolvedValue0 = t("shell.activeOrganization");
+  }
+  let resolvedValue1: any;
+  if (currentItem) {
+    resolvedValue1 = t(currentItem.labelKey);
+  } else {
+    resolvedValue1 = t("shell.workspace");
+  }
+return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="border-white/15 bg-white/60 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden dark:bg-white/5">
@@ -46,10 +58,10 @@ export function MobileNav({
           <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Neolytics</p>
           <p className="mt-2 text-sm font-medium">{currentOrganizationName}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {currentOrganizationRole ? `Acesso ${currentOrganizationRole}` : t("shell.activeOrganization")} · {getSubscriptionPlanLabel(subscriptionPlan)}
+            {resolvedValue0} · {getSubscriptionPlanLabel(subscriptionPlan)}
           </p>
           <p className="mt-2 truncate text-xs text-muted-foreground">
-            {currentItem ? t(currentItem.labelKey) : t("shell.workspace")} · {currentWorkspaceName}
+            {resolvedValue1} · {currentWorkspaceName}
           </p>
         </div>
         {navSections.map((section) => (
@@ -58,7 +70,7 @@ export function MobileNav({
             <p className="px-3 py-2 text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
               {t(section.labelKey)}
             </p>
-            {navItems.filter((item) => item.section === section.key).map((item) => (
+            {navItems.filter((item: any) => item.section === section.key).map((item: any) => (
               <DropdownMenuItem key={item.href} asChild>
                 <Link className={cn("min-h-10 rounded-xl px-3", pathname === item.href && "bg-cyan-500/10 font-semibold text-cyan-700 dark:text-cyan-200")} href={item.href}>
                   {t(item.labelKey)}

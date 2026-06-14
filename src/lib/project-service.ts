@@ -86,7 +86,7 @@ async function hydrateProjectArtAssets<T extends { artAssets?: Array<{ storagePa
 
   return {
     ...project,
-    artAssets: await Promise.all(project.artAssets.map(async (asset) => ({
+    artAssets: await Promise.all(project.artAssets.map(async (asset: any) => ({
       ...asset,
       signedUrl: await createProjectArtAssetSignedUrl(asset.storagePath).catch(() => null)
     })))
@@ -100,7 +100,7 @@ function parseCsv(value?: string | null) {
 
   return value
     .split(/[,\n;|/]+/)
-    .map((item) => item.trim())
+    .map((item: any) => item.trim())
     .filter(Boolean);
 }
 
@@ -368,8 +368,20 @@ function getPlayerMomentum(playerSnapshots: Array<{
     }
   }
 
-  const currentAverage = currentSamples > 0 ? currentWindow / currentSamples : 0;
-  const previousAverage = previousSamples > 0 ? previousWindow / previousSamples : 0;
+    let resolvedValue0: any;
+  if (currentSamples > 0) {
+    resolvedValue0 = currentWindow / currentSamples;
+  } else {
+    resolvedValue0 = 0;
+  }
+const currentAverage = resolvedValue0;
+    let resolvedValue1: any;
+  if (previousSamples > 0) {
+    resolvedValue1 = previousWindow / previousSamples;
+  } else {
+    resolvedValue1 = 0;
+  }
+const previousAverage = resolvedValue1;
 
   return {
     playerMomentum30: currentAverage,
@@ -381,17 +393,43 @@ function getPlayerMomentum(playerSnapshots: Array<{
 function getDominantMonetization(project: {
   monetizationModel: string | null;
 }, games: Array<{ isFree: boolean }>) {
-  const freeCount = games.filter((game) => game.isFree).length;
-  const dominant = freeCount >= Math.ceil(games.length / 2) ? "free-to-play" : "premium";
+  const freeCount = games.filter((game: any) => game.isFree).length;
+    let resolvedValue2: any;
+  if (freeCount >= Math.ceil(games.length / 2)) {
+    resolvedValue2 = "free-to-play";
+  } else {
+    resolvedValue2 = "premium";
+  }
+const dominant = resolvedValue2;
   const input = project.monetizationModel?.trim().toLowerCase() ?? "";
 
-  return {
+    let resolvedValue3: any;
+  if (input) {
+        let resolvedValue134: any;
+    if (dominant === "free-to-play") {
+            let resolvedValue151: any;
+      if (input.includes("free")) {
+        resolvedValue151 = 90;
+      } else {
+        resolvedValue151 = 40;
+      }
+resolvedValue134 = (resolvedValue151);
+    } else {
+            let resolvedValue152: any;
+      if (input.includes("premium") || input.includes("paid")) {
+        resolvedValue152 = 90;
+      } else {
+        resolvedValue152 = 45;
+      }
+resolvedValue134 = (resolvedValue152);
+    }
+resolvedValue3 = resolvedValue134;
+  } else {
+    resolvedValue3 = 60;
+  }
+return {
     dominant,
-    fitScore: input
-      ? dominant === "free-to-play"
-        ? (input.includes("free") ? 90 : 40)
-        : (input.includes("premium") || input.includes("paid") ? 90 : 45)
-      : 60
+    fitScore: resolvedValue3
   };
 }
 
@@ -461,15 +499,15 @@ function getProjectSearchPhrases(project: {
 
   const cleanedPhrases = phrases
     .filter((value): value is string => Boolean(value?.trim()))
-    .map((value) => value.trim())
-    .filter((value) => value.length >= 4 && value.length <= 80);
+    .map((value: any) => value.trim())
+    .filter((value: any) => value.length >= 4 && value.length <= 80);
 
   if (project.name.trim().length >= 4) {
     cleanedPhrases.push(project.name.trim());
   }
 
   return [...new Set(cleanedPhrases)]
-    .filter((phrase) => phrase.split(/\s+/).some((word) => !projectSearchStopWords.has(word.toLowerCase())))
+    .filter((phrase) => phrase.split(/\s+/).some((word: any) => !projectSearchStopWords.has(word.toLowerCase())))
     .slice(0, 8);
 }
 
@@ -486,8 +524,8 @@ function getGameTextSimilarity(projectKeywords: string[], game: {
   const text = [
     game.name,
     game.shortDescription,
-    ...game.genres.map((genre) => genre.steamGenre.name),
-    ...game.tags.map((tag) => tag.steamTag.name)
+    ...game.genres.map((genre: any) => genre.steamGenre.name),
+    ...game.tags.map((tag: any) => tag.steamTag.name)
   ]
     .filter(Boolean)
     .join(" ")
@@ -530,8 +568,9 @@ async function ensureProjectSteamCoverage(project: {
   }
 
   const selectedAppIds = [...discoveredAppIds].slice(0, 18);
-  const existingGames = selectedAppIds.length > 0
-    ? await db.steamGame.findMany({
+    let resolvedValue4: any;
+  if (selectedAppIds.length > 0) {
+    resolvedValue4 = await db.steamGame.findMany({
         where: {
           appId: {
             in: selectedAppIds
@@ -541,9 +580,12 @@ async function ensureProjectSteamCoverage(project: {
           appId: true,
           lastIngestedAt: true
         }
-      })
-    : [];
-  const existingByAppId = new Map(existingGames.map((game) => [game.appId, game]));
+      });
+  } else {
+    resolvedValue4 = [];
+  }
+const existingGames = resolvedValue4 as Array<{ appId: number; lastIngestedAt: Date | null }>;
+  const existingByAppId = new Map(existingGames.map((game: any) => [game.appId, game]));
   const staleThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const appIdsToSync = selectedAppIds
     .filter((appId) => {
@@ -732,8 +774,14 @@ async function getComparableGames(project: {
 }) {
   const matchingRules = await buildProjectMatchingRules(project);
 
-  return db.steamGame.findMany({
-    where: matchingRules.length > 0 ? { OR: matchingRules } : undefined,
+    let resolvedValue5: any;
+  if (matchingRules.length > 0) {
+    resolvedValue5 = { OR: matchingRules };
+  } else {
+    resolvedValue5 = undefined;
+  }
+return db.steamGame.findMany({
+    where: resolvedValue5,
     include: {
       priceCurrent: true,
       revenueEstimates: {
@@ -1165,24 +1213,40 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
   const { genreTokens: projectGenres, tagTokens: projectTags } = await getProjectSignalSlugs(project);
   const projectKeywords = getProjectKeywords(project);
   const now = Date.now();
-  const enrichedGames = matchingGames.map((game) => {
-    const gameGenres = game.genres.map((genre) => genre.steamGenre.slug);
-    const gameTags = game.tags.map((tag) => tag.steamTag.slug);
-    const genreMatches = gameGenres.filter((genre) => projectGenres.includes(genre)).length;
-    const tagMatches = gameTags.filter((tag) => projectTags.includes(tag)).length;
-    const genreCoverage = projectGenres.length > 0 ? genreMatches / projectGenres.length : 0;
-    const tagCoverage = projectTags.length > 0 ? tagMatches / projectTags.length : 0;
+  const enrichedGames = matchingGames.map((game: any) => {
+    const gameGenres = game.genres.map((genre: any) => genre.steamGenre.slug);
+    const gameTags = game.tags.map((tag: any) => tag.steamTag.slug);
+    const genreMatches = gameGenres.filter((genre: any) => projectGenres.includes(genre)).length;
+    const tagMatches = gameTags.filter((tag: any) => projectTags.includes(tag)).length;
+        let resolvedValue6: any;
+    if (projectGenres.length > 0) {
+      resolvedValue6 = genreMatches / projectGenres.length;
+    } else {
+      resolvedValue6 = 0;
+    }
+const genreCoverage = resolvedValue6;
+        let resolvedValue7: any;
+    if (projectTags.length > 0) {
+      resolvedValue7 = tagMatches / projectTags.length;
+    } else {
+      resolvedValue7 = 0;
+    }
+const tagCoverage = resolvedValue7;
     const textSimilarityScore = getGameTextSimilarity(projectKeywords, game);
     const projectNameTokens = slugify(project.name).split("-").filter((token) => token.length >= 3);
     const nameMatches = projectNameTokens.filter((token) => game.name.toLowerCase().includes(token)).length;
-    const similarityScore = clampScore(
+        let resolvedValue8: any;
+    if (project.pricePointCents && game.priceCurrent?.finalPriceCents) {
+      resolvedValue8 = Math.max(0, 8 - (Math.abs(project.pricePointCents - game.priceCurrent.finalPriceCents) / Math.max(project.pricePointCents, 1)) * 8);
+    } else {
+      resolvedValue8 = 0;
+    }
+const similarityScore = clampScore(
       genreCoverage * 28
       + tagCoverage * 34
       + textSimilarityScore * 0.34
       + Math.min(12, nameMatches * 4)
-      + (project.pricePointCents && game.priceCurrent?.finalPriceCents
-        ? Math.max(0, 8 - (Math.abs(project.pricePointCents - game.priceCurrent.finalPriceCents) / Math.max(project.pricePointCents, 1)) * 8)
-        : 0)
+      + (resolvedValue8)
     );
 
     return {
@@ -1195,31 +1259,31 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     };
   });
   const relevantGames = enrichedGames
-    .filter((game) => game.similarityScore >= 14 || game.genreMatches > 0 || game.tagMatches > 0)
+    .filter((game: any) => game.similarityScore >= 14 || game.genreMatches > 0 || game.tagMatches > 0)
     .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0))
     .slice(0, 60);
   const directComparables = relevantGames
-    .filter((game) => game.isDirectComparable)
+    .filter((game: any) => game.isDirectComparable)
     .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
   const adjacentComparables = relevantGames
-    .filter((game) => !game.isDirectComparable && game.similarityScore >= 20)
+    .filter((game: any) => !game.isDirectComparable && game.similarityScore >= 20)
     .sort((left, right) => right.similarityScore - left.similarityScore || (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
   const rankedComparables = [...directComparables, ...adjacentComparables];
   const competitionCount = rankedComparables.length;
   const topCompetitors = rankedComparables.slice(0, 6);
   const revenueValues = rankedComparables
-    .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
-    .filter((value) => value > 0);
+    .map((game: any) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
+    .filter((value: any) => value > 0);
   const directRevenueValues = directComparables
-    .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
-    .filter((value) => value > 0);
+    .map((game: any) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
+    .filter((value: any) => value > 0);
   const priceValues = rankedComparables
-    .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
-    .filter((value) => value > 0);
+    .map((game: any) => game.priceCurrent?.finalPriceCents ?? 0)
+    .filter((value: any) => value > 0);
   const reviewValues = rankedComparables
-    .map((game) => game.reviewScore ?? 0)
-    .filter((value) => value > 0);
-  const releaseMomentum = rankedComparables.filter((game) => {
+    .map((game: any) => game.reviewScore ?? 0)
+    .filter((value: any) => value > 0);
+  const releaseMomentum = rankedComparables.filter((game: any) => {
     if (!game.releaseDate) {
       return false;
     }
@@ -1227,14 +1291,14 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     const ageInDays = (now - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
     return ageInDays <= 365;
   }).length;
-  const launches90 = rankedComparables.filter((game) => {
+  const launches90 = rankedComparables.filter((game: any) => {
     if (!game.releaseDate) {
       return false;
     }
 
     return now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000;
   }).length;
-  const launches180 = rankedComparables.filter((game) => {
+  const launches180 = rankedComparables.filter((game: any) => {
     if (!game.releaseDate) {
       return false;
     }
@@ -1242,9 +1306,10 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     return now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000;
   }).length;
   const launches365 = releaseMomentum;
-  const matchingIds = rankedComparables.map((game) => game.id);
-  const [reviewSnapshots, playerSnapshots] = matchingIds.length > 0
-    ? await Promise.all([
+  const matchingIds = rankedComparables.map((game: any) => game.id);
+    let resolvedValue9: any;
+  if (matchingIds.length > 0) {
+    resolvedValue9 = await Promise.all([
         db.steamReviewSnapshot.findMany({
           where: {
             steamGameId: {
@@ -1281,19 +1346,58 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
             currentPlayers: true
           }
         })
-      ])
-    : [[], []];
+      ]);
+  } else {
+    resolvedValue9 = [[], []];
+  }
+const [reviewSnapshots, playerSnapshots] = resolvedValue9;
   const reviewVelocity = getReviewVelocity(reviewSnapshots);
   const playerMomentum = getPlayerMomentum(playerSnapshots);
   const medianRevenueCents = median(revenueValues);
-  const p75RevenueCents = percentile(directRevenueValues.length > 0 ? directRevenueValues : revenueValues, 0.75);
+    let resolvedValue10: any;
+  if (directRevenueValues.length > 0) {
+    resolvedValue10 = directRevenueValues;
+  } else {
+    resolvedValue10 = revenueValues;
+  }
+const p75RevenueCents = percentile(resolvedValue10, 0.75);
   const totalRevenueCents = sum(revenueValues);
-  const averagePriceCents = priceValues.length > 0 ? Math.round(average(priceValues)) : null;
-  const medianPriceCents = priceValues.length > 0 ? median(priceValues) : 0;
-  const averageReviewScore = reviewValues.length > 0 ? Number(average(reviewValues).toFixed(1)) : null;
+    let resolvedValue11: any;
+  if (priceValues.length > 0) {
+    resolvedValue11 = Math.round(average(priceValues));
+  } else {
+    resolvedValue11 = null;
+  }
+const averagePriceCents = resolvedValue11;
+    let resolvedValue12: any;
+  if (priceValues.length > 0) {
+    resolvedValue12 = median(priceValues);
+  } else {
+    resolvedValue12 = 0;
+  }
+const medianPriceCents = resolvedValue12;
+    let resolvedValue13: any;
+  if (reviewValues.length > 0) {
+    resolvedValue13 = Number(average(reviewValues).toFixed(1));
+  } else {
+    resolvedValue13 = null;
+  }
+const averageReviewScore = resolvedValue13;
   const top3Revenue = sum([...revenueValues].sort((left, right) => right - left).slice(0, 3));
-  const revenueConcentrationPercent = totalRevenueCents > 0 ? Math.round((top3Revenue / totalRevenueCents) * 100) : 0;
-  const qualityBarScore = reviewValues.length > 0 ? clampScore(percentile(reviewValues, 0.75)) : 0;
+    let resolvedValue14: any;
+  if (totalRevenueCents > 0) {
+    resolvedValue14 = Math.round((top3Revenue / totalRevenueCents) * 100);
+  } else {
+    resolvedValue14 = 0;
+  }
+const revenueConcentrationPercent = resolvedValue14;
+    let resolvedValue15: any;
+  if (reviewValues.length > 0) {
+    resolvedValue15 = clampScore(percentile(reviewValues, 0.75));
+  } else {
+    resolvedValue15 = 0;
+  }
+const qualityBarScore = resolvedValue15;
   const priceBandDistribution = getPriceBandDistribution(priceValues);
   const dominantMonetization = getDominantMonetization(project, rankedComparables);
   const coverageChecks = [
@@ -1304,16 +1408,40 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     playerMomentum.coveredSamples > 0
   ];
   const confidenceScore = clampScore((coverageChecks.filter(Boolean).length / coverageChecks.length) * 100);
-  const launchDensityScore = competitionCount > 0 ? clampScore((launches180 / competitionCount) * 100) : 0;
+    let resolvedValue16: any;
+  if (competitionCount > 0) {
+    resolvedValue16 = clampScore((launches180 / competitionCount) * 100);
+  } else {
+    resolvedValue16 = 0;
+  }
+const launchDensityScore = resolvedValue16;
   const crowdednessScore = clampScore(
     directComparables.length * 8
     + (competitionCount - directComparables.length) * 2
     + launchDensityScore * 0.2
   );
-  const revenuePotentialScore = clampScore(
-    (medianRevenueCents > 0 ? Math.min(45, medianRevenueCents / 4_000_000) : 0)
-    + (p75RevenueCents > 0 ? Math.min(35, p75RevenueCents / 10_000_000) : 0)
-    + (reviewVelocity.reviewVelocity90 > 0 ? Math.min(20, reviewVelocity.reviewVelocity90 / 25) : 0)
+    let resolvedValue17: any;
+  if (medianRevenueCents > 0) {
+    resolvedValue17 = Math.min(45, medianRevenueCents / 4_000_000);
+  } else {
+    resolvedValue17 = 0;
+  }
+  let resolvedValue18: any;
+  if (p75RevenueCents > 0) {
+    resolvedValue18 = Math.min(35, p75RevenueCents / 10_000_000);
+  } else {
+    resolvedValue18 = 0;
+  }
+  let resolvedValue19: any;
+  if (reviewVelocity.reviewVelocity90 > 0) {
+    resolvedValue19 = Math.min(20, reviewVelocity.reviewVelocity90 / 25);
+  } else {
+    resolvedValue19 = 0;
+  }
+const revenuePotentialScore = clampScore(
+    (resolvedValue17)
+    + (resolvedValue18)
+    + (resolvedValue19)
   );
   const underservedScore = clampScore(
     revenuePotentialScore * 0.35
@@ -1326,12 +1454,24 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     + revenueConcentrationPercent * 0.15
     + crowdednessScore * 0.25
   );
-  const riskScore = clampScore(
+    let resolvedValue20: any;
+  if (reviewVelocity.reviewVelocity90 < reviewVelocity.previousReviewVelocity90) {
+    resolvedValue20 = 12;
+  } else {
+    resolvedValue20 = 0;
+  }
+  let resolvedValue21: any;
+  if (playerMomentum.playerMomentum30 < playerMomentum.previousPlayerMomentum30) {
+    resolvedValue21 = 8;
+  } else {
+    resolvedValue21 = 0;
+  }
+const riskScore = clampScore(
     Math.max(0, 100 - (averageReviewScore ?? 0)) * 0.3
     + revenueConcentrationPercent * 0.25
     + crowdednessScore * 0.25
-    + (reviewVelocity.reviewVelocity90 < reviewVelocity.previousReviewVelocity90 ? 12 : 0)
-    + (playerMomentum.playerMomentum30 < playerMomentum.previousPlayerMomentum30 ? 8 : 0)
+    + (resolvedValue20)
+    + (resolvedValue21)
   );
   const opportunityScore = clampScore(
     revenuePotentialScore * 0.35
@@ -1339,10 +1479,14 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     + Math.max(0, 100 - riskScore) * 0.2
     + Math.max(0, 100 - crowdednessScore) * 0.15
   );
-  const priceFitScore = project.pricePointCents && medianPriceCents > 0
-    ? clampScore(100 - (Math.abs(project.pricePointCents - medianPriceCents) / medianPriceCents) * 100)
-    : 60;
-  const genreTagCoverageScore = clampScore(average(directComparables.slice(0, 5).map((game) => game.similarityScore)));
+    let resolvedValue22: any;
+  if (project.pricePointCents && medianPriceCents > 0) {
+    resolvedValue22 = clampScore(100 - (Math.abs(project.pricePointCents - medianPriceCents) / medianPriceCents) * 100);
+  } else {
+    resolvedValue22 = 60;
+  }
+const priceFitScore = resolvedValue22;
+  const genreTagCoverageScore = clampScore(average(directComparables.slice(0, 5).map((game: any) => game.similarityScore)));
   const positioningClarityScore = clampScore(
     [
       project.elevatorPitch,
@@ -1351,7 +1495,7 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
       project.coreLoop,
       project.differentiator,
       project.playerFantasy
-    ].filter((value) => value?.trim()).length * 16
+    ].filter((value: any) => value?.trim()).length * 16
   );
   const overallFitScore = clampScore(
     genreTagCoverageScore * 0.35
@@ -1376,16 +1520,22 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     confidenceScore,
     confidenceLabel: getConfidenceLabel(confidenceScore)
   };
-  const competitionLayer = {
+    let resolvedValue23: any;
+  if (competitionCount > 0) {
+    resolvedValue23 = Math.round((rankedComparables.filter((game: any) => !game.isFree).length / competitionCount) * 100);
+  } else {
+    resolvedValue23 = 0;
+  }
+const competitionLayer = {
     directComparableCount: directComparables.length,
     adjacentComparableCount: adjacentComparables.length,
     crowdednessScore,
     winnerConcentrationScore: revenueConcentrationPercent,
     qualityBarScore,
     dominantMonetization: dominantMonetization.dominant,
-    premiumSharePercent: competitionCount > 0 ? Math.round((rankedComparables.filter((game) => !game.isFree).length / competitionCount) * 100) : 0,
-    directComparableNames: directComparables.slice(0, 6).map((game) => game.name),
-    adjacentComparableNames: adjacentComparables.slice(0, 6).map((game) => game.name)
+    premiumSharePercent: resolvedValue23,
+    directComparableNames: directComparables.slice(0, 6).map((game: any) => game.name),
+    adjacentComparableNames: adjacentComparables.slice(0, 6).map((game: any) => game.name)
   };
   const projectFitLayer = {
     genreTagCoverageScore,
@@ -1408,30 +1558,58 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     confidenceScore,
     confidenceLabel: marketDepth.confidenceLabel
   });
-  const keyMismatches = [
-    priceFitScore < 55 && medianPriceCents > 0
-      ? `Your target price is misaligned with the segment median of ${formatMoney(medianPriceCents)}.`
-      : null,
-    dominantMonetization.fitScore < 55
-      ? `Your monetization approach does not match the dominant ${dominantMonetization.dominant} pattern in this segment.`
-      : null,
-    positioningClarityScore < 60
-      ? "The project pitch still lacks enough specificity around fantasy, audience, or differentiator."
-      : null,
-    genreTagCoverageScore < 50
-      ? "The current genre/tag framing is still weak relative to the strongest direct comparables."
-      : null
+    let resolvedValue24: any;
+  if (priceFitScore < 55 && medianPriceCents > 0) {
+    resolvedValue24 = `Your target price is misaligned with the segment median of ${formatMoney(medianPriceCents)}.`;
+  } else {
+    resolvedValue24 = null;
+  }
+  let resolvedValue25: any;
+  if (dominantMonetization.fitScore < 55) {
+    resolvedValue25 = `Your monetization approach does not match the dominant ${dominantMonetization.dominant} pattern in this segment.`;
+  } else {
+    resolvedValue25 = null;
+  }
+  let resolvedValue26: any;
+  if (positioningClarityScore < 60) {
+    resolvedValue26 = "The project pitch still lacks enough specificity around fantasy, audience, or differentiator.";
+  } else {
+    resolvedValue26 = null;
+  }
+  let resolvedValue27: any;
+  if (genreTagCoverageScore < 50) {
+    resolvedValue27 = "The current genre/tag framing is still weak relative to the strongest direct comparables.";
+  } else {
+    resolvedValue27 = null;
+  }
+const keyMismatches = [
+    resolvedValue24,
+    resolvedValue25,
+    resolvedValue26,
+    resolvedValue27
   ].filter((item): item is string => Boolean(item));
-  const practicalRecommendations = [
-    revenueConcentrationPercent >= 65
-      ? "Design the store hook to beat a concentrated winner-led market rather than assuming broad mid-tail demand."
-      : "There is enough spread below the category leaders to target a clearer mid-market position.",
-    launchDensityScore >= 45
-      ? "Recent launch density is high, so timing and positioning should be treated as first-order strategic decisions."
-      : "Launch density is manageable, which gives you more room to choose a timing window deliberately.",
-    qualityBarScore >= 85
-      ? "This segment expects a very high review bar, so polish and onboarding quality will matter almost as much as concept."
-      : "The quality bar is solid but not impossible, so a sharper value proposition can still do real work."
+    let resolvedValue28: any;
+  if (revenueConcentrationPercent >= 65) {
+    resolvedValue28 = "Design the store hook to beat a concentrated winner-led market rather than assuming broad mid-tail demand.";
+  } else {
+    resolvedValue28 = "There is enough spread below the category leaders to target a clearer mid-market position.";
+  }
+  let resolvedValue29: any;
+  if (launchDensityScore >= 45) {
+    resolvedValue29 = "Recent launch density is high, so timing and positioning should be treated as first-order strategic decisions.";
+  } else {
+    resolvedValue29 = "Launch density is manageable, which gives you more room to choose a timing window deliberately.";
+  }
+  let resolvedValue30: any;
+  if (qualityBarScore >= 85) {
+    resolvedValue30 = "This segment expects a very high review bar, so polish and onboarding quality will matter almost as much as concept.";
+  } else {
+    resolvedValue30 = "The quality bar is solid but not impossible, so a sharper value proposition can still do real work.";
+  }
+const practicalRecommendations = [
+    resolvedValue28,
+    resolvedValue29,
+    resolvedValue30
   ];
   const opportunityLayer = {
     underservedScore,
@@ -1445,42 +1623,104 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     quantitativeOpportunityScore: hybridMarketIntelligence.opportunityScoring.score,
     discoverabilityDifficulty: hybridMarketIntelligence.probabilisticAssessment.probabilities.discoverabilityDifficulty
   };
-  const opportunitySummary = [
+    let resolvedValue31: any;
+  if (opportunityScore >= 70) {
+    resolvedValue31 = `This looks like a commercially active segment with enough room for a sharply positioned entrant.`;
+  } else {
+    resolvedValue31 = `The opportunity is conditional on stronger positioning and better evidence before scaling budget.`;
+  }
+const opportunitySummary = [
     hybridMarketIntelligence.probabilisticAssessment.conclusion,
     `The weighted model rates demand at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.nicheDemand}/100, growth potential at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.growthPotential}/100, and oversaturation at ${hybridMarketIntelligence.probabilisticAssessment.probabilities.oversaturation}/100.`,
-    opportunityScore >= 70
-      ? `This looks like a commercially active segment with enough room for a sharply positioned entrant.`
-      : `The opportunity is conditional on stronger positioning and better evidence before scaling budget.`
+    resolvedValue31
   ].join(" ");
-  const riskSummary = [
+    let resolvedValue32: any;
+  if (riskScore >= 65) {
+        let resolvedValue135: any;
+    if (revenueConcentrationPercent >= 65) {
+      resolvedValue135 = "a few winners dominate revenue capture";
+    } else {
+      resolvedValue135 = "the niche still shows weak or unstable momentum";
+    }
+    let resolvedValue136: any;
+    if (executionBarScore >= 70) {
+      resolvedValue136 = "high";
+    } else {
+      resolvedValue136 = "non-trivial";
+    }
+resolvedValue32 = `Risk is elevated because ${resolvedValue135}, and the execution bar is ${resolvedValue136}.`;
+  } else {
+    resolvedValue32 = `Risk is manageable for a disciplined team. The main challenge is outperforming the current quality bar rather than entering a structurally broken segment.`;
+  }
+const riskSummary = [
     `Execution risk is ${hybridMarketIntelligence.probabilisticAssessment.probabilities.executionRisk}/100 and discoverability difficulty is ${hybridMarketIntelligence.probabilisticAssessment.probabilities.discoverabilityDifficulty}/100.`,
-    riskScore >= 65
-      ? `Risk is elevated because ${revenueConcentrationPercent >= 65 ? "a few winners dominate revenue capture" : "the niche still shows weak or unstable momentum"}, and the execution bar is ${executionBarScore >= 70 ? "high" : "non-trivial"}.`
-      : `Risk is manageable for a disciplined team. The main challenge is outperforming the current quality bar rather than entering a structurally broken segment.`
+    resolvedValue32
   ].join(" ");
-  const marketSummary = [
+    let resolvedValue33: any;
+  if (steamCoverage.discoveredAppIds.length > 0) {
+    resolvedValue33 = `Steam Store search added ${steamCoverage.discoveredAppIds.length} candidate app ids from project-specific queries before ranking.`;
+  } else {
+    resolvedValue33 = "No extra Steam Store search candidates were found for the project-specific queries.";
+  }
+  let resolvedValue34: any;
+  if (totalRevenueCents > 0) {
+    resolvedValue34 = `The tracked market depth looks ${marketDepth.marketSizeLabel.toLowerCase()}, with roughly ${formatMoney(totalRevenueCents)} in cumulative estimated net revenue across the matched set and a median of ${formatMoney(medianRevenueCents)}.`;
+  } else {
+    resolvedValue34 = "Revenue coverage is still thin, so the market sizing layer should be treated cautiously.";
+  }
+  let resolvedValue35: any;
+  if (reviewVelocity.reviewVelocity90 > 0) {
+    resolvedValue35 = `Review velocity added ${reviewVelocity.reviewVelocity90.toLocaleString("en-US")} reviews in the last 90 days versus ${reviewVelocity.previousReviewVelocity90.toLocaleString("en-US")} in the prior window.`;
+  } else {
+    resolvedValue35 = "Temporal review coverage is still limited, so momentum should be treated as directional rather than conclusive.";
+  }
+  let resolvedValue36: any;
+  if (launches365 > 0) {
+    resolvedValue36 = `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.`;
+  } else {
+    resolvedValue36 = "Recent launch activity is quiet in this segment.";
+  }
+const marketSummary = [
     `${directComparables.length} direct comparables and ${adjacentComparables.length} adjacent comps were identified from the current Steam dataset.`,
-    steamCoverage.discoveredAppIds.length > 0 ? `Steam Store search added ${steamCoverage.discoveredAppIds.length} candidate app ids from project-specific queries before ranking.` : "No extra Steam Store search candidates were found for the project-specific queries.",
-    totalRevenueCents > 0 ? `The tracked market depth looks ${marketDepth.marketSizeLabel.toLowerCase()}, with roughly ${formatMoney(totalRevenueCents)} in cumulative estimated net revenue across the matched set and a median of ${formatMoney(medianRevenueCents)}.` : "Revenue coverage is still thin, so the market sizing layer should be treated cautiously.",
-    reviewVelocity.reviewVelocity90 > 0 ? `Review velocity added ${reviewVelocity.reviewVelocity90.toLocaleString("en-US")} reviews in the last 90 days versus ${reviewVelocity.previousReviewVelocity90.toLocaleString("en-US")} in the prior window.` : "Temporal review coverage is still limited, so momentum should be treated as directional rather than conclusive.",
-    launches365 > 0 ? `${launches365} comparable launches landed in the last 12 months, with ${launches90} arriving in the last 90 days.` : "Recent launch activity is quiet in this segment.",
+    resolvedValue33,
+    resolvedValue34,
+    resolvedValue35,
+    resolvedValue36,
     `The non-AI model classifies this as: ${hybridMarketIntelligence.probabilisticAssessment.classification}.`
   ].join(" ");
   const suggestedGenres = Array.from(
-    new Set(topCompetitors.flatMap((game) => game.genres.map((genre) => genre.steamGenre.name)))
+    new Set(topCompetitors.flatMap((game: any) => game.genres.map((genre: any) => genre.steamGenre.name)))
   ).slice(0, 5);
   const suggestedTags = Array.from(
-    new Set(topCompetitors.flatMap((game) => game.tags.map((tag) => tag.steamTag.name)))
+    new Set(topCompetitors.flatMap((game: any) => game.tags.map((tag: any) => tag.steamTag.name)))
   ).slice(0, 8);
   const audienceAutofill = project.targetAudience?.trim()
     || `Players who buy ${suggestedGenres.slice(0, 2).join(" / ") || "genre"} games on Steam and respond to a clearly signaled fantasy plus an immediately legible progression loop.`;
   const coreLoopAutofill = project.coreLoop?.trim()
     || `Center the loop around ${suggestedTags.slice(0, 3).join(", ") || "clear mastery signals"} with visible retention hooks and a short path to the game's core fantasy.`;
-  const differentiators = [
+    let resolvedValue37: any;
+  if (crowdednessScore >= 65) {
+    resolvedValue37 = "The positioning hook must be visible in the first few seconds of store exposure because the direct shelf is crowded.";
+  } else {
+    resolvedValue37 = "There is room to win with a more focused concept if the store fantasy lands cleanly.";
+  }
+  let resolvedValue38: any;
+  if (priceFitScore < 60 && medianPriceCents > 0) {
+    resolvedValue38 = `Revisit pricing toward the segment center around ${formatMoney(medianPriceCents)} unless scope clearly justifies the gap.`;
+  } else {
+    resolvedValue38 = null;
+  }
+  let resolvedValue39: any;
+  if (dominantMonetization.fitScore < 55) {
+    resolvedValue39 = `Clarify why your monetization model should outperform the segment's ${dominantMonetization.dominant} baseline.`;
+  } else {
+    resolvedValue39 = null;
+  }
+const differentiators = [
     project.differentiator?.trim(),
-    crowdednessScore >= 65 ? "The positioning hook must be visible in the first few seconds of store exposure because the direct shelf is crowded." : "There is room to win with a more focused concept if the store fantasy lands cleanly.",
-    priceFitScore < 60 && medianPriceCents > 0 ? `Revisit pricing toward the segment center around ${formatMoney(medianPriceCents)} unless scope clearly justifies the gap.` : null,
-     dominantMonetization.fitScore < 55 ? `Clarify why your monetization model should outperform the segment's ${dominantMonetization.dominant} baseline.` : null
+    resolvedValue37,
+    resolvedValue38,
+     resolvedValue39
   ].filter((item): item is string => Boolean(item));
   const aiLayer = await generateAiProjectMarketAnalysis({
     project: {
@@ -1523,40 +1763,52 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
       premiumSharePercent: competitionLayer.premiumSharePercent,
       practicalRecommendations,
       keyMismatches,
-      directComparables: directComparables.slice(0, 8).map((game) => ({
+      directComparables: directComparables.slice(0, 8).map((game: any) => ({
         name: game.name,
         reviewScore: game.reviewScore,
         reviewCount: game.reviewCount,
         priceCents: game.priceCurrent?.finalPriceCents ?? null,
         medianRevenueCents: revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents),
-        genres: game.genres.map((genre) => genre.steamGenre.name),
-        tags: game.tags.map((tag) => tag.steamTag.name)
+        genres: game.genres.map((genre: any) => genre.steamGenre.name),
+        tags: game.tags.map((tag: any) => tag.steamTag.name)
       })),
-      adjacentComparables: adjacentComparables.slice(0, 8).map((game) => ({
+      adjacentComparables: adjacentComparables.slice(0, 8).map((game: any) => ({
         name: game.name,
         reviewScore: game.reviewScore,
         reviewCount: game.reviewCount,
         priceCents: game.priceCurrent?.finalPriceCents ?? null,
         medianRevenueCents: revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents),
-        genres: game.genres.map((genre) => genre.steamGenre.name),
-        tags: game.tags.map((tag) => tag.steamTag.name)
+        genres: game.genres.map((genre: any) => genre.steamGenre.name),
+        tags: game.tags.map((tag: any) => tag.steamTag.name)
       }))
     }
   });
-  const finalMarketSummary = aiLayer?.marketSummary
-    ? `${marketSummary} AI strategy layer: ${aiLayer.marketSummary}`
-    : marketSummary;
-  const finalOpportunitySummary = aiLayer?.opportunitySummary
-    ? `${opportunitySummary} AI strategy layer: ${aiLayer.opportunitySummary}`
-    : opportunitySummary;
-  const finalRiskSummary = aiLayer?.riskSummary
-    ? `${riskSummary} AI strategy layer: ${aiLayer.riskSummary}`
-    : riskSummary;
+    let resolvedValue40: any;
+  if (aiLayer?.marketSummary) {
+    resolvedValue40 = `${marketSummary} AI strategy layer: ${aiLayer.marketSummary}`;
+  } else {
+    resolvedValue40 = marketSummary;
+  }
+const finalMarketSummary = resolvedValue40;
+    let resolvedValue41: any;
+  if (aiLayer?.opportunitySummary) {
+    resolvedValue41 = `${opportunitySummary} AI strategy layer: ${aiLayer.opportunitySummary}`;
+  } else {
+    resolvedValue41 = opportunitySummary;
+  }
+const finalOpportunitySummary = resolvedValue41;
+    let resolvedValue42: any;
+  if (aiLayer?.riskSummary) {
+    resolvedValue42 = `${riskSummary} AI strategy layer: ${aiLayer.riskSummary}`;
+  } else {
+    resolvedValue42 = riskSummary;
+  }
+const finalRiskSummary = resolvedValue42;
   const finalAudienceAutofill = aiLayer?.audienceAutofill || audienceAutofill;
   const finalCoreLoopAutofill = aiLayer?.coreLoopAutofill || coreLoopAutofill;
   const analysisMetadata = {
-    topCompetitorIds: topCompetitors.map((game) => game.id),
-    topCompetitorNames: topCompetitors.map((game) => game.name),
+    topCompetitorIds: topCompetitors.map((game: any) => game.id),
+    topCompetitorNames: topCompetitors.map((game: any) => game.name),
     steamCoverage,
     projectSignals: {
       keywords: projectKeywords,
@@ -1571,7 +1823,19 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     aiLayer
   } as unknown as Prisma.InputJsonObject;
 
-  await db.project.update({
+    let resolvedValue43: any;
+  if (suggestedGenres.length > 0) {
+    resolvedValue43 = suggestedGenres.join(", ");
+  } else {
+    resolvedValue43 = null;
+  }
+  let resolvedValue44: any;
+  if (suggestedTags.length > 0) {
+    resolvedValue44 = suggestedTags.join(", ");
+  } else {
+    resolvedValue44 = null;
+  }
+await db.project.update({
     where: {
       id: project.id
     },
@@ -1579,8 +1843,8 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
       targetAudience: project.targetAudience?.trim() || finalAudienceAutofill,
       coreLoop: project.coreLoop?.trim() || finalCoreLoopAutofill,
       differentiator: project.differentiator?.trim() || differentiators[0] || null,
-      genreInput: project.genreInput?.trim() || (suggestedGenres.length > 0 ? suggestedGenres.join(", ") : null),
-      tagInput: project.tagInput?.trim() || (suggestedTags.length > 0 ? suggestedTags.join(", ") : null)
+      genreInput: project.genreInput?.trim() || (resolvedValue43),
+      tagInput: project.tagInput?.trim() || (resolvedValue44)
     }
   });
 
@@ -1632,7 +1896,7 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
         projectId: project.id
       }
     }),
-    ...topCompetitors.map((game) => db.projectCompetitorGame.create({
+    ...topCompetitors.map((game: any) => db.projectCompetitorGame.create({
       data: {
         projectId: project.id,
         steamGameId: game.id
@@ -1647,7 +1911,23 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
     include: projectInclude
   });
 
-  await notifyOrganizationDiscordWebhook(project.organizationId, {
+    let resolvedValue45: any;
+  if (medianRevenueCents > 0) {
+    resolvedValue45 = (medianRevenueCents / 100).toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                  maximumFractionDigits: 0
+                });
+  } else {
+    resolvedValue45 = "No coverage yet";
+  }
+  let resolvedValue46: any;
+  if (averageReviewScore) {
+    resolvedValue46 = `${averageReviewScore.toFixed(1)}%`;
+  } else {
+    resolvedValue46 = "No coverage yet";
+  }
+await notifyOrganizationDiscordWebhook(project.organizationId, {
     content: `Market analysis was refreshed for **${project.name}**.`,
     embeds: [
       {
@@ -1667,18 +1947,12 @@ export async function analyzeProject(projectId: string, workspaceId: string, use
           },
           {
             name: "Median revenue",
-            value: medianRevenueCents > 0
-              ? (medianRevenueCents / 100).toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                  maximumFractionDigits: 0
-                })
-              : "No coverage yet",
+            value: resolvedValue45,
             inline: true
           },
           {
             name: "Review score",
-            value: averageReviewScore ? `${averageReviewScore.toFixed(1)}%` : "No coverage yet",
+            value: resolvedValue46,
             inline: true
           },
           {
@@ -1740,20 +2014,28 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
   const matchingGames = await getComparableGames(project);
   const topCompetitors = matchingGames.slice(0, 6);
   const competitionCount = matchingGames.length;
-  const averageReviewScore = matchingGames.length > 0
-    ? matchingGames
-        .map((game) => game.reviewScore ?? 0)
-        .filter((value) => value > 0)
-        .reduce((sum, value, _, values) => sum + value / values.length, 0)
-    : 0;
-  const averagePriceCents = matchingGames.length > 0
-    ? median(
+    let resolvedValue47: any;
+  if (matchingGames.length > 0) {
+    resolvedValue47 = matchingGames
+        .map((game: any) => game.reviewScore ?? 0)
+        .filter((value: any) => value > 0)
+        .reduce((sum, value, _, values) => sum + value / values.length, 0);
+  } else {
+    resolvedValue47 = 0;
+  }
+const averageReviewScore = resolvedValue47;
+    let resolvedValue48: any;
+  if (matchingGames.length > 0) {
+    resolvedValue48 = median(
         matchingGames
-          .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
-          .filter((value) => value > 0)
-      )
-    : 0;
-  const releaseMomentum = matchingGames.filter((game) => {
+          .map((game: any) => game.priceCurrent?.finalPriceCents ?? 0)
+          .filter((value: any) => value > 0)
+      );
+  } else {
+    resolvedValue48 = 0;
+  }
+const averagePriceCents = resolvedValue48;
+  const releaseMomentum = matchingGames.filter((game: any) => {
     if (!game.releaseDate) {
       return false;
     }
@@ -1761,18 +2043,18 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     const ageInDays = (Date.now() - game.releaseDate.getTime()) / (1000 * 60 * 60 * 24);
     return ageInDays <= 365;
   }).length;
-  const measuredAssets = artAssets.filter((asset) => asset.width && asset.height);
-  const highResolutionAssets = measuredAssets.filter((asset) => (asset.width ?? 0) >= 1280 && (asset.height ?? 0) >= 720);
-  const capsuleRatioAssets = measuredAssets.filter((asset) => {
+  const measuredAssets = artAssets.filter((asset: any) => asset.width && asset.height);
+  const highResolutionAssets = measuredAssets.filter((asset: any) => (asset.width ?? 0) >= 1280 && (asset.height ?? 0) >= 720);
+  const capsuleRatioAssets = measuredAssets.filter((asset: any) => {
     const ratio = (asset.width ?? 1) / (asset.height ?? 1);
     return ratio >= 1.5 && ratio <= 2.2;
   });
-  const squareAssets = measuredAssets.filter((asset) => {
+  const squareAssets = measuredAssets.filter((asset: any) => {
     const ratio = (asset.width ?? 1) / (asset.height ?? 1);
     return ratio >= 0.85 && ratio <= 1.15;
   });
   const assetsWithVisualMetrics = artAssets
-    .map((asset) => asset.visualMetrics)
+    .map((asset: any) => asset.visualMetrics)
     .filter((metrics): metrics is {
       brightness: number;
       contrast: number;
@@ -1817,124 +2099,450 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
-  const paletteKeywords = Array.from(
+    let resolvedValue49: any;
+  if (artText.includes("neon") || artText.includes("cyber")) {
+    resolvedValue49 = "neon blue";
+  } else {
+    resolvedValue49 = null;
+  }
+  let resolvedValue50: any;
+  if (artText.includes("dark") || artText.includes("horror")) {
+    resolvedValue50 = "deep shadows";
+  } else {
+    resolvedValue50 = null;
+  }
+  let resolvedValue51: any;
+  if (artText.includes("fantasy")) {
+    resolvedValue51 = "enchanted glow";
+  } else {
+    resolvedValue51 = null;
+  }
+  let resolvedValue52: any;
+  if (artText.includes("cozy")) {
+    resolvedValue52 = "warm pastel";
+  } else {
+    resolvedValue52 = null;
+  }
+  let resolvedValue53: any;
+  if (artText.includes("pixel")) {
+    resolvedValue53 = "high-contrast sprite palette";
+  } else {
+    resolvedValue53 = null;
+  }
+  let resolvedValue54: any;
+  if (competitionCount > 12) {
+    resolvedValue54 = "store capsule contrast";
+  } else {
+    resolvedValue54 = null;
+  }
+  let resolvedValue55: any;
+  if (averageReviewScore >= 85) {
+    resolvedValue55 = "premium finish";
+  } else {
+    resolvedValue55 = "readability-first palette";
+  }
+  let resolvedValue56: any;
+  if (averageContrast >= 58) {
+    resolvedValue56 = "strong value contrast";
+  } else {
+    resolvedValue56 = null;
+  }
+  let resolvedValue57: any;
+  if (averageSaturation >= 55) {
+    resolvedValue57 = "high-saturation colorway";
+  } else {
+    resolvedValue57 = null;
+  }
+  let resolvedValue58: any;
+  if (averageSaturation > 0 && averageSaturation < 28) {
+    resolvedValue58 = "muted colorway";
+  } else {
+    resolvedValue58 = null;
+  }
+  let resolvedValue59: any;
+  if (dominantColors[0]) {
+    resolvedValue59 = `dominant ${dominantColors[0]}`;
+  } else {
+    resolvedValue59 = null;
+  }
+const paletteKeywords = Array.from(
     new Set(
       [
-        artText.includes("neon") || artText.includes("cyber") ? "neon blue" : null,
-        artText.includes("dark") || artText.includes("horror") ? "deep shadows" : null,
-        artText.includes("fantasy") ? "enchanted glow" : null,
-        artText.includes("cozy") ? "warm pastel" : null,
-        artText.includes("pixel") ? "high-contrast sprite palette" : null,
-        competitionCount > 12 ? "store capsule contrast" : null,
-        averageReviewScore >= 85 ? "premium finish" : "readability-first palette",
-        averageContrast >= 58 ? "strong value contrast" : null,
-        averageSaturation >= 55 ? "high-saturation colorway" : null,
-        averageSaturation > 0 && averageSaturation < 28 ? "muted colorway" : null,
-        dominantColors[0] ? `dominant ${dominantColors[0]}` : null
+        resolvedValue49,
+        resolvedValue50,
+        resolvedValue51,
+        resolvedValue52,
+        resolvedValue53,
+        resolvedValue54,
+        resolvedValue55,
+        resolvedValue56,
+        resolvedValue57,
+        resolvedValue58,
+        resolvedValue59
       ].filter((item): item is string => Boolean(item))
     )
   ).slice(0, 4);
-  const moodKeywords = Array.from(
+    let resolvedValue60: any;
+  if (artText.includes("sci") || artText.includes("cyber")) {
+    resolvedValue60 = "futuristic";
+  } else {
+    resolvedValue60 = null;
+  }
+  let resolvedValue61: any;
+  if (artText.includes("dark") || artText.includes("horror")) {
+    resolvedValue61 = "tense";
+  } else {
+    resolvedValue61 = null;
+  }
+  let resolvedValue62: any;
+  if (artText.includes("cozy")) {
+    resolvedValue62 = "welcoming";
+  } else {
+    resolvedValue62 = null;
+  }
+  let resolvedValue63: any;
+  if (artText.includes("fantasy")) {
+    resolvedValue63 = "mythic";
+  } else {
+    resolvedValue63 = null;
+  }
+  let resolvedValue64: any;
+  if (artText.includes("pixel")) {
+    resolvedValue64 = "retro";
+  } else {
+    resolvedValue64 = null;
+  }
+  let resolvedValue65: any;
+  if (releaseMomentum > 8) {
+    resolvedValue65 = "commercially active";
+  } else {
+    resolvedValue65 = "niche-focused";
+  }
+  let resolvedValue66: any;
+  if (competitionCount > 10) {
+    resolvedValue66 = "crowded shelf";
+  } else {
+    resolvedValue66 = "open shelf";
+  }
+  let resolvedValue67: any;
+  if (averageReadabilityScore >= 72) {
+    resolvedValue67 = "clear first read";
+  } else {
+    resolvedValue67 = null;
+  }
+  let resolvedValue68: any;
+  if (highLegibilityRiskAssets > 0) {
+    resolvedValue68 = "readability risk";
+  } else {
+    resolvedValue68 = null;
+  }
+const moodKeywords = Array.from(
     new Set(
       [
-        artText.includes("sci") || artText.includes("cyber") ? "futuristic" : null,
-        artText.includes("dark") || artText.includes("horror") ? "tense" : null,
-        artText.includes("cozy") ? "welcoming" : null,
-        artText.includes("fantasy") ? "mythic" : null,
-        artText.includes("pixel") ? "retro" : null,
-        releaseMomentum > 8 ? "commercially active" : "niche-focused",
-        competitionCount > 10 ? "crowded shelf" : "open shelf",
-        averageReadabilityScore >= 72 ? "clear first read" : null,
-        highLegibilityRiskAssets > 0 ? "readability risk" : null
+        resolvedValue60,
+        resolvedValue61,
+        resolvedValue62,
+        resolvedValue63,
+        resolvedValue64,
+        resolvedValue65,
+        resolvedValue66,
+        resolvedValue67,
+        resolvedValue68
       ].filter((item): item is string => Boolean(item))
     )
   ).slice(0, 5);
-  const realismComplexity =
-    (artText.includes("realistic") ? 22 : 0)
-    + (artText.includes("cinematic") ? 14 : 0)
-    + (artText.includes("detailed") ? 12 : 0)
-    + (artText.includes("3d") ? 10 : 0)
-    + (artText.includes("pixel") ? -10 : 0)
-    + (artText.includes("minimal") ? -12 : 0)
-    + (artText.includes("low poly") ? -8 : 0);
-  const distinctivenessScore = clampScore(
+    let resolvedValue69: any;
+  if (artText.includes("realistic")) {
+    resolvedValue69 = 22;
+  } else {
+    resolvedValue69 = 0;
+  }
+  let resolvedValue70: any;
+  if (artText.includes("cinematic")) {
+    resolvedValue70 = 14;
+  } else {
+    resolvedValue70 = 0;
+  }
+  let resolvedValue71: any;
+  if (artText.includes("detailed")) {
+    resolvedValue71 = 12;
+  } else {
+    resolvedValue71 = 0;
+  }
+  let resolvedValue72: any;
+  if (artText.includes("3d")) {
+    resolvedValue72 = 10;
+  } else {
+    resolvedValue72 = 0;
+  }
+  let resolvedValue73: any;
+  if (artText.includes("pixel")) {
+    resolvedValue73 = -10;
+  } else {
+    resolvedValue73 = 0;
+  }
+  let resolvedValue74: any;
+  if (artText.includes("minimal")) {
+    resolvedValue74 = -12;
+  } else {
+    resolvedValue74 = 0;
+  }
+  let resolvedValue75: any;
+  if (artText.includes("low poly")) {
+    resolvedValue75 = -8;
+  } else {
+    resolvedValue75 = 0;
+  }
+const realismComplexity =
+    (resolvedValue69)
+    + (resolvedValue70)
+    + (resolvedValue71)
+    + (resolvedValue72)
+    + (resolvedValue73)
+    + (resolvedValue74)
+    + (resolvedValue75);
+    let resolvedValue76: any;
+  if (project.artDirection?.trim()) {
+    resolvedValue76 = 10;
+  } else {
+    resolvedValue76 = -6;
+  }
+  let resolvedValue77: any;
+  if (project.differentiator?.trim()) {
+    resolvedValue77 = 8;
+  } else {
+    resolvedValue77 = 0;
+  }
+  let resolvedValue78: any;
+  if (project.playerFantasy?.trim()) {
+    resolvedValue78 = 6;
+  } else {
+    resolvedValue78 = 0;
+  }
+  let resolvedValue79: any;
+  if (averageReadabilityScore > 0) {
+    resolvedValue79 = (averageReadabilityScore - 55) * 0.18;
+  } else {
+    resolvedValue79 = 0;
+  }
+  let resolvedValue80: any;
+  if (artAssets.length === 0) {
+    resolvedValue80 = 12;
+  } else {
+    resolvedValue80 = 0;
+  }
+const distinctivenessScore = clampScore(
     78
-    + (project.artDirection?.trim() ? 10 : -6)
-    + (project.differentiator?.trim() ? 8 : 0)
-    + (project.playerFantasy?.trim() ? 6 : 0)
+    + (resolvedValue76)
+    + (resolvedValue77)
+    + (resolvedValue78)
     + (artAssetEvidenceScore * 0.12)
-    + (averageReadabilityScore > 0 ? (averageReadabilityScore - 55) * 0.18 : 0)
-    - (artAssets.length === 0 ? 12 : 0)
+    + (resolvedValue79)
+    - (resolvedValue80)
     - highLegibilityRiskAssets * 5
     - Math.min(competitionCount, 18) * 1.5,
     18,
     96
   );
-  const productionComplexityScore = clampScore(
+    let resolvedValue81: any;
+  if (project.pricePointCents && project.pricePointCents >= 2999) {
+    resolvedValue81 = 8;
+  } else {
+    resolvedValue81 = 0;
+  }
+  let resolvedValue82: any;
+  if (competitionCount > 15) {
+    resolvedValue82 = 8;
+  } else {
+    resolvedValue82 = 0;
+  }
+const productionComplexityScore = clampScore(
     45
     + realismComplexity
     + Math.min(highResolutionAssets.length * 3, 9)
     + Math.min(averageEdgeDensity * 0.25, 10)
-    + (project.pricePointCents && project.pricePointCents >= 2999 ? 8 : 0)
-    + (competitionCount > 15 ? 8 : 0)
+    + (resolvedValue81)
+    + (resolvedValue82)
   );
-  const priceFitScore = project.pricePointCents && averagePriceCents > 0
-    ? clampScore(100 - (Math.abs(project.pricePointCents - averagePriceCents) / averagePriceCents) * 100)
-    : 60;
-  const marketFitScore = clampScore(
+    let resolvedValue83: any;
+  if (project.pricePointCents && averagePriceCents > 0) {
+    resolvedValue83 = clampScore(100 - (Math.abs(project.pricePointCents - averagePriceCents) / averagePriceCents) * 100);
+  } else {
+    resolvedValue83 = 60;
+  }
+const priceFitScore = resolvedValue83;
+    let resolvedValue84: any;
+  if (competitionCount > 0) {
+    resolvedValue84 = (releaseMomentum / competitionCount) * 20;
+  } else {
+    resolvedValue84 = 0;
+  }
+  let resolvedValue85: any;
+  if (averageReadabilityScore > 0) {
+    resolvedValue85 = (averageReadabilityScore - 60) * 0.12;
+  } else {
+    resolvedValue85 = 0;
+  }
+const marketFitScore = clampScore(
     averageReviewScore * 0.55
     + priceFitScore * 0.25
-    + (competitionCount > 0 ? (releaseMomentum / competitionCount) * 20 : 0)
-    + (averageReadabilityScore > 0 ? (averageReadabilityScore - 60) * 0.12 : 0)
+    + (resolvedValue84)
+    + (resolvedValue85)
   );
-  const visualTrendScore = clampScore(competitionCount > 0 ? (releaseMomentum / competitionCount) * 100 : 25);
-  const styleSummary =
-    artAssets.length > 0
-      ? `${artAssets.length} uploaded art asset${artAssets.length === 1 ? "" : "s"} were reviewed. ${measuredAssets.length} have readable dimensions, ${capsuleRatioAssets.length} are close to Steam capsule/header ratios, and ${assetsWithVisualMetrics.length} were pixel-analyzed for contrast, saturation, visual density, and first-read clarity. Average readability is ${Math.round(averageReadabilityScore || 0)}/100, with ${highLegibilityRiskAssets} high-risk asset${highLegibilityRiskAssets === 1 ? "" : "s"}. Comparable Steam games currently suggest ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"} as the shelf baseline.`
-      : topCompetitors.length > 0
-      ? `Comparable Steam games currently cluster around ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"}, with ${paletteKeywords.slice(0, 2).join(" plus ") || "readable capsule contrast"} showing up as the strongest shelf signal.`
-      : "The current dataset does not have enough comparable art references yet, so the visual brief should be treated as exploratory.";
-  const fitSummary =
-    artAssets.length === 0
-      ? "No artwork has been uploaded yet, so this is still a visual-direction estimate rather than a true asset review."
-      : marketFitScore >= 70
-      ? "The proposed art direction is close to the current quality bar for this niche and should support commercial positioning if execution stays consistent."
-      : "The current art direction thesis is still under-specified relative to the niche, so the market fit will depend heavily on sharpening readability, fantasy, and store presence.";
-  const productionSummary =
-    productionComplexityScore >= 70
-      ? "This visual direction has a high production cost profile. Scope, outsourcing, and animation complexity need to be kept under tight control."
-      : "This direction is commercially workable without blockbuster art scope, as long as the team keeps consistency high across key surfaces.";
-  const recommendationSummary = [
-    distinctivenessScore < 55 ? "Push a more ownable silhouette or color story before production lock." : "Keep the current visual hook and reinforce it in the capsule and hero scenes.",
-    artAssets.length === 0 ? "Upload capsule art, key art, screenshots, or mood targets before treating this as a real art review." : null,
-    artAssets.length > 0 && capsuleRatioAssets.length === 0 ? "Add at least one wide store-facing image so the analysis can judge Steam capsule/header readability." : null,
-    highLegibilityRiskAssets > 0 ? "At least one uploaded asset has weak first-read clarity; increase value contrast, simplify noisy areas, or strengthen the focal silhouette." : null,
-    averageSaturation > 72 ? "The uploaded palette is highly saturated; reserve the strongest color for the focal point so the capsule does not become visually flat." : null,
-    priceFitScore < 55 ? `Your target price is drifting away from the niche median of ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}; align the finish bar or pricing.` : null,
-    competitionCount > 12 ? "The shelf is crowded, so capsule readability and instant fantasy communication matter more than detail density." : "There is room to claim a stronger identity if the art direction lands cleanly."
+    let resolvedValue86: any;
+  if (competitionCount > 0) {
+    resolvedValue86 = (releaseMomentum / competitionCount) * 100;
+  } else {
+    resolvedValue86 = 25;
+  }
+const visualTrendScore = clampScore(resolvedValue86);
+    let resolvedValue87: any;
+  if (artAssets.length > 0) {
+        let resolvedValue137: any;
+    if (artAssets.length === 1) {
+      resolvedValue137 = "";
+    } else {
+      resolvedValue137 = "s";
+    }
+    let resolvedValue138: any;
+    if (highLegibilityRiskAssets === 1) {
+      resolvedValue138 = "";
+    } else {
+      resolvedValue138 = "s";
+    }
+resolvedValue87 = `${artAssets.length} uploaded art asset${resolvedValue137} were reviewed. ${measuredAssets.length} have readable dimensions, ${capsuleRatioAssets.length} are close to Steam capsule/header ratios, and ${assetsWithVisualMetrics.length} were pixel-analyzed for contrast, saturation, visual density, and first-read clarity. Average readability is ${Math.round(averageReadabilityScore || 0)}/100, with ${highLegibilityRiskAssets} high-risk asset${resolvedValue138}. Comparable Steam games currently suggest ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"} as the shelf baseline.`;
+  } else {
+        let resolvedValue139: any;
+    if (topCompetitors.length > 0) {
+      resolvedValue139 = `Comparable Steam games currently cluster around ${moodKeywords.slice(0, 2).join(" and ") || "clear visual positioning"}, with ${paletteKeywords.slice(0, 2).join(" plus ") || "readable capsule contrast"} showing up as the strongest shelf signal.`;
+    } else {
+      resolvedValue139 = "The current dataset does not have enough comparable art references yet, so the visual brief should be treated as exploratory.";
+    }
+resolvedValue87 = resolvedValue139;
+  }
+const styleSummary =
+    resolvedValue87;
+    let resolvedValue88: any;
+  if (artAssets.length === 0) {
+    resolvedValue88 = "No artwork has been uploaded yet, so this is still a visual-direction estimate rather than a true asset review.";
+  } else {
+        let resolvedValue140: any;
+    if (marketFitScore >= 70) {
+      resolvedValue140 = "The proposed art direction is close to the current quality bar for this niche and should support commercial positioning if execution stays consistent.";
+    } else {
+      resolvedValue140 = "The current art direction thesis is still under-specified relative to the niche, so the market fit will depend heavily on sharpening readability, fantasy, and store presence.";
+    }
+resolvedValue88 = resolvedValue140;
+  }
+const fitSummary =
+    resolvedValue88;
+    let resolvedValue89: any;
+  if (productionComplexityScore >= 70) {
+    resolvedValue89 = "This visual direction has a high production cost profile. Scope, outsourcing, and animation complexity need to be kept under tight control.";
+  } else {
+    resolvedValue89 = "This direction is commercially workable without blockbuster art scope, as long as the team keeps consistency high across key surfaces.";
+  }
+const productionSummary =
+    resolvedValue89;
+    let resolvedValue90: any;
+  if (distinctivenessScore < 55) {
+    resolvedValue90 = "Push a more ownable silhouette or color story before production lock.";
+  } else {
+    resolvedValue90 = "Keep the current visual hook and reinforce it in the capsule and hero scenes.";
+  }
+  let resolvedValue91: any;
+  if (artAssets.length === 0) {
+    resolvedValue91 = "Upload capsule art, key art, screenshots, or mood targets before treating this as a real art review.";
+  } else {
+    resolvedValue91 = null;
+  }
+  let resolvedValue92: any;
+  if (artAssets.length > 0 && capsuleRatioAssets.length === 0) {
+    resolvedValue92 = "Add at least one wide store-facing image so the analysis can judge Steam capsule/header readability.";
+  } else {
+    resolvedValue92 = null;
+  }
+  let resolvedValue93: any;
+  if (highLegibilityRiskAssets > 0) {
+    resolvedValue93 = "At least one uploaded asset has weak first-read clarity; increase value contrast, simplify noisy areas, or strengthen the focal silhouette.";
+  } else {
+    resolvedValue93 = null;
+  }
+  let resolvedValue94: any;
+  if (averageSaturation > 72) {
+    resolvedValue94 = "The uploaded palette is highly saturated; reserve the strongest color for the focal point so the capsule does not become visually flat.";
+  } else {
+    resolvedValue94 = null;
+  }
+  let resolvedValue95: any;
+  if (priceFitScore < 55) {
+    resolvedValue95 = `Your target price is drifting away from the niche median of ${(averagePriceCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}; align the finish bar or pricing.`;
+  } else {
+    resolvedValue95 = null;
+  }
+  let resolvedValue96: any;
+  if (competitionCount > 12) {
+    resolvedValue96 = "The shelf is crowded, so capsule readability and instant fantasy communication matter more than detail density.";
+  } else {
+    resolvedValue96 = "There is room to claim a stronger identity if the art direction lands cleanly.";
+  }
+const recommendationSummary = [
+    resolvedValue90,
+    resolvedValue91,
+    resolvedValue92,
+    resolvedValue93,
+    resolvedValue94,
+    resolvedValue95,
+    resolvedValue96
   ]
     .filter((item): item is string => Boolean(item))
     .join(" ");
-  const proArtBrief = organization.subscriptionPlan === SubscriptionPlan.PRO
-    ? {
+    let resolvedValue97: any;
+  if (organization.subscriptionPlan === SubscriptionPlan.PRO) {
+        let resolvedValue141: any;
+    if (competitionCount > 12) {
+      resolvedValue141 = "The shelf is saturated enough that the art needs a harder first-read hook, not just better rendering polish.";
+    } else {
+      resolvedValue141 = "The shelf still leaves room for a clearer fantasy-first presentation if the team commits to a stronger silhouette and capsule hierarchy.";
+    }
+    let resolvedValue142: any;
+    if (productionComplexityScore >= 70) {
+      resolvedValue142 = "Reduce high-cost finish work outside the capsule, hero, and first gameplay surfaces.";
+    } else {
+      resolvedValue142 = "Keep polish concentrated on the store-facing surfaces that carry the first commercial impression.";
+    }
+    let resolvedValue143: any;
+    if (averagePriceCents >= 2499) {
+      resolvedValue143 = "Support the target price with fewer but stronger hero environments and cleaner material definition.";
+    } else {
+      resolvedValue143 = "Use readability and fantasy clarity to outperform the lower price band without overbuilding assets.";
+    }
+    let resolvedValue144: any;
+    if (competitionCount > 10) {
+      resolvedValue144 = "Build a capsule-first review lane before scaling the full asset backlog.";
+    } else {
+      resolvedValue144 = "Lock a distinctive visual motif early, then scale production around that motif.";
+    }
+resolvedValue97 = {
         capsuleReadinessScore: clampScore((distinctivenessScore * 0.45) + (marketFitScore * 0.35) + ((100 - productionComplexityScore) * 0.2)),
         shelfGapSummary:
-          competitionCount > 12
-            ? "The shelf is saturated enough that the art needs a harder first-read hook, not just better rendering polish."
-            : "The shelf still leaves room for a clearer fantasy-first presentation if the team commits to a stronger silhouette and capsule hierarchy.",
+          resolvedValue141,
         productionLevers: [
-          productionComplexityScore >= 70 ? "Reduce high-cost finish work outside the capsule, hero, and first gameplay surfaces." : "Keep polish concentrated on the store-facing surfaces that carry the first commercial impression.",
-          averagePriceCents >= 2499 ? "Support the target price with fewer but stronger hero environments and cleaner material definition." : "Use readability and fantasy clarity to outperform the lower price band without overbuilding assets.",
-          competitionCount > 10 ? "Build a capsule-first review lane before scaling the full asset backlog." : "Lock a distinctive visual motif early, then scale production around that motif."
+          resolvedValue142,
+          resolvedValue143,
+          resolvedValue144
         ],
-        referenceShelf: topCompetitors.slice(0, 3).map((game) => ({
+        referenceShelf: topCompetitors.slice(0, 3).map((game: any) => ({
           name: game.name,
           reviewScore: game.reviewScore ?? 0,
           priceCents: game.priceCurrent?.finalPriceCents ?? 0
         }))
-      }
-    : null;
-  const aiArtAssets = await Promise.all(artAssets.slice(0, 4).map(async (asset) => ({
+      };
+  } else {
+    resolvedValue97 = null;
+  }
+const proArtBrief = resolvedValue97;
+  const aiArtAssets = await Promise.all(artAssets.slice(0, 4).map(async (asset: any) => ({
     kind: asset.kind,
     originalName: asset.originalName,
     width: asset.width,
@@ -1974,7 +2582,7 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       productionComplexityScore,
       marketFitScore,
       visualTrendScore,
-      referenceGameNames: topCompetitors.map((game) => game.name),
+      referenceGameNames: topCompetitors.map((game: any) => game.name),
       paletteKeywords,
       moodKeywords
     },
@@ -2013,8 +2621,8 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       moodKeywords,
       metadata: {
         planLabel: organization.subscriptionPlan,
-        referenceGameIds: topCompetitors.map((game) => game.id),
-        referenceGameNames: topCompetitors.map((game) => game.name),
+        referenceGameIds: topCompetitors.map((game: any) => game.id),
+        referenceGameNames: topCompetitors.map((game: any) => game.name),
         uploadedArtAssets: {
           total: artAssets.length,
           measured: measuredAssets.length,
@@ -2048,8 +2656,8 @@ export async function analyzeProjectArt(projectId: string, workspaceId: string, 
       moodKeywords,
       metadata: {
         planLabel: organization.subscriptionPlan,
-        referenceGameIds: topCompetitors.map((game) => game.id),
-        referenceGameNames: topCompetitors.map((game) => game.name),
+        referenceGameIds: topCompetitors.map((game: any) => game.id),
+        referenceGameNames: topCompetitors.map((game: any) => game.name),
         uploadedArtAssets: {
           total: artAssets.length,
           measured: measuredAssets.length,
@@ -2146,7 +2754,13 @@ export async function uploadProjectArtAsset(params: {
     file: params.file
   });
 
-  const asset = await db.projectArtAsset.create({
+    let resolvedValue98: any;
+  if (upload.visualMetrics) {
+    resolvedValue98 = { visualMetrics: upload.visualMetrics as Prisma.InputJsonValue };
+  } else {
+    resolvedValue98 = {};
+  }
+const asset = await db.projectArtAsset.create({
     data: {
       projectId: project.id,
       uploadedById: params.userId,
@@ -2157,7 +2771,7 @@ export async function uploadProjectArtAsset(params: {
       sizeBytes: upload.sizeBytes,
       width: upload.width,
       height: upload.height,
-      ...(upload.visualMetrics ? { visualMetrics: upload.visualMetrics as Prisma.InputJsonValue } : {}),
+      ...(resolvedValue98),
       notes: params.notes?.trim() || null
     }
   });
@@ -2306,7 +2920,7 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     };
   } | null;
   const comparables = project.competitorGames
-    .map((item) => ({
+    .map((item: any) => ({
       name: item.steamGame.name,
       reviewScore: item.steamGame.reviewScore,
       reviewCount: item.steamGame.reviewCount,
@@ -2323,13 +2937,21 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
   const redFlags = analysisMetadata?.aiLayer?.redFlags ?? [];
   const board = project.kanbanBoards[0] ?? null;
   const activeMilestones = project.milestones.filter((milestone) => milestone.status !== "COMPLETED").slice(0, 8);
-  const boardCards = board?.columns.flatMap((column) => column.cards.map((card) => ({
+  const boardCards = board?.columns.flatMap((column) => column.cards.map((card) => {
+    let resolvedValue99: any;
+    if (Array.isArray(card.labels)) {
+      resolvedValue99 = card.labels;
+    } else {
+      resolvedValue99 = [];
+    }
+    return ({
     column: column.name,
     title: card.title,
     assignee: card.assigneeLabel,
     dueDate: card.dueDate,
-    labels: Array.isArray(card.labels) ? card.labels : []
-  }))) ?? [];
+    labels: resolvedValue99
+  });
+  })) ?? [];
   const featureSeeds = [
     ...parseCsv(project.genreInput),
     ...parseCsv(project.tagInput),
@@ -2337,60 +2959,222 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     ...parseCsv(project.differentiator),
     ...creativeAngles
   ].slice(0, 10);
-  const productionPillars = [
-    project.playerFantasy ? `Deliver the fantasy of ${project.playerFantasy}.` : "Make the player fantasy explicit before production lock.",
-    project.coreLoop ? `Protect the core loop: ${project.coreLoop}.` : "Prototype one repeatable 60-second loop before expanding scope.",
-    project.differentiator ? `Make the differentiator visible in the first playable slice: ${project.differentiator}.` : "Define one hook that is visible from screenshots and trailer beats.",
-    analysisMetadata?.projectFitLayer?.positioningClarityScore !== undefined
-      ? `Positioning clarity target: improve from ${analysisMetadata.projectFitLayer.positioningClarityScore}/100 toward a store-ready pitch.`
-      : "Create a store-ready positioning statement before capsule review."
+    let resolvedValue100: any;
+  if (project.playerFantasy) {
+    resolvedValue100 = `Deliver the fantasy of ${project.playerFantasy}.`;
+  } else {
+    resolvedValue100 = "Make the player fantasy explicit before production lock.";
+  }
+  let resolvedValue101: any;
+  if (project.coreLoop) {
+    resolvedValue101 = `Protect the core loop: ${project.coreLoop}.`;
+  } else {
+    resolvedValue101 = "Prototype one repeatable 60-second loop before expanding scope.";
+  }
+  let resolvedValue102: any;
+  if (project.differentiator) {
+    resolvedValue102 = `Make the differentiator visible in the first playable slice: ${project.differentiator}.`;
+  } else {
+    resolvedValue102 = "Define one hook that is visible from screenshots and trailer beats.";
+  }
+  let resolvedValue103: any;
+  if (analysisMetadata?.projectFitLayer?.positioningClarityScore !== undefined) {
+    resolvedValue103 = `Positioning clarity target: improve from ${analysisMetadata.projectFitLayer.positioningClarityScore}/100 toward a store-ready pitch.`;
+  } else {
+    resolvedValue103 = "Create a store-ready positioning statement before capsule review.";
+  }
+const productionPillars = [
+    resolvedValue100,
+    resolvedValue101,
+    resolvedValue102,
+    resolvedValue103
   ];
-  const mvpFeatures = featureSeeds.length > 0
-    ? featureSeeds.map((item, index) => `${index + 1}. ${item}: prove it with one playable, measurable implementation.`)
-    : [
+    let resolvedValue104: any;
+  if (featureSeeds.length > 0) {
+    resolvedValue104 = featureSeeds.map((item, index) => `${index + 1}. ${item}: prove it with one playable, measurable implementation.`);
+  } else {
+    resolvedValue104 = [
         "1. Core movement/combat/interact loop: build one shippable-feeling minute.",
         "2. Progression reward: define why the second session should happen.",
         "3. Store-facing hook: create a visual or systemic moment that can sell the game."
       ];
-  const acceptanceCriteria = [
-    analysisMetadata?.opportunityLayer?.executionBarScore !== undefined
-      ? `Prototype scope must match an execution bar of ${analysisMetadata.opportunityLayer.executionBarScore}/100.`
-      : "Prototype scope must be small enough for the current team to finish.",
-    analysisMetadata?.projectFitLayer?.priceFitScore !== undefined
-      ? `Price/value promise must reach a fit score above current ${analysisMetadata.projectFitLayer.priceFitScore}/100 before pricing lock.`
-      : "Price/value promise must be tested against direct comparable games.",
-    project.artAnalysis?.marketFitScore !== undefined
-      ? `Visual direction must maintain market fit above ${project.artAnalysis.marketFitScore}/100 while improving distinctiveness.`
-      : "Visual direction must pass a capsule readability review.",
+  }
+const mvpFeatures = resolvedValue104;
+    let resolvedValue105: any;
+  if (analysisMetadata?.opportunityLayer?.executionBarScore !== undefined) {
+    resolvedValue105 = `Prototype scope must match an execution bar of ${analysisMetadata.opportunityLayer.executionBarScore}/100.`;
+  } else {
+    resolvedValue105 = "Prototype scope must be small enough for the current team to finish.";
+  }
+  let resolvedValue106: any;
+  if (analysisMetadata?.projectFitLayer?.priceFitScore !== undefined) {
+    resolvedValue106 = `Price/value promise must reach a fit score above current ${analysisMetadata.projectFitLayer.priceFitScore}/100 before pricing lock.`;
+  } else {
+    resolvedValue106 = "Price/value promise must be tested against direct comparable games.";
+  }
+  let resolvedValue107: any;
+  if (project.artAnalysis?.marketFitScore !== undefined) {
+    resolvedValue107 = `Visual direction must maintain market fit above ${project.artAnalysis.marketFitScore}/100 while improving distinctiveness.`;
+  } else {
+    resolvedValue107 = "Visual direction must pass a capsule readability review.";
+  }
+const acceptanceCriteria = [
+    resolvedValue105,
+    resolvedValue106,
+    resolvedValue107,
     "Every feature entering production needs an owner, a done definition, and a validation signal."
   ];
-  const validationPlan = [
+    let resolvedValue108: any;
+  if (analysisMetadata?.marketDepth?.confidenceLabel === "Low") {
+    resolvedValue108 = "Improve comparable coverage before greenlighting budget-sensitive scope.";
+  } else {
+    resolvedValue108 = "Refresh market analysis before each production milestone.";
+  }
+const validationPlan = [
     "Run a 5-player friction test on the first playable loop.",
     "Compare capsule, short description, and first 15 seconds of trailer against the strongest comparable games.",
     "Track wishlist intent, demo completion, first-session retention, and feature confusion notes.",
-    analysisMetadata?.marketDepth?.confidenceLabel === "Low"
-      ? "Improve comparable coverage before greenlighting budget-sensitive scope."
-      : "Refresh market analysis before each production milestone."
+    resolvedValue108
   ];
-  const generatedBacklog = boardCards.length > 0
-    ? boardCards.slice(0, 12).map((card) => `- [${card.column}] ${card.title}${card.assignee ? ` — owner: ${card.assignee}` : ""}${card.labels.length > 0 ? ` — labels: ${card.labels.join(", ")}` : ""}`)
-    : mvpFeatures.map((item) => `- ${item}`);
-  const content = [
+    let resolvedValue109: any;
+  if (boardCards.length > 0) {
+    resolvedValue109 = boardCards.slice(0, 12).map((card) => {
+      let resolvedValue145: any;
+      if (card.assignee) {
+        resolvedValue145 = ` — owner: ${card.assignee}`;
+      } else {
+        resolvedValue145 = "";
+      }
+      let resolvedValue146: any;
+      if (card.labels.length > 0) {
+        resolvedValue146 = ` — labels: ${card.labels.join(", ")}`;
+      } else {
+        resolvedValue146 = "";
+      }
+      return `- [${card.column}] ${card.title}${resolvedValue145}${resolvedValue146}`;
+    });
+  } else {
+    resolvedValue109 = mvpFeatures.map((item: any) => `- ${item}`);
+  }
+const generatedBacklog = resolvedValue109;
+    let resolvedValue110: any;
+  if (project.elevatorPitch) {
+    resolvedValue110 = `This game should be produced around the promise: ${project.elevatorPitch}`;
+  } else {
+    resolvedValue110 = "This project still needs a sharper one-sentence promise before it is production-ready.";
+  }
+  let resolvedValue111: any;
+  if (analysisMetadata?.opportunityLayer?.opportunityScore !== undefined && analysisMetadata.opportunityLayer.opportunityScore >= 70) {
+    resolvedValue111 = "Proceed as a high-upside thesis, but keep milestone gates strict because upside still depends on execution quality.";
+  } else {
+    resolvedValue111 = "Proceed as a controlled validation project until positioning, prototype proof, and market confidence improve.";
+  }
+  let resolvedValue112: any;
+  if (project.monetizationModel) {
+    resolvedValue112 = `Support the ${project.monetizationModel} model without hiding core satisfaction behind economy friction.`;
+  } else {
+    resolvedValue112 = "Define progression rewards before content scale-up.";
+  }
+  let resolvedValue113: any;
+  if (analysisMetadata?.marketDepth?.confidenceLabel) {
+    resolvedValue113 = `${analysisMetadata.marketDepth.confidenceLabel} (${analysisMetadata.marketDepth.confidenceScore ?? "N/A"})`;
+  } else {
+    resolvedValue113 = "Unknown";
+  }
+  let resolvedValue114: any;
+  if (comparables.length > 0) {
+    resolvedValue114 = comparables.map((item, index) => {
+      let resolvedValue147: any;
+      if (item.reviewScore) {
+        resolvedValue147 = `${item.reviewScore.toFixed(1)}% review quality`;
+      } else {
+        resolvedValue147 = "quality";
+      }
+      let resolvedValue148: any;
+      if (item.priceCents) {
+        resolvedValue148 = `${formatMoney(item.priceCents)} price expectation`;
+      } else {
+        resolvedValue148 = "pricing expectation";
+      }
+      return `${index + 1}. ${item.name}: use as a bar for ${resolvedValue147} and ${resolvedValue148}.`;
+    });
+  } else {
+    resolvedValue114 = ["No competitor set has been attached yet. Add direct comparables before production lock."];
+  }
+  let resolvedValue115: any;
+  if (acquisitionChannels.length > 0) {
+    resolvedValue115 = acquisitionChannels.map((item: any) => `- ${item}`);
+  } else {
+    resolvedValue115 = ["- Acquisition channel guidance pending analysis."];
+  }
+  let resolvedValue116: any;
+  if (wishlistDrivers.length > 0) {
+    resolvedValue116 = wishlistDrivers.map((item: any) => `- ${item}`);
+  } else {
+    resolvedValue116 = ["- Wishlist driver guidance pending analysis."];
+  }
+  let resolvedValue117: any;
+  if (creativeAngles.length > 0) {
+    resolvedValue117 = creativeAngles.map((item: any) => `- ${item}`);
+  } else {
+    resolvedValue117 = ["- Creative angle guidance pending analysis."];
+  }
+  let resolvedValue118: any;
+  if (activeMilestones.length > 0) {
+    resolvedValue118 = activeMilestones.map((milestone) => {
+      let resolvedValue149: any;
+      if (milestone.dueAt) {
+        resolvedValue149 = `, due ${milestone.dueAt.toISOString().slice(0, 10)}`;
+      } else {
+        resolvedValue149 = "";
+      }
+      return `- ${milestone.title}: ${milestone.status}${resolvedValue149}. ${milestone.description ?? "Define exit criteria before work starts."}`;
+    });
+  } else {
+    resolvedValue118 = ["- Create milestone gates for prototype, vertical slice, content lock, launch readiness, and post-launch review."];
+  }
+  let resolvedValue119: any;
+  if (redFlags.length > 0) {
+    resolvedValue119 = redFlags.map((item: any) => `- ${item}`);
+  } else {
+        let resolvedValue150: any;
+    if (keyMismatches.length > 0) {
+      resolvedValue150 = keyMismatches.map((item: any) => `- ${item}`);
+    } else {
+            let resolvedValue153: any;
+      if (analysis?.riskSummary) {
+        resolvedValue153 = [`- ${analysis.riskSummary}`];
+      } else {
+        resolvedValue153 = ["- Risk register pending analysis."];
+      }
+resolvedValue150 = resolvedValue153;
+    }
+resolvedValue119 = resolvedValue150;
+  }
+  let resolvedValue120: any;
+  if (recommendations.length > 0) {
+    resolvedValue120 = recommendations.map((item: any) => `- ${item}`);
+  } else {
+    resolvedValue120 = ["- Keep refining the concept against direct Steam comparables."];
+  }
+  let resolvedValue121: any;
+  if (project.pricePointCents) {
+    resolvedValue121 = formatMoney(project.pricePointCents);
+  } else {
+    resolvedValue121 = "TBD";
+  }
+const content = [
     `# ${project.name} - Game Design Document`,
     "",
     `Version: ${nextVersion}`,
     `Generated at: ${new Date().toISOString()}`,
     "",
     "## 1. Executive Design Thesis",
-    project.elevatorPitch
-      ? `This game should be produced around the promise: ${project.elevatorPitch}`
-      : "This project still needs a sharper one-sentence promise before it is production-ready.",
+    resolvedValue110,
     analysisMetadata?.aiLayer?.strategicNarrative || analysis?.opportunitySummary || "Market analysis is missing, so this GDD treats the concept as an unvalidated production thesis.",
     "",
     "### Production decision",
-    analysisMetadata?.opportunityLayer?.opportunityScore !== undefined && analysisMetadata.opportunityLayer.opportunityScore >= 70
-      ? "Proceed as a high-upside thesis, but keep milestone gates strict because upside still depends on execution quality."
-      : "Proceed as a controlled validation project until positioning, prototype proof, and market confidence improve.",
+    resolvedValue111,
     "",
     "## 2. Player Promise",
     `- Primary fantasy: ${project.playerFantasy || analysis?.audienceAutofill || "TBD"}`,
@@ -2400,14 +3184,14 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     `- Store hook: ${analysisMetadata?.aiLayer?.storeCapsuleAdvice || "TBD"}`,
     "",
     "## 3. Generated Production Pillars",
-    ...productionPillars.map((item) => `- ${item}`),
+    ...productionPillars.map((item: any) => `- ${item}`),
     "",
     "## 4. MVP Feature Set",
-    ...mvpFeatures.map((item) => `- ${item}`),
+    ...mvpFeatures.map((item: any) => `- ${item}`),
     "",
     "## 5. Systems Design Notes",
     `- Moment-to-moment: ${project.coreLoop || "Define the first playable interaction loop."}`,
-    `- Progression: ${project.monetizationModel ? `Support the ${project.monetizationModel} model without hiding core satisfaction behind economy friction.` : "Define progression rewards before content scale-up."}`,
+    `- Progression: ${resolvedValue112}`,
     `- Content structure: Use milestones and Kanban status as production truth; avoid adding features without a board owner.`,
     `- Difficulty/readability: Make the first session teach the fantasy without requiring external explanation.`,
     "",
@@ -2416,32 +3200,30 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     `- Opportunity score: ${analysisMetadata?.opportunityLayer?.opportunityScore ?? "N/A"}`,
     `- Risk score: ${analysisMetadata?.opportunityLayer?.riskScore ?? "N/A"}`,
     `- Fit score: ${analysisMetadata?.projectFitLayer?.overallFitScore ?? "N/A"}`,
-    `- Confidence: ${analysisMetadata?.marketDepth?.confidenceLabel ? `${analysisMetadata.marketDepth.confidenceLabel} (${analysisMetadata.marketDepth.confidenceScore ?? "N/A"})` : "Unknown"}`,
+    `- Confidence: ${resolvedValue113}`,
     analysis?.marketSummary || "Run market analysis to populate this section.",
     "",
     "## 7. Comparable Game Lessons",
-    ...(comparables.length > 0
-      ? comparables.map((item, index) => `${index + 1}. ${item.name}: use as a bar for ${item.reviewScore ? `${item.reviewScore.toFixed(1)}% review quality` : "quality"} and ${item.priceCents ? `${formatMoney(item.priceCents)} price expectation` : "pricing expectation"}.`)
-      : ["No competitor set has been attached yet. Add direct comparables before production lock."]),
+    ...(resolvedValue114),
     "",
     "## 8. Acceptance Criteria",
-    ...acceptanceCriteria.map((item) => `- ${item}`),
+    ...acceptanceCriteria.map((item: any) => `- ${item}`),
     "",
     "## 9. Validation Plan",
-    ...validationPlan.map((item) => `- ${item}`),
+    ...validationPlan.map((item: any) => `- ${item}`),
     "",
     "## 10. Positioning And Go-To-Market",
     analysisMetadata?.aiLayer?.positioningSummary || "Positioning layer pending analysis.",
     analysisMetadata?.aiLayer?.launchStrategy || "Run market analysis to generate launch strategy guidance.",
     "",
     "### Acquisition channels",
-    ...(acquisitionChannels.length > 0 ? acquisitionChannels.map((item) => `- ${item}`) : ["- Acquisition channel guidance pending analysis."]),
+    ...(resolvedValue115),
     "",
     "### Wishlist drivers",
-    ...(wishlistDrivers.length > 0 ? wishlistDrivers.map((item) => `- ${item}`) : ["- Wishlist driver guidance pending analysis."]),
+    ...(resolvedValue116),
     "",
     "### Creative angles",
-    ...(creativeAngles.length > 0 ? creativeAngles.map((item) => `- ${item}`) : ["- Creative angle guidance pending analysis."]),
+    ...(resolvedValue117),
     "",
     "## 11. Art Direction Requirements",
     project.artAnalysis?.styleSummary || "Run art analysis to populate this section.",
@@ -2451,16 +3233,14 @@ export async function generateProjectGdd(projectId: string, workspaceId: string,
     ...generatedBacklog,
     "",
     "## 13. Milestone Gates",
-    ...(activeMilestones.length > 0
-      ? activeMilestones.map((milestone) => `- ${milestone.title}: ${milestone.status}${milestone.dueAt ? `, due ${milestone.dueAt.toISOString().slice(0, 10)}` : ""}. ${milestone.description ?? "Define exit criteria before work starts."}`)
-      : ["- Create milestone gates for prototype, vertical slice, content lock, launch readiness, and post-launch review."]),
+    ...(resolvedValue118),
     "",
     "## 14. Risk Register",
-    ...(redFlags.length > 0 ? redFlags.map((item) => `- ${item}`) : keyMismatches.length > 0 ? keyMismatches.map((item) => `- ${item}`) : analysis?.riskSummary ? [`- ${analysis.riskSummary}`] : ["- Risk register pending analysis."]),
+    ...(resolvedValue119),
     "",
     "## 15. Recommended Next Moves",
-    ...(recommendations.length > 0 ? recommendations.map((item) => `- ${item}`) : ["- Keep refining the concept against direct Steam comparables."]),
-    `- Pricing: ${analysisMetadata?.aiLayer?.pricingNarrative || `Current target price is ${project.pricePointCents ? formatMoney(project.pricePointCents) : "TBD"}; validate against comparable perceived value.`}`,
+    ...(resolvedValue120),
+    `- Pricing: ${analysisMetadata?.aiLayer?.pricingNarrative || `Current target price is ${resolvedValue121}; validate against comparable perceived value.`}`,
     `- Market cadence: ${launchCohorts?.last90Days ?? "N/A"} comparable launches in 90d and ${launchCohorts?.last180Days ?? "N/A"} in 180d.`
   ].join("\n");
 
@@ -2552,14 +3332,32 @@ export async function updateKanbanColumn(params: {
     }
   });
 
-  await db.kanbanColumn.update({
+    let resolvedValue122: any;
+  if (params.name !== undefined) {
+    resolvedValue122 = { name: params.name.trim() };
+  } else {
+    resolvedValue122 = {};
+  }
+  let resolvedValue123: any;
+  if (params.color !== undefined) {
+    resolvedValue123 = { color: params.color?.trim() || null };
+  } else {
+    resolvedValue123 = {};
+  }
+  let resolvedValue124: any;
+  if (params.sortOrder !== undefined) {
+    resolvedValue124 = { sortOrder: params.sortOrder };
+  } else {
+    resolvedValue124 = {};
+  }
+await db.kanbanColumn.update({
     where: {
       id: column.id
     },
     data: {
-      ...(params.name !== undefined ? { name: params.name.trim() } : {}),
-      ...(params.color !== undefined ? { color: params.color?.trim() || null } : {}),
-      ...(params.sortOrder !== undefined ? { sortOrder: params.sortOrder } : {})
+      ...(resolvedValue122),
+      ...(resolvedValue123),
+      ...(resolvedValue124)
     }
   });
 
@@ -2693,18 +3491,60 @@ export async function updateKanbanCard(params: {
     });
   }
 
-  await db.kanbanCard.update({
+    let resolvedValue125: any;
+  if (params.columnId !== undefined) {
+    resolvedValue125 = { columnId: params.columnId };
+  } else {
+    resolvedValue125 = {};
+  }
+  let resolvedValue126: any;
+  if (params.title !== undefined) {
+    resolvedValue126 = { title: params.title.trim() };
+  } else {
+    resolvedValue126 = {};
+  }
+  let resolvedValue127: any;
+  if (params.description !== undefined) {
+    resolvedValue127 = { description: params.description?.trim() || null };
+  } else {
+    resolvedValue127 = {};
+  }
+  let resolvedValue128: any;
+  if (params.assigneeLabel !== undefined) {
+    resolvedValue128 = { assigneeLabel: params.assigneeLabel?.trim() || null };
+  } else {
+    resolvedValue128 = {};
+  }
+  let resolvedValue129: any;
+  if (params.dueDate !== undefined) {
+    resolvedValue129 = { dueDate: params.dueDate ?? null };
+  } else {
+    resolvedValue129 = {};
+  }
+  let resolvedValue130: any;
+  if (params.sortOrder !== undefined) {
+    resolvedValue130 = { sortOrder: params.sortOrder };
+  } else {
+    resolvedValue130 = {};
+  }
+  let resolvedValue131: any;
+  if (params.labels !== undefined) {
+    resolvedValue131 = { labels: params.labels };
+  } else {
+    resolvedValue131 = {};
+  }
+await db.kanbanCard.update({
     where: {
       id: card.id
     },
     data: {
-      ...(params.columnId !== undefined ? { columnId: params.columnId } : {}),
-      ...(params.title !== undefined ? { title: params.title.trim() } : {}),
-      ...(params.description !== undefined ? { description: params.description?.trim() || null } : {}),
-      ...(params.assigneeLabel !== undefined ? { assigneeLabel: params.assigneeLabel?.trim() || null } : {}),
-      ...(params.dueDate !== undefined ? { dueDate: params.dueDate ?? null } : {}),
-      ...(params.sortOrder !== undefined ? { sortOrder: params.sortOrder } : {}),
-      ...(params.labels !== undefined ? { labels: params.labels } : {})
+      ...(resolvedValue125),
+      ...(resolvedValue126),
+      ...(resolvedValue127),
+      ...(resolvedValue128),
+      ...(resolvedValue129),
+      ...(resolvedValue130),
+      ...(resolvedValue131)
     }
   });
 
@@ -2737,10 +3577,16 @@ export async function moveKanbanColumn(params: {
       }
     }
   });
-  const target = await db.kanbanColumn.findFirst({
+    let resolvedValue132: any;
+  if (params.direction === "left") {
+    resolvedValue132 = column.sortOrder - 1;
+  } else {
+    resolvedValue132 = column.sortOrder + 1;
+  }
+const target = await db.kanbanColumn.findFirst({
     where: {
       boardId: column.boardId,
-      sortOrder: params.direction === "left" ? column.sortOrder - 1 : column.sortOrder + 1
+      sortOrder: resolvedValue132
     }
   });
 
@@ -2809,10 +3655,16 @@ export async function moveKanbanCard(params: {
       }
     }
   });
-  const target = await db.kanbanCard.findFirst({
+    let resolvedValue133: any;
+  if (params.direction === "up") {
+    resolvedValue133 = card.sortOrder - 1;
+  } else {
+    resolvedValue133 = card.sortOrder + 1;
+  }
+const target = await db.kanbanCard.findFirst({
     where: {
       columnId: card.columnId,
-      sortOrder: params.direction === "up" ? card.sortOrder - 1 : card.sortOrder + 1
+      sortOrder: resolvedValue133
     }
   });
 
@@ -2883,8 +3735,8 @@ export async function reorderKanbanCard(params: {
     throw new Error("Kanban column not found.");
   }
 
-  const sourceCards = sourceColumn.cards.filter((item) => item.id !== card.id);
-  let targetCards = targetColumn.cards.filter((item) => item.id !== card.id);
+  const sourceCards = sourceColumn.cards.filter((item: any) => item.id !== card.id);
+  let targetCards = targetColumn.cards.filter((item: any) => item.id !== card.id);
 
   if (sourceColumn.id === targetColumn.id) {
     targetCards = sourceCards;

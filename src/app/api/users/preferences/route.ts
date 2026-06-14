@@ -10,7 +10,7 @@ import { parseJsonBody } from "@/lib/request";
 const languageValues = [...uiLanguages];
 
 const schema = z.object({
-  preferredLanguage: z.string().refine((value) => languageValues.some((language) => language === value), {
+  preferredLanguage: z.string().refine((value: any) => languageValues.some((language) => language === value), {
     message: "Invalid language."
   })
 });

@@ -135,7 +135,31 @@ export function UserAccountMenu({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isUploadingAvatar) {
+    resolvedValue0 = t("account.uploadingAvatar");
+  } else {
+    resolvedValue0 = t("account.uploadAvatar");
+  }
+  let resolvedValue1: any;
+  if (isSavingLanguage) {
+    resolvedValue1 = t("settings.savingLanguage");
+  } else {
+    resolvedValue1 = t("settings.saveLanguage");
+  }
+  let resolvedValue2: any;
+  if (message) {
+    resolvedValue2 = <p className="text-sm text-emerald-500">{message}</p>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (error) {
+    resolvedValue3 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
@@ -161,7 +185,7 @@ export function UserAccountMenu({
             <input
               accept="image/*"
               className="hidden"
-              onChange={(event) => {
+              onChange={(event: any) => {
                 const file = event.target.files?.[0];
 
                 if (!file) {
@@ -176,7 +200,7 @@ export function UserAccountMenu({
             />
             <Button className="w-full justify-center" disabled={isUploadingAvatar} onClick={() => fileInputRef.current?.click()} type="button" variant="outline">
               <Upload className="mr-2 h-4 w-4" />
-              {isUploadingAvatar ? t("account.uploadingAvatar") : t("account.uploadAvatar")}
+              {resolvedValue0}
             </Button>
           </div>
 
@@ -187,7 +211,7 @@ export function UserAccountMenu({
             <select
               className="flex h-10 w-full rounded-xl border border-white/10 bg-background/75 px-3 py-2 text-sm"
               id="account-language"
-              onChange={(event) => setSelectedLanguage(event.target.value)}
+              onChange={(event: any) => setSelectedLanguage(event.target.value)}
               value={selectedLanguage}
             >
               {languageOptions.map((option) => (
@@ -197,12 +221,12 @@ export function UserAccountMenu({
               ))}
             </select>
             <Button className="w-full" disabled={isSavingLanguage} onClick={saveLanguage} type="button">
-              {isSavingLanguage ? t("settings.savingLanguage") : t("settings.saveLanguage")}
+              {resolvedValue1}
             </Button>
           </div>
 
-          {message ? <p className="text-sm text-emerald-500">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {resolvedValue2}
+          {resolvedValue3}
         </div>
 
         <DropdownMenuSeparator />

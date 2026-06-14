@@ -33,16 +33,34 @@ export default async function CommerceRoute() {
     });
   }
 
-  const data = overview
-    ? JSON.parse(
-        JSON.stringify(overview, (_, value) => (typeof value === "bigint" ? Number(value) : value))
-      )
-    : null;
+    let resolvedValue0: any;
+  if (overview) {
+    resolvedValue0 = JSON.parse(
+        JSON.stringify(overview, (_, value) => {
+          let resolvedValue2: any;
+          if (typeof value === "bigint") {
+            resolvedValue2 = Number(value);
+          } else {
+            resolvedValue2 = value;
+          }
+          return (resolvedValue2);
+        })
+      );
+  } else {
+    resolvedValue0 = null;
+  }
+const data = resolvedValue0;
 
-  return (
+    let resolvedValue1: any;
+  if (membership) {
+    resolvedValue1 = canManageCommerce(membership.role, membership.permissions);
+  } else {
+    resolvedValue1 = false;
+  }
+return (
     <CommercePage
       canAccessCommerceOps={canAccessCommerceOps}
-      canManage={membership ? canManageCommerce(membership.role, membership.permissions) : false}
+      canManage={resolvedValue1}
       data={data}
       organizationName={organization.name}
       planLabel={getSubscriptionPlanLabel(organization.subscriptionPlan)}

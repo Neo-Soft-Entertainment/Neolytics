@@ -77,9 +77,9 @@ export function OrganizationMembersPanel({
   }
 
   function togglePermission(permission: OrganizationPermission) {
-    setPermissions((current) => {
+    setPermissions((current: any) => {
       if (current.includes(permission)) {
-        return current.filter((item) => item !== permission);
+        return current.filter((item: any) => item !== permission);
       }
 
       return [...current, permission];
@@ -146,7 +146,111 @@ export function OrganizationMembersPanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (invitations.length > 0) {
+    resolvedValue0 = invitations.map((invitation) => {
+      let resolvedValue6: any;
+      if (canCopyInvitationToken(invitation.token)) {
+        resolvedValue6 = (
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const inviteUrl = `${window.location.origin}/invite/${invitation.token}`;
+                      await navigator.clipboard.writeText(inviteUrl).catch(() => {});
+                      setMessage("Link do convite copiado.");
+                    }}
+                  >
+                    Copiar link
+                  </Button>
+                );
+      } else {
+        resolvedValue6 = (
+                  <p className="rounded-full border border-white/10 px-3 py-2 text-xs text-muted-foreground">
+                    O link está oculto. Revogue e recrie para copiar um novo convite.
+                  </p>
+                );
+      }
+      let resolvedValue7: any;
+      if (canManage) {
+        resolvedValue7 = (
+                  <Button variant="outline" onClick={() => revokeInvite(invitation.id)}>
+                    Revogar
+                  </Button>
+                );
+      } else {
+        resolvedValue7 = null;
+      }
+      return (
+            <div key={invitation.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+              <p className="font-medium">{invitation.email}</p>
+              <p className="mt-1 text-muted-foreground">
+                Cargo: {invitation.role} · Expira em {new Date(invitation.expiresAt).toLocaleDateString()}
+              </p>
+              <PermissionBadges permissions={invitation.permissions} />
+              <div className="mt-3 flex flex-wrap gap-2">
+                {resolvedValue6}
+                {resolvedValue7}
+              </div>
+            </div>
+          );
+    });
+  } else {
+    resolvedValue0 = (
+            <p className="text-muted-foreground">Nenhum convite pendente.</p>
+          );
+  }
+  let resolvedValue1: any;
+  if (isSubmitting) {
+    resolvedValue1 = "Convidando...";
+  } else {
+    resolvedValue1 = "Convidar";
+  }
+  let resolvedValue2: any;
+  if (lastInviteUrl) {
+    resolvedValue2 = (
+            <div className="space-y-2 lg:col-span-3">
+              <Label htmlFor="invite-link">Último link de convite</Label>
+              <div className="flex flex-col gap-2 md:flex-row">
+                <Input id="invite-link" readOnly value={lastInviteUrl} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(lastInviteUrl).catch(() => {});
+                    setMessage("Link do convite copiado.");
+                  }}
+                >
+                  Copiar link
+                </Button>
+              </div>
+            </div>
+          );
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (!canManage) {
+    resolvedValue3 = (
+            <p className="text-sm text-muted-foreground lg:col-span-3">
+              Apenas administradores da organização podem convidar novos membros.
+            </p>
+          );
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (message) {
+    resolvedValue4 = <p className="text-sm text-emerald-600 lg:col-span-3">{message}</p>;
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (error) {
+    resolvedValue5 = <p className="text-sm text-destructive lg:col-span-3">{error}</p>;
+  } else {
+    resolvedValue5 = null;
+  }
+return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -174,40 +278,7 @@ export function OrganizationMembersPanel({
           <CardTitle>Convites pendentes ({invitations.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          {invitations.length > 0 ? invitations.map((invitation) => (
-            <div key={invitation.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
-              <p className="font-medium">{invitation.email}</p>
-              <p className="mt-1 text-muted-foreground">
-                Cargo: {invitation.role} · Expira em {new Date(invitation.expiresAt).toLocaleDateString()}
-              </p>
-              <PermissionBadges permissions={invitation.permissions} />
-              <div className="mt-3 flex flex-wrap gap-2">
-                {canCopyInvitationToken(invitation.token) ? (
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      const inviteUrl = `${window.location.origin}/invite/${invitation.token}`;
-                      await navigator.clipboard.writeText(inviteUrl).catch(() => {});
-                      setMessage("Link do convite copiado.");
-                    }}
-                  >
-                    Copiar link
-                  </Button>
-                ) : (
-                  <p className="rounded-full border border-white/10 px-3 py-2 text-xs text-muted-foreground">
-                    O link está oculto. Revogue e recrie para copiar um novo convite.
-                  </p>
-                )}
-                {canManage ? (
-                  <Button variant="outline" onClick={() => revokeInvite(invitation.id)}>
-                    Revogar
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          )) : (
-            <p className="text-muted-foreground">Nenhum convite pendente.</p>
-          )}
+          {resolvedValue0}
         </CardContent>
       </Card>
       <Card className="overflow-hidden">
@@ -221,14 +292,14 @@ export function OrganizationMembersPanel({
             <Input
               id="invite-email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event: any) => setEmail(event.target.value)}
               placeholder="teammate@studio.com"
               readOnly={!canManage}
             />
           </div>
           <div className="space-y-2">
             <Label>Cargo</Label>
-            <Select value={role} onValueChange={(value) => updateRole(value as OrganizationRole)} disabled={!canManage}>
+            <Select value={role} onValueChange={(value: any) => updateRole(value as OrganizationRole)} disabled={!canManage}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -241,7 +312,7 @@ export function OrganizationMembersPanel({
           </div>
           <div className="flex items-end">
             <Button className="w-full" disabled={!canManage || isSubmitting} onClick={createInvite}>
-              {isSubmitting ? "Convidando..." : "Convidar"}
+              {resolvedValue1}
             </Button>
           </div>
           <div className="space-y-3 rounded-lg border border-white/10 bg-white/35 p-3 lg:col-span-3 dark:bg-white/[0.03]">
@@ -275,31 +346,10 @@ export function OrganizationMembersPanel({
               ))}
             </div>
           </div>
-          {lastInviteUrl ? (
-            <div className="space-y-2 lg:col-span-3">
-              <Label htmlFor="invite-link">Último link de convite</Label>
-              <div className="flex flex-col gap-2 md:flex-row">
-                <Input id="invite-link" readOnly value={lastInviteUrl} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(lastInviteUrl).catch(() => {});
-                    setMessage("Link do convite copiado.");
-                  }}
-                >
-                  Copiar link
-                </Button>
-              </div>
-            </div>
-          ) : null}
-          {!canManage ? (
-            <p className="text-sm text-muted-foreground lg:col-span-3">
-              Apenas administradores da organização podem convidar novos membros.
-            </p>
-          ) : null}
-          {message ? <p className="text-sm text-emerald-600 lg:col-span-3">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive lg:col-span-3">{error}</p> : null}
+          {resolvedValue2}
+          {resolvedValue3}
+          {resolvedValue4}
+          {resolvedValue5}
         </CardContent>
       </Card>
     </div>

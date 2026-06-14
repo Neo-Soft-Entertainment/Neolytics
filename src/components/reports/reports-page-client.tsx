@@ -44,65 +44,47 @@ export function ReportsPageClient({
       setGenre("");
       setTag("");
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : t("reports.generateError"));
+            let resolvedValue0: any;
+      if (submissionError instanceof Error) {
+        resolvedValue0 = submissionError.message;
+      } else {
+        resolvedValue0 = t("reports.generateError");
+      }
+setError(resolvedValue0);
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <PageHero
-        title={t("reports.pageTitle")}
-        description={t("reports.pageDescription")}
-        summary={(
-          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">{t("reports.generatedReports")}</span>
-              <span className="font-medium">{reportsQuery.data?.length ?? 0}</span>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
-                {isPro ? t("reports.proLive") : t("reports.standardLive")}
-              </p>
-              <p className="mt-2 font-medium">
-                {isPro ? t("reports.proLiveCopy") : t("reports.standardLiveCopy")}
-              </p>
-            </div>
-          </div>
-        )}
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reports.generateReport")}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">{t("reports.title")}</Label>
-            <Input id="title" value={title} onChange={(event) => setTitle(event.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="genre">{t("reports.genreSlug")}</Label>
-            <Input id="genre" value={genre} onChange={(event) => setGenre(event.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tag">{t("reports.tagSlug")}</Label>
-            <Input id="tag" value={tag} onChange={(event) => setTag(event.target.value)} />
-          </div>
-          <div className="md:col-span-4">
-            <Button onClick={handleCreateReport} disabled={createReport.isPending}>
-              {createReport.isPending ? t("reports.generating") : t("reports.generateReport")}
-            </Button>
-          </div>
-          {error ? <p className="text-sm text-destructive md:col-span-4">{error}</p> : null}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reports.generatedReports")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {reportsQuery.isLoading ? (
+    let resolvedValue1: any;
+  if (isPro) {
+    resolvedValue1 = t("reports.proLive");
+  } else {
+    resolvedValue1 = t("reports.standardLive");
+  }
+  let resolvedValue2: any;
+  if (isPro) {
+    resolvedValue2 = t("reports.proLiveCopy");
+  } else {
+    resolvedValue2 = t("reports.standardLiveCopy");
+  }
+  let resolvedValue3: any;
+  if (createReport.isPending) {
+    resolvedValue3 = t("reports.generating");
+  } else {
+    resolvedValue3 = t("reports.generateReport");
+  }
+  let resolvedValue4: any;
+  if (error) {
+    resolvedValue4 = <p className="text-sm text-destructive md:col-span-4">{error}</p>;
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (reportsQuery.isLoading) {
+    resolvedValue5 = (
             <p className="text-sm text-muted-foreground">{t("reports.loading")}</p>
-          ) : (
+          );
+  } else {
+    resolvedValue5 = (
             <div className="space-y-4">
               <Table>
                 <TableHeader>
@@ -133,13 +115,10 @@ export function ReportsPageClient({
                   ))}
                 </TableBody>
               </Table>
-              {reportsQuery.data?.slice(0, 3).map((report) => (
-                <details key={`summary-${report.id}`} className="rounded-[1rem] border border-dashed p-4">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    {report.title}
-                  </summary>
-                  <div className="mt-3 space-y-3 text-sm">
-                    {report.metadata?.decisionBrief ? (
+              {reportsQuery.data?.slice(0, 3).map((report) => {
+                let resolvedValue6: any;
+                if (report.metadata?.decisionBrief) {
+                  resolvedValue6 = (
                       <div className="grid gap-3 lg:grid-cols-2">
                         <div className="rounded-2xl border p-3">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">Decisão</p>
@@ -162,8 +141,13 @@ export function ReportsPageClient({
                           </ul>
                         </div>
                       </div>
-                    ) : null}
-                    {report.metadata?.segment ? (
+                    );
+                } else {
+                  resolvedValue6 = null;
+                }
+                let resolvedValue7: any;
+                if (report.metadata?.segment) {
+                  resolvedValue7 = (
                       <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-2xl border p-3">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.marketSize")}</p>
@@ -184,8 +168,13 @@ export function ReportsPageClient({
                           </p>
                         </div>
                       </div>
-                    ) : null}
-                    {report.metadata?.operatingBrief ? (
+                    );
+                } else {
+                  resolvedValue7 = null;
+                }
+                let resolvedValue8: any;
+                if (report.metadata?.operatingBrief) {
+                  resolvedValue8 = (
                       <div className="grid gap-3 md:grid-cols-3">
                         <div className="rounded-2xl border p-3">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("reports.boardDirective")}</p>
@@ -200,15 +189,82 @@ export function ReportsPageClient({
                           <p className="mt-2 text-sm text-muted-foreground">{report.metadata.operatingBrief.operatingDirective}</p>
                         </div>
                       </div>
-                    ) : null}
+                    );
+                } else {
+                  resolvedValue8 = null;
+                }
+                return (
+                <details key={`summary-${report.id}`} className="rounded-[1rem] border border-dashed p-4">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    {report.title}
+                  </summary>
+                  <div className="mt-3 space-y-3 text-sm">
+                    {resolvedValue6}
+                    {resolvedValue7}
+                    {resolvedValue8}
                     <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-3 text-xs">
                       {report.content ?? ""}
                     </pre>
                   </div>
                 </details>
-              ))}
+              );
+              })}
             </div>
-          )}
+          );
+  }
+return (
+    <div className="space-y-6">
+      <PageHero
+        title={t("reports.pageTitle")}
+        description={t("reports.pageDescription")}
+        summary={(
+          <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">{t("reports.generatedReports")}</span>
+              <span className="font-medium">{reportsQuery.data?.length ?? 0}</span>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
+                {resolvedValue1}
+              </p>
+              <p className="mt-2 font-medium">
+                {resolvedValue2}
+              </p>
+            </div>
+          </div>
+        )}
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("reports.generateReport")}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">{t("reports.title")}</Label>
+            <Input id="title" value={title} onChange={(event: any) => setTitle(event.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="genre">{t("reports.genreSlug")}</Label>
+            <Input id="genre" value={genre} onChange={(event: any) => setGenre(event.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tag">{t("reports.tagSlug")}</Label>
+            <Input id="tag" value={tag} onChange={(event: any) => setTag(event.target.value)} />
+          </div>
+          <div className="md:col-span-4">
+            <Button onClick={handleCreateReport} disabled={createReport.isPending}>
+              {resolvedValue3}
+            </Button>
+          </div>
+          {resolvedValue4}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("reports.generatedReports")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {resolvedValue5}
         </CardContent>
       </Card>
     </div>

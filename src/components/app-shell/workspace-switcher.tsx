@@ -72,18 +72,36 @@ export function WorkspaceSwitcher({
   }
 
   if (workspaces.length <= 1) {
-    return (
+        let resolvedValue0: any;
+    if (error) {
+      resolvedValue0 = <p className="text-xs text-destructive">{error}</p>;
+    } else {
+      resolvedValue0 = null;
+    }
+return (
       <div className="min-w-0 space-y-1.5">
         <div className="flex min-h-11 items-center rounded-xl border border-white/10 bg-white/35 px-3 text-sm font-medium dark:bg-white/[0.04]">
           <span className="truncate">{activeWorkspaceName}</span>
         </div>
         <p className="truncate text-xs text-muted-foreground">{t("shell.currentWorkspace")}</p>
-        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        {resolvedValue0}
       </div>
     );
   }
 
-  return (
+    let resolvedValue1: any;
+  if (isSubmitting) {
+    resolvedValue1 = t("shell.switchingWorkspace");
+  } else {
+    resolvedValue1 = t("shell.currentWorkspace");
+  }
+  let resolvedValue3: any;
+  if (error) {
+    resolvedValue3 = <p className="text-xs text-destructive">{error}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+return (
     <div className="min-w-0 space-y-1.5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -95,7 +113,7 @@ export function WorkspaceSwitcher({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{activeWorkspaceName}</p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {isSubmitting ? t("shell.switchingWorkspace") : t("shell.currentWorkspace")}
+                {resolvedValue1}
               </p>
             </div>
             <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 opacity-60" />
@@ -107,12 +125,18 @@ export function WorkspaceSwitcher({
           {workspaces.map((workspace) => {
             const isCurrent = workspace.id === selectedWorkspaceId;
 
-            return (
+                        let resolvedValue2: any;
+            if (isCurrent) {
+              resolvedValue2 = <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" />;
+            } else {
+              resolvedValue2 = null;
+            }
+return (
               <DropdownMenuItem
                 key={workspace.id}
                 className="flex items-start justify-between gap-3 rounded-xl px-3 py-3"
                 disabled={isCurrent || isSubmitting}
-                onSelect={(event) => {
+                onSelect={(event: any) => {
                   event.preventDefault();
                   void onWorkspaceSelect(workspace.id);
                 }}
@@ -123,14 +147,14 @@ export function WorkspaceSwitcher({
                     {workspace.description?.trim() || workspace.slug}
                   </p>
                 </div>
-                {isCurrent ? <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" /> : null}
+                {resolvedValue2}
               </DropdownMenuItem>
             );
           })}
         </DropdownMenuContent>
       </DropdownMenu>
       <p className="truncate text-xs text-muted-foreground">{t("shell.currentWorkspace")}</p>
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {resolvedValue3}
     </div>
   );
 }

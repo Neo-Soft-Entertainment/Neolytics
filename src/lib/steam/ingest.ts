@@ -201,7 +201,19 @@ export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
     const revenueEstimate = calculateRevenueEstimate(normalized, salesEstimate);
 
     await db.$transaction(async (tx) => {
-      const game = await tx.steamGame.upsert({
+            let resolvedValue0: any;
+      if (typeof normalized.rawPayload === "object" && normalized.rawPayload && "supported_languages" in normalized.rawPayload) {
+        resolvedValue0 = String((normalized.rawPayload as Record<string, unknown>).supported_languages ?? "");
+      } else {
+        resolvedValue0 = null;
+      }
+      let resolvedValue1: any;
+      if (typeof normalized.rawPayload === "object" && normalized.rawPayload && "supported_languages" in normalized.rawPayload) {
+        resolvedValue1 = String((normalized.rawPayload as Record<string, unknown>).supported_languages ?? "");
+      } else {
+        resolvedValue1 = null;
+      }
+const game = await tx.steamGame.upsert({
         where: {
           appId: normalized.appId
         },
@@ -223,9 +235,7 @@ export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
           reviewScoreLabel: normalized.reviews.reviewScoreLabel,
           reviewCount: normalized.reviews.totalReviews,
           currentPlayers: normalized.currentPlayers,
-          supportedLanguages: typeof normalized.rawPayload === "object" && normalized.rawPayload && "supported_languages" in normalized.rawPayload
-            ? String((normalized.rawPayload as Record<string, unknown>).supported_languages ?? "")
-            : null,
+          supportedLanguages: resolvedValue0,
           lastIngestedAt: new Date()
         },
         create: {
@@ -247,9 +257,7 @@ export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
           reviewScoreLabel: normalized.reviews.reviewScoreLabel,
           reviewCount: normalized.reviews.totalReviews,
           currentPlayers: normalized.currentPlayers,
-          supportedLanguages: typeof normalized.rawPayload === "object" && normalized.rawPayload && "supported_languages" in normalized.rawPayload
-            ? String((normalized.rawPayload as Record<string, unknown>).supported_languages ?? "")
-            : null,
+          supportedLanguages: resolvedValue1,
           lastIngestedAt: new Date()
         }
       });
@@ -416,7 +424,13 @@ export async function syncSteamBatch({
   offset?: number;
 }) {
   const cappedLimit = Math.min(limit, env.STEAM_APP_SYNC_LIMIT, 100);
-  const catalogOffset = offset ?? (mode === "catalog" ? (Math.floor(Date.now() / (1000 * 60 * 60)) * cappedLimit) % 50_000 : 0);
+    let resolvedValue2: any;
+  if (mode === "catalog") {
+    resolvedValue2 = (Math.floor(Date.now() / (1000 * 60 * 60)) * cappedLimit) % 50_000;
+  } else {
+    resolvedValue2 = 0;
+  }
+const catalogOffset = offset ?? (resolvedValue2);
   let appIds: number[] = [];
 
   if (mode === "catalog") {
@@ -433,7 +447,7 @@ export async function syncSteamBatch({
     });
 
     if (existingGames.length > 0) {
-      appIds = existingGames.map((game) => game.appId);
+      appIds = existingGames.map((game: any) => game.appId);
     }
 
     if (existingGames.length === 0) {

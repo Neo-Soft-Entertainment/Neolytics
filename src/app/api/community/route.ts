@@ -33,15 +33,21 @@ async function parseCommunityPostRequest(request: Request) {
   const formData = await request.formData();
   const tags = String(formData.get("tags") ?? "")
     .split(",")
-    .map((item) => item.trim())
+    .map((item: any) => item.trim())
     .filter(Boolean);
-  const body = schema.parse({
+    let resolvedValue0: any;
+  if (formData.get("projectId") === "none") {
+    resolvedValue0 = null;
+  } else {
+    resolvedValue0 = formData.get("projectId") || null;
+  }
+const body = schema.parse({
     title: String(formData.get("title") ?? "") || undefined,
     content: String(formData.get("content") ?? ""),
     scope: formData.get("scope") || undefined,
     priority: formData.get("priority") || undefined,
     type: formData.get("type") || undefined,
-    projectId: formData.get("projectId") === "none" ? null : formData.get("projectId") || null,
+    projectId: resolvedValue0,
     tags
   });
   const mediaFiles = formData.getAll("media").filter((item): item is File => item instanceof File);
@@ -86,7 +92,7 @@ export async function GET(request: Request) {
         ]);
 
         return {
-          feed: feed.map((post) => ({
+          feed: feed.map((post: any) => ({
             ...post,
             canDelete: post.authorId === context.userId || canManageCommunity(context.organizationRole, context.organizationPermissions)
           })),

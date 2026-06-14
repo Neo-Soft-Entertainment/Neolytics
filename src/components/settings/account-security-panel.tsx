@@ -80,7 +80,31 @@ export function AccountSecurityPanel() {
     });
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isSaving) {
+    resolvedValue0 = t("settings.savingLanguage");
+  } else {
+    resolvedValue0 = t("account.changePassword");
+  }
+  let resolvedValue1: any;
+  if (isDeleting) {
+    resolvedValue1 = t("account.deletingAccount");
+  } else {
+    resolvedValue1 = t("account.deleteAccount");
+  }
+  let resolvedValue2: any;
+  if (message) {
+    resolvedValue2 = <p className="text-sm text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (error) {
+    resolvedValue3 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+return (
     <Card className="overflow-hidden">
       <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
       <CardHeader>
@@ -96,7 +120,7 @@ export function AccountSecurityPanel() {
                 autoComplete="current-password"
                 type="password"
                 value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
+                onChange={(event: any) => setCurrentPassword(event.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -106,7 +130,7 @@ export function AccountSecurityPanel() {
                 autoComplete="new-password"
                 type="password"
                 value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
+                onChange={(event: any) => setNewPassword(event.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -116,12 +140,12 @@ export function AccountSecurityPanel() {
                 autoComplete="new-password"
                 type="password"
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(event: any) => setConfirmPassword(event.target.value)}
               />
             </div>
           </div>
           <Button disabled={isSaving || newPassword.length < 8} type="button" onClick={updatePassword}>
-            {isSaving ? t("settings.savingLanguage") : t("account.changePassword")}
+            {resolvedValue0}
           </Button>
         </div>
 
@@ -129,12 +153,12 @@ export function AccountSecurityPanel() {
           <p className="font-medium text-destructive">{t("account.deleteAccount")}</p>
           <p className="mt-2 text-sm text-muted-foreground">{t("account.deleteAccountCopy")}</p>
           <Button className="mt-4" disabled={isDeleting} type="button" variant="destructive" onClick={deleteAccount}>
-            {isDeleting ? t("account.deletingAccount") : t("account.deleteAccount")}
+            {resolvedValue1}
           </Button>
         </div>
 
-        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {resolvedValue2}
+        {resolvedValue3}
       </CardContent>
     </Card>
   );

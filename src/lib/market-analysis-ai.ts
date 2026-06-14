@@ -136,8 +136,8 @@ async function requestStructuredOutput<T>(schemaName: string, schema: Record<str
     const payload = await response.json() as OpenAiResponsePayload;
     const text = payload.output_text?.trim()
       || payload.output
-        ?.flatMap((item) => item.content ?? [])
-        .find((item) => item.type === "output_text" && typeof item.text === "string")
+        ?.flatMap((item: any) => item.content ?? [])
+        .find((item: any) => item.type === "output_text" && typeof item.text === "string")
         ?.text
         ?.trim();
 
@@ -214,54 +214,134 @@ export async function generateAiProjectMarketAnalysis(input: {
     }>;
   };
 }) {
-  const fallback: AiProjectMarketAnalysisLayer = {
+    let resolvedValue0: any;
+  if (input.market.averageReviewScore) {
+    resolvedValue0 = `${input.market.averageReviewScore.toFixed(1)}%`;
+  } else {
+    resolvedValue0 = "limited coverage";
+  }
+  let resolvedValue1: any;
+  if (input.market.launches180 > 0) {
+    resolvedValue1 = `${input.market.launches180} comparable launches hit in the last 180 days, so the market is active enough that timing and positioning matter.`;
+  } else {
+    resolvedValue1 = "Recent launch density is still light, so the segment should be treated as less proven and more coverage-sensitive.";
+  }
+  let resolvedValue2: any;
+  if (input.market.opportunityScore >= 70) {
+    resolvedValue2 = "The upside is real if the project can carve out a clear wedge rather than blending into the median comp set.";
+  } else {
+    resolvedValue2 = "The upside is present, but it is not automatic; the concept still needs a sharper wedge to avoid looking interchangeable.";
+  }
+  let resolvedValue3: any;
+  if (input.market.keyMismatches.length > 0) {
+    resolvedValue3 = `The main commercial gap right now is ${input.market.keyMismatches[0].charAt(0).toLowerCase()}${input.market.keyMismatches[0].slice(1)}`;
+  } else {
+    resolvedValue3 = "The main opportunity comes from turning a reasonably active segment into a more ownable positioning thesis.";
+  }
+  let resolvedValue4: any;
+  if (input.market.riskScore >= 65) {
+    resolvedValue4 = "Commercial risk is elevated because the current data points to a demanding execution bar.";
+  } else {
+    resolvedValue4 = "Commercial risk is manageable, but it still depends on disciplined execution rather than raw concept novelty.";
+  }
+  let resolvedValue5: any;
+  if (input.market.revenueConcentrationPercent >= 65) {
+    resolvedValue5 = "Revenue is concentrated in a few leaders, so beating the shelf and first-impression bar is more important than simply matching features.";
+  } else {
+    resolvedValue5 = "Revenue is less concentrated than in a winner-take-most niche, which gives a better path for a focused entrant.";
+  }
+  let resolvedValue6: any;
+  if (input.market.confidenceScore < 60) {
+    resolvedValue6 = "Confidence is still limited because the coverage base is thin, so this should be treated as directional evidence.";
+  } else {
+    resolvedValue6 = "Confidence is strong enough to use this as a planning layer, not just an exploratory note.";
+  }
+  let resolvedValue7: any;
+  if (input.project.differentiator?.trim()) {
+    resolvedValue7 = `The wedge should revolve around ${input.project.differentiator.trim()}, but the product and store page need to make that differentiator visible immediately.`;
+  } else {
+    resolvedValue7 = `The project still needs a sharper wedge than the average comparable. Position it around the strongest fantasy-and-loop combination visible in the current comp set instead of broad genre language alone.`;
+  }
+  let resolvedValue8: any;
+  if (input.market.launches90 >= 8) {
+    resolvedValue8 = "Do not launch into the noisiest part of the release window without a much stronger store capsule, demo hook, or wishlist plan. The current segment is active enough that timing is a strategic variable.";
+  } else {
+    resolvedValue8 = "This segment gives more room to choose timing deliberately. Use that by building wishlists first and launching only once the store read is sharp enough to outperform a median comparable.";
+  }
+  let resolvedValue9: any;
+  if (input.market.medianPriceCents) {
+    resolvedValue9 = `Treat ${formatPrice(input.market.medianPriceCents)} as the center of gravity for this segment. If you price above that, the finish bar and value communication need to rise with it. If you price below it, the positioning still has to feel intentional rather than cheap.`;
+  } else {
+    resolvedValue9 = `Pricing still needs to be treated cautiously because the current segment price coverage is weak. Keep the offer architecture flexible until more comps are confirmed.`;
+  }
+  let resolvedValue10: any;
+  if (input.market.confidenceScore >= 80) {
+    resolvedValue10 = "Confidence is high because pricing, reviews, launch density, and comp coverage are all strong enough to support concrete planning.";
+  } else {
+        let resolvedValue16: any;
+    if (input.market.confidenceScore >= 60) {
+      resolvedValue16 = "Confidence is medium: the dataset is good enough to plan against, but some conclusions should still be treated as directional.";
+    } else {
+      resolvedValue16 = "Confidence is low because coverage is incomplete, so this should guide the next research step more than final greenlight decisions.";
+    }
+resolvedValue10 = resolvedValue16;
+  }
+  let resolvedValue11: any;
+  if (input.project.genreInput?.toLowerCase().includes("horror")) {
+    resolvedValue11 = "creator coverage and reaction-driven YouTube/TikTok clips";
+  } else {
+    resolvedValue11 = "genre-native creators and focused Steam Next Fest positioning";
+  }
+  let resolvedValue12: any;
+  if (input.project.tagInput?.toLowerCase().includes("cozy")) {
+    resolvedValue12 = "cozy and comfort-game creator niches on TikTok and YouTube";
+  } else {
+    resolvedValue12 = "wishlist capture through demos, festivals, and genre communities";
+  }
+  let resolvedValue13: any;
+  if (input.market.keyMismatches.length > 0) {
+    resolvedValue13 = input.market.keyMismatches.slice(0, 3);
+  } else {
+    resolvedValue13 = [];
+  }
+  let resolvedValue14: any;
+  if (input.market.executionBarScore >= 70) {
+    resolvedValue14 = "The execution bar is high enough that average production quality will not clear the commercial threshold.";
+  } else {
+    resolvedValue14 = "The current concept still needs a sharper, easier-to-communicate wedge.";
+  }
+  let resolvedValue15: any;
+  if (input.market.confidenceScore < 60) {
+    resolvedValue15 = "Coverage is still weak enough that the team should avoid overcommitting budget before another research pass.";
+  } else {
+    resolvedValue15 = "Do not mistake market viability for guaranteed positioning clarity; the store message still has to win.";
+  }
+const fallback: AiProjectMarketAnalysisLayer = {
     marketSummary: [
       `${input.project.name} is competing in a ${input.market.marketSizeLabel.toLowerCase()} Steam pocket with ${input.market.directComparableCount} direct comps and ${input.market.adjacentComparableCount} adjacent comps in the current dataset.`,
-      `The current median revenue signal sits around ${formatMoney(input.market.medianRevenueCents)}, with review quality averaging ${input.market.averageReviewScore ? `${input.market.averageReviewScore.toFixed(1)}%` : "limited coverage"}.`,
-      input.market.launches180 > 0
-        ? `${input.market.launches180} comparable launches hit in the last 180 days, so the market is active enough that timing and positioning matter.`
-        : "Recent launch density is still light, so the segment should be treated as less proven and more coverage-sensitive."
+      `The current median revenue signal sits around ${formatMoney(input.market.medianRevenueCents)}, with review quality averaging ${resolvedValue0}.`,
+      resolvedValue1
     ].join(" "),
     opportunitySummary: [
-      input.market.opportunityScore >= 70
-        ? "The upside is real if the project can carve out a clear wedge rather than blending into the median comp set."
-        : "The upside is present, but it is not automatic; the concept still needs a sharper wedge to avoid looking interchangeable.",
-      input.market.keyMismatches.length > 0
-        ? `The main commercial gap right now is ${input.market.keyMismatches[0].charAt(0).toLowerCase()}${input.market.keyMismatches[0].slice(1)}`
-        : "The main opportunity comes from turning a reasonably active segment into a more ownable positioning thesis.",
+      resolvedValue2,
+      resolvedValue3,
       input.market.practicalRecommendations[0] ?? "Commercial opportunity improves if the store fantasy becomes more legible."
     ].join(" "),
     riskSummary: [
-      input.market.riskScore >= 65
-        ? "Commercial risk is elevated because the current data points to a demanding execution bar."
-        : "Commercial risk is manageable, but it still depends on disciplined execution rather than raw concept novelty.",
-      input.market.revenueConcentrationPercent >= 65
-        ? "Revenue is concentrated in a few leaders, so beating the shelf and first-impression bar is more important than simply matching features."
-        : "Revenue is less concentrated than in a winner-take-most niche, which gives a better path for a focused entrant.",
-      input.market.confidenceScore < 60
-        ? "Confidence is still limited because the coverage base is thin, so this should be treated as directional evidence."
-        : "Confidence is strong enough to use this as a planning layer, not just an exploratory note."
+      resolvedValue4,
+      resolvedValue5,
+      resolvedValue6
     ].join(" "),
     audienceAutofill: input.project.targetAudience?.trim()
       || `Target Steam players who already buy ${input.project.genreInput || "this category"} and respond to ${input.project.playerFantasy || "a clearly signaled fantasy"} with visible progression and an understandable value proposition at ${formatPrice(input.project.pricePointCents)}.`,
     coreLoopAutofill: input.project.coreLoop?.trim()
       || `Build the core loop around ${input.project.tagInput || "the strongest demand signals in the comp set"}, giving the player a fast path into ${input.project.playerFantasy || "the core fantasy"} and a clear reason to stay through repeatable mastery or progression beats.`,
     strategicNarrative: `${input.project.name} should be positioned as a ${input.project.genreInput || "Steam-native"} concept that wins on clarity first: clear fantasy, clear loop, clear price logic, and a store-facing wedge that can survive comparison against the top direct comps.`,
-    positioningSummary: input.project.differentiator?.trim()
-      ? `The wedge should revolve around ${input.project.differentiator.trim()}, but the product and store page need to make that differentiator visible immediately.`
-      : `The project still needs a sharper wedge than the average comparable. Position it around the strongest fantasy-and-loop combination visible in the current comp set instead of broad genre language alone.`,
-    launchStrategy: input.market.launches90 >= 8
-      ? "Do not launch into the noisiest part of the release window without a much stronger store capsule, demo hook, or wishlist plan. The current segment is active enough that timing is a strategic variable."
-      : "This segment gives more room to choose timing deliberately. Use that by building wishlists first and launching only once the store read is sharp enough to outperform a median comparable.",
-    pricingNarrative: input.market.medianPriceCents
-      ? `Treat ${formatPrice(input.market.medianPriceCents)} as the center of gravity for this segment. If you price above that, the finish bar and value communication need to rise with it. If you price below it, the positioning still has to feel intentional rather than cheap.`
-      : `Pricing still needs to be treated cautiously because the current segment price coverage is weak. Keep the offer architecture flexible until more comps are confirmed.`,
+    positioningSummary: resolvedValue7,
+    launchStrategy: resolvedValue8,
+    pricingNarrative: resolvedValue9,
     storeCapsuleAdvice: `The capsule should sell ${input.project.playerFantasy || "the core player fantasy"} before it sells complexity. In this segment, first-read clarity matters more than feature density, especially when direct comps already own the obvious genre framing.`,
-    confidenceNarrative: input.market.confidenceScore >= 80
-      ? "Confidence is high because pricing, reviews, launch density, and comp coverage are all strong enough to support concrete planning."
-      : input.market.confidenceScore >= 60
-        ? "Confidence is medium: the dataset is good enough to plan against, but some conclusions should still be treated as directional."
-        : "Confidence is low because coverage is incomplete, so this should guide the next research step more than final greenlight decisions.",
+    confidenceNarrative: resolvedValue10,
     creativeAngles: [
       `Sell ${input.project.playerFantasy || "the clearest fantasy"} in one line, not the full feature list.`,
       `Frame the game against the strongest comp expectation in ${input.project.genreInput || "the segment"} and show the difference immediately.`,
@@ -269,8 +349,8 @@ export async function generateAiProjectMarketAnalysis(input: {
     ],
     acquisitionChannels: [
       "Steam capsule, short description, and wishlist-driven store optimization",
-      input.project.genreInput?.toLowerCase().includes("horror") ? "creator coverage and reaction-driven YouTube/TikTok clips" : "genre-native creators and focused Steam Next Fest positioning",
-      input.project.tagInput?.toLowerCase().includes("cozy") ? "cozy and comfort-game creator niches on TikTok and YouTube" : "wishlist capture through demos, festivals, and genre communities"
+      resolvedValue11,
+      resolvedValue12
     ],
     wishlistDrivers: [
       "A capsule that communicates the fantasy without needing context",
@@ -279,9 +359,9 @@ export async function generateAiProjectMarketAnalysis(input: {
       "Store assets that make the value proposition legible at a glance"
     ],
     redFlags: [
-      ...(input.market.keyMismatches.length > 0 ? input.market.keyMismatches.slice(0, 3) : []),
-      input.market.executionBarScore >= 70 ? "The execution bar is high enough that average production quality will not clear the commercial threshold." : "The current concept still needs a sharper, easier-to-communicate wedge.",
-      input.market.confidenceScore < 60 ? "Coverage is still weak enough that the team should avoid overcommitting budget before another research pass." : "Do not mistake market viability for guaranteed positioning clarity; the store message still has to win."
+      ...(resolvedValue13),
+      resolvedValue14,
+      resolvedValue15
     ].slice(0, 5)
   };
   const schema = {
@@ -459,9 +539,9 @@ export async function generateAiProjectArtAnalysis(input: {
 
   try {
     const imageInputs = input.assets
-      .filter((asset) => Boolean(asset.signedUrl))
+      .filter((asset: any) => Boolean(asset.signedUrl))
       .slice(0, 4)
-      .map((asset) => ({
+      .map((asset: any) => ({
         type: "input_image",
         image_url: asset.signedUrl,
         detail: "low"
@@ -506,7 +586,7 @@ export async function generateAiProjectArtAnalysis(input: {
                   JSON.stringify(input.metrics, null, 2),
                   "",
                   "UPLOADED ASSET METADATA",
-                  JSON.stringify(input.assets.map((asset) => ({
+                  JSON.stringify(input.assets.map((asset: any) => ({
                     kind: asset.kind,
                     originalName: asset.originalName,
                     width: asset.width,
@@ -554,8 +634,8 @@ export async function generateAiProjectArtAnalysis(input: {
     const payload = await response.json() as OpenAiResponsePayload;
     const text = payload.output_text?.trim()
       || payload.output
-        ?.flatMap((item) => item.content ?? [])
-        .find((item) => item.type === "output_text" && typeof item.text === "string")
+        ?.flatMap((item: any) => item.content ?? [])
+        .find((item: any) => item.type === "output_text" && typeof item.text === "string")
         ?.text
         ?.trim();
 

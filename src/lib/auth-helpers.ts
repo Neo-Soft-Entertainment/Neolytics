@@ -71,19 +71,27 @@ export async function getApiContext() {
   }
 
   const activeWorkspaceId = await getActiveWorkspaceId();
-  const workspace = await db.workspace.findFirst({
+    let resolvedValue0: any;
+  if (activeWorkspaceId) {
+    resolvedValue0 = { id: activeWorkspaceId };
+  } else {
+    resolvedValue0 = {};
+  }
+const workspace = await db.workspace.findFirst({
     where: {
       organizationId: membership.organizationId,
-      ...(activeWorkspaceId ? { id: activeWorkspaceId } : {})
+      ...(resolvedValue0)
     },
     orderBy: {
       createdAt: "asc"
     }
   });
 
-  const fallbackWorkspace = workspace
-    ? workspace
-    : await db.workspace.findFirst({
+    let resolvedValue1: any;
+  if (workspace) {
+    resolvedValue1 = workspace;
+  } else {
+    resolvedValue1 = await db.workspace.findFirst({
         where: {
           organizationId: membership.organizationId
         },
@@ -91,6 +99,8 @@ export async function getApiContext() {
           createdAt: "asc"
         }
       });
+  }
+const fallbackWorkspace = resolvedValue1;
 
   if (!fallbackWorkspace) {
     return null;

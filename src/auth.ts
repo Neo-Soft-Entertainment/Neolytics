@@ -29,7 +29,13 @@ const recaptchaAction = "login";
 const recaptchaSecretKey = process.env.RECAPTCHA_SECRET_KEY?.trim();
 const recaptchaMinimumScore = (() => {
   const score = Number(process.env.RECAPTCHA_MIN_SCORE ?? "0.5");
-  return Number.isFinite(score) && score >= 0 && score <= 1 ? score : 0.5;
+    let resolvedValue0: any;
+  if (Number.isFinite(score) && score >= 0 && score <= 1) {
+    resolvedValue0 = score;
+  } else {
+    resolvedValue0 = 0.5;
+  }
+return resolvedValue0;
 })();
 const isRecaptchaEnabled = Boolean(recaptchaSecretKey && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim());
 
@@ -98,6 +104,50 @@ async function verifyRecaptchaToken(token?: string) {
   );
 }
 
+let resolvedValue1: any;
+if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
+  resolvedValue1 = [
+          GitHub({
+            clientId: process.env.GITHUB_ID,
+            clientSecret: process.env.GITHUB_SECRET
+          })
+        ];
+} else {
+  resolvedValue1 = [];
+}
+let resolvedValue2: any;
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  resolvedValue2 = [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET
+          })
+        ];
+} else {
+  resolvedValue2 = [];
+}
+let resolvedValue3: any;
+if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
+  resolvedValue3 = [
+          Discord({
+            clientId: process.env.DISCORD_CLIENT_ID,
+            clientSecret: process.env.DISCORD_CLIENT_SECRET
+          })
+        ];
+} else {
+  resolvedValue3 = [];
+}
+let resolvedValue4: any;
+if (process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET) {
+  resolvedValue4 = [
+          Apple({
+            clientId: process.env.APPLE_CLIENT_ID,
+            clientSecret: process.env.APPLE_CLIENT_SECRET
+          })
+        ];
+} else {
+  resolvedValue4 = [];
+}
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: createSecureAuthAdapter(),
   trustHost: true,
@@ -220,38 +270,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       }
     }),
-    ...(process.env.GITHUB_ID && process.env.GITHUB_SECRET
-      ? [
-          GitHub({
-            clientId: process.env.GITHUB_ID,
-            clientSecret: process.env.GITHUB_SECRET
-          })
-        ]
-      : []),
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET
-          })
-        ]
-      : []),
-    ...(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET
-      ? [
-          Discord({
-            clientId: process.env.DISCORD_CLIENT_ID,
-            clientSecret: process.env.DISCORD_CLIENT_SECRET
-          })
-        ]
-      : []),
-    ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
-      ? [
-          Apple({
-            clientId: process.env.APPLE_CLIENT_ID,
-            clientSecret: process.env.APPLE_CLIENT_SECRET
-          })
-        ]
-      : [])
+    ...(resolvedValue1),
+    ...(resolvedValue2),
+    ...(resolvedValue3),
+    ...(resolvedValue4)
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -309,7 +331,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.email = dbUser?.email ?? session.user.email;
         session.user.image = dbUser?.image ?? session.user.image;
         session.user.preferredLanguage = dbUser?.preferredLanguage ?? "en";
-        session.user.organizations = memberships.map((membership) => ({
+        session.user.organizations = memberships.map((membership: any) => ({
           id: membership.organization.id,
           name: membership.organization.name,
           slug: membership.organization.slug,

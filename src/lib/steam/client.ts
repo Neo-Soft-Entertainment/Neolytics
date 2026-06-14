@@ -72,13 +72,19 @@ export async function fetchSteamCatalogAppIds(offset: number, count: number) {
     logger.warn({ error, offset, count }, "Official Steam app list unavailable, falling back to store search");
   }
 
-  const params = new URLSearchParams({
+    let resolvedValue0: any;
+  if (env.STEAM_DEFAULT_LANGUAGE === "en") {
+    resolvedValue0 = "english";
+  } else {
+    resolvedValue0 = env.STEAM_DEFAULT_LANGUAGE;
+  }
+const params = new URLSearchParams({
     query: "",
     start: String(offset),
     count: String(count),
     dynamic_data: "",
     sort_by: "_ASC",
-    supportedlang: env.STEAM_DEFAULT_LANGUAGE === "en" ? "english" : env.STEAM_DEFAULT_LANGUAGE,
+    supportedlang: resolvedValue0,
     snr: "1_7_7_230_7",
     infinite: "1"
   });
@@ -115,13 +121,19 @@ export async function fetchSteamSearchAppIds(query: string, count = 12) {
     return [];
   }
 
-  const params = new URLSearchParams({
+    let resolvedValue1: any;
+  if (env.STEAM_DEFAULT_LANGUAGE === "en") {
+    resolvedValue1 = "english";
+  } else {
+    resolvedValue1 = env.STEAM_DEFAULT_LANGUAGE;
+  }
+const params = new URLSearchParams({
     term: trimmedQuery,
     start: "0",
     count: String(Math.min(Math.max(count, 1), 25)),
     dynamic_data: "",
     sort_by: "_ASC",
-    supportedlang: env.STEAM_DEFAULT_LANGUAGE === "en" ? "english" : env.STEAM_DEFAULT_LANGUAGE,
+    supportedlang: resolvedValue1,
     snr: "1_7_7_230_7",
     infinite: "1"
   });

@@ -51,7 +51,25 @@ export function UserLanguagePanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (message) {
+    resolvedValue0 = <p className="text-sm text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (error) {
+    resolvedValue1 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (isSaving) {
+    resolvedValue2 = t("settings.savingLanguage");
+  } else {
+    resolvedValue2 = t("settings.saveLanguage");
+  }
+return (
     <Card className="overflow-hidden">
       <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
       <CardHeader>
@@ -64,7 +82,7 @@ export function UserLanguagePanel({
             id="preferred-language"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             value={preferredLanguage}
-            onChange={(event) => setPreferredLanguage(event.target.value)}
+            onChange={(event: any) => setPreferredLanguage(event.target.value)}
           >
             {languageOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -76,10 +94,10 @@ export function UserLanguagePanel({
             {t("settings.languageHelp")}
           </p>
         </div>
-        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {resolvedValue0}
+        {resolvedValue1}
         <Button disabled={isSaving} type="button" onClick={saveLanguage}>
-          {isSaving ? t("settings.savingLanguage") : t("settings.saveLanguage")}
+          {resolvedValue2}
         </Button>
       </CardContent>
     </Card>

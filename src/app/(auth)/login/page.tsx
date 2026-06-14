@@ -16,9 +16,13 @@ export default async function LoginPage({
   }
 
   const { inviteToken } = await searchParams;
-  const recaptchaSiteKey = process.env.RECAPTCHA_SECRET_KEY?.trim()
-    ? process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim()
-    : undefined;
+    let resolvedValue0: any;
+  if (process.env.RECAPTCHA_SECRET_KEY?.trim()) {
+    resolvedValue0 = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY?.trim();
+  } else {
+    resolvedValue0 = undefined;
+  }
+const recaptchaSiteKey = resolvedValue0;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/20 p-6">

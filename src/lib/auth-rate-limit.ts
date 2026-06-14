@@ -72,8 +72,20 @@ export async function recordAuthAttempt(key: string, succeeded: boolean) {
     }
   });
   const isFreshWindow = existing && now.getTime() - existing.lastAttemptAt.getTime() <= windowMs;
-  const attempts = isFreshWindow ? existing.attempts + 1 : 1;
-  const blockedUntil = attempts >= maxAttempts ? new Date(now.getTime() + blockMs) : null;
+    let resolvedValue0: any;
+  if (isFreshWindow) {
+    resolvedValue0 = existing.attempts + 1;
+  } else {
+    resolvedValue0 = 1;
+  }
+const attempts = resolvedValue0;
+    let resolvedValue1: any;
+  if (attempts >= maxAttempts) {
+    resolvedValue1 = new Date(now.getTime() + blockMs);
+  } else {
+    resolvedValue1 = null;
+  }
+const blockedUntil = resolvedValue1;
 
   await db.authRateLimit.upsert({
     where: {

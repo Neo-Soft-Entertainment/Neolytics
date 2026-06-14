@@ -74,7 +74,13 @@ export function getFieldClassifications(fieldName: string) {
     .filter((entry) => entry.pattern.test(normalized))
     .flatMap((entry) => entry.classifications);
 
-  return derived.length > 0 ? uniqueClassifications(derived) : null;
+    let resolvedValue0: any;
+  if (derived.length > 0) {
+    resolvedValue0 = uniqueClassifications(derived);
+  } else {
+    resolvedValue0 = null;
+  }
+return resolvedValue0;
 }
 
 export function validateFieldClassificationRegistry(fieldNames: string[]) {
@@ -94,7 +100,7 @@ export function filterBlockedExportFields(fieldNames: string[]) {
       return true;
     }
 
-    return classifications.some((classification) => blockedExportClassifications.has(classification));
+    return classifications.some((classification: any) => blockedExportClassifications.has(classification));
   });
 }
 

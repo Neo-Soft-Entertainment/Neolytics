@@ -44,13 +44,31 @@ export function SignupForm({
   const t = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [isSocialLoading, setIsSocialLoading] = useState<"google" | "discord" | "apple" | null>(null);
-  const schema = z.object({
+    let resolvedValue0: any;
+  if (inviteToken) {
+    resolvedValue0 = z.string().optional();
+  } else {
+    resolvedValue0 = z.string().min(2);
+  }
+  let resolvedValue1: any;
+  if (inviteToken) {
+    resolvedValue1 = z.string().optional();
+  } else {
+    resolvedValue1 = z.string().min(2);
+  }
+  let resolvedValue2: any;
+  if (inviteToken) {
+    resolvedValue2 = z.nativeEnum(SubscriptionPlan).optional();
+  } else {
+    resolvedValue2 = z.nativeEnum(SubscriptionPlan);
+  }
+const schema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(8),
-    organizationName: inviteToken ? z.string().optional() : z.string().min(2),
-    workspaceName: inviteToken ? z.string().optional() : z.string().min(2),
-    plan: inviteToken ? z.nativeEnum(SubscriptionPlan).optional() : z.nativeEnum(SubscriptionPlan)
+    organizationName: resolvedValue0,
+    workspaceName: resolvedValue1,
+    plan: resolvedValue2
   });
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -68,8 +86,14 @@ export function SignupForm({
   async function onGoogleSignIn() {
     setError(null);
     setIsSocialLoading("google");
-    await signIn("google", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+        let resolvedValue3: any;
+    if (inviteToken) {
+      resolvedValue3 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue3 = "/setup";
+    }
+await signIn("google", {
+      callbackUrl: resolvedValue3
     });
     setIsSocialLoading(null);
   }
@@ -77,8 +101,14 @@ export function SignupForm({
   async function onDiscordSignIn() {
     setError(null);
     setIsSocialLoading("discord");
-    await signIn("discord", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+        let resolvedValue4: any;
+    if (inviteToken) {
+      resolvedValue4 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue4 = "/setup";
+    }
+await signIn("discord", {
+      callbackUrl: resolvedValue4
     });
     setIsSocialLoading(null);
   }
@@ -86,8 +116,14 @@ export function SignupForm({
   async function onAppleSignIn() {
     setError(null);
     setIsSocialLoading("apple");
-    await signIn("apple", {
-      callbackUrl: inviteToken ? `/invite/${inviteToken}` : "/setup"
+        let resolvedValue5: any;
+    if (inviteToken) {
+      resolvedValue5 = `/invite/${inviteToken}`;
+    } else {
+      resolvedValue5 = "/setup";
+    }
+await signIn("apple", {
+      callbackUrl: resolvedValue5
     });
     setIsSocialLoading(null);
   }
@@ -95,24 +131,30 @@ export function SignupForm({
   async function onSubmit(values: FormValues) {
     setError(null);
 
-    const response = await fetch("/api/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(inviteToken ? {
+        let resolvedValue6: any;
+    if (inviteToken) {
+      resolvedValue6 = {
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
         inviteToken
-      } : {
+      };
+    } else {
+      resolvedValue6 = {
         ...values,
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
         organizationName: values.organizationName?.trim(),
         workspaceName: values.workspaceName?.trim(),
         inviteToken
-      })
+      };
+    }
+const response = await fetch("/api/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(resolvedValue6)
     });
 
     if (!response.ok) {
@@ -158,20 +200,29 @@ export function SignupForm({
     router.refresh();
   }
 
-  return (
-    <Card className="w-full max-w-lg border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle>{inviteToken ? t("auth.joinOrganization") : t("auth.createWorkspace")}</CardTitle>
-        <CardDescription>
-          {inviteToken
-            ? `Crie sua conta e entre em ${invitedOrganizationName ?? "esta organização"}.`
-            : t("auth.signupDescription")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {hasGoogleLogin || hasDiscordLogin || hasAppleLogin ? (
-          <div className="space-y-2.5">
-            {hasGoogleLogin ? (
+    let resolvedValue7: any;
+  if (inviteToken) {
+    resolvedValue7 = t("auth.joinOrganization");
+  } else {
+    resolvedValue7 = t("auth.createWorkspace");
+  }
+  let resolvedValue8: any;
+  if (inviteToken) {
+    resolvedValue8 = `Crie sua conta e entre em ${invitedOrganizationName ?? "esta organização"}.`;
+  } else {
+    resolvedValue8 = t("auth.signupDescription");
+  }
+  let resolvedValue9: any;
+  if (hasGoogleLogin || hasDiscordLogin || hasAppleLogin) {
+        let resolvedValue17: any;
+    if (hasGoogleLogin) {
+            let resolvedValue28: any;
+      if (isSocialLoading === "google") {
+        resolvedValue28 = t("auth.redirectGoogle");
+      } else {
+        resolvedValue28 = t("auth.continueGoogle");
+      }
+resolvedValue17 = (
               <Button
                 className="w-full"
                 disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -179,10 +230,21 @@ export function SignupForm({
                 variant="outline"
                 onClick={onGoogleSignIn}
               >
-                {isSocialLoading === "google" ? t("auth.redirectGoogle") : t("auth.continueGoogle")}
+                {resolvedValue28}
               </Button>
-            ) : null}
-            {hasDiscordLogin ? (
+            );
+    } else {
+      resolvedValue17 = null;
+    }
+    let resolvedValue18: any;
+    if (hasDiscordLogin) {
+            let resolvedValue29: any;
+      if (isSocialLoading === "discord") {
+        resolvedValue29 = t("auth.redirectDiscord");
+      } else {
+        resolvedValue29 = t("auth.continueDiscord");
+      }
+resolvedValue18 = (
               <Button
                 className="w-full"
                 disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -190,10 +252,21 @@ export function SignupForm({
                 variant="outline"
                 onClick={onDiscordSignIn}
               >
-                {isSocialLoading === "discord" ? t("auth.redirectDiscord") : t("auth.continueDiscord")}
+                {resolvedValue29}
               </Button>
-            ) : null}
-            {hasAppleLogin ? (
+            );
+    } else {
+      resolvedValue18 = null;
+    }
+    let resolvedValue19: any;
+    if (hasAppleLogin) {
+            let resolvedValue30: any;
+      if (isSocialLoading === "apple") {
+        resolvedValue30 = t("auth.redirectApple");
+      } else {
+        resolvedValue30 = t("auth.continueApple");
+      }
+resolvedValue19 = (
               <Button
                 className="w-full"
                 disabled={form.formState.isSubmitting || isSocialLoading !== null}
@@ -201,14 +274,28 @@ export function SignupForm({
                 variant="outline"
                 onClick={onAppleSignIn}
               >
-                {isSocialLoading === "apple" ? t("auth.redirectApple") : t("auth.continueApple")}
+                {resolvedValue30}
               </Button>
-            ) : null}
-            {!inviteToken ? (
+            );
+    } else {
+      resolvedValue19 = null;
+    }
+    let resolvedValue20: any;
+    if (!inviteToken) {
+      resolvedValue20 = (
               <p className="text-xs text-muted-foreground">
                 {t("auth.socialSignupHint")}
               </p>
-            ) : null}
+            );
+    } else {
+      resolvedValue20 = null;
+    }
+resolvedValue9 = (
+          <div className="space-y-2.5">
+            {resolvedValue17}
+            {resolvedValue18}
+            {resolvedValue19}
+            {resolvedValue20}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -218,64 +305,93 @@ export function SignupForm({
               </div>
             </div>
           </div>
-        ) : null}
-        <form className="grid gap-3.5 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="name">{t("auth.yourName")}</Label>
-            <Input id="name" autoComplete="name" {...form.register("name")} />
-            {form.formState.errors.name ? (
+        );
+  } else {
+    resolvedValue9 = null;
+  }
+  let resolvedValue10: any;
+  if (form.formState.errors.name) {
+    resolvedValue10 = (
               <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{t("auth.email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              readOnly={Boolean(inviteToken && invitedEmail)}
-              {...form.register("email")}
-            />
-            {form.formState.errors.email ? (
+            );
+  } else {
+    resolvedValue10 = null;
+  }
+  let resolvedValue11: any;
+  if (form.formState.errors.email) {
+    resolvedValue11 = (
               <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">{t("auth.password")}</Label>
-            <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
-            {form.formState.errors.password ? (
+            );
+  } else {
+    resolvedValue11 = null;
+  }
+  let resolvedValue12: any;
+  if (form.formState.errors.password) {
+    resolvedValue12 = (
               <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
-            ) : null}
-          </div>
-          {inviteToken ? (
-            <div className="rounded-2xl border bg-muted/30 p-3 text-sm text-muted-foreground md:col-span-2">
-              Entrando em
-              {" "}
-              <span className="font-medium text-foreground">{invitedOrganizationName ?? "esta organização"}</span>
-              {invitedEmail ? (
+            );
+  } else {
+    resolvedValue12 = null;
+  }
+  let resolvedValue13: any;
+  if (inviteToken) {
+        let resolvedValue21: any;
+    if (invitedEmail) {
+      resolvedValue21 = (
                 <>
                   {" "}
                   com
                   {" "}
                   <span className="font-medium text-foreground">{invitedEmail}</span>.
                 </>
-              ) : null}
+              );
+    } else {
+      resolvedValue21 = null;
+    }
+resolvedValue13 = (
+            <div className="rounded-2xl border bg-muted/30 p-3 text-sm text-muted-foreground md:col-span-2">
+              Entrando em
+              {" "}
+              <span className="font-medium text-foreground">{invitedOrganizationName ?? "esta organização"}</span>
+              {resolvedValue21}
             </div>
-          ) : (
+          );
+  } else {
+        let resolvedValue22: any;
+    if (form.formState.errors.organizationName) {
+      resolvedValue22 = (
+                  <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
+                );
+    } else {
+      resolvedValue22 = null;
+    }
+    let resolvedValue23: any;
+    if (form.formState.errors.workspaceName) {
+      resolvedValue23 = (
+                  <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
+                );
+    } else {
+      resolvedValue23 = null;
+    }
+    let resolvedValue26: any;
+    if (form.formState.errors.plan) {
+      resolvedValue26 = (
+                  <p className="text-sm text-destructive">{form.formState.errors.plan.message}</p>
+                );
+    } else {
+      resolvedValue26 = null;
+    }
+resolvedValue13 = (
             <>
               <div className="space-y-2">
                 <Label htmlFor="organizationName">{t("auth.organization")}</Label>
                 <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
-                {form.formState.errors.organizationName ? (
-                  <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
-                ) : null}
+                {resolvedValue22}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="workspaceName">{t("auth.firstWorkspace")}</Label>
                 <Input id="workspaceName" placeholder="Portfólio principal" {...form.register("workspaceName")} />
-                {form.formState.errors.workspaceName ? (
-                  <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
-                ) : null}
+                {resolvedValue23}
               </div>
               <div className="space-y-3 md:col-span-2">
                 <Label>{t("auth.plan")}</Label>
@@ -284,11 +400,23 @@ export function SignupForm({
                     const planId = planKey as SubscriptionPlan;
                     const isSelected = selectedPlan === planId;
 
-                    return (
+                                        let resolvedValue24: any;
+                    if (isSelected) {
+                      resolvedValue24 = "border-primary bg-primary/5";
+                    } else {
+                      resolvedValue24 = "hover:border-foreground/30";
+                    }
+                    let resolvedValue25: any;
+                    if (planId === SubscriptionPlan.FREE) {
+                      resolvedValue25 = "Começa imediatamente.";
+                    } else {
+                      resolvedValue25 = "Começa com 7 dias de teste gratuito no Stripe Checkout.";
+                    }
+return (
                       <button
                         key={planId}
                         className={`rounded-2xl border p-3 text-left transition ${
-                          isSelected ? "border-primary bg-primary/5" : "hover:border-foreground/30"
+                          resolvedValue24
                         }`}
                         onClick={() => form.setValue("plan", planId, { shouldValidate: true })}
                         type="button"
@@ -301,7 +429,7 @@ export function SignupForm({
                           <p className="text-sm font-semibold">{plan.priceLabel}</p>
                         </div>
                         <p className="mt-3 text-xs text-muted-foreground">
-                          {planId === SubscriptionPlan.FREE ? "Começa imediatamente." : "Começa com 7 dias de teste gratuito no Stripe Checkout."}
+                          {resolvedValue25}
                         </p>
                       </button>
                     );
@@ -315,25 +443,81 @@ export function SignupForm({
                     ))}
                   </div>
                 </details>
-                {form.formState.errors.plan ? (
-                  <p className="text-sm text-destructive">{form.formState.errors.plan.message}</p>
-                ) : null}
+                {resolvedValue26}
               </div>
             </>
-          )}
-          {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
+          );
+  }
+  let resolvedValue14: any;
+  if (error) {
+    resolvedValue14 = <p className="text-sm text-destructive md:col-span-2">{error}</p>;
+  } else {
+    resolvedValue14 = null;
+  }
+  let resolvedValue15: any;
+  if (inviteToken) {
+    resolvedValue15 = `/login?inviteToken=${inviteToken}`;
+  } else {
+    resolvedValue15 = "/login";
+  }
+  let resolvedValue16: any;
+  if (form.formState.isSubmitting) {
+    resolvedValue16 = t("auth.creating");
+  } else {
+        let resolvedValue27: any;
+    if (inviteToken) {
+      resolvedValue27 = t("auth.createAndJoin");
+    } else {
+      resolvedValue27 = t("auth.createAccountAction");
+    }
+resolvedValue16 = resolvedValue27;
+  }
+return (
+    <Card className="w-full max-w-lg border-white/10 shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle>{resolvedValue7}</CardTitle>
+        <CardDescription>
+          {resolvedValue8}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {resolvedValue9}
+        <form className="grid gap-3.5 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="name">{t("auth.yourName")}</Label>
+            <Input id="name" autoComplete="name" {...form.register("name")} />
+            {resolvedValue10}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">{t("auth.email")}</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              readOnly={Boolean(inviteToken && invitedEmail)}
+              {...form.register("email")}
+            />
+            {resolvedValue11}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">{t("auth.password")}</Label>
+            <Input id="password" type="password" autoComplete="new-password" {...form.register("password")} />
+            {resolvedValue12}
+          </div>
+          {resolvedValue13}
+          {resolvedValue14}
           <div className="flex flex-col gap-3 md:col-span-2 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-muted-foreground">
               {t("auth.alreadyHaveAccount")}{" "}
               <Link
                 className="underline underline-offset-4"
-                href={inviteToken ? `/login?inviteToken=${inviteToken}` : "/login"}
+                href={resolvedValue15}
               >
                 {t("auth.signIn")}
               </Link>
             </p>
             <Button disabled={form.formState.isSubmitting || isSocialLoading !== null} type="submit">
-              {form.formState.isSubmitting ? t("auth.creating") : inviteToken ? t("auth.createAndJoin") : t("auth.createAccountAction")}
+              {resolvedValue16}
             </Button>
           </div>
         </form>

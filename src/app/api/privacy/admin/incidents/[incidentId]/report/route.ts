@@ -27,12 +27,16 @@ export async function GET(
       }
     });
 
-    return ok(buildIncidentNotificationReport({
+        let resolvedValue0: any;
+    if (Array.isArray(incident.affectedDataCategories)) {
+      resolvedValue0 = incident.affectedDataCategories.map((entry) => String(entry));
+    } else {
+      resolvedValue0 = [];
+    }
+return ok(buildIncidentNotificationReport({
       incidentId: incident.id,
       severity: incident.severity,
-      affectedDataCategories: Array.isArray(incident.affectedDataCategories)
-        ? incident.affectedDataCategories.map((entry) => String(entry))
-        : [],
+      affectedDataCategories: resolvedValue0,
       affectedUserCountEstimate: incident.affectedUserCountEstimate,
       discoveredAt: incident.discoveredAt,
       containedAt: incident.containedAt,

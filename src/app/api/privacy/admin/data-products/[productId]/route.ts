@@ -33,20 +33,44 @@ export async function PATCH(
     const body = await parseJsonBody(request, schema);
     const { productId } = await params;
     const approvalStatus = body.approvalStatus;
-    const product = await db.dataProduct.update({
+        let resolvedValue0: any;
+    if (approvalStatus === ApprovalStatus.APPROVED) {
+      resolvedValue0 = new Date();
+    } else {
+      resolvedValue0 = null;
+    }
+    let resolvedValue1: any;
+    if (approvalStatus === ApprovalStatus.APPROVED) {
+      resolvedValue1 = context.userId;
+    } else {
+      resolvedValue1 = null;
+    }
+const product = await db.dataProduct.update({
       where: {
         id: productId
       },
       data: {
         approvalStatus,
-        approvedAt: approvalStatus === ApprovalStatus.APPROVED ? new Date() : null,
-        approvedById: approvalStatus === ApprovalStatus.APPROVED ? context.userId : null,
+        approvedAt: resolvedValue0,
+        approvedById: resolvedValue1,
         exportAllowed: body.exportAllowed,
         buyerContractAccepted: body.buyerContractAccepted
       }
     });
 
-    await createPrivacyAuditLog(db, {
+        let resolvedValue2: any;
+    if (approvalStatus === ApprovalStatus.APPROVED) {
+      resolvedValue2 = PrivacyDecision.ALLOW;
+    } else {
+            let resolvedValue3: any;
+      if (approvalStatus === ApprovalStatus.REJECTED) {
+        resolvedValue3 = PrivacyDecision.BLOCK;
+      } else {
+        resolvedValue3 = PrivacyDecision.REQUIRE_REVIEW;
+      }
+resolvedValue2 = resolvedValue3;
+    }
+await createPrivacyAuditLog(db, {
       organizationId: context.organizationId,
       actorId: context.userId,
       actorRole: context.organizationRole,
@@ -54,11 +78,7 @@ export async function PATCH(
       resourceType: "data_product",
       resourceId: product.id,
       decision:
-        approvalStatus === ApprovalStatus.APPROVED
-          ? PrivacyDecision.ALLOW
-          : approvalStatus === ApprovalStatus.REJECTED
-            ? PrivacyDecision.BLOCK
-            : PrivacyDecision.REQUIRE_REVIEW,
+        resolvedValue2,
       reason: approvalStatus
     });
 

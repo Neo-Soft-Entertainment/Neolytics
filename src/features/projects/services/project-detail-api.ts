@@ -37,26 +37,38 @@ async function toProjectActionResult(response: Response): Promise<ProjectActionR
 }
 
 async function projectJsonRequest(url: string, method: "PATCH" | "POST", body?: unknown) {
-  return toProjectActionResult(await fetch(url, {
+    let resolvedValue0: any;
+  if (body) {
+    resolvedValue0 = JSON.stringify(body);
+  } else {
+    resolvedValue0 = undefined;
+  }
+return toProjectActionResult(await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json"
     },
-    body: body ? JSON.stringify(body) : undefined
+    body: resolvedValue0
   }));
 }
 
 function parseLabels(labels: string) {
   return labels
     .split(",")
-    .map((item) => item.trim())
+    .map((item: any) => item.trim())
     .filter(Boolean);
 }
 
 export function saveProjectOverview(projectId: string, form: ProjectOverviewFormState) {
-  return projectJsonRequest(`/api/projects/${projectId}`, "PATCH", {
+    let resolvedValue1: any;
+  if (form.pricePointCents) {
+    resolvedValue1 = Number(form.pricePointCents);
+  } else {
+    resolvedValue1 = null;
+  }
+return projectJsonRequest(`/api/projects/${projectId}`, "PATCH", {
     ...form,
-    pricePointCents: form.pricePointCents ? Number(form.pricePointCents) : null
+    pricePointCents: resolvedValue1
   });
 }
 
@@ -91,24 +103,36 @@ export async function deleteProjectArtAsset(projectId: string, assetId: string) 
 }
 
 export function createProjectMilestone(projectId: string, milestone: ProjectMilestoneDraft) {
-  return projectJsonRequest(`/api/projects/${projectId}/milestones`, "POST", {
+    let resolvedValue2: any;
+  if (milestone.dueAt) {
+    resolvedValue2 = new Date(milestone.dueAt).toISOString();
+  } else {
+    resolvedValue2 = undefined;
+  }
+return projectJsonRequest(`/api/projects/${projectId}/milestones`, "POST", {
     title: milestone.title,
     description: milestone.description,
     ownerLabel: milestone.ownerLabel,
     status: milestone.status,
-    dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString() : undefined,
+    dueAt: resolvedValue2,
     budgetedCostCents: Number(milestone.budgetedCostCents || 0),
     expectedRevenueCents: Number(milestone.expectedRevenueCents || 0)
   });
 }
 
 export function saveProjectMilestone(projectId: string, milestoneId: string, milestone: ProjectMilestoneDraft) {
-  return projectJsonRequest(`/api/projects/${projectId}/milestones/${milestoneId}`, "PATCH", {
+    let resolvedValue3: any;
+  if (milestone.dueAt) {
+    resolvedValue3 = new Date(milestone.dueAt).toISOString();
+  } else {
+    resolvedValue3 = undefined;
+  }
+return projectJsonRequest(`/api/projects/${projectId}/milestones/${milestoneId}`, "PATCH", {
     title: milestone.title,
     description: milestone.description,
     ownerLabel: milestone.ownerLabel,
     status: milestone.status,
-    dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString() : undefined,
+    dueAt: resolvedValue3,
     budgetedCostCents: Number(milestone.budgetedCostCents || 0),
     expectedRevenueCents: Number(milestone.expectedRevenueCents || 0)
   });
@@ -133,26 +157,38 @@ export function updateProjectKanbanColumn(projectId: string, columnId: string, n
 }
 
 export function createProjectKanbanCard(projectId: string, columnId: string, card: ProjectKanbanCardDraft) {
-  return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
+    let resolvedValue4: any;
+  if (card.dueDate) {
+    resolvedValue4 = new Date(card.dueDate).toISOString();
+  } else {
+    resolvedValue4 = undefined;
+  }
+return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
     type: "createCard",
     columnId,
     title: card.title,
     description: card.description,
     assigneeLabel: card.assigneeLabel,
-    dueDate: card.dueDate ? new Date(card.dueDate).toISOString() : undefined,
+    dueDate: resolvedValue4,
     labels: parseLabels(card.labels)
   });
 }
 
 export function saveProjectKanbanCard(projectId: string, cardId: string, card: ProjectKanbanCardDraft & { columnId: string }) {
-  return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
+    let resolvedValue5: any;
+  if (card.dueDate) {
+    resolvedValue5 = new Date(card.dueDate).toISOString();
+  } else {
+    resolvedValue5 = null;
+  }
+return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
     type: "updateCard",
     cardId,
     title: card.title,
     columnId: card.columnId,
     description: card.description,
     assigneeLabel: card.assigneeLabel,
-    dueDate: card.dueDate ? new Date(card.dueDate).toISOString() : null,
+    dueDate: resolvedValue5,
     labels: parseLabels(card.labels)
   });
 }

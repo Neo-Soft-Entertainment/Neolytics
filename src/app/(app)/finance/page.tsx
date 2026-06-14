@@ -11,25 +11,47 @@ export default async function FinanceRoute() {
   const canAccessContractsRoyalties = hasSubscriptionCapability(organization.subscriptionPlan, "contractsRoyalties");
   const canAccessInvoiceOps = hasSubscriptionCapability(organization.subscriptionPlan, "invoiceOps");
   const canAccessApprovalsAudit = hasSubscriptionCapability(organization.subscriptionPlan, "approvalsAudit");
-  const [membership, overview] = await Promise.all([
-    session?.user?.id
-      ? db.organizationMember.findUnique({
+    let resolvedValue0: any;
+  if (session?.user?.id) {
+    resolvedValue0 = db.organizationMember.findUnique({
           where: {
             organizationId_userId: {
               organizationId: organization.id,
               userId: session.user.id
             }
           }
-        })
-      : null,
-    canAccessFinanceWorkspace ? getFinanceSummary(organization.id) : null
+        });
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (canAccessFinanceWorkspace) {
+    resolvedValue1 = getFinanceSummary(organization.id);
+  } else {
+    resolvedValue1 = null;
+  }
+const [membership, overview] = await Promise.all([
+    resolvedValue0,
+    resolvedValue1
   ]);
 
-  const summary = overview
-    ? JSON.parse(
-        JSON.stringify(overview, (_, value) => (typeof value === "bigint" ? Number(value) : value))
-      )
-    : null;
+    let resolvedValue2: any;
+  if (overview) {
+    resolvedValue2 = JSON.parse(
+        JSON.stringify(overview, (_, value) => {
+          let resolvedValue3: any;
+          if (typeof value === "bigint") {
+            resolvedValue3 = Number(value);
+          } else {
+            resolvedValue3 = value;
+          }
+          return (resolvedValue3);
+        })
+      );
+  } else {
+    resolvedValue2 = null;
+  }
+const summary = resolvedValue2;
 
   return (
     <FinancePage

@@ -80,7 +80,49 @@ export function OrganizationDiscordPanel({
     setMessage("Webhook de teste enviado ao Discord.");
   }
 
-  return (
+    let resolvedValue0: any;
+  if (configured) {
+    resolvedValue0 = "Webhook configurado. Cole uma nova URL para substituir.";
+  } else {
+    resolvedValue0 = "https://discord.com/api/webhooks/...";
+  }
+  let resolvedValue1: any;
+  if (configured) {
+    resolvedValue1 = (
+            <p className="text-xs text-muted-foreground">O webhook salvo está criptografado e oculto. Cole uma nova URL somente se quiser substituí-lo.</p>
+          );
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (isSaving) {
+    resolvedValue2 = "Salvando...";
+  } else {
+    resolvedValue2 = "Salvar webhook";
+  }
+  let resolvedValue3: any;
+  if (isTesting) {
+    resolvedValue3 = "Enviando...";
+  } else {
+    resolvedValue3 = "Enviar teste";
+  }
+  let resolvedValue4: any;
+  if (!canManage) {
+    resolvedValue4 = (
+          <p className="text-sm text-muted-foreground">
+            Apenas administradores da organização podem gerenciar integrações do Discord.
+          </p>
+        );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (message) {
+    resolvedValue5 = <p className="text-sm text-muted-foreground">{message}</p>;
+  } else {
+    resolvedValue5 = null;
+  }
+return (
     <Card>
       <CardHeader>
         <CardTitle>Webhooks do Discord</CardTitle>
@@ -93,28 +135,26 @@ export function OrganizationDiscordPanel({
           <Label htmlFor="discord-webhook-url">URL do webhook</Label>
           <Input
             id="discord-webhook-url"
-            placeholder={configured ? "Webhook configurado. Cole uma nova URL para substituir." : "https://discord.com/api/webhooks/..."}
+            placeholder={resolvedValue0}
             value={webhookUrl}
-            onChange={(event) => setWebhookUrl(event.target.value)}
+            onChange={(event: any) => setWebhookUrl(event.target.value)}
             readOnly={!canManage}
           />
-          {configured ? (
-            <p className="text-xs text-muted-foreground">O webhook salvo está criptografado e oculto. Cole uma nova URL somente se quiser substituí-lo.</p>
-          ) : null}
+          {resolvedValue1}
         </div>
         <label className="flex items-center gap-3 text-sm">
           <input
             checked={enabled}
             className="h-4 w-4"
             disabled={!canManage}
-            onChange={(event) => setEnabled(event.target.checked)}
+            onChange={(event: any) => setEnabled(event.target.checked)}
             type="checkbox"
           />
           Ativar notificações do Discord para esta organização
         </label>
         <div className="flex flex-wrap gap-3">
           <Button disabled={!canManage || isSaving} onClick={saveWebhook} type="button">
-            {isSaving ? "Salvando..." : "Salvar webhook"}
+            {resolvedValue2}
           </Button>
           <Button
             disabled={!canManage || (!configured && !webhookUrl.trim()) || !enabled || isTesting}
@@ -122,15 +162,11 @@ export function OrganizationDiscordPanel({
             type="button"
             variant="outline"
           >
-            {isTesting ? "Enviando..." : "Enviar teste"}
+            {resolvedValue3}
           </Button>
         </div>
-        {!canManage ? (
-          <p className="text-sm text-muted-foreground">
-            Apenas administradores da organização podem gerenciar integrações do Discord.
-          </p>
-        ) : null}
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+        {resolvedValue4}
+        {resolvedValue5}
       </CardContent>
     </Card>
   );

@@ -53,29 +53,59 @@ export function CreateOrganizationForm({
     router.refresh();
   }
 
-  return (
-    <form className={compact ? "grid gap-3" : "grid gap-4 md:grid-cols-2"} onSubmit={form.handleSubmit(onSubmit)}>
+    let resolvedValue0: any;
+  if (compact) {
+    resolvedValue0 = "grid gap-3";
+  } else {
+    resolvedValue0 = "grid gap-4 md:grid-cols-2";
+  }
+  let resolvedValue1: any;
+  if (form.formState.errors.organizationName) {
+    resolvedValue1 = (
+          <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
+        );
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (form.formState.errors.workspaceName) {
+    resolvedValue2 = (
+          <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
+        );
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (error) {
+    resolvedValue3 = <p className="text-sm text-destructive md:col-span-2">{error}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (form.formState.isSubmitting) {
+    resolvedValue4 = "Criando...";
+  } else {
+    resolvedValue4 = "Criar organização";
+  }
+return (
+    <form className={resolvedValue0} onSubmit={form.handleSubmit(onSubmit)}>
       <div className="space-y-2">
         <Label htmlFor="organizationName">Nome da organização</Label>
         <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
-        {form.formState.errors.organizationName ? (
-          <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
-        ) : null}
+        {resolvedValue1}
       </div>
       <div className="space-y-2">
         <Label htmlFor="workspaceName">Nome da área de trabalho</Label>
         <Input id="workspaceName" placeholder="Portfólio principal" {...form.register("workspaceName")} />
-        {form.formState.errors.workspaceName ? (
-          <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
-        ) : null}
+        {resolvedValue2}
       </div>
-      {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
+      {resolvedValue3}
       <p className="text-xs text-muted-foreground md:col-span-2">
         Novas organizações começam no plano Free. Idioma e país padrão podem ser ajustados depois em Empresa.
       </p>
       <div className="md:col-span-2">
         <Button disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting ? "Criando..." : "Criar organização"}
+          {resolvedValue4}
         </Button>
       </div>
     </form>

@@ -25,7 +25,7 @@ function clampScore(value: number) {
 }
 
 function median(values: number[]) {
-  const sorted = values.filter((value) => Number.isFinite(value)).sort((left, right) => left - right);
+  const sorted = values.filter((value: any) => Number.isFinite(value)).sort((left, right) => left - right);
 
   if (sorted.length === 0) {
     return 0;
@@ -78,7 +78,7 @@ async function syncSteamAppIds(appIds: number[], limit = 6) {
       lastIngestedAt: true
     }
   });
-  const existingByAppId = new Map(existingGames.map((game) => [game.appId, game]));
+  const existingByAppId = new Map(existingGames.map((game: any) => [game.appId, game]));
   const appIdsToSync = selectedAppIds.filter((appId) => isSteamGameStale(existingByAppId.get(appId)?.lastIngestedAt));
   let synced = 0;
   let skipped = 0;
@@ -132,12 +132,36 @@ async function syncSteamSearchQuery(query?: string) {
     return null;
   }
 
-  const directAppId = /^\d+$/.test(trimmedQuery) ? Number(trimmedQuery) : null;
-  const searchAppIds = directAppId ? [] : await fetchSteamSearchAppIds(trimmedQuery, 8).catch(() => []);
-  const sync = await syncSteamAppIds([
-    ...(directAppId ? [directAppId] : []),
+    let resolvedValue0: any;
+  if (/^\d+$/.test(trimmedQuery)) {
+    resolvedValue0 = Number(trimmedQuery);
+  } else {
+    resolvedValue0 = null;
+  }
+const directAppId = resolvedValue0;
+    let resolvedValue1: any;
+  if (directAppId) {
+    resolvedValue1 = [];
+  } else {
+    resolvedValue1 = await fetchSteamSearchAppIds(trimmedQuery, 8).catch(() => []);
+  }
+const searchAppIds = resolvedValue1;
+    let resolvedValue2: any;
+  if (directAppId) {
+    resolvedValue2 = [directAppId];
+  } else {
+    resolvedValue2 = [];
+  }
+  let resolvedValue3: any;
+  if (directAppId) {
+    resolvedValue3 = 1;
+  } else {
+    resolvedValue3 = 6;
+  }
+const sync = await syncSteamAppIds([
+    ...(resolvedValue2),
     ...searchAppIds
-  ], directAppId ? 1 : 6);
+  ], resolvedValue3);
 
   return {
     source: "steam-live-search",
@@ -162,11 +186,17 @@ function getObservedVelocity<T extends { snapshotDate: Date }>(
   const latestValue = Number(latest[field] ?? 0);
   const baselineValue = Number(baseline[field] ?? 0);
 
-  return {
+    let resolvedValue4: any;
+  if (baselineValue > 0) {
+    resolvedValue4 = Math.round(((latestValue - baselineValue) / baselineValue) * 100);
+  } else {
+    resolvedValue4 = null;
+  }
+return {
     current: latestValue,
     baseline: baselineValue,
     absoluteChange: latestValue - baselineValue,
-    relativeChangePercent: baselineValue > 0 ? Math.round(((latestValue - baselineValue) / baselineValue) * 100) : null,
+    relativeChangePercent: resolvedValue4,
     windowDays
   };
 }
@@ -210,15 +240,23 @@ export async function searchGames(input: {
   const page = input.page ?? 1;
   const pageSize = input.pageSize ?? 25;
   const hasFilters = Boolean(input.query || input.genre || input.tag || input.minPrice !== undefined || input.maxPrice !== undefined || input.minReviewScore !== undefined || input.fromReleaseDate || input.toReleaseDate);
-  const steamSync = page === 1 && input.query
-    ? await syncSteamSearchQuery(input.query)
-    : !hasFilters && page <= 5
-      ? await syncSteamCatalogPage(Math.min(pageSize, 10), (page - 1) * pageSize)
-      : null;
+    let resolvedValue5: any;
+  if (page === 1 && input.query) {
+    resolvedValue5 = await syncSteamSearchQuery(input.query);
+  } else {
+        let resolvedValue34: any;
+    if (!hasFilters && page <= 5) {
+      resolvedValue34 = await syncSteamCatalogPage(Math.min(pageSize, 10), (page - 1) * pageSize);
+    } else {
+      resolvedValue34 = null;
+    }
+resolvedValue5 = resolvedValue34;
+  }
+const steamSync = resolvedValue5;
 
-  const where: Prisma.SteamGameWhereInput = {
-    ...(input.query
-      ? {
+    let resolvedValue6: any;
+  if (input.query) {
+    resolvedValue6 = {
           OR: [
             {
               name: {
@@ -233,10 +271,13 @@ export async function searchGames(input: {
               }
             }
           ]
-        }
-      : {}),
-    ...(input.genre
-      ? {
+        };
+  } else {
+    resolvedValue6 = {};
+  }
+  let resolvedValue7: any;
+  if (input.genre) {
+    resolvedValue7 = {
           genres: {
             some: {
               steamGenre: {
@@ -244,10 +285,13 @@ export async function searchGames(input: {
               }
             }
           }
-        }
-      : {}),
-    ...(input.tag
-      ? {
+        };
+  } else {
+    resolvedValue7 = {};
+  }
+  let resolvedValue8: any;
+  if (input.tag) {
+    resolvedValue8 = {
           tags: {
             some: {
               steamTag: {
@@ -255,44 +299,90 @@ export async function searchGames(input: {
               }
             }
           }
-        }
-      : {}),
-    ...(input.minReviewScore !== undefined
-      ? {
+        };
+  } else {
+    resolvedValue8 = {};
+  }
+  let resolvedValue9: any;
+  if (input.minReviewScore !== undefined) {
+    resolvedValue9 = {
           reviewScore: {
             gte: input.minReviewScore
           }
-        }
-      : {}),
-    ...(input.fromReleaseDate || input.toReleaseDate
-      ? {
+        };
+  } else {
+    resolvedValue9 = {};
+  }
+  let resolvedValue10: any;
+  if (input.fromReleaseDate || input.toReleaseDate) {
+        let resolvedValue35: any;
+    if (input.fromReleaseDate) {
+      resolvedValue35 = { gte: input.fromReleaseDate };
+    } else {
+      resolvedValue35 = {};
+    }
+    let resolvedValue36: any;
+    if (input.toReleaseDate) {
+      resolvedValue36 = { lte: input.toReleaseDate };
+    } else {
+      resolvedValue36 = {};
+    }
+resolvedValue10 = {
           releaseDate: {
-            ...(input.fromReleaseDate ? { gte: input.fromReleaseDate } : {}),
-            ...(input.toReleaseDate ? { lte: input.toReleaseDate } : {})
+            ...(resolvedValue35),
+            ...(resolvedValue36)
           }
-        }
-      : {}),
-    ...(input.minPrice !== undefined || input.maxPrice !== undefined
-      ? {
+        };
+  } else {
+    resolvedValue10 = {};
+  }
+  let resolvedValue11: any;
+  if (input.minPrice !== undefined || input.maxPrice !== undefined) {
+        let resolvedValue37: any;
+    if (input.minPrice !== undefined) {
+      resolvedValue37 = { gte: input.minPrice };
+    } else {
+      resolvedValue37 = {};
+    }
+    let resolvedValue38: any;
+    if (input.maxPrice !== undefined) {
+      resolvedValue38 = { lte: input.maxPrice };
+    } else {
+      resolvedValue38 = {};
+    }
+resolvedValue11 = {
           priceCurrent: {
             is: {
               finalPriceCents: {
-                ...(input.minPrice !== undefined ? { gte: input.minPrice } : {}),
-                ...(input.maxPrice !== undefined ? { lte: input.maxPrice } : {})
+                ...(resolvedValue37),
+                ...(resolvedValue38)
               }
             }
           }
-        }
-      : {})
+        };
+  } else {
+    resolvedValue11 = {};
+  }
+const where: Prisma.SteamGameWhereInput = {
+    ...(resolvedValue6),
+    ...(resolvedValue7),
+    ...(resolvedValue8),
+    ...(resolvedValue9),
+    ...(resolvedValue10),
+    ...(resolvedValue11)
   };
 
-  const [items, total] = await Promise.all([
+    let resolvedValue12: any;
+  if (hasFilters) {
+    resolvedValue12 = [{ reviewCount: "desc" }, { appId: "asc" }];
+  } else {
+    resolvedValue12 = [{ lastIngestedAt: "desc" }, { reviewCount: "desc" }, { appId: "asc" }];
+  }
+const [items, total] = await Promise.all([
     db.steamGame.findMany({
       where,
       include: gameInclude,
-      orderBy: hasFilters
-        ? [{ reviewCount: "desc" }, { appId: "asc" }]
-        : [{ lastIngestedAt: "desc" }, { reviewCount: "desc" }, { appId: "asc" }],
+      orderBy: resolvedValue12,
       skip: (page - 1) * pageSize,
       take: pageSize
     }),
@@ -334,13 +424,21 @@ export async function getGameByAppId(appId: number) {
 }
 
 export function getSteamXrayAccess(plan: SubscriptionPlan) {
-  return {
+    let resolvedValue13: any;
+  if (plan === "FREE") {
+    resolvedValue13 = "Basic access";
+  } else {
+        let resolvedValue39: any;
+    if (plan === "PLUS") {
+      resolvedValue39 = "Advanced access";
+    } else {
+      resolvedValue39 = "Unlimited";
+    }
+resolvedValue13 = resolvedValue39;
+  }
+return {
     label:
-      plan === "FREE"
-        ? "Basic access"
-        : plan === "PLUS"
-          ? "Advanced access"
-          : "Unlimited",
+      resolvedValue13,
     historyLimit: getSteamXrayHistoryLimit(plan),
     playerHistoryAvailable: canAccessSteamXrayPlayerHistory(plan),
     rawSnapshotsBetaAvailable: hasSubscriptionCapability(plan, "earlyAccess")
@@ -502,8 +600,8 @@ export async function getSteamDatabaseProfile(appId: number) {
     }
   });
 
-  const genreIds = game.genres.map((genre) => genre.steamGenreId);
-  const tagIds = game.tags.map((tag) => tag.steamTagId);
+  const genreIds = game.genres.map((genre: any) => genre.steamGenreId);
+  const tagIds = game.tags.map((tag: any) => tag.steamTagId);
   const peerRules: Prisma.SteamGameWhereInput[] = [];
 
   if (genreIds.length > 0) {
@@ -530,12 +628,18 @@ export async function getSteamDatabaseProfile(appId: number) {
     });
   }
 
-  const peers = await db.steamGame.findMany({
+    let resolvedValue14: any;
+  if (peerRules.length > 0) {
+    resolvedValue14 = { OR: peerRules };
+  } else {
+    resolvedValue14 = {};
+  }
+const peers = await db.steamGame.findMany({
     where: {
       id: {
         not: game.id
       },
-      ...(peerRules.length > 0 ? { OR: peerRules } : {})
+      ...(resolvedValue14)
     },
     include: {
       priceCurrent: true,
@@ -578,20 +682,46 @@ export async function getSteamDatabaseProfile(appId: number) {
   const playerVelocity30 = getObservedVelocity(playerSnapshots, "currentPlayers", 30);
   const recentPeers = peers.filter((peer) => peer.releaseDate && peer.releaseDate >= oneYearAgo);
   const previousYearPeers = peers.filter((peer) => peer.releaseDate && peer.releaseDate >= twoYearsAgo && peer.releaseDate < oneYearAgo);
-  const growthRatio = previousYearPeers.length > 0 ? recentPeers.length / previousYearPeers.length : recentPeers.length > 0 ? 1 : 0;
-  const priceCompatibilityScore = currentPrice === 0 || medianPeerPrice === 0
-    ? 65
-    : clampScore(100 - Math.abs(currentPrice - medianPeerPrice) / medianPeerPrice * 100);
+    let resolvedValue15: any;
+  if (previousYearPeers.length > 0) {
+    resolvedValue15 = recentPeers.length / previousYearPeers.length;
+  } else {
+        let resolvedValue40: any;
+    if (recentPeers.length > 0) {
+      resolvedValue40 = 1;
+    } else {
+      resolvedValue40 = 0;
+    }
+resolvedValue15 = resolvedValue40;
+  }
+const growthRatio = resolvedValue15;
+    let resolvedValue16: any;
+  if (currentPrice === 0 || medianPeerPrice === 0) {
+    resolvedValue16 = 65;
+  } else {
+    resolvedValue16 = clampScore(100 - Math.abs(currentPrice - medianPeerPrice) / medianPeerPrice * 100);
+  }
+const priceCompatibilityScore = resolvedValue16;
   const demandScore = clampScore(Math.log10((game.reviewCount ?? 0) + 1) * 22);
   const competitionScore = clampScore(100 - Math.min(85, peers.length / 4));
-  const growthScore = clampScore(
-    (growthRatio >= 1 ? 55 + Math.min(35, (growthRatio - 1) * 35) : 45 * growthRatio)
+    let resolvedValue17: any;
+  if (growthRatio >= 1) {
+    resolvedValue17 = 55 + Math.min(35, (growthRatio - 1) * 35);
+  } else {
+    resolvedValue17 = 45 * growthRatio;
+  }
+const growthScore = clampScore(
+    (resolvedValue17)
     + Math.min(15, Math.max(0, reviewVelocity30?.relativeChangePercent ?? 0) / 2)
   );
   const sentimentScore = clampScore(game.reviewScore ?? 50);
-  const historicalPerformanceScore = medianPeerRevenue > 0
-    ? clampScore(Math.log10(gameMedianRevenue + 1) / Math.log10(medianPeerRevenue * 4 + 1) * 100)
-    : demandScore;
+    let resolvedValue18: any;
+  if (medianPeerRevenue > 0) {
+    resolvedValue18 = clampScore(Math.log10(gameMedianRevenue + 1) / Math.log10(medianPeerRevenue * 4 + 1) * 100);
+  } else {
+    resolvedValue18 = demandScore;
+  }
+const historicalPerformanceScore = resolvedValue18;
   const opportunityScore = clampScore(
     demandScore * 0.24
     + competitionScore * 0.18
@@ -611,8 +741,8 @@ export async function getSteamDatabaseProfile(appId: number) {
   const dataQualityScore = clampScore((dataQualityFactors.filter(Boolean).length / dataQualityFactors.length) * 100);
   const directCompetitors = peers
     .filter((peer) =>
-      peer.genres.some((genre) => genreIds.includes(genre.steamGenreId))
-      && peer.tags.some((tag) => tagIds.includes(tag.steamTagId))
+      peer.genres.some((genre: any) => genreIds.includes(genre.steamGenreId))
+      && peer.tags.some((tag: any) => tagIds.includes(tag.steamTagId))
     )
     .slice(0, 8);
   const adjacentCompetitors = peers
@@ -640,31 +770,141 @@ export async function getSteamDatabaseProfile(appId: number) {
   }
 
   const emergingTags = Array.from(topTags.values())
-    .map((tag) => ({
+    .map((tag: any) => {
+      let resolvedValue19: any;
+      if (recentPeers.length > 0) {
+        resolvedValue19 = Math.round((tag.recent / recentPeers.length) * 100);
+      } else {
+        resolvedValue19 = 0;
+      }
+      let resolvedValue20: any;
+      if (peers.length > 0) {
+        resolvedValue20 = Math.round((tag.total / peers.length) * 100);
+      } else {
+        resolvedValue20 = 0;
+      }
+      return ({
       name: tag.name,
-      recentSharePercent: recentPeers.length > 0 ? Math.round((tag.recent / recentPeers.length) * 100) : 0,
-      datasetSharePercent: peers.length > 0 ? Math.round((tag.total / peers.length) * 100) : 0
-    }))
-    .filter((tag) => tag.recentSharePercent > tag.datasetSharePercent && tag.recentSharePercent >= 10)
+      recentSharePercent: resolvedValue19,
+      datasetSharePercent: resolvedValue20
+    });
+    })
+    .filter((tag: any) => tag.recentSharePercent > tag.datasetSharePercent && tag.recentSharePercent >= 10)
     .sort((left, right) => right.recentSharePercent - left.recentSharePercent)
     .slice(0, 6);
   const observedPrices = priceSnapshots.map((snapshot) => snapshot.finalPriceCents ?? 0).filter((price) => price > 0);
   const observedPlayers = playerSnapshots.map((snapshot) => snapshot.currentPlayers).filter((players) => players > 0);
 
-  return {
+    let resolvedValue21: any;
+  if (opportunityScore >= 75) {
+    resolvedValue21 = "High probability opportunity";
+  } else {
+        let resolvedValue41: any;
+    if (opportunityScore >= 58) {
+      resolvedValue41 = "Medium confidence market";
+    } else {
+            let resolvedValue47: any;
+      if (peers.length > 120) {
+        resolvedValue47 = "Oversaturated segment";
+      } else {
+        resolvedValue47 = "Low evidence opportunity";
+      }
+resolvedValue41 = resolvedValue47;
+    }
+resolvedValue21 = resolvedValue41;
+  }
+  let resolvedValue22: any;
+  if (dataQualityScore >= 75) {
+    resolvedValue22 = "High";
+  } else {
+        let resolvedValue42: any;
+    if (dataQualityScore >= 50) {
+      resolvedValue42 = "Medium";
+    } else {
+      resolvedValue42 = "Low";
+    }
+resolvedValue22 = resolvedValue42;
+  }
+  let resolvedValue23: any;
+  if (game.reviewScore) {
+    resolvedValue23 = `${game.reviewScore.toFixed(1)}%`;
+  } else {
+    resolvedValue23 = "N/A";
+  }
+  let resolvedValue24: any;
+  if (game.revenueEstimates.length > 0) {
+    resolvedValue24 = formatCurrency(gameMedianRevenue);
+  } else {
+    resolvedValue24 = "N/A";
+  }
+  let resolvedValue25: any;
+  if (peers.length >= 160) {
+    resolvedValue25 = "High";
+  } else {
+        let resolvedValue43: any;
+    if (peers.length >= 60) {
+      resolvedValue43 = "Medium";
+    } else {
+      resolvedValue43 = "Low";
+    }
+resolvedValue25 = resolvedValue43;
+  }
+  let resolvedValue26: any;
+  if (observedPrices.length > 0) {
+    resolvedValue26 = Math.min(...observedPrices);
+  } else {
+    resolvedValue26 = null;
+  }
+  let resolvedValue27: any;
+  if (observedPrices.length > 0) {
+    resolvedValue27 = Math.max(...observedPrices);
+  } else {
+    resolvedValue27 = null;
+  }
+  let resolvedValue28: any;
+  if (observedPlayers.length > 0) {
+    resolvedValue28 = Math.max(...observedPlayers);
+  } else {
+    resolvedValue28 = null;
+  }
+  let resolvedValue29: any;
+  if (observedPlayers.length > 0) {
+    resolvedValue29 = Math.round(observedPlayers.reduce((sum, value) => sum + value, 0) / observedPlayers.length);
+  } else {
+    resolvedValue29 = null;
+  }
+  let resolvedValue30: any;
+  if (growthRatio >= 1.25) {
+    resolvedValue30 = "Rising";
+  } else {
+        let resolvedValue44: any;
+    if (growthRatio <= 0.75) {
+      resolvedValue44 = "Cooling";
+    } else {
+      resolvedValue44 = "Stable";
+    }
+resolvedValue30 = resolvedValue44;
+  }
+  let resolvedValue31: any;
+  if (growthRatio >= 1.25) {
+    resolvedValue31 = "Similar Steam releases are appearing faster than the prior-year cohort, which usually indicates stronger category attention and higher discoverability competition.";
+  } else {
+        let resolvedValue45: any;
+    if (growthRatio <= 0.75) {
+      resolvedValue45 = "The comparable release cadence is lower than the prior-year cohort, which can mean category cooling or a less crowded release window.";
+    } else {
+      resolvedValue45 = "Comparable release cadence is broadly stable against the prior-year cohort.";
+    }
+resolvedValue31 = resolvedValue45;
+  }
+return {
     appId: game.appId,
     name: game.name,
     generatedAt: now.toISOString(),
     classification:
-      opportunityScore >= 75
-        ? "High probability opportunity"
-        : opportunityScore >= 58
-          ? "Medium confidence market"
-          : peers.length > 120
-            ? "Oversaturated segment"
-            : "Low evidence opportunity",
+      resolvedValue21,
     opportunityScore,
-    confidenceLevel: dataQualityScore >= 75 ? "High" : dataQualityScore >= 50 ? "Medium" : "Low",
+    confidenceLevel: resolvedValue22,
     dataQuality: {
       score: dataQualityScore,
       priceSnapshots: priceSnapshots.length,
@@ -678,15 +918,15 @@ export async function getSteamDatabaseProfile(appId: number) {
       { name: "Competition", score: competitionScore, weight: 18, evidence: `${formatNumber(peers.length)} similar games in the current Neolytics Steam Database slice.` },
       { name: "Growth trend", score: growthScore, weight: 16, evidence: `${formatNumber(recentPeers.length)} similar launches in the last 12 months vs ${formatNumber(previousYearPeers.length)} in the prior year.` },
       { name: "Pricing compatibility", score: priceCompatibilityScore, weight: 14, evidence: `${formatCurrency(currentPrice)} current price vs ${formatCurrency(medianPeerPrice)} peer median.` },
-      { name: "User sentiment", score: sentimentScore, weight: 14, evidence: `${game.reviewScore ? `${game.reviewScore.toFixed(1)}%` : "N/A"} review score.` },
-      { name: "Historical performance", score: historicalPerformanceScore, weight: 14, evidence: `${game.revenueEstimates.length > 0 ? formatCurrency(gameMedianRevenue) : "N/A"} estimated median net revenue.` }
+      { name: "User sentiment", score: sentimentScore, weight: 14, evidence: `${resolvedValue23} review score.` },
+      { name: "Historical performance", score: historicalPerformanceScore, weight: 14, evidence: `${resolvedValue24} estimated median net revenue.` }
     ],
     marketSignals: {
       demandScore,
       competitionScore,
       growthScore,
       sentimentScore,
-      genreSaturation: peers.length >= 160 ? "High" : peers.length >= 60 ? "Medium" : "Low",
+      genreSaturation: resolvedValue25,
       growthRatio: Number(growthRatio.toFixed(2)),
       reviewVelocity30,
       playerVelocity30
@@ -694,14 +934,14 @@ export async function getSteamDatabaseProfile(appId: number) {
     observedHistory: {
       price: {
         currentPriceCents: currentPrice,
-        lowestObservedPriceCents: observedPrices.length > 0 ? Math.min(...observedPrices) : null,
-        highestObservedPriceCents: observedPrices.length > 0 ? Math.max(...observedPrices) : null,
+        lowestObservedPriceCents: resolvedValue26,
+        highestObservedPriceCents: resolvedValue27,
         discountSnapshotCount: priceSnapshots.filter((snapshot) => (snapshot.discountPercent ?? 0) > 0).length
       },
       players: {
         currentPlayers: game.currentPlayers,
-        peakObservedPlayers: observedPlayers.length > 0 ? Math.max(...observedPlayers) : null,
-        averageObservedPlayers: observedPlayers.length > 0 ? Math.round(observedPlayers.reduce((sum, value) => sum + value, 0) / observedPlayers.length) : null
+        peakObservedPlayers: resolvedValue28,
+        averageObservedPlayers: resolvedValue29
       },
       reviews: {
         totalReviews: game.reviewCount,
@@ -740,13 +980,9 @@ export async function getSteamDatabaseProfile(appId: number) {
       }))
     },
     trendDetection: {
-      releaseMomentum: growthRatio >= 1.25 ? "Rising" : growthRatio <= 0.75 ? "Cooling" : "Stable",
+      releaseMomentum: resolvedValue30,
       explanation:
-        growthRatio >= 1.25
-          ? "Similar Steam releases are appearing faster than the prior-year cohort, which usually indicates stronger category attention and higher discoverability competition."
-          : growthRatio <= 0.75
-            ? "The comparable release cadence is lower than the prior-year cohort, which can mean category cooling or a less crowded release window."
-            : "Comparable release cadence is broadly stable against the prior-year cohort.",
+        resolvedValue31,
       emergingTags
     },
     sources: [
@@ -824,15 +1060,19 @@ function getPortfolioReadiness(projectAnalyses: Array<{
       confidenceScore: metadata.marketDepth?.confidenceScore ?? null
     };
   });
-  const scoredSignals = thesisSignals.filter((item) => item.opportunityScore !== null);
-  const portfolioReadiness = scoredSignals.length > 0
-    ? {
+  const scoredSignals = thesisSignals.filter((item: any) => item.opportunityScore !== null);
+    let resolvedValue32: any;
+  if (scoredSignals.length > 0) {
+    resolvedValue32 = {
         averageOpportunityScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.opportunityScore ?? 0), 0) / scoredSignals.length),
         averageRiskScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.riskScore ?? 0), 0) / scoredSignals.length),
         averageFitScore: Math.round(scoredSignals.reduce((sum, item) => sum + (item.fitScore ?? 0), 0) / scoredSignals.length),
         topThesis: [...scoredSignals].sort((left, right) => (right.opportunityScore ?? 0) - (left.opportunityScore ?? 0))[0] ?? null
-      }
-    : null;
+      };
+  } else {
+    resolvedValue32 = null;
+  }
+const portfolioReadiness = resolvedValue32;
 
   return {
     thesisSignals,
@@ -905,13 +1145,21 @@ export async function getDashboardSummary(workspaceId: string) {
   ]);
   const portfolio = getPortfolioReadiness(projectAnalyses);
 
-  return {
+    let resolvedValue33: any;
+  if (subscriptionPlan === SubscriptionPlan.FREE) {
+    resolvedValue33 = "Explorer";
+  } else {
+        let resolvedValue46: any;
+    if (subscriptionPlan === SubscriptionPlan.PLUS) {
+      resolvedValue46 = "Operating";
+    } else {
+      resolvedValue46 = "Executive";
+    }
+resolvedValue33 = resolvedValue46;
+  }
+return {
     planLabel:
-      subscriptionPlan === SubscriptionPlan.FREE
-        ? "Explorer"
-        : subscriptionPlan === SubscriptionPlan.PLUS
-          ? "Operating"
-          : "Executive",
+      resolvedValue33,
     canAccessFinanceWorkspace: hasSubscriptionCapability(subscriptionPlan, "financeWorkspace"),
     marketOverview: {
       totalGames: totals._count._all,
@@ -1019,7 +1267,7 @@ export async function getDashboardDetails(workspaceId: string) {
     take: 12
   });
   const topRevenue = topRevenueGames
-    .flatMap((game) => {
+    .flatMap((game: any) => {
       const estimate = game.revenueEstimates[0];
 
       if (!estimate) {
@@ -1104,10 +1352,10 @@ export async function getOpportunityFinderData() {
     take: 250
   });
 
-  const items = games.map((game) => {
+  const items = games.map((game: any) => {
     const peers = games.filter((candidate) =>
-      candidate.genres.some((genre) =>
-        game.genres.some((current) => current.steamGenreId === genre.steamGenreId)
+      candidate.genres.some((genre: any) =>
+        game.genres.some((current: any) => current.steamGenreId === genre.steamGenreId)
       )
     );
     const profile = buildGameOpportunityProfile(game, peers);

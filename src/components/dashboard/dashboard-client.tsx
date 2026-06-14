@@ -76,7 +76,265 @@ export function DashboardClient() {
     );
   }
 
-  return (
+    let resolvedValue0: any;
+  if (data.canAccessFinanceWorkspace) {
+    resolvedValue0 = (
+              <Button asChild variant="outline">
+                <Link href="/finance">Abrir financeiro</Link>
+              </Button>
+            );
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (data.canAccessFinanceWorkspace) {
+    resolvedValue1 = (
+        <div className="grid gap-4 md:grid-cols-4">
+          <KpiCard label="Caixa líquido" value={formatCurrency(data.financeSnapshot.netCashCents)} />
+          <KpiCard label="Recebíveis pendentes" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
+          <KpiCard label="Pagáveis pendentes" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
+          <KpiCard label="Orçamentos ativos" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
+        </div>
+      );
+  } else {
+    resolvedValue1 = (
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="font-medium">Área financeira libera no Plus</p>
+              <p className="mt-1 text-sm text-muted-foreground">Faça upgrade para rodar orçamentos, faturas e operações da empresa aqui.</p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/settings">Ver planos</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      );
+  }
+  let resolvedValue2: any;
+  if (data.portfolioReadiness) {
+    resolvedValue2 = (
+        <div className="grid gap-4 md:grid-cols-4">
+          <KpiCard label="Oportunidade do portfólio" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
+          <KpiCard label="Risco do portfólio" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
+          <KpiCard label="Fit do portfólio" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
+          <KpiCard label="Teses analisadas" value={formatNumber(data.projectSignalsCount)} />
+        </div>
+      );
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (!details) {
+    resolvedValue3 = (
+              <p className="text-sm text-muted-foreground">Carregando sinais de projetos em segundo plano...</p>
+            );
+  } else {
+        let resolvedValue9: any;
+    if (details.projectSignals.length === 0) {
+      resolvedValue9 = (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Rode análise de mercado em um projeto para iniciar o quadro.</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/projects">Abrir projetos</Link>
+                </Button>
+              </div>
+            );
+    } else {
+      resolvedValue9 = (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Oportunidade</TableHead>
+                    <TableHead>Risco</TableHead>
+                    <TableHead>Fit</TableHead>
+                    <TableHead>Confiança</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {details.projectSignals.map((item: any) => (
+                    <TableRow key={item.projectId}>
+                      <TableCell>
+                        <Link className="font-medium hover:underline" href={`/projects/${item.projectId}`}>
+                          {item.projectName}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{formatNumber(item.opportunityScore)}</TableCell>
+                      <TableCell>{formatNumber(item.riskScore)}</TableCell>
+                      <TableCell>{formatNumber(item.fitScore)}</TableCell>
+                      <TableCell>{formatNumber(item.confidenceScore)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+    }
+resolvedValue3 = resolvedValue9;
+  }
+  let resolvedValue4: any;
+  if (!details) {
+    resolvedValue4 = (
+              <p className="text-sm text-muted-foreground">Carregando jogos salvos em segundo plano...</p>
+            );
+  } else {
+        let resolvedValue10: any;
+    if (details.trackedGames.length === 0) {
+      resolvedValue10 = (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Nenhum jogo salvo ainda. Comece com uma shortlist.</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/games">Criar shortlist</Link>
+                </Button>
+              </div>
+            );
+    } else {
+      resolvedValue10 = (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Jogo</TableHead>
+                    <TableHead>Avaliações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {details.trackedGames.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
+                          {item.steamGame.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{formatNumber(item.steamGame.reviewCount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+    }
+resolvedValue4 = resolvedValue10;
+  }
+  let resolvedValue5: any;
+  if (!details) {
+    resolvedValue5 = (
+              <p className="text-sm text-muted-foreground">Carregando lançamentos recentes em segundo plano...</p>
+            );
+  } else {
+    resolvedValue5 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Data de lançamento</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {details.recentLaunches.map((game: any) => {
+                  let resolvedValue11: any;
+                  if (game.releaseDate) {
+                    resolvedValue11 = new Date(game.releaseDate).toLocaleDateString();
+                  } else {
+                    resolvedValue11 = "N/A";
+                  }
+                  return (
+                  <TableRow key={game.id}>
+                    <TableCell>
+                      <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
+                        {game.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{resolvedValue11}</TableCell>
+                  </TableRow>
+                );
+                })}
+              </TableBody>
+            </Table>
+            );
+  }
+  let resolvedValue6: any;
+  if (data.portfolioReadiness?.topThesis) {
+    resolvedValue6 = (
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>Principal tese atual</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-lg font-semibold">{data.portfolioReadiness.topThesis.projectName}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Estágio: {data.portfolioReadiness.topThesis.stage.replaceAll("_", " ")} · Oportunidade {formatNumber(data.portfolioReadiness.topThesis.opportunityScore)} · Fit {formatNumber(data.portfolioReadiness.topThesis.fitScore)}
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={`/projects/${data.portfolioReadiness.topThesis.projectId}`}>Abrir tese</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      );
+  } else {
+    resolvedValue6 = null;
+  }
+  let resolvedValue7: any;
+  if (!details) {
+    resolvedValue7 = (
+              <p className="text-sm text-muted-foreground">Carregando ranking de receita em segundo plano...</p>
+            );
+  } else {
+    resolvedValue7 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Receita líquida estimada</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {details.topRevenue.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
+                        {item.steamGame.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{formatCurrency(item.medianNetRevenueCents)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            );
+  }
+  let resolvedValue8: any;
+  if (!details) {
+    resolvedValue8 = (
+              <p className="text-sm text-muted-foreground">Carregando sinais de crescimento em segundo plano...</p>
+            );
+  } else {
+    resolvedValue8 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Total de avaliações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {details.fastestGrowing.map((game: any) => (
+                  <TableRow key={game.id}>
+                    <TableCell>
+                      <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
+                        {game.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{formatNumber(game.reviewCount)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            );
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title="Central de comando do estúdio"
@@ -87,11 +345,7 @@ export function DashboardClient() {
             <Button asChild>
               <Link href="/games">Explorar jogos</Link>
             </Button>
-            {data.canAccessFinanceWorkspace ? (
-              <Button asChild variant="outline">
-                <Link href="/finance">Abrir financeiro</Link>
-              </Button>
-            ) : null}
+            {resolvedValue0}
             <Button asChild variant="outline">
               <Link href="/opportunities">Abrir oportunidades</Link>
             </Button>
@@ -119,35 +373,8 @@ export function DashboardClient() {
         <KpiCard label="Jogos salvos" value={formatNumber(data.marketOverview.trackedGamesCount)} />
         <KpiCard label="Lançamentos recentes" value={formatNumber(data.recentLaunchesCount)} />
       </div>
-      {data.canAccessFinanceWorkspace ? (
-        <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label="Caixa líquido" value={formatCurrency(data.financeSnapshot.netCashCents)} />
-          <KpiCard label="Recebíveis pendentes" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
-          <KpiCard label="Pagáveis pendentes" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
-          <KpiCard label="Orçamentos ativos" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
-        </div>
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="font-medium">Área financeira libera no Plus</p>
-              <p className="mt-1 text-sm text-muted-foreground">Faça upgrade para rodar orçamentos, faturas e operações da empresa aqui.</p>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="/settings">Ver planos</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-      {data.portfolioReadiness ? (
-        <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label="Oportunidade do portfólio" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
-          <KpiCard label="Risco do portfólio" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
-          <KpiCard label="Fit do portfólio" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
-          <KpiCard label="Teses analisadas" value={formatNumber(data.projectSignalsCount)} />
-        </div>
-      ) : null}
+      {resolvedValue1}
+      {resolvedValue2}
       <Dialog open={isTourOpen} onOpenChange={setIsTourOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -178,43 +405,7 @@ export function DashboardClient() {
             <CardTitle>Quadro de projetos</CardTitle>
           </CardHeader>
           <CardContent>
-            {!details ? (
-              <p className="text-sm text-muted-foreground">Carregando sinais de projetos em segundo plano...</p>
-            ) : details.projectSignals.length === 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Rode análise de mercado em um projeto para iniciar o quadro.</p>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/projects">Abrir projetos</Link>
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Projeto</TableHead>
-                    <TableHead>Oportunidade</TableHead>
-                    <TableHead>Risco</TableHead>
-                    <TableHead>Fit</TableHead>
-                    <TableHead>Confiança</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {details.projectSignals.map((item) => (
-                    <TableRow key={item.projectId}>
-                      <TableCell>
-                        <Link className="font-medium hover:underline" href={`/projects/${item.projectId}`}>
-                          {item.projectName}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{formatNumber(item.opportunityScore)}</TableCell>
-                      <TableCell>{formatNumber(item.riskScore)}</TableCell>
-                      <TableCell>{formatNumber(item.fitScore)}</TableCell>
-                      <TableCell>{formatNumber(item.confidenceScore)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            {resolvedValue3}
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
@@ -223,37 +414,7 @@ export function DashboardClient() {
             <CardTitle>Jogos acompanhados</CardTitle>
           </CardHeader>
           <CardContent>
-            {!details ? (
-              <p className="text-sm text-muted-foreground">Carregando jogos salvos em segundo plano...</p>
-            ) : details.trackedGames.length === 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Nenhum jogo salvo ainda. Comece com uma shortlist.</p>
-                <Button asChild size="sm" variant="outline">
-                  <Link href="/games">Criar shortlist</Link>
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Jogo</TableHead>
-                    <TableHead>Avaliações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {details.trackedGames.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
-                          {item.steamGame.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{formatNumber(item.steamGame.reviewCount)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            {resolvedValue4}
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
@@ -262,52 +423,11 @@ export function DashboardClient() {
             <CardTitle>Lançamentos recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            {!details ? (
-              <p className="text-sm text-muted-foreground">Carregando lançamentos recentes em segundo plano...</p>
-            ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Jogo</TableHead>
-                  <TableHead>Data de lançamento</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {details.recentLaunches.map((game) => (
-                  <TableRow key={game.id}>
-                    <TableCell>
-                      <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
-                        {game.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{game.releaseDate ? new Date(game.releaseDate).toLocaleDateString() : "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            )}
+            {resolvedValue5}
           </CardContent>
         </Card>
       </div>
-      {data.portfolioReadiness?.topThesis ? (
-        <Card className="overflow-hidden">
-          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-          <CardHeader>
-            <CardTitle>Principal tese atual</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-lg font-semibold">{data.portfolioReadiness.topThesis.projectName}</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Estágio: {data.portfolioReadiness.topThesis.stage.replaceAll("_", " ")} · Oportunidade {formatNumber(data.portfolioReadiness.topThesis.opportunityScore)} · Fit {formatNumber(data.portfolioReadiness.topThesis.fitScore)}
-              </p>
-            </div>
-            <Button asChild>
-              <Link href={`/projects/${data.portfolioReadiness.topThesis.projectId}`}>Abrir tese</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
+      {resolvedValue6}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -315,30 +435,7 @@ export function DashboardClient() {
             <CardTitle>Maiores receitas</CardTitle>
           </CardHeader>
           <CardContent>
-            {!details ? (
-              <p className="text-sm text-muted-foreground">Carregando ranking de receita em segundo plano...</p>
-            ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Jogo</TableHead>
-                  <TableHead>Receita líquida estimada</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {details.topRevenue.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Link className="font-medium hover:underline" href={`/games/${item.steamGame.appId}`}>
-                        {item.steamGame.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{formatCurrency(item.medianNetRevenueCents)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            )}
+            {resolvedValue7}
           </CardContent>
         </Card>
         <Card className="overflow-hidden">
@@ -347,30 +444,7 @@ export function DashboardClient() {
             <CardTitle>Maior crescimento de avaliações</CardTitle>
           </CardHeader>
           <CardContent>
-            {!details ? (
-              <p className="text-sm text-muted-foreground">Carregando sinais de crescimento em segundo plano...</p>
-            ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Jogo</TableHead>
-                  <TableHead>Total de avaliações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {details.fastestGrowing.map((game) => (
-                  <TableRow key={game.id}>
-                    <TableCell>
-                      <Link className="font-medium hover:underline" href={`/games/${game.appId}`}>
-                        {game.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{formatNumber(game.reviewCount)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            )}
+            {resolvedValue8}
           </CardContent>
         </Card>
       </div>

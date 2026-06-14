@@ -50,7 +50,13 @@ export async function POST(request: Request) {
   try {
     await enforceSubscriptionCapability(context.organizationId, "companyHub");
     const body = await parseJsonBody(request, schema);
-    const item = await createComplianceItem({
+        let resolvedValue0: any;
+    if (body.dueAt) {
+      resolvedValue0 = new Date(body.dueAt);
+    } else {
+      resolvedValue0 = null;
+    }
+const item = await createComplianceItem({
       organizationId: context.organizationId,
       userId: context.userId,
       title: body.title,
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
       projectId: body.projectId,
       ownerUserId: body.ownerUserId,
       sourceDocumentId: body.sourceDocumentId,
-      dueAt: body.dueAt ? new Date(body.dueAt) : null,
+      dueAt: resolvedValue0,
       notes: body.notes
     });
 

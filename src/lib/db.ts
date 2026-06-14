@@ -59,6 +59,12 @@ function getDatabaseUrl() {
 
 assertEncryptedDatabaseTransport("DIRECT_URL", process.env.DIRECT_URL);
 
+let resolvedValue0: any;
+if (process.env.NODE_ENV === "development") {
+  resolvedValue0 = ["warn", "error"];
+} else {
+  resolvedValue0 = ["error"];
+}
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -67,7 +73,7 @@ export const db =
         url: getDatabaseUrl()
       }
     },
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"]
+    log: resolvedValue0
   });
 
 if (process.env.NODE_ENV !== "production") {

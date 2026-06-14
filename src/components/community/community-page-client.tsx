@@ -49,7 +49,7 @@ function getCommunityQueryKey(scope: CommunityPostScope) {
 function parsePostTags(value: string) {
   return value
     .split(",")
-    .map((item) => item.trim())
+    .map((item: any) => item.trim())
     .filter(Boolean);
 }
 
@@ -153,10 +153,16 @@ export function CommunityPageClient({
   const feed = query.data?.feed ?? [];
   const deferredSearch = useDeferredValue(search);
   const canPublishPost = form.content.trim().length > 0;
-  const planLabel = subscriptionPlan === SubscriptionPlan.PRO ? "Comunidade Pro" : "Comunidade";
+    let resolvedValue0: any;
+  if (subscriptionPlan === SubscriptionPlan.PRO) {
+    resolvedValue0 = "Comunidade Pro";
+  } else {
+    resolvedValue0 = "Comunidade";
+  }
+const planLabel = resolvedValue0;
 
   function updateCommunityCache(scope: CommunityPostScope, update: (current: CommunityResponse) => CommunityResponse) {
-    queryClient.setQueryData<CommunityResponse>(getCommunityQueryKey(scope), (current) => {
+    queryClient.setQueryData<CommunityResponse>(getCommunityQueryKey(scope), (current: any) => {
       if (!current) {
         return current;
       }
@@ -184,7 +190,7 @@ export function CommunityPageClient({
     let project: CommunityPostItem["project"] = null;
 
     if (submittedForm.scope === CommunityPostScope.ORGANIZATION && submittedForm.projectId !== "none") {
-      const selectedProject = projectsQuery.data?.find((item) => item.id === submittedForm.projectId);
+      const selectedProject = projectsQuery.data?.find((item: any) => item.id === submittedForm.projectId);
 
       if (selectedProject) {
         project = {
@@ -235,7 +241,7 @@ export function CommunityPageClient({
     const previousData = queryClient.getQueryData<CommunityResponse>(queryKey);
     const optimisticPost = buildOptimisticPost(`optimistic-post-${Date.now()}`, submittedForm, submittedMedia);
 
-    updateCommunityCache(submittedScope, (current) => ({
+    updateCommunityCache(submittedScope, (current: any) => ({
       ...current,
       feed: [optimisticPost, ...current.feed]
     }));
@@ -292,9 +298,9 @@ export function CommunityPageClient({
       canDelete: true
     };
 
-    updateCommunityCache(submittedScope, (current) => ({
+    updateCommunityCache(submittedScope, (current: any) => ({
       ...current,
-      feed: current.feed.map((post) => {
+      feed: current.feed.map((post: any) => {
         if (post.id === optimisticPost.id) {
           return confirmedPost;
         }
@@ -325,9 +331,9 @@ export function CommunityPageClient({
       author: getOptimisticAuthor()
     };
 
-    updateCommunityCache(scopeFilter, (current) => ({
+    updateCommunityCache(scopeFilter, (current: any) => ({
       ...current,
-      feed: current.feed.map((post) => {
+      feed: current.feed.map((post: any) => {
         if (post.id !== postId) {
           return post;
         }
@@ -338,7 +344,7 @@ export function CommunityPageClient({
         };
       })
     }));
-    setCommentDrafts((current) => {
+    setCommentDrafts((current: any) => {
       const next = { ...current };
       delete next[postId];
       return next;
@@ -356,7 +362,7 @@ export function CommunityPageClient({
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
       restoreCommunityCache(scopeFilter, previousData);
-      setCommentDrafts((current) => ({
+      setCommentDrafts((current: any) => ({
         ...current,
         [postId]: content
       }));
@@ -366,16 +372,16 @@ export function CommunityPageClient({
 
     const createdComment = await response.json() as CommunityPostItem["comments"][number];
 
-    updateCommunityCache(scopeFilter, (current) => ({
+    updateCommunityCache(scopeFilter, (current: any) => ({
       ...current,
-      feed: current.feed.map((post) => {
+      feed: current.feed.map((post: any) => {
         if (post.id !== postId) {
           return post;
         }
 
         return {
           ...post,
-          comments: post.comments.map((comment) => {
+          comments: post.comments.map((comment: any) => {
             if (comment.id === optimisticComment.id) {
               return createdComment;
             }
@@ -410,9 +416,9 @@ export function CommunityPageClient({
   async function toggleLike(postId: string) {
     const previousData = queryClient.getQueryData<CommunityResponse>(getCommunityQueryKey(scopeFilter));
 
-    updateCommunityCache(scopeFilter, (current) => ({
+    updateCommunityCache(scopeFilter, (current: any) => ({
       ...current,
-      feed: current.feed.map((post) => {
+      feed: current.feed.map((post: any) => {
         if (post.id !== postId) {
           return post;
         }
@@ -447,9 +453,9 @@ export function CommunityPageClient({
   async function deletePost(postId: string) {
     const previousData = queryClient.getQueryData<CommunityResponse>(getCommunityQueryKey(scopeFilter));
 
-    updateCommunityCache(scopeFilter, (current) => ({
+    updateCommunityCache(scopeFilter, (current: any) => ({
       ...current,
-      feed: current.feed.filter((post) => post.id !== postId)
+      feed: current.feed.filter((post: any) => post.id !== postId)
     }));
 
     const response = await fetch(`/api/community/${postId}`, {
@@ -469,7 +475,7 @@ export function CommunityPageClient({
 
   const visibleFeed = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
-    const filtered = feed.filter((post) => {
+    const filtered = feed.filter((post: any) => {
       if (typeFilter !== "ALL" && post.type !== typeFilter) {
         return false;
       }
@@ -526,7 +532,262 @@ export function CommunityPageClient({
     return <ErrorState title="Comunidade indisponível" description="Não foi possível carregar o feed da comunidade agora." />;
   }
 
-  return (
+    let resolvedValue2: any;
+  if (canAccessRanking) {
+    resolvedValue2 = "Ativo";
+  } else {
+    resolvedValue2 = "Bloqueado";
+  }
+  let resolvedValue4: any;
+  if (form.scope === CommunityPostScope.ORGANIZATION) {
+    resolvedValue4 = (
+                <div className="space-y-2">
+                  <Label>Projeto vinculado</Label>
+                  <Select value={form.projectId} onValueChange={(value: any) => setForm((current: any) => ({ ...current, projectId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum projeto vinculado</SelectItem>
+                      {(projectsQuery.data ?? []).map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (mediaFiles.length > 0) {
+    resolvedValue5 = (
+                  <div className="flex flex-wrap gap-2">
+                    {mediaFiles.map((file) => (
+                      <span key={`${file.name}-${file.size}`} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                        {file.name}
+                      </span>
+                    ))}
+                  </div>
+                );
+  } else {
+    resolvedValue5 = null;
+  }
+  let resolvedValue6: any;
+  if (feedback) {
+    resolvedValue6 = <p className="text-sm text-muted-foreground">{feedback}</p>;
+  } else {
+    resolvedValue6 = null;
+  }
+  let resolvedValue7: any;
+  if (isSubmitting) {
+    resolvedValue7 = "Publicando...";
+  } else {
+    resolvedValue7 = "Publicar atualização";
+  }
+  let resolvedValue8: any;
+  if (visibleFeed.length > 0) {
+    resolvedValue8 = visibleFeed.map((post: any) => {
+      let resolvedValue9: any;
+      if (post.author.image) {
+        resolvedValue9 = (
+                      <img src={post.author.image} alt="" className="h-11 w-11 rounded-full border object-cover" />
+                    );
+      } else {
+        resolvedValue9 = (
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full border bg-muted text-sm font-semibold">
+                        {(post.author.name || post.author.email).slice(0, 1).toUpperCase()}
+                      </div>
+                    );
+      }
+      let resolvedValue10: any;
+      if (post.scope === CommunityPostScope.GLOBAL) {
+        resolvedValue10 = "Global";
+      } else {
+        resolvedValue10 = "Interno";
+      }
+      let resolvedValue11: any;
+      if (post.canDelete === true) {
+        resolvedValue11 = (
+                      <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
+                        Excluir
+                      </Button>
+                    );
+      } else {
+        resolvedValue11 = null;
+      }
+      let resolvedValue12: any;
+      if (post.media.length > 0) {
+                let resolvedValue19: any;
+        if (post.media.length === 1) {
+          resolvedValue19 = "overflow-hidden rounded-lg border";
+        } else {
+          resolvedValue19 = "grid gap-2 overflow-hidden rounded-lg border bg-muted/20 p-2 sm:grid-cols-2";
+        }
+resolvedValue12 = (
+                  <div className={resolvedValue19}>
+                    {post.media.map((item: any) => {
+                      let resolvedValue20: any;
+                      if (item.signedUrl) {
+                                                let resolvedValue21: any;
+                        if (post.media.length === 1) {
+                          resolvedValue21 = "max-h-[560px] w-full object-cover";
+                        } else {
+                          resolvedValue21 = "h-64 w-full rounded-md object-cover";
+                        }
+resolvedValue20 = (
+                      <img
+                        key={item.storagePath}
+                        src={item.signedUrl}
+                        alt={item.originalName}
+                        className={resolvedValue21}
+                      />
+                    );
+                      } else {
+                        resolvedValue20 = null;
+                      }
+                      return resolvedValue20;
+                    })}
+                  </div>
+                );
+      } else {
+        resolvedValue12 = null;
+      }
+      let resolvedValue13: any;
+      if (post.project) {
+        resolvedValue13 = (
+                  <div className="rounded-lg border bg-muted/35 p-3 text-muted-foreground">
+                    Projeto vinculado: <span className="font-medium text-foreground">{post.project.name}</span>
+                  </div>
+                );
+      } else {
+        resolvedValue13 = null;
+      }
+      let resolvedValue14: any;
+      if (post.tags && post.tags.length > 0) {
+        resolvedValue14 = (
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.map((tag: any) => (
+                      <span key={tag} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                );
+      } else {
+        resolvedValue14 = null;
+      }
+      let resolvedValue15: any;
+      if (post.viewerHasLiked) {
+        resolvedValue15 = "default";
+      } else {
+        resolvedValue15 = "outline";
+      }
+      let resolvedValue16: any;
+      if (post.viewerHasLiked) {
+        resolvedValue16 = "Curtido";
+      } else {
+        resolvedValue16 = "Curtir";
+      }
+      let resolvedValue17: any;
+      if (post.comments.length > 0) {
+        resolvedValue17 = (
+                    <div className="space-y-2">
+                      {post.comments.map((comment: any) => (
+                        <div key={comment.id} className="rounded-lg border bg-muted/25 p-3">
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">{comment.author.name || comment.author.email}</span>{" "}
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{comment.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+      } else {
+        resolvedValue17 = (
+                    <p className="text-sm text-muted-foreground">Ainda não há comentários.</p>
+                  );
+      }
+      let resolvedValue18: any;
+      if (submittingCommentId === post.id) {
+        resolvedValue18 = "Enviando...";
+      } else {
+        resolvedValue18 = "Comentar";
+      }
+      return (
+            <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
+              <CardHeader className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {resolvedValue9}
+                    <div className="min-w-0">
+                      <p className="font-medium leading-none">{post.author.name || post.author.email}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {postTypeOptions.find((option) => option.value === post.type)?.label ?? post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                      {resolvedValue10}
+                    </span>
+                    <span className={`rounded-full border px-2.5 py-1 text-xs ${getPriorityBadgeClass(post.priority)}`}>
+                      {priorityOptions.find((option) => option.value === post.priority)?.label ?? post.priority}
+                    </span>
+                    {resolvedValue11}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {resolvedValue12}
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  <span className="font-semibold text-foreground">{post.author.name || post.author.email}</span>{" "}
+                  {post.content}
+                </p>
+                {resolvedValue13}
+                {resolvedValue14}
+                <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+                  <Button size="sm" variant={resolvedValue15} onClick={() => toggleLike(post.id)}>
+                    {resolvedValue16} · {post.likeCount}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSearch(post.author.name || post.author.email)}>
+                    Mais do autor
+                  </Button>
+                </div>
+                <div className="space-y-3 border-t pt-3">
+                  <p className="text-sm font-medium">Comentários</p>
+                  {resolvedValue17}
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <Input
+                      value={commentDrafts[post.id] ?? ""}
+                      onChange={(event: any) => setCommentDrafts((current: any) => ({ ...current, [post.id]: event.target.value }))}
+                      placeholder="Adicionar comentário"
+                    />
+                    <Button disabled={submittingCommentId === post.id} onClick={() => createComment(post.id)}>
+                      {resolvedValue18}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+    });
+  } else {
+    resolvedValue8 = (
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle>Ainda não há posts</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                Publique a primeira nota de mercado, checkpoint de arte ou atualização de projeto para iniciar o feed.
+              </CardContent>
+            </Card>
+          );
+  }
+return (
     <div className="space-y-5 lg:flex lg:h-[calc(100vh-7rem)] lg:flex-col lg:overflow-hidden">
       <div className="flex flex-col gap-3 lg:flex-none lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -545,14 +806,22 @@ export function CommunityPageClient({
         <Tabs
           className="order-3 rounded-lg border bg-card p-3 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:max-h-full lg:self-start lg:overflow-y-auto"
           value={scopeFilter}
-          onValueChange={(value) => {
+          onValueChange={(value: any) => {
             const scope = value as CommunityPostScope;
             setScopeFilter(scope);
-            setForm((current) => ({
+            setForm((current: any) => {
+              let resolvedValue1: any;
+              if (scope === CommunityPostScope.GLOBAL) {
+                resolvedValue1 = "none";
+              } else {
+                resolvedValue1 = current.projectId;
+              }
+              return ({
               ...current,
               scope,
-              projectId: scope === CommunityPostScope.GLOBAL ? "none" : current.projectId
-            }));
+              projectId: resolvedValue1
+            });
+            });
           }}
         >
           <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-lg border bg-card p-1.5">
@@ -574,7 +843,7 @@ export function CommunityPageClient({
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-muted-foreground">Ranking</span>
-              <span className="font-medium">{canAccessRanking ? "Ativo" : "Bloqueado"}</span>
+              <span className="font-medium">{resolvedValue2}</span>
             </div>
           </div>
         </Tabs>
@@ -590,13 +859,13 @@ export function CommunityPageClient({
                 <Input
                   id="community-search"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event: any) => setSearch(event.target.value)}
                   placeholder="Pesquisar legendas, tags, autores ou projetos"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Ordenar por</Label>
-                <Select value={sortMode} onValueChange={(value) => setSortMode(value as "recent" | "liked")}>
+                <Select value={sortMode} onValueChange={(value: any) => setSortMode(value as "recent" | "liked")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -608,7 +877,7 @@ export function CommunityPageClient({
               </div>
               <div className="space-y-2">
                 <Label>Filtro de categoria</Label>
-                <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as CommunityPostType | "ALL")}>
+                <Select value={typeFilter} onValueChange={(value: any) => setTypeFilter(value as CommunityPostType | "ALL")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -638,11 +907,19 @@ export function CommunityPageClient({
                   <Label>Público</Label>
                   <Select
                     value={form.scope}
-                    onValueChange={(value) => setForm((current) => ({
+                    onValueChange={(value: any) => setForm((current: any) => {
+                      let resolvedValue3: any;
+                      if (value === CommunityPostScope.GLOBAL) {
+                        resolvedValue3 = "none";
+                      } else {
+                        resolvedValue3 = current.projectId;
+                      }
+                      return ({
                       ...current,
                       scope: value as CommunityPostScope,
-                      projectId: value === CommunityPostScope.GLOBAL ? "none" : current.projectId
-                    }))}
+                      projectId: resolvedValue3
+                    });
+                    })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -658,7 +935,7 @@ export function CommunityPageClient({
                 </div>
                 <div className="space-y-2">
                   <Label>Categoria</Label>
-                  <Select value={form.type} onValueChange={(value) => setForm((current) => ({ ...current, type: value as CommunityPostType }))}>
+                  <Select value={form.type} onValueChange={(value: any) => setForm((current: any) => ({ ...current, type: value as CommunityPostType }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -673,7 +950,7 @@ export function CommunityPageClient({
                 </div>
                 <div className="space-y-2">
                   <Label>Prioridade</Label>
-                  <Select value={form.priority} onValueChange={(value) => setForm((current) => ({ ...current, priority: value as CommunityPostPriority }))}>
+                  <Select value={form.priority} onValueChange={(value: any) => setForm((current: any) => ({ ...current, priority: value as CommunityPostPriority }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -687,30 +964,13 @@ export function CommunityPageClient({
                   </Select>
                 </div>
               </div>
-              {form.scope === CommunityPostScope.ORGANIZATION ? (
-                <div className="space-y-2">
-                  <Label>Projeto vinculado</Label>
-                  <Select value={form.projectId} onValueChange={(value) => setForm((current) => ({ ...current, projectId: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum projeto vinculado</SelectItem>
-                      {(projectsQuery.data ?? []).map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
+              {resolvedValue4}
               <div className="space-y-2">
                 <Label htmlFor="community-content">Legenda</Label>
                 <Textarea
                   id="community-content"
                   value={form.content}
-                  onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, content: event.target.value }))}
                   placeholder="Escreva uma legenda..."
                 />
               </div>
@@ -721,148 +981,28 @@ export function CommunityPageClient({
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   multiple
-                  onChange={(event) => updateMediaFiles(event.target.files)}
+                  onChange={(event: any) => updateMediaFiles(event.target.files)}
                 />
                 <p className="text-xs text-muted-foreground">Adicione até 4 imagens. Cada imagem deve ter 8 MB ou menos.</p>
-                {mediaFiles.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {mediaFiles.map((file) => (
-                      <span key={`${file.name}-${file.size}`} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
-                        {file.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                {resolvedValue5}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="community-tags">Tags</Label>
                 <Input
                   id="community-tags"
                   value={form.tags}
-                  onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, tags: event.target.value }))}
                   placeholder="indie, pricing, cozy, capsule"
                 />
               </div>
-              {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
+              {resolvedValue6}
               <Button disabled={isSubmitting || !canPublishPost} onClick={createPost}>
-                {isSubmitting ? "Publicando..." : "Publicar atualização"}
+                {resolvedValue7}
               </Button>
             </CardContent>
           </Card>
           <div className="order-4 min-h-0 space-y-4 lg:col-start-2 lg:row-start-2 lg:h-full lg:overflow-y-auto lg:pr-1">
-          {visibleFeed.length > 0 ? visibleFeed.map((post) => (
-            <Card key={post.id} className={`overflow-hidden border-l-4 ${getPriorityCardClass(post.priority)}`}>
-              <CardHeader className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {post.author.image ? (
-                      <img src={post.author.image} alt="" className="h-11 w-11 rounded-full border object-cover" />
-                    ) : (
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full border bg-muted text-sm font-semibold">
-                        {(post.author.name || post.author.email).slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium leading-none">{post.author.name || post.author.email}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {postTypeOptions.find((option) => option.value === post.type)?.label ?? post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                      {post.scope === CommunityPostScope.GLOBAL ? "Global" : "Interno"}
-                    </span>
-                    <span className={`rounded-full border px-2.5 py-1 text-xs ${getPriorityBadgeClass(post.priority)}`}>
-                      {priorityOptions.find((option) => option.value === post.priority)?.label ?? post.priority}
-                    </span>
-                    {post.canDelete === true ? (
-                      <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
-                        Excluir
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                {post.media.length > 0 ? (
-                  <div className={post.media.length === 1 ? "overflow-hidden rounded-lg border" : "grid gap-2 overflow-hidden rounded-lg border bg-muted/20 p-2 sm:grid-cols-2"}>
-                    {post.media.map((item) => item.signedUrl ? (
-                      <img
-                        key={item.storagePath}
-                        src={item.signedUrl}
-                        alt={item.originalName}
-                        className={post.media.length === 1 ? "max-h-[560px] w-full object-cover" : "h-64 w-full rounded-md object-cover"}
-                      />
-                    ) : null)}
-                  </div>
-                ) : null}
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  <span className="font-semibold text-foreground">{post.author.name || post.author.email}</span>{" "}
-                  {post.content}
-                </p>
-                {post.project ? (
-                  <div className="rounded-lg border bg-muted/35 p-3 text-muted-foreground">
-                    Projeto vinculado: <span className="font-medium text-foreground">{post.project.name}</span>
-                  </div>
-                ) : null}
-                {post.tags && post.tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {post.tags.map((tag) => (
-                      <span key={tag} className="rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-                  <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
-                    {post.viewerHasLiked ? "Curtido" : "Curtir"} · {post.likeCount}
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSearch(post.author.name || post.author.email)}>
-                    Mais do autor
-                  </Button>
-                </div>
-                <div className="space-y-3 border-t pt-3">
-                  <p className="text-sm font-medium">Comentários</p>
-                  {post.comments.length > 0 ? (
-                    <div className="space-y-2">
-                      {post.comments.map((comment) => (
-                        <div key={comment.id} className="rounded-lg border bg-muted/25 p-3">
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">{comment.author.name || comment.author.email}</span>{" "}
-                            {new Date(comment.createdAt).toLocaleString()}
-                          </p>
-                          <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{comment.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Ainda não há comentários.</p>
-                  )}
-                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                    <Input
-                      value={commentDrafts[post.id] ?? ""}
-                      onChange={(event) => setCommentDrafts((current) => ({ ...current, [post.id]: event.target.value }))}
-                      placeholder="Adicionar comentário"
-                    />
-                    <Button disabled={submittingCommentId === post.id} onClick={() => createComment(post.id)}>
-                      {submittingCommentId === post.id ? "Enviando..." : "Comentar"}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )) : (
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle>Ainda não há posts</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Publique a primeira nota de mercado, checkpoint de arte ou atualização de projeto para iniciar o feed.
-              </CardContent>
-            </Card>
-          )}
+          {resolvedValue8}
           </div>
         </div>
       </div>

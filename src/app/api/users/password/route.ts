@@ -35,9 +35,13 @@ export async function PATCH(request: Request) {
     }
 
     if (user.passwordHash) {
-      const isCurrentPasswordValid = body.currentPassword
-        ? (await verifyPassword(body.currentPassword, user.passwordHash)).isValid
-        : false;
+            let resolvedValue0: any;
+      if (body.currentPassword) {
+        resolvedValue0 = (await verifyPassword(body.currentPassword, user.passwordHash)).isValid;
+      } else {
+        resolvedValue0 = false;
+      }
+const isCurrentPasswordValid = resolvedValue0;
 
       if (!isCurrentPasswordValid) {
         return badRequest("Current password is invalid.");

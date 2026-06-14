@@ -33,62 +33,85 @@ export function GameDetailClient({ appId }: { appId: number }) {
   const snapshots: any[] = snapshotsQuery.data ?? [];
   const databaseProfile = databaseProfileQuery.data;
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {game.genres.map((genre: any) => (
-              <Badge key={genre.steamGenreId ?? genre.steamGenre.id} variant="secondary">
-                {genre.steamGenre.name}
-              </Badge>
-            ))}
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">{game.name}</h1>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{game.shortDescription ?? "Nenhuma descrição disponível."}</p>
-          </div>
-        </div>
-        <Card className="w-full max-w-sm">
-          <CardHeader className="flex flex-row items-start justify-between gap-3">
-            <div className="space-y-2">
-              <CardTitle>Snapshot atual</CardTitle>
-              <Badge variant="outline">{`Steam X-Ray · ${game.steamXrayAccess.label}`}</Badge>
-            </div>
-            <ExportActions
-              label="Exportar"
-              xlsxHref={`/api/exports/games/${appId}?format=xlsx`}
-              csvHref={`/api/exports/games/${appId}?format=csv`}
-              googleSheetsEndpoint={`/api/exports/games/${appId}`}
-            />
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-muted-foreground">
-              {game.steamXrayAccess.playerHistoryAvailable
-                ? `${game.steamXrayAccess.historyLimit} dias de histórico estão disponíveis neste plano.`
-                : `Este plano inclui ${game.steamXrayAccess.historyLimit} dias de histórico de preço e avaliações.`}
-            </p>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Preço</span>
-              <span>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Avaliações</span>
-              <span>{formatNumber(game.reviewCount)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Nota das avaliações</span>
-              <span>{game.reviewScore ? `${game.reviewScore.toFixed(1)}%` : "N/A"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Jogadores atuais</span>
-              <span>{formatNumber(game.currentPlayers)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <div ref={databaseLoad.ref}>
-      {databaseProfile ? (
+    let resolvedValue0: any;
+  if (game.steamXrayAccess.playerHistoryAvailable) {
+    resolvedValue0 = `${game.steamXrayAccess.historyLimit} dias de histórico estão disponíveis neste plano.`;
+  } else {
+    resolvedValue0 = `Este plano inclui ${game.steamXrayAccess.historyLimit} dias de histórico de preço e avaliações.`;
+  }
+  let resolvedValue1: any;
+  if (game.reviewScore) {
+    resolvedValue1 = `${game.reviewScore.toFixed(1)}%`;
+  } else {
+    resolvedValue1 = "N/A";
+  }
+  let resolvedValue2: any;
+  if (databaseProfile) {
+        let resolvedValue9: any;
+    if (databaseProfile.trendDetection.emergingTags.length > 0) {
+      resolvedValue9 = (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {databaseProfile.trendDetection.emergingTags.map((tag: any) => (
+                        <Badge key={tag.name} variant="secondary">
+                          {`${tag.name} ${tag.recentSharePercent}% recente`}
+                        </Badge>
+                      ))}
+                    </div>
+                  );
+    } else {
+      resolvedValue9 = null;
+    }
+    let resolvedValue10: any;
+    if (databaseProfile.competitiveIntelligence.directCompetitors.length > 0) {
+      resolvedValue10 = (
+                    databaseProfile.competitiveIntelligence.directCompetitors.slice(0, 5).map((competitor) => {
+                      let resolvedValue15: any;
+                      if (competitor.reviewScore) {
+                        resolvedValue15 = `${competitor.reviewScore.toFixed(1)}%`;
+                      } else {
+                        resolvedValue15 = "N/A";
+                      }
+                      return (
+                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
+                        <span className="font-medium">{competitor.name}</span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {`${formatNumber(competitor.reviewCount)} avaliações · ${resolvedValue15} nota · ${formatCurrency(competitor.estimatedMedianNetRevenueCents)}`}
+                        </span>
+                      </Link>
+                    );
+                    })
+                  );
+    } else {
+      resolvedValue10 = (
+                    <p className="text-sm text-muted-foreground">Nenhum concorrente direto identificado no recorte atual do banco de dados.</p>
+                  );
+    }
+    let resolvedValue11: any;
+    if (databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.length > 0) {
+      resolvedValue11 = (
+                    databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.slice(0, 5).map((competitor) => {
+                      let resolvedValue16: any;
+                      if (competitor.reviewScore) {
+                        resolvedValue16 = `${competitor.reviewScore.toFixed(1)}%`;
+                      } else {
+                        resolvedValue16 = "N/A";
+                      }
+                      return (
+                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
+                        <span className="font-medium">{competitor.name}</span>
+                        <span className="mt-1 block text-muted-foreground">
+                          {`${formatNumber(competitor.reviewCount)} avaliações · ${resolvedValue16} nota`}
+                        </span>
+                      </Link>
+                    );
+                    })
+                  );
+    } else {
+      resolvedValue11 = (
+                    <p className="text-sm text-muted-foreground">Nenhum lançamento recente de destaque identificado ainda.</p>
+                  );
+    }
+resolvedValue2 = (
         <Card className="overflow-hidden border-cyan-400/20 bg-gradient-to-br from-card via-card to-cyan-500/10">
           <CardHeader className="space-y-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -126,7 +149,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold">Fatores ponderados da nota</h3>
-                {databaseProfile.weightedFactors.map((factor) => (
+                {databaseProfile.weightedFactors.map((factor: any) => (
                   <div key={factor.name} className="rounded-2xl border bg-background/70 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-medium">{factor.name}</p>
@@ -150,15 +173,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
                 <div className="rounded-2xl border bg-background/70 p-4">
                   <h3 className="text-sm font-semibold">Detecção de tendências</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{databaseProfile.trendDetection.explanation}</p>
-                  {databaseProfile.trendDetection.emergingTags.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {databaseProfile.trendDetection.emergingTags.map((tag) => (
-                        <Badge key={tag.name} variant="secondary">
-                          {`${tag.name} ${tag.recentSharePercent}% recente`}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : null}
+                  {resolvedValue9}
                 </div>
                 <div className="rounded-2xl border bg-background/70 p-4">
                   <h3 className="text-sm font-semibold">Fontes usadas</h3>
@@ -170,54 +185,208 @@ export function GameDetailClient({ appId }: { appId: number }) {
               <div className="rounded-2xl border bg-background/70 p-4">
                 <h3 className="text-sm font-semibold">Concorrentes diretos</h3>
                 <div className="mt-3 space-y-2">
-                  {databaseProfile.competitiveIntelligence.directCompetitors.length > 0 ? (
-                    databaseProfile.competitiveIntelligence.directCompetitors.slice(0, 5).map((competitor) => (
-                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
-                        <span className="font-medium">{competitor.name}</span>
-                        <span className="mt-1 block text-muted-foreground">
-                          {`${formatNumber(competitor.reviewCount)} avaliações · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} nota · ${formatCurrency(competitor.estimatedMedianNetRevenueCents)}`}
-                        </span>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Nenhum concorrente direto identificado no recorte atual do banco de dados.</p>
-                  )}
+                  {resolvedValue10}
                 </div>
               </div>
               <div className="rounded-2xl border bg-background/70 p-4">
                 <h3 className="text-sm font-semibold">Lançamentos recentes para observar</h3>
                 <div className="mt-3 space-y-2">
-                  {databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.length > 0 ? (
-                    databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.slice(0, 5).map((competitor) => (
-                      <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
-                        <span className="font-medium">{competitor.name}</span>
-                        <span className="mt-1 block text-muted-foreground">
-                          {`${formatNumber(competitor.reviewCount)} avaliações · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} nota`}
-                        </span>
-                      </Link>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Nenhum lançamento recente de destaque identificado ainda.</p>
-                  )}
+                  {resolvedValue11}
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
-      ) : (
+      );
+  } else {
+        let resolvedValue12: any;
+    if (databaseProfileQuery.isError) {
+      resolvedValue12 = "Não foi possível carregar o perfil do banco de dados agora.";
+    } else {
+            let resolvedValue17: any;
+      if (databaseProfileQuery.isFetching) {
+        resolvedValue17 = "Carregando perfil do banco de dados em segundo plano...";
+      } else {
+        resolvedValue17 = "O perfil avançado do banco de dados será carregado conforme você continuar.";
+      }
+resolvedValue12 = resolvedValue17;
+    }
+resolvedValue2 = (
         <Card>
           <CardHeader>
             <CardTitle>Neolytics Steam Database</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            {databaseProfileQuery.isError
-              ? "Não foi possível carregar o perfil do banco de dados agora."
-              : databaseProfileQuery.isFetching
-                ? "Carregando perfil do banco de dados em segundo plano..."
-                : "O perfil avançado do banco de dados será carregado conforme você continuar."}
+            {resolvedValue12}
           </CardContent>
         </Card>
-      )}
+      );
+  }
+  let resolvedValue3: any;
+  if (history?.priceHistory?.length) {
+    resolvedValue3 = (
+            <HistoryLineChart
+              data={history.priceHistory.map((item: any) => ({
+                date: new Date(item.snapshotDate).toLocaleDateString(),
+                price: (item.finalPriceCents ?? 0) / 100
+              }))}
+              xKey="date"
+              yKey="price"
+            />
+          );
+  } else {
+    resolvedValue3 = (
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de preço.</p>
+          );
+  }
+  let resolvedValue4: any;
+  if (history?.reviewHistory?.length) {
+    resolvedValue4 = (
+            <HistoryLineChart
+              data={history.reviewHistory.map((item: any) => ({
+                date: new Date(item.snapshotDate).toLocaleDateString(),
+                reviews: item.totalReviews
+              }))}
+              xKey="date"
+              yKey="reviews"
+            />
+          );
+  } else {
+    resolvedValue4 = (
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de avaliações.</p>
+          );
+  }
+  let resolvedValue5: any;
+  if (game.steamXrayAccess.playerHistoryAvailable && history?.playerHistory?.length) {
+    resolvedValue5 = (
+            <HistoryLineChart
+              data={history.playerHistory.map((item: any) => ({
+                date: new Date(item.snapshotDate).toLocaleDateString(),
+                players: item.currentPlayers
+              }))}
+              xKey="date"
+              yKey="players"
+            />
+          );
+  } else {
+        let resolvedValue13: any;
+    if (game.steamXrayAccess.playerHistoryAvailable) {
+      resolvedValue13 = (
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de jogadores.</p>
+          );
+    } else {
+      resolvedValue13 = (
+            <p className="text-sm text-muted-foreground">Histórico de jogadores simultâneos começa no Plus.</p>
+          );
+    }
+resolvedValue5 = resolvedValue13;
+  }
+  let resolvedValue6: any;
+  if (game.steamXrayAccess.playerHistoryAvailable) {
+    resolvedValue6 = "Histórico de jogadores está disponível neste plano.";
+  } else {
+    resolvedValue6 = "Histórico de jogadores libera no Plus e no Pro.";
+  }
+  let resolvedValue7: any;
+  if (game.steamXrayAccess.rawSnapshotsBetaAvailable) {
+    resolvedValue7 = "Stream beta de snapshots brutos está ativo neste nível de acesso.";
+  } else {
+    resolvedValue7 = "Stream beta de snapshots brutos exige acesso antecipado.";
+  }
+  let resolvedValue8: any;
+  if (game.steamXrayAccess.rawSnapshotsBetaAvailable) {
+        let resolvedValue14: any;
+    if (snapshots.length > 0) {
+      resolvedValue14 = (
+              snapshots.slice(0, 10).map((snapshot) => {
+                let resolvedValue18: any;
+                if (snapshot.reviewScore) {
+                  resolvedValue18 = `${snapshot.reviewScore.toFixed(1)}%`;
+                } else {
+                  resolvedValue18 = "N/A";
+                }
+                return (
+                <div key={snapshot.snapshotDate} className="rounded-2xl border p-3">
+                  <p className="font-medium">{new Date(snapshot.snapshotDate).toLocaleString()}</p>
+                  <p className="text-muted-foreground">
+                    {`Jogadores: ${formatNumber(snapshot.currentPlayers ?? null)} · Nota das avaliações: ${resolvedValue18}`}
+                  </p>
+                </div>
+              );
+              })
+            );
+    } else {
+      resolvedValue14 = (
+              <p className="text-muted-foreground">Ainda não há snapshots brutos disponíveis.</p>
+            );
+    }
+resolvedValue8 = (
+        <Card>
+          <CardHeader>
+            <CardTitle>Stream beta de snapshots brutos</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {resolvedValue14}
+          </CardContent>
+        </Card>
+      );
+  } else {
+    resolvedValue8 = null;
+  }
+return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {game.genres.map((genre: any) => (
+              <Badge key={genre.steamGenreId ?? genre.steamGenre.id} variant="secondary">
+                {genre.steamGenre.name}
+              </Badge>
+            ))}
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">{game.name}</h1>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{game.shortDescription ?? "Nenhuma descrição disponível."}</p>
+          </div>
+        </div>
+        <Card className="w-full max-w-sm">
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div className="space-y-2">
+              <CardTitle>Snapshot atual</CardTitle>
+              <Badge variant="outline">{`Steam X-Ray · ${game.steamXrayAccess.label}`}</Badge>
+            </div>
+            <ExportActions
+              label="Exportar"
+              xlsxHref={`/api/exports/games/${appId}?format=xlsx`}
+              csvHref={`/api/exports/games/${appId}?format=csv`}
+              googleSheetsEndpoint={`/api/exports/games/${appId}`}
+            />
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <p className="text-muted-foreground">
+              {resolvedValue0}
+            </p>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Preço</span>
+              <span>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Avaliações</span>
+              <span>{formatNumber(game.reviewCount)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Nota das avaliações</span>
+              <span>{resolvedValue1}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Jogadores atuais</span>
+              <span>{formatNumber(game.currentPlayers)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div ref={databaseLoad.ref}>
+      {resolvedValue2}
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -247,48 +416,13 @@ export function GameDetailClient({ appId }: { appId: number }) {
       </div>
       <div ref={historyLoad.ref} className="grid gap-6 xl:grid-cols-3">
         <ChartCard title="Histórico de preço">
-          {history?.priceHistory?.length ? (
-            <HistoryLineChart
-              data={history.priceHistory.map((item: any) => ({
-                date: new Date(item.snapshotDate).toLocaleDateString(),
-                price: (item.finalPriceCents ?? 0) / 100
-              }))}
-              xKey="date"
-              yKey="price"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">Ainda não há histórico de preço.</p>
-          )}
+          {resolvedValue3}
         </ChartCard>
         <ChartCard title="Histórico de avaliações">
-          {history?.reviewHistory?.length ? (
-            <HistoryLineChart
-              data={history.reviewHistory.map((item: any) => ({
-                date: new Date(item.snapshotDate).toLocaleDateString(),
-                reviews: item.totalReviews
-              }))}
-              xKey="date"
-              yKey="reviews"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">Ainda não há histórico de avaliações.</p>
-          )}
+          {resolvedValue4}
         </ChartCard>
         <ChartCard title="Histórico de jogadores">
-          {game.steamXrayAccess.playerHistoryAvailable && history?.playerHistory?.length ? (
-            <HistoryLineChart
-              data={history.playerHistory.map((item: any) => ({
-                date: new Date(item.snapshotDate).toLocaleDateString(),
-                players: item.currentPlayers
-              }))}
-              xKey="date"
-              yKey="players"
-            />
-          ) : game.steamXrayAccess.playerHistoryAvailable ? (
-            <p className="text-sm text-muted-foreground">Ainda não há histórico de jogadores.</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">Histórico de jogadores simultâneos começa no Plus.</p>
-          )}
+          {resolvedValue5}
         </ChartCard>
       </div>
       <Card>
@@ -298,31 +432,11 @@ export function GameDetailClient({ appId }: { appId: number }) {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>{`Plano atual: ${game.steamXrayAccess.label}.`}</p>
           <p>{`Janela de histórico: ${game.steamXrayAccess.historyLimit} dias para dados de gráfico.`}</p>
-          <p>{game.steamXrayAccess.playerHistoryAvailable ? "Histórico de jogadores está disponível neste plano." : "Histórico de jogadores libera no Plus e no Pro."}</p>
-          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Stream beta de snapshots brutos está ativo neste nível de acesso." : "Stream beta de snapshots brutos exige acesso antecipado."}</p>
+          <p>{resolvedValue6}</p>
+          <p>{resolvedValue7}</p>
         </CardContent>
       </Card>
-      {game.steamXrayAccess.rawSnapshotsBetaAvailable ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Stream beta de snapshots brutos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {snapshots.length > 0 ? (
-              snapshots.slice(0, 10).map((snapshot) => (
-                <div key={snapshot.snapshotDate} className="rounded-2xl border p-3">
-                  <p className="font-medium">{new Date(snapshot.snapshotDate).toLocaleString()}</p>
-                  <p className="text-muted-foreground">
-                    {`Jogadores: ${formatNumber(snapshot.currentPlayers ?? null)} · Nota das avaliações: ${snapshot.reviewScore ? `${snapshot.reviewScore.toFixed(1)}%` : "N/A"}`}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-muted-foreground">Ainda não há snapshots brutos disponíveis.</p>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+      {resolvedValue8}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>

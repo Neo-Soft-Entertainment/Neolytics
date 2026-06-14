@@ -35,14 +35,20 @@ export function ProjectsPageClient() {
     setError(null);
     setIsSubmitting(true);
 
-    const response = await fetch("/api/projects", {
+        let resolvedValue0: any;
+    if (form.pricePointCents) {
+      resolvedValue0 = Number(form.pricePointCents);
+    } else {
+      resolvedValue0 = null;
+    }
+const response = await fetch("/api/projects", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
         ...form,
-        pricePointCents: form.pricePointCents ? Number(form.pricePointCents) : null
+        pricePointCents: resolvedValue0
       })
     });
 
@@ -59,7 +65,101 @@ export function ProjectsPageClient() {
     router.refresh();
   }
 
-  return (
+    let resolvedValue1: any;
+  if (query.isLoading) {
+    resolvedValue1 = (
+            <p className="text-sm text-muted-foreground">{t("projects.loading")}</p>
+          );
+  } else {
+        let resolvedValue4: any;
+    if (query.isError) {
+      resolvedValue4 = (
+            <ErrorState title={t("projects.unavailable")} description={t("projects.unavailableDescription")} />
+          );
+    } else {
+            let resolvedValue5: any;
+      if (query.data && query.data.length > 0) {
+        resolvedValue5 = (
+            query.data.map((project) => {
+              let resolvedValue6: any;
+              if (project.analysis?.averageReviewScore) {
+                resolvedValue6 = formatPercent(project.analysis.averageReviewScore, 1);
+              } else {
+                resolvedValue6 = t("common.na");
+              }
+              let resolvedValue7: any;
+              if (project.analysis?.medianRevenueCents) {
+                resolvedValue7 = formatCurrency(project.analysis.medianRevenueCents);
+              } else {
+                resolvedValue7 = t("common.na");
+              }
+              return (
+              <Card key={project.id} className="overflow-hidden">
+                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+                <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg">
+                      <Link className="hover:underline" href={`/projects/${project.id}`}>
+                        {project.name}
+                      </Link>
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">{project.elevatorPitch || t("projects.noPitchYet")}</p>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs font-medium text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
+                    {(project.stage ?? "DISCOVERY").replaceAll("_", " ")}
+                  </span>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.competition")}</p>
+                    <p className="mt-1 text-lg font-semibold">{project.analysis?.competitionCount ?? t("common.na")}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.avgReview")}</p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {resolvedValue6}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.medianRevenue")}</p>
+                    <p className="mt-1 text-lg font-semibold">
+                      {resolvedValue7}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+            })
+          );
+      } else {
+        resolvedValue5 = (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("projects.noProjectsYet")}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {t("projects.noProjectsYetCopy")}
+              </CardContent>
+            </Card>
+          );
+      }
+resolvedValue4 = resolvedValue5;
+    }
+resolvedValue1 = resolvedValue4;
+  }
+  let resolvedValue2: any;
+  if (error) {
+    resolvedValue2 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (isSubmitting) {
+    resolvedValue3 = t("projects.creating");
+  } else {
+    resolvedValue3 = t("projects.createProject");
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title={t("projects.pageTitle")}
@@ -93,57 +193,7 @@ export function ProjectsPageClient() {
       />
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-4">
-          {query.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("projects.loading")}</p>
-          ) : query.isError ? (
-            <ErrorState title={t("projects.unavailable")} description={t("projects.unavailableDescription")} />
-          ) : query.data && query.data.length > 0 ? (
-            query.data.map((project) => (
-              <Card key={project.id} className="overflow-hidden">
-                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-                <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      <Link className="hover:underline" href={`/projects/${project.id}`}>
-                        {project.name}
-                      </Link>
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{project.elevatorPitch || t("projects.noPitchYet")}</p>
-                  </div>
-                  <span className="rounded-full border border-white/10 bg-white/55 px-2.5 py-1 text-xs font-medium text-muted-foreground backdrop-blur dark:bg-white/[0.04]">
-                    {(project.stage ?? "DISCOVERY").replaceAll("_", " ")}
-                  </span>
-                </CardHeader>
-                <CardContent className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.competition")}</p>
-                    <p className="mt-1 text-lg font-semibold">{project.analysis?.competitionCount ?? t("common.na")}</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.avgReview")}</p>
-                    <p className="mt-1 text-lg font-semibold">
-                      {project.analysis?.averageReviewScore ? formatPercent(project.analysis.averageReviewScore, 1) : t("common.na")}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("projects.medianRevenue")}</p>
-                    <p className="mt-1 text-lg font-semibold">
-                      {project.analysis?.medianRevenueCents ? formatCurrency(project.analysis.medianRevenueCents) : t("common.na")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("projects.noProjectsYet")}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {t("projects.noProjectsYetCopy")}
-              </CardContent>
-            </Card>
-          )}
+          {resolvedValue1}
         </div>
         <Card className="h-fit overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-70" />
@@ -156,7 +206,7 @@ export function ProjectsPageClient() {
               <Input
                 id="project-name"
                 value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                onChange={(event: any) => setForm((current: any) => ({ ...current, name: event.target.value }))}
                 placeholder={t("projects.projectName")}
               />
             </div>
@@ -165,7 +215,7 @@ export function ProjectsPageClient() {
               <Textarea
                 id="project-pitch"
                 value={form.elevatorPitch}
-                onChange={(event) => setForm((current) => ({ ...current, elevatorPitch: event.target.value }))}
+                onChange={(event: any) => setForm((current: any) => ({ ...current, elevatorPitch: event.target.value }))}
                 placeholder={t("projects.elevatorPitch")}
               />
             </div>
@@ -174,7 +224,7 @@ export function ProjectsPageClient() {
               <Textarea
                 id="project-description"
                 value={form.description}
-                onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                onChange={(event: any) => setForm((current: any) => ({ ...current, description: event.target.value }))}
                 placeholder={t("projects.projectDescription")}
               />
             </div>
@@ -184,7 +234,7 @@ export function ProjectsPageClient() {
                 <Input
                   id="project-genres"
                   value={form.genreInput}
-                  onChange={(event) => setForm((current) => ({ ...current, genreInput: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, genreInput: event.target.value }))}
                   placeholder="strategy, rpg"
                 />
               </div>
@@ -193,7 +243,7 @@ export function ProjectsPageClient() {
                 <Input
                   id="project-tags"
                   value={form.tagInput}
-                  onChange={(event) => setForm((current) => ({ ...current, tagInput: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, tagInput: event.target.value }))}
                   placeholder="deckbuilder, co-op"
                 />
               </div>
@@ -204,7 +254,7 @@ export function ProjectsPageClient() {
                 <Input
                   id="project-monetization"
                   value={form.monetizationModel}
-                  onChange={(event) => setForm((current) => ({ ...current, monetizationModel: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, monetizationModel: event.target.value }))}
                   placeholder="premium, free-to-play"
                 />
               </div>
@@ -213,14 +263,14 @@ export function ProjectsPageClient() {
                 <Input
                   id="project-price"
                   value={form.pricePointCents}
-                  onChange={(event) => setForm((current) => ({ ...current, pricePointCents: event.target.value }))}
+                  onChange={(event: any) => setForm((current: any) => ({ ...current, pricePointCents: event.target.value }))}
                   placeholder="2499"
                 />
               </div>
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {resolvedValue2}
             <Button disabled={isSubmitting} onClick={createProject}>
-              {isSubmitting ? t("projects.creating") : t("projects.createProject")}
+              {resolvedValue3}
             </Button>
           </CardContent>
         </Card>

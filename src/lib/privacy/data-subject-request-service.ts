@@ -102,7 +102,13 @@ export async function reviewDataSubjectRequest(params: {
   client?: RequestClient;
 }) {
   const requestClient = getRequestClient(params.client);
-  const request = await requestClient.dataSubjectRequest.update({
+    let resolvedValue0: any;
+  if (params.status === DataSubjectRequestStatus.COMPLETED || params.status === DataSubjectRequestStatus.REJECTED) {
+    resolvedValue0 = new Date();
+  } else {
+    resolvedValue0 = null;
+  }
+const request = await requestClient.dataSubjectRequest.update({
     where: {
       id: params.requestId
     },
@@ -111,20 +117,24 @@ export async function reviewDataSubjectRequest(params: {
       handledById: params.handledById,
       resolution: params.resolution ?? null,
       completedAt:
-        params.status === DataSubjectRequestStatus.COMPLETED || params.status === DataSubjectRequestStatus.REJECTED
-          ? new Date()
-          : null
+        resolvedValue0
     }
   });
 
-  await createPrivacyAuditLog(requestClient, {
+    let resolvedValue1: any;
+  if (params.status === DataSubjectRequestStatus.REJECTED) {
+    resolvedValue1 = PrivacyDecision.BLOCK;
+  } else {
+    resolvedValue1 = PrivacyDecision.ALLOW;
+  }
+await createPrivacyAuditLog(requestClient, {
     organizationId: params.organizationId ?? null,
     actorId: params.handledById,
     actorRole: params.actorRole ?? null,
     action: "data_subject_request.reviewed",
     resourceType: "data_subject_request",
     resourceId: request.id,
-    decision: params.status === DataSubjectRequestStatus.REJECTED ? PrivacyDecision.BLOCK : PrivacyDecision.ALLOW,
+    decision: resolvedValue1,
     reason: params.resolution ?? params.status
   });
 
@@ -189,7 +199,7 @@ export async function buildPersonalDataAccessPackage(userId: string, client?: Re
     user,
     consents,
     dataSubjectRequests: requests,
-    organizations: memberships.map((membership) => ({
+    organizations: memberships.map((membership: any) => ({
       id: membership.organization.id,
       name: membership.organization.name,
       slug: membership.organization.slug,
@@ -205,7 +215,16 @@ export async function getDeletionBlockReason(params: {
   client?: RequestClient;
 }) {
   const requestClient = getRequestClient(params.client);
-  const legalHold = await requestClient.privacyLegalHold.findFirst({
+    let resolvedValue2: any;
+  if (params.organizationId) {
+    resolvedValue2 = [{
+              resourceType: "organization",
+              resourceId: params.organizationId
+            }];
+  } else {
+    resolvedValue2 = [];
+  }
+const legalHold = await requestClient.privacyLegalHold.findFirst({
     where: {
       active: true,
       OR: [
@@ -213,12 +232,7 @@ export async function getDeletionBlockReason(params: {
           resourceType: "user",
           resourceId: params.userId
         },
-        ...(params.organizationId
-          ? [{
-              resourceType: "organization",
-              resourceId: params.organizationId
-            }]
-          : [])
+        ...(resolvedValue2)
       ]
     },
     orderBy: {

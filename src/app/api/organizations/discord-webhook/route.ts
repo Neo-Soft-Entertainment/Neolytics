@@ -11,7 +11,7 @@ import { decryptNullableString, encryptNullableString } from "@/lib/security/enc
 import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
-  webhookUrl: z.union([z.string().url(), z.literal("")]).optional().transform((value) => value?.trim() ?? ""),
+  webhookUrl: z.union([z.string().url(), z.literal("")]).optional().transform((value: any) => value?.trim() ?? ""),
   enabled: z.boolean()
 });
 

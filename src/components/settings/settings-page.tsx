@@ -58,8 +58,9 @@ export async function SettingsPage() {
       }
     })
   ]);
-  const memberships = session?.user?.id
-    ? await db.organizationMember.findMany({
+    let resolvedValue0: any;
+  if (session?.user?.id) {
+    resolvedValue0 = await db.organizationMember.findMany({
         where: {
           userId: session.user.id
         },
@@ -77,32 +78,60 @@ export async function SettingsPage() {
         orderBy: {
           joinedAt: "asc"
         }
-      })
-    : [];
+      });
+  } else {
+    resolvedValue0 = [];
+  }
+const memberships = resolvedValue0;
   const language = session?.user?.preferredLanguage ?? "en";
   const t = (key: Parameters<typeof translate>[1], values?: Record<string, string | number>) =>
     translate(language, key, values);
-  const currentMembership = memberships.find((membership) => membership.organizationId === organization.id);
+  const currentMembership = memberships.find((membership: any) => membership.organizationId === organization.id);
   const canManageSubscription = currentMembership?.role === "OWNER" || currentMembership?.role === "ADMIN";
-  const canManageAccess = currentMembership
-    ? canManageOrganization(currentMembership.role, currentMembership.permissions)
-    : false;
-  const canManageWorkspaceSettings = currentMembership
-    ? canManageWorkspaces(currentMembership.role, currentMembership.permissions)
-    : false;
+    let resolvedValue1: any;
+  if (currentMembership) {
+    resolvedValue1 = canManageOrganization(currentMembership.role, currentMembership.permissions);
+  } else {
+    resolvedValue1 = false;
+  }
+const canManageAccess = resolvedValue1;
+    let resolvedValue2: any;
+  if (currentMembership) {
+    resolvedValue2 = canManageWorkspaces(currentMembership.role, currentMembership.permissions);
+  } else {
+    resolvedValue2 = false;
+  }
+const canManageWorkspaceSettings = resolvedValue2;
   const canDeleteOrganization = currentMembership?.role === "OWNER";
   const hasGoogleLogin = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const hasDiscordLogin = Boolean(process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET);
   const hasAppleLogin = Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET);
   const hasGoogleSheets = Boolean(process.env.GOOGLE_SHEETS_CLIENT_EMAIL && process.env.GOOGLE_SHEETS_PRIVATE_KEY);
-  const seatLimitLabel = subscriptionSnapshot.limits.seats === null
-    ? "Ilimitado"
-    : `${subscriptionSnapshot.usage.seats}/${subscriptionSnapshot.limits.seats}`;
+    let resolvedValue3: any;
+  if (subscriptionSnapshot.limits.seats === null) {
+    resolvedValue3 = "Ilimitado";
+  } else {
+    resolvedValue3 = `${subscriptionSnapshot.usage.seats}/${subscriptionSnapshot.limits.seats}`;
+  }
+const seatLimitLabel = resolvedValue3;
   const privacyPurposes = listProcessingPurposes();
-  const privacyConsents = session?.user?.id ? await listUserConsentState(session.user.id) : [];
-  const privacyRequests = session?.user?.id ? await listUserDataSubjectRequests(session.user.id) : [];
-  const privacyAdminSnapshot = canManageSubscription
-    ? await Promise.all([
+    let resolvedValue4: any;
+  if (session?.user?.id) {
+    resolvedValue4 = await listUserConsentState(session.user.id);
+  } else {
+    resolvedValue4 = [];
+  }
+const privacyConsents = resolvedValue4;
+    let resolvedValue5: any;
+  if (session?.user?.id) {
+    resolvedValue5 = await listUserDataSubjectRequests(session.user.id);
+  } else {
+    resolvedValue5 = [];
+  }
+const privacyRequests = resolvedValue5;
+    let resolvedValue6: any;
+  if (canManageSubscription) {
+    resolvedValue6 = await Promise.all([
         db.userConsent.count(),
         db.dataSubjectRequest.count({
           where: {
@@ -179,7 +208,17 @@ export async function SettingsPage() {
           auditLogs: auditLogCount,
           legalHolds: legalHoldCount
         },
-        requests: adminRequests.map((item) => ({
+        requests: adminRequests.map((item: any) => {
+          let resolvedValue20: any;
+          if (item.handledBy) {
+            resolvedValue20 = {
+                email: item.handledBy.email,
+                name: item.handledBy.name
+              };
+          } else {
+            resolvedValue20 = null;
+          }
+          return ({
           id: item.id,
           requestType: item.requestType,
           status: item.status,
@@ -191,14 +230,10 @@ export async function SettingsPage() {
             email: item.user.email,
             name: item.user.name
           },
-          handledBy: item.handledBy
-            ? {
-                email: item.handledBy.email,
-                name: item.handledBy.name
-              }
-            : null
-        })),
-        products: adminProducts.map((item) => ({
+          handledBy: resolvedValue20
+        });
+        }),
+        products: adminProducts.map((item: any) => ({
           id: item.id,
           productName: item.productName,
           productType: item.productType,
@@ -206,23 +241,98 @@ export async function SettingsPage() {
           minimumCohortSize: item.minimumCohortSize,
           privacyRiskScore: item.privacyRiskScore
         })),
-        incidents: adminIncidents.map((item) => ({
+        incidents: adminIncidents.map((item: any) => ({
           id: item.id,
           severity: item.severity,
           status: item.status,
           discoveredAt: item.discoveredAt.toISOString()
         })),
-        auditLogs: adminAuditLogs.map((item) => ({
+        auditLogs: adminAuditLogs.map((item: any) => ({
           id: item.id,
           action: item.action,
           resourceType: item.resourceType,
           decision: item.decision,
           createdAt: item.createdAt.toISOString()
         }))
-      }))
-    : null;
+      }));
+  } else {
+    resolvedValue6 = null;
+  }
+const privacyAdminSnapshot = resolvedValue6;
 
-  return (
+    let resolvedValue7: any;
+  if (hasGoogleLogin) {
+    resolvedValue7 = "default";
+  } else {
+    resolvedValue7 = "secondary";
+  }
+  let resolvedValue8: any;
+  if (hasGoogleLogin) {
+    resolvedValue8 = t("settings.enabled");
+  } else {
+    resolvedValue8 = t("settings.disabled");
+  }
+  let resolvedValue9: any;
+  if (hasGoogleLogin) {
+    resolvedValue9 = t("settings.googleEnabledCopy");
+  } else {
+    resolvedValue9 = t("settings.googleDisabledCopy");
+  }
+  let resolvedValue10: any;
+  if (hasDiscordLogin) {
+    resolvedValue10 = "default";
+  } else {
+    resolvedValue10 = "secondary";
+  }
+  let resolvedValue11: any;
+  if (hasDiscordLogin) {
+    resolvedValue11 = t("settings.enabled");
+  } else {
+    resolvedValue11 = t("settings.disabled");
+  }
+  let resolvedValue12: any;
+  if (hasDiscordLogin) {
+    resolvedValue12 = t("settings.discordEnabledCopy");
+  } else {
+    resolvedValue12 = t("settings.discordDisabledCopy");
+  }
+  let resolvedValue13: any;
+  if (hasAppleLogin) {
+    resolvedValue13 = "default";
+  } else {
+    resolvedValue13 = "secondary";
+  }
+  let resolvedValue14: any;
+  if (hasAppleLogin) {
+    resolvedValue14 = t("settings.enabled");
+  } else {
+    resolvedValue14 = t("settings.disabled");
+  }
+  let resolvedValue15: any;
+  if (hasAppleLogin) {
+    resolvedValue15 = t("settings.appleEnabledCopy");
+  } else {
+    resolvedValue15 = t("settings.appleDisabledCopy");
+  }
+  let resolvedValue16: any;
+  if (hasGoogleSheets) {
+    resolvedValue16 = "default";
+  } else {
+    resolvedValue16 = "secondary";
+  }
+  let resolvedValue17: any;
+  if (hasGoogleSheets) {
+    resolvedValue17 = t("settings.enabled");
+  } else {
+    resolvedValue17 = t("settings.disabled");
+  }
+  let resolvedValue18: any;
+  if (hasGoogleSheets) {
+    resolvedValue18 = t("settings.googleSheetsEnabledCopy");
+  } else {
+    resolvedValue18 = t("settings.googleSheetsDisabledCopy");
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title="Configurações"
@@ -412,40 +522,34 @@ export async function SettingsPage() {
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">{t("settings.googleLogin")}</p>
-                    <Badge variant={hasGoogleLogin ? "default" : "secondary"}>
-                      {hasGoogleLogin ? t("settings.enabled") : t("settings.disabled")}
+                    <Badge variant={resolvedValue7}>
+                      {resolvedValue8}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
-                    {hasGoogleLogin
-                      ? t("settings.googleEnabledCopy")
-                      : t("settings.googleDisabledCopy")}
+                    {resolvedValue9}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">{t("settings.discordLogin")}</p>
-                    <Badge variant={hasDiscordLogin ? "default" : "secondary"}>
-                      {hasDiscordLogin ? t("settings.enabled") : t("settings.disabled")}
+                    <Badge variant={resolvedValue10}>
+                      {resolvedValue11}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
-                    {hasDiscordLogin
-                      ? t("settings.discordEnabledCopy")
-                      : t("settings.discordDisabledCopy")}
+                    {resolvedValue12}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">{t("settings.appleLogin")}</p>
-                    <Badge variant={hasAppleLogin ? "default" : "secondary"}>
-                      {hasAppleLogin ? t("settings.enabled") : t("settings.disabled")}
+                    <Badge variant={resolvedValue13}>
+                      {resolvedValue14}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
-                    {hasAppleLogin
-                      ? t("settings.appleEnabledCopy")
-                      : t("settings.appleDisabledCopy")}
+                    {resolvedValue15}
                   </p>
                 </div>
               </CardContent>
@@ -460,14 +564,12 @@ export async function SettingsPage() {
                 <div className="rounded-2xl border border-white/10 bg-white/45 p-4 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">{t("settings.googleSheetsExport")}</p>
-                    <Badge variant={hasGoogleSheets ? "default" : "secondary"}>
-                      {hasGoogleSheets ? t("settings.enabled") : t("settings.disabled")}
+                    <Badge variant={resolvedValue16}>
+                      {resolvedValue17}
                     </Badge>
                   </div>
                   <p className="mt-1 text-muted-foreground">
-                    {hasGoogleSheets
-                      ? t("settings.googleSheetsEnabledCopy")
-                      : t("settings.googleSheetsDisabledCopy")}
+                    {resolvedValue18}
                   </p>
                 </div>
               </CardContent>
@@ -494,19 +596,25 @@ export async function SettingsPage() {
 
         <TabsContent value="privacy" className="space-y-4">
           <PrivacyPanel
-            consents={privacyConsents.map((item) => ({
-              purpose: item.purpose,
-              consent: item.consent
-                ? {
+            consents={privacyConsents.map((item: any) => {
+              let resolvedValue19: any;
+              if (item.consent) {
+                resolvedValue19 = {
                     id: item.consent.id,
                     status: item.consent.status,
                     consentTextVersion: item.consent.consentTextVersion,
                     grantedAt: item.consent.grantedAt.toISOString(),
                     revokedAt: item.consent.revokedAt?.toISOString() ?? null
-                  }
-                : null
-            }))}
-            requests={privacyRequests.map((item) => ({
+                  };
+              } else {
+                resolvedValue19 = null;
+              }
+              return ({
+              purpose: item.purpose,
+              consent: resolvedValue19
+            });
+            })}
+            requests={privacyRequests.map((item: any) => ({
               id: item.id,
               requestType: item.requestType,
               status: item.status,

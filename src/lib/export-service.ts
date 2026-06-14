@@ -49,7 +49,13 @@ function formatDate(value: Date | string | null | undefined) {
 }
 
 function toNumber(value: number | bigint | null | undefined) {
-  return value === null || value === undefined ? 0 : Number(value);
+    let resolvedValue0: any;
+  if (value === null || value === undefined) {
+    resolvedValue0 = 0;
+  } else {
+    resolvedValue0 = Number(value);
+  }
+return resolvedValue0;
 }
 
 function average(values: number[]) {
@@ -68,7 +74,13 @@ function median(values: number[]) {
   const sorted = [...values].sort((left, right) => left - right);
   const middle = Math.floor(sorted.length / 2);
 
-  return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+    let resolvedValue1: any;
+  if (sorted.length % 2 === 0) {
+    resolvedValue1 = (sorted[middle - 1] + sorted[middle]) / 2;
+  } else {
+    resolvedValue1 = sorted[middle];
+  }
+return resolvedValue1;
 }
 
 function getSignalLabel(score: number | null | undefined, reviewCount: number | null | undefined) {
@@ -225,16 +237,32 @@ export function createPdfBuffer(workbook: ExportWorkbook) {
 
 export async function createDownloadResponse(workbook: ExportWorkbook, format: "xlsx" | "csv" | "pdf") {
   const fileName = `${workbook.fileName}.${format}`;
-  const body = format === "xlsx"
-    ? createWorkbookBuffer(workbook)
-    : format === "csv"
-      ? createCsvText(workbook)
-      : await createPdfBuffer(workbook);
-  const contentType = format === "xlsx"
-    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    : format === "csv"
-      ? "text/csv; charset=utf-8"
-      : "application/pdf";
+    let resolvedValue2: any;
+  if (format === "xlsx") {
+    resolvedValue2 = createWorkbookBuffer(workbook);
+  } else {
+        let resolvedValue39: any;
+    if (format === "csv") {
+      resolvedValue39 = createCsvText(workbook);
+    } else {
+      resolvedValue39 = await createPdfBuffer(workbook);
+    }
+resolvedValue2 = resolvedValue39;
+  }
+const body = resolvedValue2;
+    let resolvedValue3: any;
+  if (format === "xlsx") {
+    resolvedValue3 = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  } else {
+        let resolvedValue40: any;
+    if (format === "csv") {
+      resolvedValue40 = "text/csv; charset=utf-8";
+    } else {
+      resolvedValue40 = "application/pdf";
+    }
+resolvedValue3 = resolvedValue40;
+  }
+const contentType = resolvedValue3;
 
   return new Response(body, {
     headers: {
@@ -351,7 +379,7 @@ export async function buildDashboardWorkbook(workspaceId: string): Promise<Expor
       },
       {
         name: "Tracked Games",
-        rows: data.trackedGames.map((item) => ({
+        rows: data.trackedGames.map((item: any) => ({
           game: item.steamGame.name,
           appId: item.steamGame.appId,
           reviewCount: item.steamGame.reviewCount ?? 0
@@ -359,7 +387,7 @@ export async function buildDashboardWorkbook(workspaceId: string): Promise<Expor
       },
       {
         name: "Recent Launches",
-        rows: data.recentLaunches.map((game) => ({
+        rows: data.recentLaunches.map((game: any) => ({
           game: game.name,
           appId: game.appId,
           releaseDate: formatDate(game.releaseDate)
@@ -367,7 +395,7 @@ export async function buildDashboardWorkbook(workspaceId: string): Promise<Expor
       },
       {
         name: "Top Revenue",
-        rows: data.topRevenue.map((item) => ({
+        rows: data.topRevenue.map((item: any) => ({
           game: item.steamGame.name,
           appId: item.steamGame.appId,
           medianNetRevenueCents: item.medianNetRevenueCents,
@@ -376,7 +404,7 @@ export async function buildDashboardWorkbook(workspaceId: string): Promise<Expor
       },
       {
         name: "Fastest Growing",
-        rows: data.fastestGrowing.map((game) => ({
+        rows: data.fastestGrowing.map((game: any) => ({
           game: game.name,
           appId: game.appId,
           reviewCount: game.reviewCount ?? 0
@@ -410,15 +438,23 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
       },
       {
         name: "Cost Centers",
-        rows: data.costCenters.map((costCenter) => ({
+        rows: data.costCenters.map((costCenter) => {
+          let resolvedValue4: any;
+          if (costCenter.active) {
+            resolvedValue4 = "Yes";
+          } else {
+            resolvedValue4 = "No";
+          }
+          return ({
           code: costCenter.code,
           name: costCenter.name,
-          active: costCenter.active ? "Yes" : "No"
-        }))
+          active: resolvedValue4
+        });
+        })
       },
       {
         name: "Cash Flow",
-        rows: data.cashflow.map((item) => ({
+        rows: data.cashflow.map((item: any) => ({
           month: item.month,
           inflowUsd: formatCurrency(item.inflowCents),
           outflowUsd: formatCurrency(item.outflowCents),
@@ -466,7 +502,7 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
       },
       {
         name: "Revenue Channels",
-        rows: data.commercialOperations.revenueChannels.map((channel) => ({
+        rows: data.commercialOperations.revenueChannels.map((channel: any) => ({
           sourceType: channel.sourceType,
           sourceName: channel.sourceName,
           entriesCount: channel.entriesCount,
@@ -546,7 +582,7 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
       {
         name: "Payable Allocations",
         rows: data.payableTitles.flatMap((title) =>
-          title.allocations.map((allocation) => ({
+          title.allocations.map((allocation: any) => ({
             prefix: title.prefix,
             titleNumber: title.titleNumber,
             supplierName: title.supplierName,
@@ -577,7 +613,7 @@ export async function buildFinanceWorkbook(organizationId: string): Promise<Expo
       },
       {
         name: "Project PnL",
-        rows: data.projectSnapshots.map((item) => ({
+        rows: data.projectSnapshots.map((item: any) => ({
           project: item.projectName,
           stage: item.stage,
           budgetPlannedUsd: formatCurrency(item.budgetPlannedCents),
@@ -608,7 +644,7 @@ export async function buildGameSearchWorkbook(input: {
     page: 1,
     pageSize: input.pageSize ?? 500
   });
-  const appIds = result.items.map((game) => game.appId);
+  const appIds = result.items.map((game: any) => game.appId);
   const enrichedGames = await db.steamGame.findMany({
     where: {
       appId: {
@@ -641,15 +677,29 @@ export async function buildGameSearchWorkbook(input: {
       }
     }
   });
-  const gamesByAppId = new Map(enrichedGames.map((game) => [game.appId, game]));
-  const games = result.items.map((game) => gamesByAppId.get(game.appId) ?? game);
-  const prices = games.map((game) => game.priceCurrent?.finalPriceCents ?? null).filter((value): value is number => value !== null);
-  const reviewScores = games.map((game) => game.reviewScore ?? null).filter((value): value is number => value !== null);
-  const reviewCounts = games.map((game) => game.reviewCount ?? 0);
-  const revenues = games.map((game) => toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null)).filter((value) => value > 0);
+  const gamesByAppId = new Map(enrichedGames.map((game: any) => [game.appId, game]));
+  const games = result.items.map((game: any) => gamesByAppId.get(game.appId) ?? game);
+  const prices = games.map((game: any) => game.priceCurrent?.finalPriceCents ?? null).filter((value): value is number => value !== null);
+  const reviewScores = games.map((game: any) => game.reviewScore ?? null).filter((value): value is number => value !== null);
+  const reviewCounts = games.map((game: any) => game.reviewCount ?? 0);
+  const revenues = games.map((game: any) => {
+    let resolvedValue5: any;
+    if ("revenueEstimates" in game) {
+      resolvedValue5 = game.revenueEstimates[0]?.medianNetRevenueCents;
+    } else {
+      resolvedValue5 = null;
+    }
+    return toNumber(resolvedValue5);
+  }).filter((value: any) => value > 0);
   const shortlist = [...games]
-    .map((game) => {
-      const revenue = toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null);
+    .map((game: any) => {
+            let resolvedValue6: any;
+      if ("revenueEstimates" in game) {
+        resolvedValue6 = game.revenueEstimates[0]?.medianNetRevenueCents;
+      } else {
+        resolvedValue6 = null;
+      }
+const revenue = toNumber(resolvedValue6);
       const score = Math.round(
         (game.reviewScore ?? 0) * 0.55
         + Math.min(25, Math.log10((game.reviewCount ?? 0) + 1) * 7)
@@ -671,7 +721,7 @@ export async function buildGameSearchWorkbook(input: {
     { band: "$20-$30", min: 2000, max: 2999 },
     { band: "$30+", min: 3000, max: null }
   ].map((band) => {
-    const bandGames = games.filter((game) => {
+    const bandGames = games.filter((game: any) => {
       const price = game.priceCurrent?.finalPriceCents ?? 0;
 
       if (band.min === null) {
@@ -688,24 +738,56 @@ export async function buildGameSearchWorkbook(input: {
     return {
       band: band.band,
       games: bandGames.length,
-      avgReviewScore: Math.round(average(bandGames.map((game) => game.reviewScore ?? 0))),
-      medianReviews: Math.round(median(bandGames.map((game) => game.reviewCount ?? 0))),
-      medianRevenueUsd: formatCurrency(median(bandGames.map((game) => toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null)).filter((value) => value > 0)))
+      avgReviewScore: Math.round(average(bandGames.map((game: any) => game.reviewScore ?? 0))),
+      medianReviews: Math.round(median(bandGames.map((game: any) => game.reviewCount ?? 0))),
+      medianRevenueUsd: formatCurrency(median(bandGames.map((game: any) => {
+        let resolvedValue7: any;
+        if ("revenueEstimates" in game) {
+          resolvedValue7 = game.revenueEstimates[0]?.medianNetRevenueCents;
+        } else {
+          resolvedValue7 = null;
+        }
+        return toNumber(resolvedValue7);
+      }).filter((value: any) => value > 0)))
     };
   });
   const tagCounts = new Map<string, { count: number; reviewScoreTotal: number; revenueTotal: number }>();
 
   for (const game of games) {
-    for (const tag of game.tags.map((item) => item.steamTag.name)) {
+    for (const tag of game.tags.map((item: any) => item.steamTag.name)) {
       const current = tagCounts.get(tag) ?? { count: 0, reviewScoreTotal: 0, revenueTotal: 0 };
       current.count += 1;
       current.reviewScoreTotal += game.reviewScore ?? 0;
-      current.revenueTotal += toNumber("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents : null);
+            let resolvedValue8: any;
+      if ("revenueEstimates" in game) {
+        resolvedValue8 = game.revenueEstimates[0]?.medianNetRevenueCents;
+      } else {
+        resolvedValue8 = null;
+      }
+current.revenueTotal += toNumber(resolvedValue8);
       tagCounts.set(tag, current);
     }
   }
 
-  return {
+    let resolvedValue9: any;
+  if (average(reviewScores) >= 80) {
+    resolvedValue9 = "The exported segment has a strong quality bar.";
+  } else {
+    resolvedValue9 = "The exported segment has quality gaps; inspect leaders before copying patterns.";
+  }
+  let resolvedValue10: any;
+  if (revenues.length > 0) {
+    resolvedValue10 = "Revenue estimates are available for part of this set; use the shortlist to prioritize deeper comparison.";
+  } else {
+    resolvedValue10 = "Revenue estimate coverage is thin; use reviews and price as the primary signal.";
+  }
+  let resolvedValue11: any;
+  if (shortlist[0]) {
+    resolvedValue11 = `Start by comparing ${shortlist[0].game.name} against the top 5 shortlist titles.`;
+  } else {
+    resolvedValue11 = "Refine filters and export again with a clearer segment.";
+  }
+return {
     fileName: "steam-games-search",
     title: "Steam Games Search Export",
     sheets: [
@@ -720,21 +802,28 @@ export async function buildGameSearchWorkbook(input: {
           { metric: "Median estimated revenue", value: formatCurrency(median(revenues)) },
           {
             metric: "Quality read",
-            value: average(reviewScores) >= 80 ? "The exported segment has a strong quality bar." : "The exported segment has quality gaps; inspect leaders before copying patterns."
+            value: resolvedValue9
           },
           {
             metric: "Commercial read",
-            value: revenues.length > 0 ? "Revenue estimates are available for part of this set; use the shortlist to prioritize deeper comparison." : "Revenue estimate coverage is thin; use reviews and price as the primary signal."
+            value: resolvedValue10
           },
           {
             metric: "Recommended next action",
-            value: shortlist[0] ? `Start by comparing ${shortlist[0].game.name} against the top 5 shortlist titles.` : "Refine filters and export again with a clearer segment."
+            value: resolvedValue11
           }
         ]
       },
       {
         name: "Opportunity Shortlist",
-        rows: shortlist.map((item, index) => ({
+        rows: shortlist.map((item, index) => {
+          let resolvedValue12: any;
+          if ("salesEstimates" in item.game) {
+            resolvedValue12 = item.game.salesEstimates[0]?.medianEstimate ?? null;
+          } else {
+            resolvedValue12 = null;
+          }
+          return ({
           rank: index + 1,
           appId: item.game.appId,
           name: item.game.name,
@@ -743,11 +832,12 @@ export async function buildGameSearchWorkbook(input: {
           priceUsd: formatCurrency(item.game.priceCurrent?.finalPriceCents ?? null),
           reviewScore: item.game.reviewScore ?? null,
           reviewCount: item.game.reviewCount ?? null,
-          medianSales: "salesEstimates" in item.game ? item.game.salesEstimates[0]?.medianEstimate ?? null : null,
+          medianSales: resolvedValue12,
           medianRevenueUsd: formatCurrency(item.revenue),
-          genres: item.game.genres.map((genre) => genre.steamGenre.name).join(", "),
-          tags: item.game.tags.slice(0, 8).map((tag) => tag.steamTag.name).join(", ")
-        }))
+          genres: item.game.genres.map((genre: any) => genre.steamGenre.name).join(", "),
+          tags: item.game.tags.slice(0, 8).map((tag: any) => tag.steamTag.name).join(", ")
+        });
+        })
       },
       {
         name: "Pricing Bands",
@@ -756,32 +846,54 @@ export async function buildGameSearchWorkbook(input: {
       {
         name: "Tag Signals",
         rows: Array.from(tagCounts.entries())
-          .map(([tag, data]) => ({
+          .map(([tag, data]) => {
+            let resolvedValue13: any;
+            if (data.count >= 5) {
+              resolvedValue13 = "Recurring segment signal";
+            } else {
+              resolvedValue13 = "Niche/edge signal";
+            }
+            return ({
             tag,
             games: data.count,
             avgReviewScore: Math.round(data.reviewScoreTotal / data.count),
             totalEstimatedRevenueUsd: formatCurrency(data.revenueTotal),
-            read: data.count >= 5 ? "Recurring segment signal" : "Niche/edge signal"
-          }))
+            read: resolvedValue13
+          });
+          })
           .sort((left, right) => right.games - left.games)
           .slice(0, 40)
       },
       {
         name: "Games",
-        rows: games.map((game) => ({
+        rows: games.map((game: any) => {
+          let resolvedValue14: any;
+          if ("salesEstimates" in game) {
+            resolvedValue14 = game.salesEstimates[0]?.medianEstimate ?? null;
+          } else {
+            resolvedValue14 = null;
+          }
+          let resolvedValue15: any;
+          if ("revenueEstimates" in game) {
+            resolvedValue15 = game.revenueEstimates[0]?.medianNetRevenueCents ?? null;
+          } else {
+            resolvedValue15 = null;
+          }
+          return ({
           appId: game.appId,
           name: game.name,
-          genres: game.genres.map((genre) => genre.steamGenre.name).join(", "),
-          tags: game.tags.slice(0, 12).map((tag) => tag.steamTag.name).join(", "),
+          genres: game.genres.map((genre: any) => genre.steamGenre.name).join(", "),
+          tags: game.tags.slice(0, 12).map((tag: any) => tag.steamTag.name).join(", "),
           priceCents: game.priceCurrent?.finalPriceCents ?? null,
           priceUsd: formatCurrency(game.priceCurrent?.finalPriceCents ?? null),
           reviewScore: game.reviewScore ?? null,
           reviewCount: game.reviewCount ?? null,
           releaseDate: formatDate(game.releaseDate),
-          medianSales: "salesEstimates" in game ? game.salesEstimates[0]?.medianEstimate ?? null : null,
-          medianRevenueUsd: formatCurrency("revenueEstimates" in game ? game.revenueEstimates[0]?.medianNetRevenueCents ?? null : null),
+          medianSales: resolvedValue14,
+          medianRevenueUsd: formatCurrency(resolvedValue15),
           signal: getSignalLabel(game.reviewScore, game.reviewCount)
-        }))
+        });
+        })
       }
     ]
   };
@@ -805,11 +917,89 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
   const latestReviewSnapshot = reviewHistory[reviewHistory.length - 1] ?? null;
   const firstPlayerSnapshot = playerHistory[0] ?? null;
   const latestPlayerSnapshot = playerHistory[playerHistory.length - 1] ?? null;
-  const reviewDelta = latestReviewSnapshot && firstReviewSnapshot ? latestReviewSnapshot.totalReviews - firstReviewSnapshot.totalReviews : null;
-  const playerDelta = latestPlayerSnapshot && firstPlayerSnapshot ? latestPlayerSnapshot.currentPlayers - firstPlayerSnapshot.currentPlayers : null;
-  const discountEvents = priceHistory.filter((item) => (item.discountPercent ?? 0) > 0);
-  const lowestObservedPrice = median(priceHistory.map((item) => item.finalPriceCents ?? 0).filter((value) => value > 0));
-  const executiveSignals = [
+    let resolvedValue16: any;
+  if (latestReviewSnapshot && firstReviewSnapshot) {
+    resolvedValue16 = latestReviewSnapshot.totalReviews - firstReviewSnapshot.totalReviews;
+  } else {
+    resolvedValue16 = null;
+  }
+const reviewDelta = resolvedValue16;
+    let resolvedValue17: any;
+  if (latestPlayerSnapshot && firstPlayerSnapshot) {
+    resolvedValue17 = latestPlayerSnapshot.currentPlayers - firstPlayerSnapshot.currentPlayers;
+  } else {
+    resolvedValue17 = null;
+  }
+const playerDelta = resolvedValue17;
+  const discountEvents = priceHistory.filter((item: any) => (item.discountPercent ?? 0) > 0);
+  const lowestObservedPrice = median(priceHistory.map((item: any) => item.finalPriceCents ?? 0).filter((value: any) => value > 0));
+    let resolvedValue18: any;
+  if (game.reviewScore) {
+    resolvedValue18 = `${game.reviewScore}% across ${game.reviewCount ?? 0} reviews`;
+  } else {
+    resolvedValue18 = "Review quality unavailable";
+  }
+  let resolvedValue19: any;
+  if ((game.reviewScore ?? 0) >= 80) {
+    resolvedValue19 = "Audience reception is strong enough to study feature promises and store positioning.";
+  } else {
+    resolvedValue19 = "Treat this as a cautionary comp unless demand is unusually high.";
+  }
+  let resolvedValue20: any;
+  if (latestRevenueEstimate) {
+    resolvedValue20 = `${formatCurrency(latestRevenueEstimate.lowNetRevenueCents)} - ${formatCurrency(latestRevenueEstimate.highNetRevenueCents)}`;
+  } else {
+    resolvedValue20 = "Revenue estimate unavailable";
+  }
+  let resolvedValue21: any;
+  if (latestRevenueEstimate) {
+    resolvedValue21 = "Use the median estimate as a planning anchor, not a forecast guarantee.";
+  } else {
+    resolvedValue21 = "Do not use this title for revenue planning until estimates are available.";
+  }
+  let resolvedValue22: any;
+  if (discountEvents.length > 0) {
+    resolvedValue22 = `, ${discountEvents.length} observed discount snapshots`;
+  } else {
+    resolvedValue22 = "";
+  }
+  let resolvedValue23: any;
+  if (discountEvents.length > 0) {
+    resolvedValue23 = "Discount behavior is visible; compare timing against review/player movement.";
+  } else {
+    resolvedValue23 = "No discount cadence is visible in the export window.";
+  }
+  let resolvedValue24: any;
+  if (reviewDelta === null) {
+    resolvedValue24 = "unknown";
+  } else {
+        let resolvedValue41: any;
+    if (reviewDelta >= 0) {
+      resolvedValue41 = `+${reviewDelta}`;
+    } else {
+      resolvedValue41 = String(reviewDelta);
+    }
+resolvedValue24 = resolvedValue41;
+  }
+  let resolvedValue25: any;
+  if (playerDelta === null) {
+    resolvedValue25 = "unknown";
+  } else {
+        let resolvedValue42: any;
+    if (playerDelta >= 0) {
+      resolvedValue42 = `+${playerDelta}`;
+    } else {
+      resolvedValue42 = String(playerDelta);
+    }
+resolvedValue25 = resolvedValue42;
+  }
+  let resolvedValue26: any;
+  if ((reviewDelta ?? 0) > 0 || (playerDelta ?? 0) > 0) {
+    resolvedValue26 = "There is observable movement worth checking against content updates or discounts.";
+  } else {
+    resolvedValue26 = "Momentum is flat in available snapshots.";
+  }
+const executiveSignals = [
     {
       signal: "Market role",
       read: getSignalLabel(game.reviewScore, game.reviewCount),
@@ -817,27 +1007,75 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
     },
     {
       signal: "Quality bar",
-      read: game.reviewScore ? `${game.reviewScore}% across ${game.reviewCount ?? 0} reviews` : "Review quality unavailable",
-      implication: (game.reviewScore ?? 0) >= 80 ? "Audience reception is strong enough to study feature promises and store positioning." : "Treat this as a cautionary comp unless demand is unusually high."
+      read: resolvedValue18,
+      implication: resolvedValue19
     },
     {
       signal: "Commercial range",
-      read: latestRevenueEstimate ? `${formatCurrency(latestRevenueEstimate.lowNetRevenueCents)} - ${formatCurrency(latestRevenueEstimate.highNetRevenueCents)}` : "Revenue estimate unavailable",
-      implication: latestRevenueEstimate ? "Use the median estimate as a planning anchor, not a forecast guarantee." : "Do not use this title for revenue planning until estimates are available."
+      read: resolvedValue20,
+      implication: resolvedValue21
     },
     {
       signal: "Price posture",
-      read: `${formatCurrency(game.priceCurrent?.finalPriceCents ?? null)} current price${discountEvents.length > 0 ? `, ${discountEvents.length} observed discount snapshots` : ""}`,
-      implication: discountEvents.length > 0 ? "Discount behavior is visible; compare timing against review/player movement." : "No discount cadence is visible in the export window."
+      read: `${formatCurrency(game.priceCurrent?.finalPriceCents ?? null)} current price${resolvedValue22}`,
+      implication: resolvedValue23
     },
     {
       signal: "Momentum",
-      read: `Reviews ${reviewDelta === null ? "unknown" : reviewDelta >= 0 ? `+${reviewDelta}` : String(reviewDelta)}, players ${playerDelta === null ? "unknown" : playerDelta >= 0 ? `+${playerDelta}` : String(playerDelta)}`,
-      implication: (reviewDelta ?? 0) > 0 || (playerDelta ?? 0) > 0 ? "There is observable movement worth checking against content updates or discounts." : "Momentum is flat in available snapshots."
+      read: `Reviews ${resolvedValue24}, players ${resolvedValue25}`,
+      implication: resolvedValue26
     }
   ];
 
-  return {
+    let resolvedValue27: any;
+  if (latestRevenueEstimate) {
+    resolvedValue27 = "High";
+  } else {
+    resolvedValue27 = "Medium";
+  }
+  let resolvedValue28: any;
+  if (latestRevenueEstimate) {
+    resolvedValue28 = `Median net revenue estimate is ${formatCurrency(latestRevenueEstimate.medianNetRevenueCents)}.`;
+  } else {
+    resolvedValue28 = "Revenue estimate is unavailable.";
+  }
+  let resolvedValue29: any;
+  if (discountEvents.length > 0) {
+    resolvedValue29 = "Medium";
+  } else {
+    resolvedValue29 = "Low";
+  }
+  let resolvedValue30: any;
+  if (discountEvents.length > 0) {
+    resolvedValue30 = `${discountEvents.length} discount snapshots observed; median observed paid price is ${formatCurrency(lowestObservedPrice)}.`;
+  } else {
+    resolvedValue30 = "No discount pattern observed.";
+  }
+  let resolvedValue31: any;
+  if (game.tags.length > 0) {
+    resolvedValue31 = `Dominant tags: ${game.tags.slice(0, 8).map((tag: any) => tag.steamTag.name).join(", ")}.`;
+  } else {
+    resolvedValue31 = "Tag coverage is thin.";
+  }
+  let resolvedValue32: any;
+  if (latestRevenueEstimate) {
+    resolvedValue32 = Number(latestRevenueEstimate.lowNetRevenueCents);
+  } else {
+    resolvedValue32 = null;
+  }
+  let resolvedValue33: any;
+  if (latestRevenueEstimate) {
+    resolvedValue33 = Number(latestRevenueEstimate.medianNetRevenueCents);
+  } else {
+    resolvedValue33 = null;
+  }
+  let resolvedValue34: any;
+  if (latestRevenueEstimate) {
+    resolvedValue34 = Number(latestRevenueEstimate.highNetRevenueCents);
+  } else {
+    resolvedValue34 = null;
+  }
+return {
     fileName: `steam-game-${appId}`,
     title: `${game.name} Report`,
     sheets: [
@@ -855,21 +1093,21 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
             output: "One positioning note: copy, avoid, or outflank."
           },
           {
-            priority: latestRevenueEstimate ? "High" : "Medium",
+            priority: resolvedValue27,
             action: "Set revenue planning band",
-            reason: latestRevenueEstimate ? `Median net revenue estimate is ${formatCurrency(latestRevenueEstimate.medianNetRevenueCents)}.` : "Revenue estimate is unavailable.",
+            reason: resolvedValue28,
             output: "Low/base/high planning range for project forecast."
           },
           {
-            priority: discountEvents.length > 0 ? "Medium" : "Low",
+            priority: resolvedValue29,
             action: "Review discount timing",
-            reason: discountEvents.length > 0 ? `${discountEvents.length} discount snapshots observed; median observed paid price is ${formatCurrency(lowestObservedPrice)}.` : "No discount pattern observed.",
+            reason: resolvedValue30,
             output: "Pricing and discount assumption for launch/post-launch model."
           },
           {
             priority: "Medium",
             action: "Extract feature promises from tags",
-            reason: game.tags.length > 0 ? `Dominant tags: ${game.tags.slice(0, 8).map((tag) => tag.steamTag.name).join(", ")}.` : "Tag coverage is thin.",
+            reason: resolvedValue31,
             output: "Feature promise checklist for concept comparison."
           }
         ]
@@ -881,7 +1119,7 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
           { field: "Name", value: game.name },
           { field: "Description", value: game.shortDescription ?? "" },
           { field: "Release date", value: formatDate(game.releaseDate) },
-          { field: "Genres", value: game.genres.map((genre) => genre.steamGenre.name).join(", ") },
+          { field: "Genres", value: game.genres.map((genre: any) => genre.steamGenre.name).join(", ") },
           { field: "Developers", value: game.developers.map((developer) => developer.steamDeveloper.name).join(", ") },
           { field: "Publishers", value: game.publishers.map((publisher) => publisher.steamPublisher.name).join(", ") },
           { field: "Current price", value: formatCurrency(game.priceCurrent?.finalPriceCents ?? null) },
@@ -894,7 +1132,7 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
       },
       {
         name: "Price History",
-        rows: priceHistory.map((item) => ({
+        rows: priceHistory.map((item: any) => ({
           snapshotDate: formatDate(item.snapshotDate),
           finalPriceCents: item.finalPriceCents ?? null,
           finalPriceUsd: formatCurrency(item.finalPriceCents ?? null),
@@ -905,7 +1143,7 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
       },
       {
         name: "Review History",
-        rows: reviewHistory.map((item) => ({
+        rows: reviewHistory.map((item: any) => ({
           snapshotDate: formatDate(item.snapshotDate),
           totalReviews: item.totalReviews,
           totalPositiveReviews: item.totalPositiveReviews,
@@ -916,7 +1154,7 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
       },
       {
         name: "Player History",
-        rows: playerHistory.map((item) => ({
+        rows: playerHistory.map((item: any) => ({
           snapshotDate: formatDate(item.snapshotDate),
           currentPlayers: item.currentPlayers
         }))
@@ -934,9 +1172,9 @@ export async function buildGameWorkbook(appId: number): Promise<ExportWorkbook> 
           },
           {
             type: "Revenue",
-            low: latestRevenueEstimate ? Number(latestRevenueEstimate.lowNetRevenueCents) : null,
-            median: latestRevenueEstimate ? Number(latestRevenueEstimate.medianNetRevenueCents) : null,
-            high: latestRevenueEstimate ? Number(latestRevenueEstimate.highNetRevenueCents) : null,
+            low: resolvedValue32,
+            median: resolvedValue33,
+            high: resolvedValue34,
             confidence: latestRevenueEstimate?.confidence ?? "",
             explanation: latestRevenueEstimate?.explanation ?? ""
           }
@@ -955,7 +1193,7 @@ export async function buildCompareWorkbook(appIds: number[]): Promise<ExportWork
     sheets: [
       {
         name: "Comparison",
-        rows: games.map((game) => ({
+        rows: games.map((game: any) => ({
           appId: game.appId,
           name: game.name,
           priceUsd: formatCurrency(game.priceCurrent?.finalPriceCents ?? null),
@@ -963,7 +1201,7 @@ export async function buildCompareWorkbook(appIds: number[]): Promise<ExportWork
           reviewCount: game.reviewCount ?? null,
           medianSales: game.salesEstimates[0]?.medianEstimate ?? null,
           medianNetRevenueUsd: formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null),
-          genres: game.genres.map((genre) => genre.steamGenre.name).join(", ")
+          genres: game.genres.map((genre: any) => genre.steamGenre.name).join(", ")
         }))
       }
     ]
@@ -979,7 +1217,7 @@ export async function buildOpportunitiesWorkbook(): Promise<ExportWorkbook> {
     sheets: [
       {
         name: "Opportunities",
-        rows: items.map((item) => ({
+        rows: items.map((item: any) => ({
           appId: item.appId,
           name: item.name,
           opportunityScore: item.score,
@@ -1003,7 +1241,82 @@ export async function buildProjectWorkbook(projectId: string, workspaceId: strin
   const latestGdd = project.gdds[0] ?? null;
   const board = project.kanbanBoards[0] ?? null;
 
-  return {
+    let resolvedValue35: any;
+  if (project.analysis) {
+        let resolvedValue43: any;
+    if (Array.isArray(project.analysis.suggestedGenres)) {
+      resolvedValue43 = project.analysis.suggestedGenres.join(", ");
+    } else {
+      resolvedValue43 = "";
+    }
+    let resolvedValue44: any;
+    if (Array.isArray(project.analysis.suggestedTags)) {
+      resolvedValue44 = project.analysis.suggestedTags.join(", ");
+    } else {
+      resolvedValue44 = "";
+    }
+resolvedValue35 = [
+          {
+            analyzedAt: formatDate(project.analysis.analyzedAt),
+            matchingGamesCount: project.analysis.matchingGamesCount,
+            competitionCount: project.analysis.competitionCount,
+            releaseMomentum: project.analysis.releaseMomentum,
+            averageReviewScore: project.analysis.averageReviewScore ?? null,
+            averagePriceUsd: formatCurrency(project.analysis.averagePriceCents ?? null),
+            medianRevenueUsd: formatCurrency(project.analysis.medianRevenueCents ?? null),
+            opportunitySummary: project.analysis.opportunitySummary,
+            riskSummary: project.analysis.riskSummary,
+            audienceAutofill: project.analysis.audienceAutofill ?? "",
+            coreLoopAutofill: project.analysis.coreLoopAutofill ?? "",
+            suggestedGenres: resolvedValue43,
+            suggestedTags: resolvedValue44
+          }
+        ];
+  } else {
+    resolvedValue35 = [];
+  }
+  let resolvedValue36: any;
+  if (latestGdd) {
+    resolvedValue36 = latestGdd.content.split("\n").map((line, index) => ({
+          line: index + 1,
+          content: line
+        }));
+  } else {
+    resolvedValue36 = [];
+  }
+  let resolvedValue37: any;
+  if (board) {
+    resolvedValue37 = board.columns.flatMap((column) => {
+              if (column.cards.length === 0) {
+                return [{
+                  column: column.name,
+                  title: "",
+                  assignee: "",
+                  dueDate: "",
+                  labels: ""
+                }];
+              }
+
+              return column.cards.map((card) => {
+                let resolvedValue45: any;
+                if (Array.isArray(card.labels)) {
+                  resolvedValue45 = card.labels.join(", ");
+                } else {
+                  resolvedValue45 = "";
+                }
+                return ({
+                column: column.name,
+                title: card.title,
+                assignee: card.assigneeLabel ?? "",
+                dueDate: formatDate(card.dueDate),
+                labels: resolvedValue45
+              });
+              });
+            });
+  } else {
+    resolvedValue37 = [];
+  }
+return {
     fileName: `project-${project.slug}`,
     title: `${project.name} Project Report`,
     sheets: [
@@ -1027,27 +1340,11 @@ export async function buildProjectWorkbook(projectId: string, workspaceId: strin
       },
       {
         name: "Market Analysis",
-        rows: project.analysis ? [
-          {
-            analyzedAt: formatDate(project.analysis.analyzedAt),
-            matchingGamesCount: project.analysis.matchingGamesCount,
-            competitionCount: project.analysis.competitionCount,
-            releaseMomentum: project.analysis.releaseMomentum,
-            averageReviewScore: project.analysis.averageReviewScore ?? null,
-            averagePriceUsd: formatCurrency(project.analysis.averagePriceCents ?? null),
-            medianRevenueUsd: formatCurrency(project.analysis.medianRevenueCents ?? null),
-            opportunitySummary: project.analysis.opportunitySummary,
-            riskSummary: project.analysis.riskSummary,
-            audienceAutofill: project.analysis.audienceAutofill ?? "",
-            coreLoopAutofill: project.analysis.coreLoopAutofill ?? "",
-            suggestedGenres: Array.isArray(project.analysis.suggestedGenres) ? project.analysis.suggestedGenres.join(", ") : "",
-            suggestedTags: Array.isArray(project.analysis.suggestedTags) ? project.analysis.suggestedTags.join(", ") : ""
-          }
-        ] : []
+        rows: resolvedValue35
       },
       {
         name: "Comparable Games",
-        rows: project.competitorGames.map((item) => ({
+        rows: project.competitorGames.map((item: any) => ({
           appId: item.steamGame.appId,
           name: item.steamGame.name,
           reviewScore: item.steamGame.reviewScore ?? null,
@@ -1057,34 +1354,11 @@ export async function buildProjectWorkbook(projectId: string, workspaceId: strin
       },
       {
         name: "GDD",
-        rows: latestGdd ? latestGdd.content.split("\n").map((line, index) => ({
-          line: index + 1,
-          content: line
-        })) : []
+        rows: resolvedValue36
       },
       {
         name: "Kanban",
-        rows: board
-          ? board.columns.flatMap((column) => {
-              if (column.cards.length === 0) {
-                return [{
-                  column: column.name,
-                  title: "",
-                  assignee: "",
-                  dueDate: "",
-                  labels: ""
-                }];
-              }
-
-              return column.cards.map((card) => ({
-                column: column.name,
-                title: card.title,
-                assignee: card.assigneeLabel ?? "",
-                dueDate: formatDate(card.dueDate),
-                labels: Array.isArray(card.labels) ? card.labels.join(", ") : ""
-              }));
-            })
-          : []
+        rows: resolvedValue37
       }
     ]
   };
@@ -1157,10 +1431,18 @@ export async function buildReportWorkbook(reportId: string, organizationId: stri
       },
       {
         name: "Market Metrics",
-        rows: Object.entries(segment).map(([metric, value]) => ({
+        rows: Object.entries(segment).map(([metric, value]) => {
+          let resolvedValue38: any;
+          if (typeof value === "object") {
+            resolvedValue38 = JSON.stringify(value);
+          } else {
+            resolvedValue38 = String(value ?? "");
+          }
+          return ({
           metric,
-          value: typeof value === "object" ? JSON.stringify(value) : String(value ?? "")
-        }))
+          value: resolvedValue38
+        });
+        })
       },
       {
         name: "Action Items",

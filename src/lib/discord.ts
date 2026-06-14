@@ -45,7 +45,13 @@ export async function sendDiscordWebhook(webhookUrl: string, payload: DiscordWeb
   }
 
   const body = await response.text().catch(() => "");
-  throw new Error(`Discord webhook request failed with status ${response.status}${body ? `: ${body}` : ""}`);
+    let resolvedValue0: any;
+  if (body) {
+    resolvedValue0 = `: ${body}`;
+  } else {
+    resolvedValue0 = "";
+  }
+throw new Error(`Discord webhook request failed with status ${response.status}${resolvedValue0}`);
 }
 
 export async function notifyOrganizationDiscordWebhook(

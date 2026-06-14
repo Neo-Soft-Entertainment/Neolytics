@@ -50,7 +50,33 @@ export function OrganizationDangerZone({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isDeleting) {
+    resolvedValue0 = "Excluindo...";
+  } else {
+    resolvedValue0 = "Excluir organização";
+  }
+  let resolvedValue1: any;
+  if (!canDelete) {
+    resolvedValue1 = (
+          <p className="text-sm text-muted-foreground">Apenas proprietários da organização podem excluir a organização.</p>
+        );
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (message) {
+    resolvedValue2 = <p className="text-sm text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (error) {
+    resolvedValue3 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue3 = null;
+  }
+return (
     <Card className="border-destructive/30">
       <CardHeader>
         <CardTitle>Zona de risco</CardTitle>
@@ -66,13 +92,11 @@ export function OrganizationDangerZone({
           type="button"
           variant="destructive"
         >
-          {isDeleting ? "Excluindo..." : "Excluir organização"}
+          {resolvedValue0}
         </Button>
-        {!canDelete ? (
-          <p className="text-sm text-muted-foreground">Apenas proprietários da organização podem excluir a organização.</p>
-        ) : null}
-        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {resolvedValue1}
+        {resolvedValue2}
+        {resolvedValue3}
       </CardContent>
     </Card>
   );

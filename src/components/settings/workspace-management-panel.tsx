@@ -91,19 +91,78 @@ export function WorkspaceManagementPanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue4: any;
+  if (!canManage) {
+    resolvedValue4 = (
+          <p className="text-muted-foreground">Apenas administradores da organização podem gerenciar áreas de trabalho.</p>
+        );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (workspaces.length <= 1) {
+    resolvedValue5 = (
+          <p className="text-muted-foreground">Pelo menos uma área de trabalho deve permanecer na organização.</p>
+        );
+  } else {
+    resolvedValue5 = null;
+  }
+  let resolvedValue6: any;
+  if (message) {
+    resolvedValue6 = <p className="text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue6 = null;
+  }
+  let resolvedValue7: any;
+  if (error) {
+    resolvedValue7 = <p className="text-destructive">{error}</p>;
+  } else {
+    resolvedValue7 = null;
+  }
+return (
     <Card>
       <CardHeader>
         <CardTitle>Lista de áreas de trabalho ({workspaces.length})</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
-        {workspaces.map((workspace) => (
+        {workspaces.map((workspace) => {
+          let resolvedValue0: any;
+          if (workspace.id === currentWorkspaceId) {
+            resolvedValue0 = <Badge>Atual</Badge>;
+          } else {
+            resolvedValue0 = null;
+          }
+          let resolvedValue1: any;
+          if (workspace.id === currentWorkspaceId) {
+            resolvedValue1 = "secondary";
+          } else {
+            resolvedValue1 = "outline";
+          }
+          let resolvedValue2: any;
+          if (workspace.id === currentWorkspaceId) {
+            resolvedValue2 = "Ativo";
+          } else {
+                        let resolvedValue8: any;
+            if (switchingId === workspace.id) {
+              resolvedValue8 = "Trocando...";
+            } else {
+              resolvedValue8 = "Definir ativo";
+            }
+resolvedValue2 = resolvedValue8;
+          }
+          let resolvedValue3: any;
+          if (deletingId === workspace.id) {
+            resolvedValue3 = "Excluindo...";
+          } else {
+            resolvedValue3 = "Excluir";
+          }
+          return (
           <div key={workspace.id} className="rounded-2xl border p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{workspace.name}</p>
-                  {workspace.id === currentWorkspaceId ? <Badge>Atual</Badge> : null}
+                  {resolvedValue0}
                 </div>
                 <p className="mt-1 text-muted-foreground">Slug: {workspace.slug}</p>
                 <p className="mt-1 text-muted-foreground">
@@ -118,9 +177,9 @@ export function WorkspaceManagementPanel({
                   }}
                   size="sm"
                   type="button"
-                  variant={workspace.id === currentWorkspaceId ? "secondary" : "outline"}
+                  variant={resolvedValue1}
                 >
-                  {workspace.id === currentWorkspaceId ? "Ativo" : switchingId === workspace.id ? "Trocando..." : "Definir ativo"}
+                  {resolvedValue2}
                 </Button>
                 <Button
                   disabled={!canManage || workspaces.length <= 1 || deletingId === workspace.id}
@@ -129,20 +188,17 @@ export function WorkspaceManagementPanel({
                   type="button"
                   variant="destructive"
                 >
-                  {deletingId === workspace.id ? "Excluindo..." : "Excluir"}
+                  {resolvedValue3}
                 </Button>
               </div>
             </div>
           </div>
-        ))}
-        {!canManage ? (
-          <p className="text-muted-foreground">Apenas administradores da organização podem gerenciar áreas de trabalho.</p>
-        ) : null}
-        {workspaces.length <= 1 ? (
-          <p className="text-muted-foreground">Pelo menos uma área de trabalho deve permanecer na organização.</p>
-        ) : null}
-        {message ? <p className="text-emerald-600">{message}</p> : null}
-        {error ? <p className="text-destructive">{error}</p> : null}
+        );
+        })}
+        {resolvedValue4}
+        {resolvedValue5}
+        {resolvedValue6}
+        {resolvedValue7}
       </CardContent>
     </Card>
   );

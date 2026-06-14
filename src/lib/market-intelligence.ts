@@ -127,13 +127,13 @@ function getLatestByGame<T extends { steamGameId: string; snapshotDate: Date }>(
 function getReviewVelocity(snapshots: TimeSeriesReviewSnapshot[]) {
   return getLatestByGame(snapshots)
     .map((group) => Math.max(0, group.latest.totalReviews - group.first.totalReviews))
-    .filter((value) => value > 0);
+    .filter((value: any) => value > 0);
 }
 
 function getPlayerMomentum(snapshots: TimeSeriesPlayerSnapshot[]) {
   return getLatestByGame(snapshots)
     .map((group) => Math.max(0, group.latest.currentPlayers - group.first.currentPlayers))
-    .filter((value) => value > 0);
+    .filter((value: any) => value > 0);
 }
 
 function getTopTags(games: RankedComparableGame[], limit = 8) {
@@ -143,7 +143,13 @@ function getTopTags(games: RankedComparableGame[], limit = 8) {
     for (const tag of game.tags) {
       const current = counts.get(tag.steamTag.slug) ?? { name: tag.steamTag.name, count: 0, directCount: 0 };
       current.count += 1;
-      current.directCount += game.isDirectComparable ? 1 : 0;
+            let resolvedValue0: any;
+      if (game.isDirectComparable) {
+        resolvedValue0 = 1;
+      } else {
+        resolvedValue0 = 0;
+      }
+current.directCount += resolvedValue0;
       counts.set(tag.steamTag.slug, current);
     }
   }
@@ -213,10 +219,10 @@ function revenueToNumber(value: bigint | number | null | undefined) {
 
 function getPriceBandDistribution(values: number[]) {
   return {
-    under10: values.filter((value) => value < 1000).length,
-    between10And20: values.filter((value) => value >= 1000 && value < 2000).length,
-    between20And30: values.filter((value) => value >= 2000 && value < 3000).length,
-    over30: values.filter((value) => value >= 3000).length
+    under10: values.filter((value: any) => value < 1000).length,
+    between10And20: values.filter((value: any) => value >= 1000 && value < 2000).length,
+    between20And30: values.filter((value: any) => value >= 2000 && value < 3000).length,
+    over30: values.filter((value: any) => value >= 3000).length
   };
 }
 
@@ -251,38 +257,92 @@ function getConfidenceLabel(score: number) {
 export function buildSegmentIntelligence(games: ComparableGame[]) {
   const now = Date.now();
   const revenueValues = games
-    .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
-    .filter((value) => value > 0);
+    .map((game: any) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
+    .filter((value: any) => value > 0);
   const priceValues = games
-    .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
-    .filter((value) => value > 0);
+    .map((game: any) => game.priceCurrent?.finalPriceCents ?? 0)
+    .filter((value: any) => value > 0);
   const reviewScores = games
-    .map((game) => game.reviewScore ?? 0)
-    .filter((value) => value > 0);
+    .map((game: any) => game.reviewScore ?? 0)
+    .filter((value: any) => value > 0);
   const reviewCounts = games
-    .map((game) => game.reviewCount ?? 0)
-    .filter((value) => value > 0);
-  const launches90 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000).length;
-  const launches180 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000).length;
-  const launches365 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000).length;
+    .map((game: any) => game.reviewCount ?? 0)
+    .filter((value: any) => value > 0);
+  const launches90 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000).length;
+  const launches180 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000).length;
+  const launches365 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000).length;
   const totalRevenueCents = revenueValues.reduce((sum, value) => sum + value, 0);
   const top3RevenueCents = [...revenueValues].sort((left, right) => right - left).slice(0, 3).reduce((sum, value) => sum + value, 0);
-  const revenueConcentrationPercent = totalRevenueCents > 0 ? Math.round((top3RevenueCents / totalRevenueCents) * 100) : 0;
-  const averageReviewScore = reviewScores.length > 0 ? Number(average(reviewScores).toFixed(1)) : 0;
-  const averagePriceCents = priceValues.length > 0 ? Math.round(average(priceValues)) : 0;
+    let resolvedValue1: any;
+  if (totalRevenueCents > 0) {
+    resolvedValue1 = Math.round((top3RevenueCents / totalRevenueCents) * 100);
+  } else {
+    resolvedValue1 = 0;
+  }
+const revenueConcentrationPercent = resolvedValue1;
+    let resolvedValue2: any;
+  if (reviewScores.length > 0) {
+    resolvedValue2 = Number(average(reviewScores).toFixed(1));
+  } else {
+    resolvedValue2 = 0;
+  }
+const averageReviewScore = resolvedValue2;
+    let resolvedValue3: any;
+  if (priceValues.length > 0) {
+    resolvedValue3 = Math.round(average(priceValues));
+  } else {
+    resolvedValue3 = 0;
+  }
+const averagePriceCents = resolvedValue3;
   const medianRevenueCents = median(revenueValues);
   const p75RevenueCents = percentile(revenueValues, 0.75);
   const medianPriceCents = median(priceValues);
   const priceBandDistribution = getPriceBandDistribution(priceValues);
-  const freeCount = games.filter((game) => game.isFree).length;
-  const premiumSharePercent = games.length > 0 ? Math.round(((games.length - freeCount) / games.length) * 100) : 0;
-  const qualityBarScore = reviewScores.length > 0 ? clampScore(percentile(reviewScores, 0.75)) : 0;
-  const launchDensityScore = games.length > 0 ? clampScore((launches180 / games.length) * 100) : 0;
+  const freeCount = games.filter((game: any) => game.isFree).length;
+    let resolvedValue4: any;
+  if (games.length > 0) {
+    resolvedValue4 = Math.round(((games.length - freeCount) / games.length) * 100);
+  } else {
+    resolvedValue4 = 0;
+  }
+const premiumSharePercent = resolvedValue4;
+    let resolvedValue5: any;
+  if (reviewScores.length > 0) {
+    resolvedValue5 = clampScore(percentile(reviewScores, 0.75));
+  } else {
+    resolvedValue5 = 0;
+  }
+const qualityBarScore = resolvedValue5;
+    let resolvedValue6: any;
+  if (games.length > 0) {
+    resolvedValue6 = clampScore((launches180 / games.length) * 100);
+  } else {
+    resolvedValue6 = 0;
+  }
+const launchDensityScore = resolvedValue6;
   const crowdednessScore = clampScore(games.length * 4 + launchDensityScore * 0.35);
-  const reviewVelocityScore = clampScore(reviewCounts.length > 0 ? average(reviewCounts) / 50 : 0);
-  const revenuePotentialScore = clampScore(
-    (medianRevenueCents > 0 ? Math.min(45, medianRevenueCents / 4_000_000) : 0)
-    + (p75RevenueCents > 0 ? Math.min(35, p75RevenueCents / 10_000_000) : 0)
+    let resolvedValue7: any;
+  if (reviewCounts.length > 0) {
+    resolvedValue7 = average(reviewCounts) / 50;
+  } else {
+    resolvedValue7 = 0;
+  }
+const reviewVelocityScore = clampScore(resolvedValue7);
+    let resolvedValue8: any;
+  if (medianRevenueCents > 0) {
+    resolvedValue8 = Math.min(45, medianRevenueCents / 4_000_000);
+  } else {
+    resolvedValue8 = 0;
+  }
+  let resolvedValue9: any;
+  if (p75RevenueCents > 0) {
+    resolvedValue9 = Math.min(35, p75RevenueCents / 10_000_000);
+  } else {
+    resolvedValue9 = 0;
+  }
+const revenuePotentialScore = clampScore(
+    (resolvedValue8)
+    + (resolvedValue9)
     + Math.min(20, reviewVelocityScore * 0.2)
   );
   const underservedScore = clampScore(
@@ -350,12 +410,20 @@ export function buildGameOpportunityProfile(
   const segment = buildSegmentIntelligence(peers);
   const medianRevenue = revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents);
   const priceCents = game.priceCurrent?.finalPriceCents ?? 0;
-  const revenueFit = segment.medianRevenueCents > 0
-    ? clampScore((medianRevenue / segment.medianRevenueCents) * 60, 0, 100)
-    : 50;
-  const priceFit = segment.medianPriceCents > 0
-    ? clampScore(100 - (Math.abs(priceCents - segment.medianPriceCents) / segment.medianPriceCents) * 100)
-    : 60;
+    let resolvedValue10: any;
+  if (segment.medianRevenueCents > 0) {
+    resolvedValue10 = clampScore((medianRevenue / segment.medianRevenueCents) * 60, 0, 100);
+  } else {
+    resolvedValue10 = 50;
+  }
+const revenueFit = resolvedValue10;
+    let resolvedValue11: any;
+  if (segment.medianPriceCents > 0) {
+    resolvedValue11 = clampScore(100 - (Math.abs(priceCents - segment.medianPriceCents) / segment.medianPriceCents) * 100);
+  } else {
+    resolvedValue11 = 60;
+  }
+const priceFit = resolvedValue11;
   const reviewFit = clampScore(game.reviewScore ?? segment.averageReviewScore ?? 0);
   const opportunityScore = clampScore(
     segment.opportunityScore * 0.45
@@ -390,21 +458,21 @@ export function buildHybridMarketIntelligence(input: {
   const games = input.rankedComparables;
   const now = Date.now();
   const revenueValues = games
-    .map((game) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
-    .filter((value) => value > 0);
+    .map((game: any) => revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents))
+    .filter((value: any) => value > 0);
   const priceValues = games
-    .map((game) => game.priceCurrent?.finalPriceCents ?? 0)
-    .filter((value) => value > 0);
+    .map((game: any) => game.priceCurrent?.finalPriceCents ?? 0)
+    .filter((value: any) => value > 0);
   const reviewCounts = games
-    .map((game) => game.reviewCount ?? 0)
-    .filter((value) => value > 0);
+    .map((game: any) => game.reviewCount ?? 0)
+    .filter((value: any) => value > 0);
   const reviewScores = games
-    .map((game) => game.reviewScore ?? 0)
-    .filter((value) => value > 0);
-  const launches90 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000).length;
-  const launches180 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000).length;
-  const launches365 = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000).length;
-  const launchesOlder = games.filter((game) => game.releaseDate && now - game.releaseDate.getTime() > 365 * 24 * 60 * 60 * 1000).length;
+    .map((game: any) => game.reviewScore ?? 0)
+    .filter((value: any) => value > 0);
+  const launches90 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 90 * 24 * 60 * 60 * 1000).length;
+  const launches180 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 180 * 24 * 60 * 60 * 1000).length;
+  const launches365 = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000).length;
+  const launchesOlder = games.filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() > 365 * 24 * 60 * 60 * 1000).length;
   const reviewVelocityValues = getReviewVelocity(input.reviewSnapshots);
   const playerMomentumValues = getPlayerMomentum(input.playerSnapshots);
   const revenueRange = getRevenueRange(revenueValues);
@@ -413,24 +481,54 @@ export function buildHybridMarketIntelligence(input: {
   const medianReviewCount = median(reviewCounts);
   const medianReviewVelocity = median(reviewVelocityValues);
   const medianPlayerMomentum = median(playerMomentumValues);
-  const launchTrendRatio = launchesOlder > 0 ? launches365 / launchesOlder : launches365 > 0 ? 1 : 0;
+    let resolvedValue12: any;
+  if (launchesOlder > 0) {
+    resolvedValue12 = launches365 / launchesOlder;
+  } else {
+        let resolvedValue30: any;
+    if (launches365 > 0) {
+      resolvedValue30 = 1;
+    } else {
+      resolvedValue30 = 0;
+    }
+resolvedValue12 = resolvedValue30;
+  }
+const launchTrendRatio = resolvedValue12;
   const demandScore = clampScore(
     Math.min(35, medianReviewCount / 80)
     + Math.min(25, medianReviewVelocity / 8)
     + Math.min(25, revenueRange.medianCents / 4_000_000)
     + Math.min(15, medianPlayerMomentum / 30)
   );
-  const competitionScore = clampScore(
+    let resolvedValue13: any;
+  if (input.revenueConcentrationPercent >= 65) {
+    resolvedValue13 = 12;
+  } else {
+    resolvedValue13 = 0;
+  }
+  let resolvedValue14: any;
+  if (launches180 >= 8) {
+    resolvedValue14 = 10;
+  } else {
+    resolvedValue14 = 0;
+  }
+const competitionScore = clampScore(
     input.directComparables.length * 9
     + input.adjacentComparables.length * 2.5
-    + (input.revenueConcentrationPercent >= 65 ? 12 : 0)
-    + (launches180 >= 8 ? 10 : 0)
+    + (resolvedValue13)
+    + (resolvedValue14)
   );
-  const growthTrendScore = clampScore(
+    let resolvedValue15: any;
+  if (launches90 > 0) {
+    resolvedValue15 = 15;
+  } else {
+    resolvedValue15 = 0;
+  }
+const growthTrendScore = clampScore(
     Math.min(35, launchTrendRatio * 30)
     + Math.min(30, medianReviewVelocity / 6)
     + Math.min(20, medianPlayerMomentum / 20)
-    + (launches90 > 0 ? 15 : 0)
+    + (resolvedValue15)
   );
   const genreMomentumScore = clampScore(
     Math.min(40, launches365 * 5)
@@ -438,19 +536,45 @@ export function buildHybridMarketIntelligence(input: {
     + Math.min(30, averageReviewCount / 150)
   );
   const topTags = getTopTags(games);
-  const tagPopularityScore = clampScore(
-    topTags.length > 0
-      ? average(topTags.map((tag) => (tag.directCount * 12) + (tag.count * 3)))
-      : 0
+    let resolvedValue16: any;
+  if (topTags.length > 0) {
+    resolvedValue16 = average(topTags.map((tag: any) => (tag.directCount * 12) + (tag.count * 3)));
+  } else {
+    resolvedValue16 = 0;
+  }
+const tagPopularityScore = clampScore(
+    resolvedValue16
   );
-  const marketSaturationScore = clampScore(
+    let resolvedValue17: any;
+  if (launches180 >= 10) {
+    resolvedValue17 = 20;
+  } else {
+        let resolvedValue31: any;
+    if (launches180 >= 5) {
+      resolvedValue31 = 10;
+    } else {
+      resolvedValue31 = 0;
+    }
+resolvedValue17 = resolvedValue31;
+  }
+const marketSaturationScore = clampScore(
     competitionScore * 0.55
     + input.revenueConcentrationPercent * 0.25
-    + (launches180 >= 10 ? 20 : launches180 >= 5 ? 10 : 0)
+    + (resolvedValue17)
   );
-  const priceCompatibilityScore = input.project.pricePointCents && input.medianPriceCents > 0
-    ? clampScore(100 - (Math.abs(input.project.pricePointCents - input.medianPriceCents) / input.medianPriceCents) * 100)
-    : priceValues.length > 0 ? 65 : 45;
+    let resolvedValue18: any;
+  if (input.project.pricePointCents && input.medianPriceCents > 0) {
+    resolvedValue18 = clampScore(100 - (Math.abs(input.project.pricePointCents - input.medianPriceCents) / input.medianPriceCents) * 100);
+  } else {
+        let resolvedValue32: any;
+    if (priceValues.length > 0) {
+      resolvedValue32 = 65;
+    } else {
+      resolvedValue32 = 45;
+    }
+resolvedValue18 = resolvedValue32;
+  }
+const priceCompatibilityScore = resolvedValue18;
   const sentimentScore = clampScore(
     (input.averageReviewScore ?? average(reviewScores)) * 0.75
     + Math.min(25, medianReviewCount / 200)
@@ -499,7 +623,19 @@ export function buildHybridMarketIntelligence(input: {
     growthTrendScore,
     marketSaturationScore
   );
-  const factors = [
+    let resolvedValue19: any;
+  if (input.project.pricePointCents) {
+    resolvedValue19 = `Project price is compared against the segment median price.`;
+  } else {
+    resolvedValue19 = `No project price was supplied, so pricing confidence is capped by segment coverage.`;
+  }
+  let resolvedValue20: any;
+  if (input.project.pricePointCents) {
+    resolvedValue20 = formatMoney(input.project.pricePointCents);
+  } else {
+    resolvedValue20 = "Not set";
+  }
+const factors = [
     {
       name: "Demand",
       score: demandScore,
@@ -551,7 +687,7 @@ export function buildHybridMarketIntelligence(input: {
       weight: 10,
       justification: `Tag popularity measures repeated direct-comparable tags rather than freeform AI interpretation.`,
       metrics: {
-        topTags: topTags.slice(0, 5).map((tag) => `${tag.name} (${tag.directCount}/${tag.count})`).join(", ") || "No strong tag cluster"
+        topTags: topTags.slice(0, 5).map((tag: any) => `${tag.name} (${tag.directCount}/${tag.count})`).join(", ") || "No strong tag cluster"
       }
     },
     {
@@ -569,11 +705,9 @@ export function buildHybridMarketIntelligence(input: {
       name: "Pricing compatibility",
       score: priceCompatibilityScore,
       weight: 8,
-      justification: input.project.pricePointCents
-        ? `Project price is compared against the segment median price.`
-        : `No project price was supplied, so pricing confidence is capped by segment coverage.`,
+      justification: resolvedValue19,
       metrics: {
-        projectPrice: input.project.pricePointCents ? formatMoney(input.project.pricePointCents) : "Not set",
+        projectPrice: resolvedValue20,
         segmentMedianPrice: formatMoney(input.medianPriceCents)
       }
     },
@@ -605,10 +739,10 @@ export function buildHybridMarketIntelligence(input: {
   );
   const sortedByReviewVelocity = [...games].sort((left, right) => (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
   const recentSuccessfulLaunches = games
-    .filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000 && (game.reviewScore ?? 0) >= 80 && (game.reviewCount ?? 0) >= 100)
+    .filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000 && (game.reviewScore ?? 0) >= 80 && (game.reviewCount ?? 0) >= 100)
     .sort((left, right) => (right.reviewCount ?? 0) - (left.reviewCount ?? 0));
   const failedLaunches = games
-    .filter((game) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000 && ((game.reviewScore ?? 100) < 65 || (game.reviewCount ?? 0) < 25))
+    .filter((game: any) => game.releaseDate && now - game.releaseDate.getTime() <= 365 * 24 * 60 * 60 * 1000 && ((game.reviewScore ?? 100) < 65 || (game.reviewCount ?? 0) < 25))
     .sort((left, right) => (left.reviewScore ?? 0) - (right.reviewScore ?? 0));
   const mapGame = (game: RankedComparableGame) => ({
     name: game.name,
@@ -619,57 +753,111 @@ export function buildHybridMarketIntelligence(input: {
     priceCents: game.priceCurrent?.finalPriceCents ?? null,
     releaseDate: game.releaseDate?.toISOString() ?? null,
     medianRevenueCents: revenueToNumber(game.revenueEstimates[0]?.medianNetRevenueCents),
-    tags: game.tags.slice(0, 5).map((tag) => tag.steamTag.name),
-    genres: game.genres.slice(0, 4).map((genre) => genre.steamGenre.name)
+    tags: game.tags.slice(0, 5).map((tag: any) => tag.steamTag.name),
+    genres: game.genres.slice(0, 4).map((genre: any) => genre.steamGenre.name)
   });
   const risingTags = topTags
-    .filter((tag) => tag.directCount >= 2 || tag.count >= 4)
-    .map((tag) => ({
+    .filter((tag: any) => tag.directCount >= 2 || tag.count >= 4)
+    .map((tag: any) => ({
       tag: tag.name,
       strengthScore: clampScore(tag.directCount * 18 + tag.count * 4),
       explanation: `${tag.name} appears in ${tag.directCount} direct comps and ${tag.count} total comps, which suggests repeatable audience language rather than a one-off label.`
     }));
-  const decliningSignals = [
-    growthTrendScore < 45
-      ? {
+    let resolvedValue21: any;
+  if (growthTrendScore < 45) {
+    resolvedValue21 = {
           signal: "Weak recent launch/review momentum",
           score: growthTrendScore,
           explanation: `Only ${launches90} comparable launches landed in 90 days and median review velocity is ${medianReviewVelocity}, so current demand may be slower than the historical shelf implies.`
-        }
-      : null,
-    medianPlayerMomentum <= 0 && input.playerSnapshots.length > 0
-      ? {
+        };
+  } else {
+    resolvedValue21 = null;
+  }
+  let resolvedValue22: any;
+  if (medianPlayerMomentum <= 0 && input.playerSnapshots.length > 0) {
+    resolvedValue22 = {
           signal: "Flat player momentum",
           score: 35,
           explanation: "Player count snapshots do not show positive median momentum across covered comps."
-        }
-      : null
+        };
+  } else {
+    resolvedValue22 = null;
+  }
+const decliningSignals = [
+    resolvedValue21,
+    resolvedValue22
   ].filter((item): item is { signal: string; score: number; explanation: string } => Boolean(item));
   const underservedNiches = topTags
-    .filter((tag) => tag.directCount >= 1 && input.directComparables.length <= 6 && demandScore >= 55)
+    .filter((tag: any) => tag.directCount >= 1 && input.directComparables.length <= 6 && demandScore >= 55)
     .slice(0, 4)
-    .map((tag) => ({
+    .map((tag: any) => ({
       niche: tag.name,
       confidence: getScoreLabel(input.confidenceScore),
       explanation: `${tag.name} has visible demand signals, but the direct comparable count is ${input.directComparables.length}, so it may be less crowded than the broader genre.`
     }));
-  const seasonalOpportunities = launches90 > launches180 / 2
-    ? [
+    let resolvedValue23: any;
+  if (launches90 > launches180 / 2) {
+    resolvedValue23 = [
         {
           window: "Near-term release window",
           confidence: getScoreLabel(growthTrendScore),
           explanation: "A high share of launches happened in the last 90 days, so wishlist and festival timing should be checked before committing to a crowded window."
         }
-      ]
-    : [
+      ];
+  } else {
+    resolvedValue23 = [
         {
           window: "Flexible timing",
           confidence: getScoreLabel(input.confidenceScore),
           explanation: "Recent launch density is not extreme, so positioning and wishlist readiness matter more than avoiding one specific season."
         }
       ];
+  }
+const seasonalOpportunities = resolvedValue23;
 
-  return {
+    let resolvedValue24: any;
+  if (revenueValues.length < Math.max(3, games.length * 0.35)) {
+    resolvedValue24 = "Revenue estimates have limited coverage.";
+  } else {
+    resolvedValue24 = null;
+  }
+  let resolvedValue25: any;
+  if (input.playerSnapshots.length === 0) {
+    resolvedValue25 = "Concurrent player trend data is unavailable for this comp set.";
+  } else {
+    resolvedValue25 = null;
+  }
+  let resolvedValue26: any;
+  if (input.confidenceScore < 60) {
+    resolvedValue26 = "Confidence is directional because one or more data layers are thin.";
+  } else {
+    resolvedValue26 = null;
+  }
+  let resolvedValue27: any;
+  if (reviewVelocityValues.length > 0) {
+    resolvedValue27 = medianReviewVelocity * 4 + launches90 * 5;
+  } else {
+    resolvedValue27 = demandScore * 0.45;
+  }
+  let resolvedValue28: any;
+  if (launches365 > launchesOlder) {
+    resolvedValue28 = [
+            {
+              trend: input.project.genreInput || "Current comparable genre cluster",
+              strengthScore: genreMomentumScore,
+              explanation: `${launches365} comparable launches appeared in the last year versus ${launchesOlder} older tracked comps, indicating rising supply and likely audience attention.`
+            }
+          ];
+  } else {
+    resolvedValue28 = [];
+  }
+  let resolvedValue29: any;
+  if (growthTrendScore >= 65) {
+    resolvedValue29 = "Momentum is likely being driven by recent releases converting into review volume and repeated tag clusters, which indicates a shelf with active audience search behavior.";
+  } else {
+    resolvedValue29 = "The market is not clearly accelerating; any opportunity depends more on differentiated positioning than broad category growth.";
+  }
+return {
     sourceModel: "hybrid_quantitative_market_intelligence_v1",
     aiDependency: "optional_enhancement_only",
     sourcesUsed: [
@@ -696,9 +884,9 @@ export function buildHybridMarketIntelligence(input: {
         playerSnapshotCoverage: new Set(input.playerSnapshots.map((snapshot) => snapshot.steamGameId)).size
       },
       limitations: [
-        revenueValues.length < Math.max(3, games.length * 0.35) ? "Revenue estimates have limited coverage." : null,
-        input.playerSnapshots.length === 0 ? "Concurrent player trend data is unavailable for this comp set." : null,
-        input.confidenceScore < 60 ? "Confidence is directional because one or more data layers are thin." : null
+        resolvedValue24,
+        resolvedValue25,
+        resolvedValue26
       ].filter((item): item is string => Boolean(item))
     },
     probabilisticAssessment: {
@@ -728,7 +916,7 @@ export function buildHybridMarketIntelligence(input: {
       marketMomentumScore: growthTrendScore,
       revenuePotentialRange: revenueRange,
       wishlistProxy: {
-        score: clampScore(reviewVelocityValues.length > 0 ? medianReviewVelocity * 4 + launches90 * 5 : demandScore * 0.45),
+        score: clampScore(resolvedValue27),
         basis: "Wishlist proxy uses review velocity, recent launch activity, review volume, and tag concentration because Steam does not expose wishlist counts publicly."
       },
       reasoning: `Demand is inferred from ${medianReviewCount} median reviews, ${medianReviewVelocity} median review growth in the observed window, ${formatMoney(revenueRange.medianCents)} median estimated revenue, and ${launches365} comparable launches in 12 months.`
@@ -742,22 +930,12 @@ export function buildHybridMarketIntelligence(input: {
       failedLaunches: failedLaunches.slice(0, 6).map(mapGame)
     },
     trendDetection: {
-      risingGenres: launches365 > launchesOlder
-        ? [
-            {
-              trend: input.project.genreInput || "Current comparable genre cluster",
-              strengthScore: genreMomentumScore,
-              explanation: `${launches365} comparable launches appeared in the last year versus ${launchesOlder} older tracked comps, indicating rising supply and likely audience attention.`
-            }
-          ]
-        : [],
+      risingGenres: resolvedValue28,
       emergingTags: risingTags,
       decliningSignals,
       seasonalOpportunities,
       underservedNiches,
-      marketShiftExplanation: growthTrendScore >= 65
-        ? "Momentum is likely being driven by recent releases converting into review volume and repeated tag clusters, which indicates a shelf with active audience search behavior."
-        : "The market is not clearly accelerating; any opportunity depends more on differentiated positioning than broad category growth."
+      marketShiftExplanation: resolvedValue29
     },
     evidenceTrail: [
       {

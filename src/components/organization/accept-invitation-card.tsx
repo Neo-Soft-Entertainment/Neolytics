@@ -48,7 +48,25 @@ export function AcceptInvitationCard({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (permissions.length > 0) {
+    resolvedValue0 = permissions.join(", ");
+  } else {
+    resolvedValue0 = "Apenas permissões padrão do cargo";
+  }
+  let resolvedValue1: any;
+  if (message) {
+    resolvedValue1 = <p className="text-destructive">{message}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (isSubmitting) {
+    resolvedValue2 = "Aceitando...";
+  } else {
+    resolvedValue2 = "Aceitar convite";
+  }
+return (
     <Card className="w-full max-w-xl">
       <CardHeader>
         <CardTitle>Entrar em {organizationName}</CardTitle>
@@ -58,11 +76,11 @@ export function AcceptInvitationCard({
       </CardHeader>
       <CardContent className="space-y-4 text-sm text-muted-foreground">
         <p>Email convidado: {invitedEmail}</p>
-        <p>Permissões: {permissions.length > 0 ? permissions.join(", ") : "Apenas permissões padrão do cargo"}</p>
+        <p>Permissões: {resolvedValue0}</p>
         <p>Logado como: {currentEmail ?? "Usuário desconhecido"}</p>
-        {message ? <p className="text-destructive">{message}</p> : null}
+        {resolvedValue1}
         <Button disabled={isSubmitting} onClick={acceptInvite}>
-          {isSubmitting ? "Aceitando..." : "Aceitar convite"}
+          {resolvedValue2}
         </Button>
       </CardContent>
     </Card>

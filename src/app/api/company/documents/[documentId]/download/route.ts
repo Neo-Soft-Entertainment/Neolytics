@@ -42,9 +42,13 @@ export async function GET(
       return badRequest("Document not found.");
     }
 
-    const version = versionId
-      ? document.versions.find((item) => item.id === versionId)
-      : document.versions[0];
+        let resolvedValue0: any;
+    if (versionId) {
+      resolvedValue0 = document.versions.find((item: any) => item.id === versionId);
+    } else {
+      resolvedValue0 = document.versions[0];
+    }
+const version = resolvedValue0;
 
     if (!version) {
       return badRequest("Document version not found.");

@@ -69,14 +69,20 @@ export async function createStripeCheckoutSession(params: {
     }
   });
 
-  const session = await stripe.checkout.sessions.create({
+    let resolvedValue0: any;
+  if (organization.stripeCustomerId) {
+    resolvedValue0 = undefined;
+  } else {
+    resolvedValue0 = params.userEmail;
+  }
+const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     payment_method_collection: "always",
     client_reference_id: params.organizationId,
     success_url: `${appUrl}/signup/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${appUrl}/settings`,
     customer: organization.stripeCustomerId ?? undefined,
-    customer_email: organization.stripeCustomerId ? undefined : params.userEmail,
+    customer_email: resolvedValue0,
     line_items: [
       {
         price: priceId,
@@ -141,10 +147,14 @@ export async function syncStripeCheckoutSession(sessionId: string) {
     throw new Error("Stripe checkout session does not contain a subscription.");
   }
 
-  const subscriptionId =
-    typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription.id;
+    let resolvedValue1: any;
+  if (typeof session.subscription === "string") {
+    resolvedValue1 = session.subscription;
+  } else {
+    resolvedValue1 = session.subscription.id;
+  }
+const subscriptionId =
+    resolvedValue1;
 
   return syncStripeSubscription(subscriptionId);
 }
@@ -174,16 +184,40 @@ export async function syncStripeSubscriptionRecord(subscription: Stripe.Subscrip
     throw new Error("Não foi possível mapear a assinatura da Stripe para um plano da Neolytics.");
   }
 
-  return syncOrganizationSubscriptionFromStripe({
+    let resolvedValue2: any;
+  if (typeof subscription.customer === "string") {
+    resolvedValue2 = subscription.customer;
+  } else {
+    resolvedValue2 = subscription.customer?.id ?? null;
+  }
+  let resolvedValue3: any;
+  if (currentPeriodStart) {
+    resolvedValue3 = new Date(currentPeriodStart * 1000);
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (currentPeriodEnd) {
+    resolvedValue4 = new Date(currentPeriodEnd * 1000);
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (canceledAt) {
+    resolvedValue5 = new Date(canceledAt * 1000);
+  } else {
+    resolvedValue5 = null;
+  }
+return syncOrganizationSubscriptionFromStripe({
     organizationId,
     plan,
-    customerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? null,
+    customerId: resolvedValue2,
     subscriptionId: subscription.id,
     priceId,
     isCanceled: subscription.status === "canceled",
-    currentPeriodStart: currentPeriodStart ? new Date(currentPeriodStart * 1000) : null,
-    currentPeriodEnd: currentPeriodEnd ? new Date(currentPeriodEnd * 1000) : null,
-    canceledAt: canceledAt ? new Date(canceledAt * 1000) : null
+    currentPeriodStart: resolvedValue3,
+    currentPeriodEnd: resolvedValue4,
+    canceledAt: resolvedValue5
   });
 }
 

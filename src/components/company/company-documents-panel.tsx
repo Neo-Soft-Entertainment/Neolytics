@@ -46,7 +46,7 @@ export function CompanyDocumentsPanel({
   const [typeFilter, setTypeFilter] = useState("ALL");
 
   const filteredDocuments = useMemo(() => {
-    return documents.filter((document) => {
+    return documents.filter((document: any) => {
       if (typeFilter !== "ALL" && document.type !== typeFilter) {
         return false;
       }
@@ -98,7 +98,31 @@ export function CompanyDocumentsPanel({
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (isCreating) {
+    resolvedValue0 = "Criando...";
+  } else {
+    resolvedValue0 = "Criar documento";
+  }
+  let resolvedValue1: any;
+  if (error) {
+    resolvedValue1 = <p className="mt-3 text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (filteredDocuments.length === 0) {
+    resolvedValue2 = (
+          <Card>
+            <CardContent className="py-8 text-sm text-muted-foreground">
+              Nenhum documento da empresa corresponde aos filtros atuais.
+            </CardContent>
+          </Card>
+        );
+  } else {
+    resolvedValue2 = null;
+  }
+return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
@@ -113,7 +137,7 @@ export function CompanyDocumentsPanel({
             <p className="text-muted-foreground">Vencendo em breve</p>
             <p className="mt-1 text-2xl font-semibold">
               {
-                documents.filter((document) => {
+                documents.filter((document: any) => {
                   if (!document.expiresAt) {
                     return false;
                   }
@@ -128,11 +152,11 @@ export function CompanyDocumentsPanel({
           </div>
           <div className="rounded-xl border p-3">
             <p className="text-muted-foreground">Vinculados a projeto</p>
-            <p className="mt-1 text-2xl font-semibold">{documents.filter((document) => document.project).length}</p>
+            <p className="mt-1 text-2xl font-semibold">{documents.filter((document: any) => document.project).length}</p>
           </div>
           <div className="rounded-xl border p-3">
             <p className="text-muted-foreground">Documentos versionados</p>
-            <p className="mt-1 text-2xl font-semibold">{documents.filter((document) => document.versions.length > 1).length}</p>
+            <p className="mt-1 text-2xl font-semibold">{documents.filter((document: any) => document.versions.length > 1).length}</p>
           </div>
         </CardContent>
       </Card>
@@ -145,7 +169,7 @@ export function CompanyDocumentsPanel({
           <form
             id="create-company-document-form"
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            onSubmit={(event) => {
+            onSubmit={(event: any) => {
               event.preventDefault();
               void createDocument(new FormData(event.currentTarget));
             }}
@@ -219,11 +243,11 @@ export function CompanyDocumentsPanel({
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Criando..." : "Criar documento"}
+                {resolvedValue0}
               </Button>
             </div>
           </form>
-          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+          {resolvedValue1}
         </CardContent>
       </Card>
 
@@ -237,7 +261,7 @@ export function CompanyDocumentsPanel({
               <Label htmlFor="document-query">Pesquisar</Label>
               <Input
                 id="document-query"
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event: any) => setQuery(event.target.value)}
                 placeholder="Pesquisar por título, emissor, projeto, empresa ou nome de arquivo"
                 value={query}
               />
@@ -247,7 +271,7 @@ export function CompanyDocumentsPanel({
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 id="document-type-filter"
-                onChange={(event) => setTypeFilter(event.target.value)}
+                onChange={(event: any) => setTypeFilter(event.target.value)}
                 value={typeFilter}
               >
                 <option value="ALL">Todos</option>
@@ -261,16 +285,10 @@ export function CompanyDocumentsPanel({
           </CardContent>
         </Card>
 
-        {filteredDocuments.map((document) => (
+        {filteredDocuments.map((document: any) => (
           <DocumentCard key={document.id} canManage={canManage} document={document} />
         ))}
-        {filteredDocuments.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-sm text-muted-foreground">
-              Nenhum documento da empresa corresponde aos filtros atuais.
-            </CardContent>
-          </Card>
-        ) : null}
+        {resolvedValue2}
       </div>
     </div>
   );
@@ -318,8 +336,14 @@ function DocumentCard({
     setMessage(null);
     setIsOpening(true);
 
-    const response = await fetch(
-      `/api/company/documents/${document.id}/download${versionId ? `?versionId=${versionId}` : ""}`
+        let resolvedValue3: any;
+    if (versionId) {
+      resolvedValue3 = `?versionId=${versionId}`;
+    } else {
+      resolvedValue3 = "";
+    }
+const response = await fetch(
+      `/api/company/documents/${document.id}/download${resolvedValue3}`
     );
 
     setIsOpening(false);
@@ -336,7 +360,37 @@ function DocumentCard({
 
   const latestVersion = document.versions[0];
 
-  return (
+    let resolvedValue4: any;
+  if (document.status === "ACTIVE") {
+    resolvedValue4 = "default";
+  } else {
+    resolvedValue4 = "secondary";
+  }
+  let resolvedValue5: any;
+  if (document.expiresAt) {
+    resolvedValue5 = new Date(document.expiresAt).toLocaleDateString();
+  } else {
+    resolvedValue5 = "—";
+  }
+  let resolvedValue7: any;
+  if (isSavingVersion) {
+    resolvedValue7 = "Salvando...";
+  } else {
+    resolvedValue7 = "Adicionar nova versão";
+  }
+  let resolvedValue8: any;
+  if (isOpening) {
+    resolvedValue8 = "Abrindo...";
+  } else {
+    resolvedValue8 = "Abrir última";
+  }
+  let resolvedValue9: any;
+  if (message) {
+    resolvedValue9 = <p className="text-sm text-muted-foreground">{message}</p>;
+  } else {
+    resolvedValue9 = null;
+  }
+return (
     <Card>
       <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -347,7 +401,7 @@ function DocumentCard({
         </div>
         <div className="flex gap-2">
           <Badge variant="secondary">{getDocumentTypeLabel(document.type)}</Badge>
-          <Badge variant={document.status === "ACTIVE" ? "default" : "secondary"}>{document.status}</Badge>
+          <Badge variant={resolvedValue4}>{document.status}</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -362,7 +416,7 @@ function DocumentCard({
           </div>
           <div>
             <p className="text-muted-foreground">Expira</p>
-            <p>{document.expiresAt ? new Date(document.expiresAt).toLocaleDateString() : "—"}</p>
+            <p>{resolvedValue5}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Última versão</p>
@@ -382,11 +436,18 @@ function DocumentCard({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {document.versions.map((version) => (
+            {document.versions.map((version: any) => {
+              let resolvedValue6: any;
+              if (version.sizeBytes) {
+                resolvedValue6 = `${Math.round(version.sizeBytes / 1024)} KB`;
+              } else {
+                resolvedValue6 = "—";
+              }
+              return (
               <TableRow key={version.id}>
                 <TableCell>v{version.version}</TableCell>
                 <TableCell>{version.originalName}</TableCell>
-                <TableCell>{version.sizeBytes ? `${Math.round(version.sizeBytes / 1024)} KB` : "—"}</TableCell>
+                <TableCell>{resolvedValue6}</TableCell>
                 <TableCell className="max-w-[280px] truncate">{version.storagePath}</TableCell>
                 <TableCell>{new Date(version.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
@@ -395,13 +456,14 @@ function DocumentCard({
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+            );
+            })}
           </TableBody>
         </Table>
 
         <form
           className="grid gap-3 md:grid-cols-3"
-          onSubmit={(event) => {
+          onSubmit={(event: any) => {
             event.preventDefault();
             void addVersion(new FormData(event.currentTarget));
           }}
@@ -412,14 +474,14 @@ function DocumentCard({
           </div>
           <div className="flex items-end gap-2 md:col-span-2">
             <Button disabled={!canManage || isSavingVersion} size="sm" type="submit">
-              {isSavingVersion ? "Salvando..." : "Adicionar nova versão"}
+              {resolvedValue7}
             </Button>
             <Button disabled={isOpening} onClick={() => void openLatestVersion()} size="sm" type="button" variant="outline">
-              {isOpening ? "Abrindo..." : "Abrir última"}
+              {resolvedValue8}
             </Button>
           </div>
         </form>
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
+        {resolvedValue9}
       </CardContent>
     </Card>
   );

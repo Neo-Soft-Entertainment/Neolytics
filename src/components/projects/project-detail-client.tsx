@@ -57,7 +57,7 @@ function getProjectQueryKey(projectId: string) {
 function parseDraftLabels(labels: string) {
   return labels
     .split(",")
-    .map((item) => item.trim())
+    .map((item: any) => item.trim())
     .filter(Boolean);
 }
 
@@ -470,7 +470,13 @@ export function ProjectDetailClient({
       return;
     }
 
-    setProjectForm({
+        let resolvedValue0: any;
+    if (query.data.pricePointCents) {
+      resolvedValue0 = String(query.data.pricePointCents);
+    } else {
+      resolvedValue0 = "";
+    }
+setProjectForm({
       name: query.data.name,
       elevatorPitch: query.data.elevatorPitch ?? "",
       description: query.data.description ?? "",
@@ -482,7 +488,7 @@ export function ProjectDetailClient({
       monetizationModel: query.data.monetizationModel ?? "",
       artDirection: query.data.artDirection ?? "",
       playerFantasy: query.data.playerFantasy ?? "",
-      pricePointCents: query.data.pricePointCents ? String(query.data.pricePointCents) : "",
+      pricePointCents: resolvedValue0,
       stage: query.data.stage ?? "DISCOVERY"
     });
 
@@ -498,12 +504,24 @@ export function ProjectDetailClient({
     for (const boardItem of query.data.kanbanBoards ?? []) {
       for (const column of boardItem.columns ?? []) {
         for (const card of column.cards ?? []) {
-          nextCardEdits[card.id] = {
+                    let resolvedValue1: any;
+          if (card.dueDate) {
+            resolvedValue1 = new Date(card.dueDate).toISOString().slice(0, 10);
+          } else {
+            resolvedValue1 = "";
+          }
+          let resolvedValue2: any;
+          if (Array.isArray(card.labels)) {
+            resolvedValue2 = card.labels.join(", ");
+          } else {
+            resolvedValue2 = "";
+          }
+nextCardEdits[card.id] = {
             title: card.title,
             description: card.description ?? "",
             assigneeLabel: card.assigneeLabel ?? "",
-            dueDate: card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "",
-            labels: Array.isArray(card.labels) ? card.labels.join(", ") : "",
+            dueDate: resolvedValue1,
+            labels: resolvedValue2,
             columnId: column.id
           };
         }
@@ -523,12 +541,18 @@ export function ProjectDetailClient({
     }> = {};
 
     for (const milestone of query.data.milestones ?? []) {
-      nextMilestoneEdits[milestone.id] = {
+            let resolvedValue3: any;
+      if (milestone.dueAt) {
+        resolvedValue3 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+      } else {
+        resolvedValue3 = "";
+      }
+nextMilestoneEdits[milestone.id] = {
         title: milestone.title,
         description: milestone.description ?? "",
         ownerLabel: milestone.ownerLabel ?? "",
         status: milestone.status,
-        dueAt: milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : "",
+        dueAt: resolvedValue3,
         budgetedCostCents: String(milestone.budgetedCostCents ?? 0),
         expectedRevenueCents: String(milestone.expectedRevenueCents ?? 0)
       };
@@ -550,7 +574,7 @@ export function ProjectDetailClient({
   }
 
   function updateProjectCache(update: (current: ProjectDetailResponse) => ProjectDetailResponse) {
-    queryClient.setQueryData<ProjectDetailResponse>(getProjectQueryKey(projectId), (current) => {
+    queryClient.setQueryData<ProjectDetailResponse>(getProjectQueryKey(projectId), (current: any) => {
       if (!current) {
         return current;
       }
@@ -584,7 +608,7 @@ export function ProjectDetailClient({
       pricePointCents = Number(projectForm.pricePointCents);
     }
 
-    updateProjectCache((current) => ({
+    updateProjectCache((current: any) => ({
       ...current,
       name: projectForm.name.trim(),
       elevatorPitch: projectForm.elevatorPitch.trim() || null,
@@ -700,9 +724,9 @@ export function ProjectDetailClient({
     setFeedback(null);
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => ({
+    updateProjectCache((current: any) => ({
       ...current,
-      artAssets: current.artAssets.filter((asset) => asset.id !== assetId)
+      artAssets: current.artAssets.filter((asset: any) => asset.id !== assetId)
     }));
 
     const result = await deleteProjectArtAsset(projectId, assetId);
@@ -735,7 +759,7 @@ export function ProjectDetailClient({
 
     const optimisticMilestone = toOptimisticMilestone(`optimistic-milestone-${Date.now()}`, submittedMilestone, sortOrder);
 
-    updateProjectCache((current) => ({
+    updateProjectCache((current: any) => ({
       ...current,
       milestones: [...current.milestones, optimisticMilestone]
     }));
@@ -773,9 +797,9 @@ export function ProjectDetailClient({
     const previousData = getProjectSnapshot();
     const optimisticMilestone = toOptimisticMilestone(milestoneId, milestone, 0);
 
-    updateProjectCache((current) => ({
+    updateProjectCache((current: any) => ({
       ...current,
-      milestones: current.milestones.map((currentMilestone) => {
+      milestones: current.milestones.map((currentMilestone: any) => {
         if (currentMilestone.id !== milestoneId) {
           return currentMilestone;
         }
@@ -824,7 +848,7 @@ export function ProjectDetailClient({
       cards: []
     };
 
-    updateProjectCache((current) => addColumnToProject(current, optimisticColumn));
+    updateProjectCache((current: any) => addColumnToProject(current, optimisticColumn));
     setNewColumn({ name: "", color: "" });
 
     const result = await createProjectKanbanColumn(projectId, submittedColumn.name, submittedColumn.color);
@@ -848,7 +872,7 @@ export function ProjectDetailClient({
       nextColor = null;
     }
 
-    updateProjectCache((current) => updateColumnInProject(current, columnId, name.trim(), nextColor, sortOrder));
+    updateProjectCache((current: any) => updateColumnInProject(current, columnId, name.trim(), nextColor, sortOrder));
 
     const result = await updateProjectKanbanColumn(projectId, columnId, name, color, sortOrder);
 
@@ -886,8 +910,8 @@ export function ProjectDetailClient({
 
     const optimisticCard = toOptimisticCard(`optimistic-card-${Date.now()}`, cardState, sortOrder);
 
-    updateProjectCache((current) => addCardToProject(current, columnId, optimisticCard));
-    setNewCards((current) => ({
+    updateProjectCache((current: any) => addCardToProject(current, columnId, optimisticCard));
+    setNewCards((current: any) => ({
       ...current,
       [columnId]: {
         title: "",
@@ -921,7 +945,7 @@ export function ProjectDetailClient({
 
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => {
+    updateProjectCache((current: any) => {
       let sourceCard: ProjectKanbanCardItem | null = null;
       let sourceColumnId = cardState.columnId;
 
@@ -962,7 +986,7 @@ export function ProjectDetailClient({
   async function moveCard(cardId: string, columnId: string) {
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => reorderCardInProject(current, cardId, columnId, Number.MAX_SAFE_INTEGER));
+    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, Number.MAX_SAFE_INTEGER));
 
     const result = await moveProjectKanbanCard(projectId, cardId, columnId);
 
@@ -978,7 +1002,7 @@ export function ProjectDetailClient({
   async function moveCardInColumn(cardId: string, direction: "up" | "down") {
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => moveCardOneSlotInProject(current, cardId, direction));
+    updateProjectCache((current: any) => moveCardOneSlotInProject(current, cardId, direction));
 
     const result = await moveProjectKanbanCardInColumn(projectId, cardId, direction);
 
@@ -994,7 +1018,7 @@ export function ProjectDetailClient({
   async function reorderCard(cardId: string, columnId: string, targetIndex: number) {
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => reorderCardInProject(current, cardId, columnId, targetIndex));
+    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, targetIndex));
 
     const result = await reorderProjectKanbanCard(projectId, cardId, columnId, targetIndex);
 
@@ -1016,7 +1040,7 @@ export function ProjectDetailClient({
 
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => removeCardFromProject(current, cardId));
+    updateProjectCache((current: any) => removeCardFromProject(current, cardId));
 
     const result = await deleteProjectKanbanCard(projectId, cardId);
 
@@ -1033,7 +1057,7 @@ export function ProjectDetailClient({
   async function moveColumn(columnId: string, direction: "left" | "right") {
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => moveColumnInProject(current, columnId, direction));
+    updateProjectCache((current: any) => moveColumnInProject(current, columnId, direction));
 
     const result = await moveProjectKanbanColumn(projectId, columnId, direction);
 
@@ -1055,7 +1079,7 @@ export function ProjectDetailClient({
 
     const previousData = getProjectSnapshot();
 
-    updateProjectCache((current) => removeColumnFromProject(current, columnId));
+    updateProjectCache((current: any) => removeColumnFromProject(current, columnId));
 
     const result = await deleteProjectKanbanColumn(projectId, columnId);
 
@@ -1090,13 +1114,13 @@ export function ProjectDetailClient({
     revenueEntries: query.data.revenueEntries ?? [],
     expenseEntries: query.data.expenseEntries ?? [],
     approvalRequests: query.data.approvalRequests ?? [],
-    artAssets: (query.data.artAssets ?? []).map((asset) => ({
+    artAssets: (query.data.artAssets ?? []).map((asset: any) => ({
       ...asset,
       kind: asset.kind ?? "asset",
       originalName: asset.originalName ?? "Asset",
       sizeBytes: asset.sizeBytes ?? 0
     })),
-    competitorGames: (query.data.competitorGames ?? []).filter((item) => item?.steamGame).map((item) => ({
+    competitorGames: (query.data.competitorGames ?? []).filter((item: any) => item?.steamGame).map((item: any) => ({
       ...item,
       steamGame: {
         ...item.steamGame,
@@ -1122,25 +1146,115 @@ export function ProjectDetailClient({
   const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
   const hybridMarketIntelligence = project.analysis?.metadata?.hybridMarketIntelligence ?? null;
   const aiLayer = project.analysis?.metadata?.aiLayer ?? null;
-  const opportunityRecommendations = Array.isArray(opportunityLayer?.practicalRecommendations) ? opportunityLayer.practicalRecommendations : [];
-  const opportunityMismatches = Array.isArray(opportunityLayer?.keyMismatches) ? opportunityLayer.keyMismatches : [];
-  const aiCreativeAngles = Array.isArray(aiLayer?.creativeAngles) ? aiLayer.creativeAngles : [];
-  const aiAcquisitionChannels = Array.isArray(aiLayer?.acquisitionChannels) ? aiLayer.acquisitionChannels : [];
-  const aiWishlistDrivers = Array.isArray(aiLayer?.wishlistDrivers) ? aiLayer.wishlistDrivers : [];
-  const aiRedFlags = Array.isArray(aiLayer?.redFlags) ? aiLayer.redFlags : [];
+    let resolvedValue4: any;
+  if (Array.isArray(opportunityLayer?.practicalRecommendations)) {
+    resolvedValue4 = opportunityLayer.practicalRecommendations;
+  } else {
+    resolvedValue4 = [];
+  }
+const opportunityRecommendations = resolvedValue4;
+    let resolvedValue5: any;
+  if (Array.isArray(opportunityLayer?.keyMismatches)) {
+    resolvedValue5 = opportunityLayer.keyMismatches;
+  } else {
+    resolvedValue5 = [];
+  }
+const opportunityMismatches = resolvedValue5;
+    let resolvedValue6: any;
+  if (Array.isArray(aiLayer?.creativeAngles)) {
+    resolvedValue6 = aiLayer.creativeAngles;
+  } else {
+    resolvedValue6 = [];
+  }
+const aiCreativeAngles = resolvedValue6;
+    let resolvedValue7: any;
+  if (Array.isArray(aiLayer?.acquisitionChannels)) {
+    resolvedValue7 = aiLayer.acquisitionChannels;
+  } else {
+    resolvedValue7 = [];
+  }
+const aiAcquisitionChannels = resolvedValue7;
+    let resolvedValue8: any;
+  if (Array.isArray(aiLayer?.wishlistDrivers)) {
+    resolvedValue8 = aiLayer.wishlistDrivers;
+  } else {
+    resolvedValue8 = [];
+  }
+const aiWishlistDrivers = resolvedValue8;
+    let resolvedValue9: any;
+  if (Array.isArray(aiLayer?.redFlags)) {
+    resolvedValue9 = aiLayer.redFlags;
+  } else {
+    resolvedValue9 = [];
+  }
+const aiRedFlags = resolvedValue9;
   const hybridProbabilities = hybridMarketIntelligence?.probabilisticAssessment?.probabilities ?? {};
-  const hybridFactors = Array.isArray(hybridMarketIntelligence?.opportunityScoring?.factors) ? hybridMarketIntelligence.opportunityScoring.factors : [];
-  const hybridEmergingTags = Array.isArray(hybridMarketIntelligence?.trendDetection?.emergingTags) ? hybridMarketIntelligence.trendDetection.emergingTags : [];
-  const hybridDecliningSignals = Array.isArray(hybridMarketIntelligence?.trendDetection?.decliningSignals) ? hybridMarketIntelligence.trendDetection.decliningSignals : [];
-  const hybridMarketLeaders = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.marketLeaders) ? hybridMarketIntelligence.competitiveIntelligence.marketLeaders : [];
-  const hybridSuccessfulLaunches = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.recentlySuccessfulLaunches) ? hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches : [];
-  const hybridFailedLaunches = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.failedLaunches) ? hybridMarketIntelligence.competitiveIntelligence.failedLaunches : [];
-  const hybridEvidenceTrail = Array.isArray(hybridMarketIntelligence?.evidenceTrail) ? hybridMarketIntelligence.evidenceTrail : [];
-  const hybridSourcesUsed = Array.isArray(hybridMarketIntelligence?.sourcesUsed) ? hybridMarketIntelligence.sourcesUsed : [];
-  const hybridLimitations = Array.isArray(hybridMarketIntelligence?.dataQuality?.limitations) ? hybridMarketIntelligence.dataQuality.limitations : [];
+    let resolvedValue10: any;
+  if (Array.isArray(hybridMarketIntelligence?.opportunityScoring?.factors)) {
+    resolvedValue10 = hybridMarketIntelligence.opportunityScoring.factors;
+  } else {
+    resolvedValue10 = [];
+  }
+const hybridFactors = resolvedValue10;
+    let resolvedValue11: any;
+  if (Array.isArray(hybridMarketIntelligence?.trendDetection?.emergingTags)) {
+    resolvedValue11 = hybridMarketIntelligence.trendDetection.emergingTags;
+  } else {
+    resolvedValue11 = [];
+  }
+const hybridEmergingTags = resolvedValue11;
+    let resolvedValue12: any;
+  if (Array.isArray(hybridMarketIntelligence?.trendDetection?.decliningSignals)) {
+    resolvedValue12 = hybridMarketIntelligence.trendDetection.decliningSignals;
+  } else {
+    resolvedValue12 = [];
+  }
+const hybridDecliningSignals = resolvedValue12;
+    let resolvedValue13: any;
+  if (Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.marketLeaders)) {
+    resolvedValue13 = hybridMarketIntelligence.competitiveIntelligence.marketLeaders;
+  } else {
+    resolvedValue13 = [];
+  }
+const hybridMarketLeaders = resolvedValue13;
+    let resolvedValue14: any;
+  if (Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.recentlySuccessfulLaunches)) {
+    resolvedValue14 = hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches;
+  } else {
+    resolvedValue14 = [];
+  }
+const hybridSuccessfulLaunches = resolvedValue14;
+    let resolvedValue15: any;
+  if (Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.failedLaunches)) {
+    resolvedValue15 = hybridMarketIntelligence.competitiveIntelligence.failedLaunches;
+  } else {
+    resolvedValue15 = [];
+  }
+const hybridFailedLaunches = resolvedValue15;
+    let resolvedValue16: any;
+  if (Array.isArray(hybridMarketIntelligence?.evidenceTrail)) {
+    resolvedValue16 = hybridMarketIntelligence.evidenceTrail;
+  } else {
+    resolvedValue16 = [];
+  }
+const hybridEvidenceTrail = resolvedValue16;
+    let resolvedValue17: any;
+  if (Array.isArray(hybridMarketIntelligence?.sourcesUsed)) {
+    resolvedValue17 = hybridMarketIntelligence.sourcesUsed;
+  } else {
+    resolvedValue17 = [];
+  }
+const hybridSourcesUsed = resolvedValue17;
+    let resolvedValue18: any;
+  if (Array.isArray(hybridMarketIntelligence?.dataQuality?.limitations)) {
+    resolvedValue18 = hybridMarketIntelligence.dataQuality.limitations;
+  } else {
+    resolvedValue18 = [];
+  }
+const hybridLimitations = resolvedValue18;
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
-  const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
+  const pendingApprovalsCount = project.approvalRequests.filter((item: any) => item.status === "PENDING").length;
   const artMetadata = (project.artAnalysis?.metadata ?? null) as {
     uploadedArtAssets?: {
       total: number;
@@ -1180,16 +1294,1284 @@ export function ProjectDetailClient({
     } | null;
   } | null;
   const uploadedArtAssets = artMetadata?.uploadedArtAssets ?? null;
-  const uploadedDominantColors = Array.isArray(uploadedArtAssets?.dominantColors) ? uploadedArtAssets.dominantColors : [];
-  const proProductionLevers = Array.isArray(artMetadata?.proArtBrief?.productionLevers)
-    ? artMetadata.proArtBrief.productionLevers
-    : ["Rode a camada Pro de arte para receber alavancas de execução para escopo e polimento de loja."];
-  const proReferenceShelf = Array.isArray(artMetadata?.proArtBrief?.referenceShelf) ? artMetadata.proArtBrief.referenceShelf : [];
-  const aiArtPriorityFixes = Array.isArray(artMetadata?.aiArtLayer?.priorityFixes) ? artMetadata.aiArtLayer.priorityFixes : [];
-  const aiArtStrengths = Array.isArray(artMetadata?.aiArtLayer?.strengths) ? artMetadata.aiArtLayer.strengths : [];
-  const aiArtRisks = Array.isArray(artMetadata?.aiArtLayer?.risks) ? artMetadata.aiArtLayer.risks : [];
+    let resolvedValue19: any;
+  if (Array.isArray(uploadedArtAssets?.dominantColors)) {
+    resolvedValue19 = uploadedArtAssets.dominantColors;
+  } else {
+    resolvedValue19 = [];
+  }
+const uploadedDominantColors = resolvedValue19;
+    let resolvedValue20: any;
+  if (Array.isArray(artMetadata?.proArtBrief?.productionLevers)) {
+    resolvedValue20 = artMetadata.proArtBrief.productionLevers;
+  } else {
+    resolvedValue20 = ["Rode a camada Pro de arte para receber alavancas de execução para escopo e polimento de loja."];
+  }
+const proProductionLevers = resolvedValue20;
+    let resolvedValue21: any;
+  if (Array.isArray(artMetadata?.proArtBrief?.referenceShelf)) {
+    resolvedValue21 = artMetadata.proArtBrief.referenceShelf;
+  } else {
+    resolvedValue21 = [];
+  }
+const proReferenceShelf = resolvedValue21;
+    let resolvedValue22: any;
+  if (Array.isArray(artMetadata?.aiArtLayer?.priorityFixes)) {
+    resolvedValue22 = artMetadata.aiArtLayer.priorityFixes;
+  } else {
+    resolvedValue22 = [];
+  }
+const aiArtPriorityFixes = resolvedValue22;
+    let resolvedValue23: any;
+  if (Array.isArray(artMetadata?.aiArtLayer?.strengths)) {
+    resolvedValue23 = artMetadata.aiArtLayer.strengths;
+  } else {
+    resolvedValue23 = [];
+  }
+const aiArtStrengths = resolvedValue23;
+    let resolvedValue24: any;
+  if (Array.isArray(artMetadata?.aiArtLayer?.risks)) {
+    resolvedValue24 = artMetadata.aiArtLayer.risks;
+  } else {
+    resolvedValue24 = [];
+  }
+const aiArtRisks = resolvedValue24;
 
-  return (
+    let resolvedValue25: any;
+  if (isAnalyzing) {
+    resolvedValue25 = t("projectDetail.analyzing");
+  } else {
+    resolvedValue25 = t("projectDetail.runMarketAnalysis");
+  }
+  let resolvedValue26: any;
+  if (isAnalyzingArt) {
+    resolvedValue26 = t("projectDetail.analyzingArt");
+  } else {
+    resolvedValue26 = t("projectDetail.runArtAnalysis");
+  }
+  let resolvedValue27: any;
+  if (isGeneratingGdd) {
+    resolvedValue27 = t("projectDetail.generating");
+  } else {
+    resolvedValue27 = t("projectDetail.generateGdd");
+  }
+  let resolvedValue28: any;
+  if (viabilityLimit) {
+    resolvedValue28 = getLimitLabel(viabilityLimit);
+  } else {
+    resolvedValue28 = "...";
+  }
+  let resolvedValue29: any;
+  if (artLimit) {
+    resolvedValue29 = getLimitLabel(artLimit);
+  } else {
+    resolvedValue29 = "...";
+  }
+  let resolvedValue30: any;
+  if (gddLimit) {
+    resolvedValue30 = getLimitLabel(gddLimit);
+  } else {
+    resolvedValue30 = "...";
+  }
+  let resolvedValue31: any;
+  if (feedback) {
+    resolvedValue31 = <p className="text-sm text-muted-foreground">{feedback}</p>;
+  } else {
+    resolvedValue31 = null;
+  }
+  let resolvedValue32: any;
+  if (aiLayer) {
+    resolvedValue32 = (
+                  <>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Leitura estratégica da IA</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.strategicNarrative}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Diferencial de posicionamento</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.positioningSummary}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Estratégia de lançamento</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.launchStrategy}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Preço e desenho da oferta</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.pricingNarrative}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Cápsula da loja e mensagem</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.storeCapsuleAdvice}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Leitura de confiança da IA</p>
+                        <p className="mt-2 text-muted-foreground">{aiLayer.confidenceNarrative}</p>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Ângulos criativos</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiCreativeAngles.map((item: any) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Canais de aquisição</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiAcquisitionChannels.map((item: any) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Gatilhos de wishlist</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiWishlistDrivers.map((item: any) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Alertas da IA</p>
+                        <ul className="mt-2 space-y-2 text-muted-foreground">
+                          {aiRedFlags.map((item: any) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </>
+                );
+  } else {
+    resolvedValue32 = null;
+  }
+  let resolvedValue33: any;
+  if (hybridMarketIntelligence) {
+        let resolvedValue53: any;
+    if (hybridSuccessfulLaunches.length) {
+      resolvedValue53 = hybridSuccessfulLaunches.slice(0, 5).map((game: any) => (
+                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
+                            ));
+    } else {
+      resolvedValue53 = <li>Nenhum lançamento recente de alta confiança neste conjunto comparável.</li>;
+    }
+    let resolvedValue54: any;
+    if (hybridFailedLaunches.length) {
+      resolvedValue54 = hybridFailedLaunches.slice(0, 5).map((game: any) => (
+                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
+                            ));
+    } else {
+      resolvedValue54 = <li>Nenhum lançamento recente claramente fraco neste conjunto comparável.</li>;
+    }
+    let resolvedValue55: any;
+    if (hybridLimitations.length) {
+      resolvedValue55 = (
+                        <ul className="mt-3 space-y-2 text-muted-foreground">
+                          {hybridLimitations.map((item: any) => (
+                            <li key={item}>- {item}</li>
+                          ))}
+                        </ul>
+                      );
+    } else {
+      resolvedValue55 = null;
+    }
+resolvedValue33 = (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Inteligência quantitativa de mercado</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-5 text-sm">
+                  <div className="grid gap-4 lg:grid-cols-4">
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Score de oportunidade</p>
+                      <p className="mt-2 text-3xl font-semibold">{formatNumber(hybridMarketIntelligence.opportunityScoring?.score ?? null)}</p>
+                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring?.label ?? "Análise pendente."}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Classificação</p>
+                      <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment?.classification ?? "Análise pendente."}</p>
+                      <p className="mt-1 text-muted-foreground">Confiança {hybridMarketIntelligence.probabilisticAssessment?.confidenceLevel ?? "N/A"}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Demanda</p>
+                      <p className="mt-2 text-2xl font-semibold">{formatNumber(hybridMarketIntelligence.demandModel?.demandScore ?? null)}</p>
+                      <p className="mt-1 text-muted-foreground">Proxy de wishlist {formatNumber(hybridMarketIntelligence.demandModel?.wishlistProxy?.score ?? null)}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Faixa de receita</p>
+                      <p className="mt-2 font-medium">
+                        {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.lowCents ?? null)} - {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.highCents ?? null)}
+                      </p>
+                      <p className="mt-1 text-muted-foreground">Mediana {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.medianCents ?? null)}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Conclusão probabilística</p>
+                    <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment?.conclusion ?? "Análise pendente."}</p>
+                    <div className="mt-4 grid gap-3 md:grid-cols-3">
+                      {Object.entries(hybridProbabilities).map(([key, value]) => {
+                        let resolvedValue52: any;
+                        if (typeof value === "number" || typeof value === "string") {
+                          resolvedValue52 = value;
+                        } else {
+                          resolvedValue52 = "N/A";
+                        }
+                        return (
+                        <div key={key} className="rounded-xl border bg-muted/30 p-3">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/([A-Z])/g, " $1")}</p>
+                          <p className="mt-1 text-lg font-semibold">{resolvedValue52}</p>
+                        </div>
+                      );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Fatores ponderados do score</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridFactors.map((factor: any) => (
+                          <div key={factor.name} className="rounded-xl border bg-muted/30 p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="font-medium">{factor.name}</p>
+                              <p className="text-sm text-muted-foreground">{factor.score}/100 · peso {factor.weight}</p>
+                            </div>
+                            <p className="mt-2 text-muted-foreground">{factor.justification}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Detecção de tendências</p>
+                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection?.marketShiftExplanation ?? "Análise pendente."}</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridEmergingTags.slice(0, 4).map((trend: any) => (
+                          <div key={trend.tag} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{trend.tag} · {trend.strengthScore}</p>
+                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
+                          </div>
+                        ))}
+                        {hybridDecliningSignals.slice(0, 3).map((trend: any) => (
+                          <div key={trend.signal} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{trend.signal} · {trend.score}</p>
+                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 xl:grid-cols-3">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Líderes de mercado</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {hybridMarketLeaders.slice(0, 5).map((game: any) => (
+                          <li key={game.appId}>{game.name} · {formatCurrency(game.medianRevenueCents)} · {formatNumber(game.reviewScore)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Lançamentos recentes bem-sucedidos</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {resolvedValue53}
+                      </ul>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Lançamentos similares fracos ou malsucedidos</p>
+                      <ul className="mt-3 space-y-2 text-muted-foreground">
+                        {resolvedValue54}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Trilha de evidências</p>
+                      <div className="mt-3 space-y-3">
+                        {hybridEvidenceTrail.map((item: any) => (
+                          <div key={item.claim} className="rounded-xl border bg-muted/30 p-3">
+                            <p className="font-medium">{item.claim}</p>
+                            <p className="mt-1 text-muted-foreground">{item.support}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Fontes: {item.sources.join(", ")}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Qualidade dos dados</p>
+                      <p className="mt-2 text-muted-foreground">
+                        Confiança {hybridMarketIntelligence.dataQuality?.label ?? "N/A"} ({formatNumber(hybridMarketIntelligence.dataQuality?.score ?? null)}/100). Dependência de IA: {hybridMarketIntelligence.aiDependency?.replaceAll("_", " ") ?? "N/A"}.
+                      </p>
+                      <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Fontes usadas</p>
+                      <p className="mt-2 text-muted-foreground">{hybridSourcesUsed.join(", ") || "Fontes indisponíveis."}</p>
+                      {resolvedValue55}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+  } else {
+    resolvedValue33 = null;
+  }
+  let resolvedValue34: any;
+  if (marketDepth) {
+    resolvedValue34 = `${marketDepth.marketSizeLabel} · ${formatCurrency(marketDepth.marketSizeCents)}`;
+  } else {
+    resolvedValue34 = "Análise pendente.";
+  }
+  let resolvedValue35: any;
+  if (marketDepth) {
+    resolvedValue35 = `${formatNumber(marketDepth.reviewVelocity90)} vs ${formatNumber(marketDepth.previousReviewVelocity90)} nos 90 dias anteriores`;
+  } else {
+    resolvedValue35 = "Análise pendente.";
+  }
+  let resolvedValue36: any;
+  if (marketDepth) {
+    resolvedValue36 = `${formatNumber(marketDepth.playerMomentum30)} média vs ${formatNumber(marketDepth.previousPlayerMomentum30)}`;
+  } else {
+    resolvedValue36 = "Análise pendente.";
+  }
+  let resolvedValue37: any;
+  if (marketDepth) {
+    resolvedValue37 = `${marketDepth.launchCohorts?.last90Days ?? 0} / 90d · ${marketDepth.launchCohorts?.last180Days ?? 0} / 180d · ${marketDepth.launchCohorts?.last365Days ?? 0} / 365d`;
+  } else {
+    resolvedValue37 = "Análise pendente.";
+  }
+  let resolvedValue38: any;
+  if (marketDepth) {
+    resolvedValue38 = `<$10: ${marketDepth.priceBandDistribution?.under10 ?? 0} · $10-20: ${marketDepth.priceBandDistribution?.between10And20 ?? 0} · $20-30: ${marketDepth.priceBandDistribution?.between20And30 ?? 0} · $30+: ${marketDepth.priceBandDistribution?.over30 ?? 0}`;
+  } else {
+    resolvedValue38 = "Análise pendente.";
+  }
+  let resolvedValue39: any;
+  if (competitionLayer) {
+    resolvedValue39 = `${competitionLayer.directComparableCount} diretos · ${competitionLayer.adjacentComparableCount} adjacentes`;
+  } else {
+    resolvedValue39 = "Análise pendente.";
+  }
+  let resolvedValue40: any;
+  if (competitionLayer) {
+    resolvedValue40 = `${competitionLayer.winnerConcentrationScore}% nos vencedores principais`;
+  } else {
+    resolvedValue40 = "Análise pendente.";
+  }
+  let resolvedValue41: any;
+  if (competitionLayer) {
+    resolvedValue41 = `${competitionLayer.dominantMonetization} dominante · ${competitionLayer.premiumSharePercent}% premium`;
+  } else {
+    resolvedValue41 = "Análise pendente.";
+  }
+  let resolvedValue42: any;
+  if (marketDepth) {
+    resolvedValue42 = `${marketDepth.confidenceLabel} (${marketDepth.confidenceScore})`;
+  } else {
+    resolvedValue42 = "Análise pendente.";
+  }
+  let resolvedValue43: any;
+  if (opportunityRecommendations.length) {
+    resolvedValue43 = opportunityRecommendations.map((item: any) => (
+                        <li key={item}>- {item}</li>
+                      ));
+  } else {
+    resolvedValue43 = <li>Análise pendente.</li>;
+  }
+  let resolvedValue44: any;
+  if (opportunityMismatches.length) {
+    resolvedValue44 = opportunityMismatches.map((item: any) => (
+                        <li key={item}>- {item}</li>
+                      ));
+  } else {
+    resolvedValue44 = <li>{t("projectDetail.noMismatches")}</li>;
+  }
+  let resolvedValue45: any;
+  if (project.competitorGames.length > 0) {
+    resolvedValue45 = project.competitorGames.map((item: any) => (
+                <div key={item.steamGame.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="font-medium">{item.steamGame.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Reviews: {formatNumber(item.steamGame.reviewCount)} · Nota: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
+                      </p>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {formatCurrency(item.steamGame.revenueEstimates[0]?.medianNetRevenueCents ?? null)}
+                    </p>
+                  </div>
+                </div>
+              ));
+  } else {
+    resolvedValue45 = (
+                <p className="text-sm text-muted-foreground">{t("projectDetail.noComparableSet")}</p>
+              );
+  }
+  let resolvedValue46: any;
+  if (!canRunArtAnalysis) {
+    resolvedValue46 = (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("projectDetail.artNotIncluded")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  Seu acesso atual não inclui análise de artes. Faça upgrade para benchmark de posicionamento visual,
+                  complexidade de produção e encaixe arte-mercado dentro de cada projeto.
+                </p>
+              </CardContent>
+            </Card>
+          );
+  } else {
+        let resolvedValue56: any;
+    if (project.artAssets.length > 0) {
+      resolvedValue56 = (
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {project.artAssets.map((asset: any) => {
+                        let resolvedValue66: any;
+                        if (asset.signedUrl) {
+                          resolvedValue66 = (
+                            <img src={asset.signedUrl} alt={asset.originalName} className="h-52 w-full object-cover" />
+                          );
+                        } else {
+                          resolvedValue66 = (
+                            <div className="flex h-52 items-center justify-center bg-muted text-sm text-muted-foreground">Prévia indisponível</div>
+                          );
+                        }
+                        let resolvedValue67: any;
+                        if (asset.width && asset.height) {
+                          resolvedValue67 = `${asset.width} x ${asset.height}`;
+                        } else {
+                          resolvedValue67 = "Dimensões indisponíveis";
+                        }
+                        let resolvedValue68: any;
+                        if (asset.visualMetrics) {
+                          resolvedValue68 = (
+                              <div className="grid gap-2 rounded-xl border bg-background/60 p-3 text-xs">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Legibilidade</span>
+                                  <span className="font-medium">{asset.visualMetrics.readabilityScore}/100 · risco {asset.visualMetrics.legibilityRisk}</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Contraste / saturação</span>
+                                  <span className="font-medium">{asset.visualMetrics.contrast} / {asset.visualMetrics.saturation}</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-muted-foreground">Cor dominante</span>
+                                  <span className="inline-flex items-center gap-2 font-medium">
+                                    <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: asset.visualMetrics.dominantColor }} />
+                                    {asset.visualMetrics.dominantColor}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                        } else {
+                          resolvedValue68 = (
+                              <p className="text-xs text-muted-foreground">Métricas de pixel indisponíveis para este arquivo. Reenvie para analisar a legibilidade visual.</p>
+                            );
+                        }
+                        let resolvedValue69: any;
+                        if (asset.notes) {
+                          resolvedValue69 = <p className="text-xs text-muted-foreground">{asset.notes}</p>;
+                        } else {
+                          resolvedValue69 = null;
+                        }
+                        return (
+                        <div key={asset.id} className="overflow-hidden rounded-2xl border bg-muted/20">
+                          {resolvedValue66}
+                          <div className="space-y-2 p-4 text-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium">{(asset.kind ?? "asset").replaceAll("_", " ")}</p>
+                                <p className="text-muted-foreground">{asset.originalName}</p>
+                              </div>
+                              <Button size="sm" variant="ghost" onClick={() => deleteArtAsset(asset.id)}>
+                                Excluir
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {resolvedValue67} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                            {resolvedValue68}
+                            {resolvedValue69}
+                          </div>
+                        </div>
+                      );
+                      })}
+                    </div>
+                  );
+    } else {
+      resolvedValue56 = (
+                    <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+                      Envie cápsulas, headers, screenshots, personagens, ambientes ou referências antes de rodar a análise de arte. Sem uploads, o sistema só consegue estimar a partir do texto do projeto e dos comparáveis de mercado.
+                    </div>
+                  );
+    }
+    let resolvedValue57: any;
+    if (uploadedDominantColors.length) {
+      resolvedValue57 = (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Leitura do sinal visual</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 text-sm md:grid-cols-3">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Contraste médio</p>
+                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageContrast ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Saturação média</p>
+                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageSaturation ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Cores dominantes</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {uploadedDominantColors.map((color: any) => (
+                          <span key={color} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+                            <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: color }} />
+                            {color}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+    } else {
+      resolvedValue57 = null;
+    }
+    let resolvedValue58: any;
+    if (isAnalyzingArt) {
+      resolvedValue58 = t("projectDetail.analyzingArt");
+    } else {
+            let resolvedValue70: any;
+      if (project.artAnalysis) {
+        resolvedValue70 = t("projectDetail.refreshArtAnalysis");
+      } else {
+        resolvedValue70 = t("projectDetail.runArtAnalysis");
+      }
+resolvedValue58 = resolvedValue70;
+    }
+    let resolvedValue59: any;
+    if (isProArtAnalysis) {
+      resolvedValue59 = (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Prontidão de cápsula</p>
+                        <p className="mt-2 text-2xl font-semibold">
+                          {formatNumber(artMetadata?.proArtBrief?.capsuleReadinessScore ?? null)}
+                        </p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {artMetadata?.proArtBrief?.shelfGapSummary ?? "Rode a camada Pro de arte para pontuar prontidão de loja e lacuna de prateleira."}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Alavancas de produção</p>
+                        <div className="mt-2 space-y-2 text-sm text-muted-foreground">
+                          {proProductionLevers.map((item: any) => (
+                            <p key={item}>• {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+    } else {
+      resolvedValue59 = null;
+    }
+    let resolvedValue60: any;
+    if (artMetadata?.aiArtLayer) {
+      resolvedValue60 = (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Crítica visual da IA</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 text-sm">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Crítica visual</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.visualCritique}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Avaliação de primeira leitura</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.firstReadAssessment}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Conselho para cápsula</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.capsuleAdvice}</p>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Conselho de produção</p>
+                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.productionAdvice}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Posicionamento de mercado</p>
+                      <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.marketPositioningAdvice}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">{artMetadata.aiArtLayer.confidenceNarrative}</p>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Correções prioritárias</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {aiArtPriorityFixes.map((item: any) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Pontos fortes</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {aiArtStrengths.map((item: any) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border p-4">
+                        <p className="font-medium">Riscos</p>
+                        <div className="mt-2 space-y-2 text-muted-foreground">
+                          {aiArtRisks.map((item: any) => (
+                            <p key={item}>- {item}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+    } else {
+            let resolvedValue71: any;
+      if (project.artAssets.length > 0) {
+        resolvedValue71 = (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Crítica visual da IA</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      A crítica com IA é opcional. Quando a IA estiver habilitada, a análise de arte vai revisar as imagens enviadas junto com os sinais visuais medidos.
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+      } else {
+        resolvedValue71 = null;
+      }
+resolvedValue60 = resolvedValue71;
+    }
+    let resolvedValue61: any;
+    if (isProArtAnalysis) {
+            let resolvedValue72: any;
+      if (proReferenceShelf.length) {
+        resolvedValue72 = proReferenceShelf.map((item: any) => (
+                      <div key={item.name} className="rounded-2xl border p-4">
+                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Barra de reviews {formatPercent(item.reviewScore, 1)} · Preço {formatCurrency(item.priceCents)}
+                          </p>
+                        </div>
+                      </div>
+                    ));
+      } else {
+        resolvedValue72 = (
+                      <p className="text-sm text-muted-foreground">{t("projectDetail.proBenchmarkFallback")}</p>
+                    );
+      }
+resolvedValue61 = (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Benchmark Pro de prateleira</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    {resolvedValue72}
+                  </CardContent>
+                </Card>
+              );
+    } else {
+      resolvedValue61 = null;
+    }
+    let resolvedValue62: any;
+    if (project.competitorGames.length > 0) {
+      resolvedValue62 = project.competitorGames.slice(0, 6).map((item: any) => (
+                    <div key={item.steamGame.id} className="rounded-2xl border p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <p className="font-medium">{item.steamGame.name}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {(item.steamGame.genres.map((genre: any) => genre.steamGenre?.name).filter(Boolean).slice(0, 2).join(", ")) || t("projectDetail.noGenreCoverage")}
+                            {" · "}
+                            {(item.steamGame.tags.map((tag: any) => tag.steamTag?.name).filter(Boolean).slice(0, 3).join(", ")) || t("projectDetail.noTagCoverage")}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium">
+                          Barra de reviews: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
+                        </p>
+                      </div>
+                    </div>
+                  ));
+    } else {
+      resolvedValue62 = (
+                    <p className="text-sm text-muted-foreground">Rode a análise de mercado primeiro para montar o conjunto inicial de referências.</p>
+                  );
+    }
+resolvedValue46 = (
+            <>
+              <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/15">
+                <CardHeader>
+                  <CardTitle>Assets de arte enviados</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="grid gap-3 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4 lg:grid-cols-[180px_minmax(0,1fr)_220px]">
+                    <div className="space-y-2">
+                      <Label>Tipo de asset</Label>
+                      <Select value={artAssetForm.kind} onValueChange={(value: any) => setArtAssetForm((current: any) => ({ ...current, kind: value }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="capsule">Cápsula Steam</SelectItem>
+                          <SelectItem value="header">Header/key art</SelectItem>
+                          <SelectItem value="screenshot">Screenshot</SelectItem>
+                          <SelectItem value="character">Personagem</SelectItem>
+                          <SelectItem value="environment">Ambiente</SelectItem>
+                          <SelectItem value="reference">Referência</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="art-asset-notes">Observações</Label>
+                      <Input
+                        id="art-asset-notes"
+                        value={artAssetForm.notes}
+                        onChange={(event: any) => setArtAssetForm((current: any) => ({ ...current, notes: event.target.value }))}
+                        placeholder="O que a análise deve observar?"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="art-asset-file">Imagem</Label>
+                      <Input
+                        id="art-asset-file"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        disabled={isUploadingArtAsset}
+                        onChange={(event: any) => uploadArtAsset(event.target.files?.[0] ?? null)}
+                      />
+                    </div>
+                  </div>
+                  {resolvedValue56}
+                </CardContent>
+              </Card>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Distinção</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.distinctivenessScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Complexidade de produção</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.productionComplexityScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Fit de mercado</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.marketFitScore ?? null)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Tendência visual</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.artAnalysis?.visualTrendScore ?? null)}
+                  </CardContent>
+                </Card>
+              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Evidências dos assets</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Assets enviados</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.total ?? project.artAssets.length}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Imagens na proporção da loja</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.capsuleRatio ?? 0}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Score de evidência</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.evidenceScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Analisados por pixel</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset: any) => asset.visualMetrics).length}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Legibilidade média</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
+                  </div>
+                  <div className="rounded-2xl border p-4">
+                    <p className="font-medium">Assets de alto risco</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              {resolvedValue57}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Análise integrada de direção de arte</CardTitle>
+                  <Button disabled={isAnalyzingArt} onClick={runArtAnalysis}>
+                    {resolvedValue58}
+                  </Button>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Posicionamento de estilo</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.styleSummary ?? t("projectDetail.artStyleFallback")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Fit de mercado</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.fitSummary ?? t("projectDetail.artFitFallback")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Risco de produção</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.productionSummary ?? t("projectDetail.artProductionFallback")}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Recomendação</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.recommendationSummary ?? t("projectDetail.artRecommendationFallback")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Palavras-chave de paleta</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.paletteKeywords?.join(", ") || "Análise pendente."}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border p-4">
+                      <p className="font-medium">Palavras-chave de clima</p>
+                      <p className="mt-2 text-muted-foreground">
+                        {project.artAnalysis?.moodKeywords?.join(", ") || "Análise pendente."}
+                      </p>
+                    </div>
+                  </div>
+                  {resolvedValue59}
+                </CardContent>
+              </Card>
+              {resolvedValue60}
+              {resolvedValue61}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Conjunto de referências de arte</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3">
+                  {resolvedValue62}
+                </CardContent>
+              </Card>
+            </>
+          );
+  }
+  let resolvedValue47: any;
+  if (executionView === "board") {
+    resolvedValue47 = "default";
+  } else {
+    resolvedValue47 = "ghost";
+  }
+  let resolvedValue48: any;
+  if (executionView === "milestones") {
+    resolvedValue48 = "default";
+  } else {
+    resolvedValue48 = "ghost";
+  }
+  let resolvedValue49: any;
+  if (executionView === "board") {
+    resolvedValue49 = (
+            <ProjectKanbanBoard
+              projectName={project.name}
+              board={board}
+              search={kanbanSearch}
+              setSearch={setKanbanSearch}
+              assigneeFilter={kanbanAssigneeFilter}
+              setAssigneeFilter={setKanbanAssigneeFilter}
+              labelFilter={kanbanLabelFilter}
+              setLabelFilter={setKanbanLabelFilter}
+              newColumn={newColumn}
+              setNewColumn={setNewColumn}
+              createColumn={createColumn}
+              updateColumn={updateColumn}
+              moveColumn={moveColumn}
+              deleteColumn={deleteColumn}
+              newCards={newCards}
+              setNewCards={setNewCards}
+              cardEdits={cardEdits}
+              setCardEdits={setCardEdits}
+              createCard={createCard}
+              saveCard={saveCard}
+              moveCard={moveCard}
+              moveCardInColumn={moveCardInColumn}
+              deleteCard={deleteCard}
+              reorderCard={reorderCard}
+              assigneeOptions={assigneeOptions}
+            />
+          );
+  } else {
+        let resolvedValue63: any;
+    if (project.milestones.length === 0) {
+      resolvedValue63 = (
+                    <p className="text-sm text-muted-foreground">{t("projectDetail.noMilestones")}</p>
+                  );
+    } else {
+      resolvedValue63 = (
+                    project.milestones.map((milestone) => {
+                      let resolvedValue76: any;
+                      if (milestone.dueAt) {
+                        resolvedValue76 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                      } else {
+                        resolvedValue76 = "";
+                      }
+                      return (
+                      <div key={milestone.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <Input
+                            value={milestoneEdits[milestone.id]?.title ?? milestone.title}
+                            onChange={(event: any) => setMilestoneEdits((current: any) => {
+                              let resolvedValue73: any;
+                              if (milestone.dueAt) {
+                                resolvedValue73 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue73 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: event.target.value,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue73),
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            });
+                            })}
+                          />
+                          <ProjectAssigneeSelect
+                            value={milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? ""}
+                            onChange={(ownerLabel) => setMilestoneEdits((current: any) => {
+                              let resolvedValue74: any;
+                              if (milestone.dueAt) {
+                                resolvedValue74 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue74 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel,
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue74),
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            });
+                            })}
+                            assigneeOptions={assigneeOptions}
+                          />
+                          <Select
+                            value={milestoneEdits[milestone.id]?.status ?? milestone.status}
+                            onValueChange={(value: any) => setMilestoneEdits((current: any) => {
+                              let resolvedValue75: any;
+                              if (milestone.dueAt) {
+                                resolvedValue75 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue75 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: value,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue75),
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            });
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
+                                <SelectItem key={status} value={status}>{status}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="date"
+                            value={milestoneEdits[milestone.id]?.dueAt ?? (resolvedValue76)}
+                            onChange={(event: any) => setMilestoneEdits((current: any) => ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: event.target.value,
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            }))}
+                          />
+                          <Input
+                            type="number"
+                            value={milestoneEdits[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0)}
+                            onChange={(event: any) => setMilestoneEdits((current: any) => {
+                              let resolvedValue77: any;
+                              if (milestone.dueAt) {
+                                resolvedValue77 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue77 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue77),
+                                budgetedCostCents: event.target.value,
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            });
+                            })}
+                          />
+                          <Input
+                            type="number"
+                            value={milestoneEdits[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)}
+                            onChange={(event: any) => setMilestoneEdits((current: any) => {
+                              let resolvedValue78: any;
+                              if (milestone.dueAt) {
+                                resolvedValue78 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue78 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: current[milestone.id]?.description ?? milestone.description ?? "",
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue78),
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: event.target.value
+                              }
+                            });
+                            })}
+                          />
+                          <Textarea
+                            className="md:col-span-2"
+                            value={milestoneEdits[milestone.id]?.description ?? milestone.description ?? ""}
+                            onChange={(event: any) => setMilestoneEdits((current: any) => {
+                              let resolvedValue79: any;
+                              if (milestone.dueAt) {
+                                resolvedValue79 = new Date(milestone.dueAt).toISOString().slice(0, 10);
+                              } else {
+                                resolvedValue79 = "";
+                              }
+                              return ({
+                              ...current,
+                              [milestone.id]: {
+                                title: current[milestone.id]?.title ?? milestone.title,
+                                description: event.target.value,
+                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
+                                status: current[milestone.id]?.status ?? milestone.status,
+                                dueAt: current[milestone.id]?.dueAt ?? (resolvedValue79),
+                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
+                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
+                              }
+                            });
+                            })}
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                          <div className="text-sm text-muted-foreground">
+                            Orçamento {formatCurrency(milestone.budgetedCostCents)} · Receita {formatCurrency(milestone.expectedRevenueCents)}
+                          </div>
+                          <Button type="button" onClick={() => saveMilestone(milestone.id)}>{t("projectDetail.saveMilestone")}</Button>
+                        </div>
+                      </div>
+                    );
+                    })
+                  );
+    }
+    let resolvedValue64: any;
+    if (project.budgets.length > 0) {
+      resolvedValue64 = (
+                    <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
+                      <p className="font-medium">Snapshot do orçamento do projeto</p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        {project.budgets.map((budget) => (
+                          <div key={budget.id} className="rounded-xl border border-white/10 bg-background/75 p-3 text-sm">
+                            <p className="font-medium">{budget.name}</p>
+                            <p className="text-muted-foreground">{budget.status}</p>
+                            <p className="mt-2">Planejado {formatCurrency(budget.totalPlannedCents)}</p>
+                            <p>Realizado {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+    } else {
+      resolvedValue64 = null;
+    }
+resolvedValue49 = (
+            <>
+              <DemoManagerPageClient
+                projectId={projectId}
+                sections={["Dependências", "Bugs e Bloqueios"]}
+                showHeader={false}
+              />
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Marcos</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(project.milestones.length)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Custo orçado</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatCurrency(milestoneBudgetTotal)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Receita esperada</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatCurrency(milestoneRevenueTotal)}
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Aprovações pendentes</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-2xl font-semibold">
+                    {formatNumber(pendingApprovalsCount)}
+                  </CardContent>
+                </Card>
+              </div>
+              <Card className="overflow-hidden">
+                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+                <CardHeader>
+                  <CardTitle>Criar milestone</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                  <Input value={newMilestone.title} onChange={(event: any) => setNewMilestone((current: any) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
+                  <ProjectAssigneeSelect
+                    value={newMilestone.ownerLabel}
+                    onChange={(ownerLabel) => setNewMilestone((current: any) => ({ ...current, ownerLabel }))}
+                    assigneeOptions={assigneeOptions}
+                  />
+                  <Select value={newMilestone.status} onValueChange={(value: any) => setNewMilestone((current: any) => ({ ...current, status: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input type="date" value={newMilestone.dueAt} onChange={(event: any) => setNewMilestone((current: any) => ({ ...current, dueAt: event.target.value }))} />
+                  <Input type="number" value={newMilestone.budgetedCostCents} onChange={(event: any) => setNewMilestone((current: any) => ({ ...current, budgetedCostCents: event.target.value }))} placeholder="Custo orçado em centavos" />
+                  <Input type="number" value={newMilestone.expectedRevenueCents} onChange={(event: any) => setNewMilestone((current: any) => ({ ...current, expectedRevenueCents: event.target.value }))} placeholder="Receita esperada em centavos" />
+                  <Textarea className="md:col-span-2" value={newMilestone.description} onChange={(event: any) => setNewMilestone((current: any) => ({ ...current, description: event.target.value }))} placeholder="Escopo do marco, critérios de aceite, notas de entrega..." />
+                  <Button className="md:col-span-2" onClick={createMilestone}>Criar marco</Button>
+                </CardContent>
+              </Card>
+              <Card className="overflow-hidden">
+                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+                <CardHeader>
+                  <CardTitle>Marcos do projeto e ponte financeira</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {resolvedValue63}
+                  {resolvedValue64}
+                </CardContent>
+              </Card>
+            </>
+          );
+  }
+  let resolvedValue50: any;
+  if (isGeneratingGdd) {
+    resolvedValue50 = "Gerando...";
+  } else {
+        let resolvedValue65: any;
+    if (latestGdd) {
+      resolvedValue65 = "Gerar novamente";
+    } else {
+      resolvedValue65 = "Gerar GDD";
+    }
+resolvedValue50 = resolvedValue65;
+  }
+  let resolvedValue51: any;
+  if (latestGdd) {
+    resolvedValue51 = (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    {latestGdd.title} · Atualizado em {new Date(latestGdd.updatedAt).toLocaleString()}
+                  </p>
+                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-4 text-sm">
+                    {latestGdd.content}
+                  </pre>
+                </div>
+              );
+  } else {
+    resolvedValue51 = (
+                <p className="text-sm text-muted-foreground">Gere o primeiro GDD a partir do projeto atual e da análise de mercado.</p>
+              );
+  }
+return (
     <div className="space-y-6">
       <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
@@ -1202,13 +2584,13 @@ export function ProjectDetailClient({
             </div>
             <div className="flex flex-wrap gap-3">
               <Button disabled={isAnalyzing || !canRunViabilityAnalysis} onClick={runAnalysis}>
-                {isAnalyzing ? t("projectDetail.analyzing") : t("projectDetail.runMarketAnalysis")}
+                {resolvedValue25}
               </Button>
               <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
-                {isAnalyzingArt ? t("projectDetail.analyzingArt") : t("projectDetail.runArtAnalysis")}
+                {resolvedValue26}
               </Button>
               <Button disabled={isGeneratingGdd || !canGenerateGdd} variant="outline" onClick={generateGdd}>
-                {isGeneratingGdd ? t("projectDetail.generating") : t("projectDetail.generateGdd")}
+                {resolvedValue27}
               </Button>
               <ExportActions
                 label={t("common.exportProject")}
@@ -1239,11 +2621,11 @@ export function ProjectDetailClient({
         </CardContent>
       </Card>
       <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
-        <p>Uso atual: {usage.usage?.viabilityAnalysesPerMonth ?? 0} de {viabilityLimit ? getLimitLabel(viabilityLimit) : "..."}</p>
-        <p>Uso atual: {usage.usage?.artAnalysesPerMonth ?? 0} de {artLimit ? getLimitLabel(artLimit) : "..."}</p>
-        <p>Uso atual: {usage.usage?.gdds ?? 0} de {gddLimit ? getLimitLabel(gddLimit) : "..."}</p>
+        <p>Uso atual: {usage.usage?.viabilityAnalysesPerMonth ?? 0} de {resolvedValue28}</p>
+        <p>Uso atual: {usage.usage?.artAnalysesPerMonth ?? 0} de {resolvedValue29}</p>
+        <p>Uso atual: {usage.usage?.gdds ?? 0} de {resolvedValue30}</p>
       </div>
-      {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
+      {resolvedValue31}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur dark:bg-white/[0.04]">
           <TabsTrigger value="overview">{t("projectDetail.overviewTab")}</TabsTrigger>
@@ -1361,220 +2743,10 @@ export function ProjectDetailClient({
                   </p>
                   </div>
                 </div>
-                {aiLayer ? (
-                  <>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Leitura estratégica da IA</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.strategicNarrative}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Diferencial de posicionamento</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.positioningSummary}</p>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Estratégia de lançamento</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.launchStrategy}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Preço e desenho da oferta</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.pricingNarrative}</p>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Cápsula da loja e mensagem</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.storeCapsuleAdvice}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Leitura de confiança da IA</p>
-                        <p className="mt-2 text-muted-foreground">{aiLayer.confidenceNarrative}</p>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Ângulos criativos</p>
-                        <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiCreativeAngles.map((item) => (
-                            <li key={item}>- {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Canais de aquisição</p>
-                        <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiAcquisitionChannels.map((item) => (
-                            <li key={item}>- {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Gatilhos de wishlist</p>
-                        <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiWishlistDrivers.map((item) => (
-                            <li key={item}>- {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Alertas da IA</p>
-                        <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiRedFlags.map((item) => (
-                            <li key={item}>- {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
+                {resolvedValue32}
               </CardContent>
             </Card>
-            {hybridMarketIntelligence ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inteligência quantitativa de mercado</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-5 text-sm">
-                  <div className="grid gap-4 lg:grid-cols-4">
-                    <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Score de oportunidade</p>
-                      <p className="mt-2 text-3xl font-semibold">{formatNumber(hybridMarketIntelligence.opportunityScoring?.score ?? null)}</p>
-                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring?.label ?? "Análise pendente."}</p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Classificação</p>
-                      <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment?.classification ?? "Análise pendente."}</p>
-                      <p className="mt-1 text-muted-foreground">Confiança {hybridMarketIntelligence.probabilisticAssessment?.confidenceLevel ?? "N/A"}</p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Demanda</p>
-                      <p className="mt-2 text-2xl font-semibold">{formatNumber(hybridMarketIntelligence.demandModel?.demandScore ?? null)}</p>
-                      <p className="mt-1 text-muted-foreground">Proxy de wishlist {formatNumber(hybridMarketIntelligence.demandModel?.wishlistProxy?.score ?? null)}</p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Faixa de receita</p>
-                      <p className="mt-2 font-medium">
-                        {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.lowCents ?? null)} - {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.highCents ?? null)}
-                      </p>
-                      <p className="mt-1 text-muted-foreground">Mediana {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.medianCents ?? null)}</p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Conclusão probabilística</p>
-                    <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment?.conclusion ?? "Análise pendente."}</p>
-                    <div className="mt-4 grid gap-3 md:grid-cols-3">
-                      {Object.entries(hybridProbabilities).map(([key, value]) => (
-                        <div key={key} className="rounded-xl border bg-muted/30 p-3">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/([A-Z])/g, " $1")}</p>
-                          <p className="mt-1 text-lg font-semibold">{typeof value === "number" || typeof value === "string" ? value : "N/A"}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Fatores ponderados do score</p>
-                      <div className="mt-3 space-y-3">
-                        {hybridFactors.map((factor) => (
-                          <div key={factor.name} className="rounded-xl border bg-muted/30 p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="font-medium">{factor.name}</p>
-                              <p className="text-sm text-muted-foreground">{factor.score}/100 · peso {factor.weight}</p>
-                            </div>
-                            <p className="mt-2 text-muted-foreground">{factor.justification}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Detecção de tendências</p>
-                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection?.marketShiftExplanation ?? "Análise pendente."}</p>
-                      <div className="mt-3 space-y-3">
-                        {hybridEmergingTags.slice(0, 4).map((trend) => (
-                          <div key={trend.tag} className="rounded-xl border bg-muted/30 p-3">
-                            <p className="font-medium">{trend.tag} · {trend.strengthScore}</p>
-                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
-                          </div>
-                        ))}
-                        {hybridDecliningSignals.slice(0, 3).map((trend) => (
-                          <div key={trend.signal} className="rounded-xl border bg-muted/30 p-3">
-                            <p className="font-medium">{trend.signal} · {trend.score}</p>
-                            <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 xl:grid-cols-3">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Líderes de mercado</p>
-                      <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridMarketLeaders.slice(0, 5).map((game) => (
-                          <li key={game.appId}>{game.name} · {formatCurrency(game.medianRevenueCents)} · {formatNumber(game.reviewScore)}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Lançamentos recentes bem-sucedidos</p>
-                      <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridSuccessfulLaunches.length
-                          ? hybridSuccessfulLaunches.slice(0, 5).map((game) => (
-                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
-                            ))
-                          : <li>Nenhum lançamento recente de alta confiança neste conjunto comparável.</li>}
-                      </ul>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Lançamentos similares fracos ou malsucedidos</p>
-                      <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridFailedLaunches.length
-                          ? hybridFailedLaunches.slice(0, 5).map((game) => (
-                              <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
-                            ))
-                          : <li>Nenhum lançamento recente claramente fraco neste conjunto comparável.</li>}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Trilha de evidências</p>
-                      <div className="mt-3 space-y-3">
-                        {hybridEvidenceTrail.map((item) => (
-                          <div key={item.claim} className="rounded-xl border bg-muted/30 p-3">
-                            <p className="font-medium">{item.claim}</p>
-                            <p className="mt-1 text-muted-foreground">{item.support}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">Fontes: {item.sources.join(", ")}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Qualidade dos dados</p>
-                      <p className="mt-2 text-muted-foreground">
-                        Confiança {hybridMarketIntelligence.dataQuality?.label ?? "N/A"} ({formatNumber(hybridMarketIntelligence.dataQuality?.score ?? null)}/100). Dependência de IA: {hybridMarketIntelligence.aiDependency?.replaceAll("_", " ") ?? "N/A"}.
-                      </p>
-                      <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Fontes usadas</p>
-                      <p className="mt-2 text-muted-foreground">{hybridSourcesUsed.join(", ") || "Fontes indisponíveis."}</p>
-                      {hybridLimitations.length ? (
-                        <ul className="mt-3 space-y-2 text-muted-foreground">
-                          {hybridLimitations.map((item) => (
-                            <li key={item}>- {item}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
+            {resolvedValue33}
             <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -1584,33 +2756,31 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Tamanho de mercado</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.marketSizeLabel} · ${formatCurrency(marketDepth.marketSizeCents)}` : "Análise pendente."}
+                      {resolvedValue34}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Velocidade de reviews</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${formatNumber(marketDepth.reviewVelocity90)} vs ${formatNumber(marketDepth.previousReviewVelocity90)} nos 90 dias anteriores` : "Análise pendente."}
+                      {resolvedValue35}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Momento de jogadores</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${formatNumber(marketDepth.playerMomentum30)} média vs ${formatNumber(marketDepth.previousPlayerMomentum30)}` : "Análise pendente."}
+                      {resolvedValue36}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Coortes de lançamento</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.launchCohorts?.last90Days ?? 0} / 90d · ${marketDepth.launchCohorts?.last180Days ?? 0} / 180d · ${marketDepth.launchCohorts?.last365Days ?? 0} / 365d` : "Análise pendente."}
+                      {resolvedValue37}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Distribuição de preço</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth
-                        ? `<$10: ${marketDepth.priceBandDistribution?.under10 ?? 0} · $10-20: ${marketDepth.priceBandDistribution?.between10And20 ?? 0} · $20-30: ${marketDepth.priceBandDistribution?.between20And30 ?? 0} · $30+: ${marketDepth.priceBandDistribution?.over30 ?? 0}`
-                        : "Análise pendente."}
+                      {resolvedValue38}
                     </p>
                   </div>
                 </CardContent>
@@ -1623,7 +2793,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Diretos vs adjacentes</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.directComparableCount} diretos · ${competitionLayer.adjacentComparableCount} adjacentes` : "Análise pendente."}
+                      {resolvedValue39}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
@@ -1635,7 +2805,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Concentração de receita</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.winnerConcentrationScore}% nos vencedores principais` : "Análise pendente."}
+                      {resolvedValue40}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
@@ -1647,7 +2817,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Mix de monetização</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.dominantMonetization} dominante · ${competitionLayer.premiumSharePercent}% premium` : "Análise pendente."}
+                      {resolvedValue41}
                     </p>
                   </div>
                 </CardContent>
@@ -1674,15 +2844,13 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Confiança</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.confidenceLabel} (${marketDepth.confidenceScore})` : "Análise pendente."}
+                      {resolvedValue42}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Recomendações práticas</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
-                      {opportunityRecommendations.length ? opportunityRecommendations.map((item) => (
-                        <li key={item}>- {item}</li>
-                      )) : <li>Análise pendente.</li>}
+                      {resolvedValue43}
                     </ul>
                   </div>
                 </CardContent>
@@ -1711,9 +2879,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Principais desalinhamentos</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
-                      {opportunityMismatches.length ? opportunityMismatches.map((item) => (
-                        <li key={item}>- {item}</li>
-                      )) : <li>{t("projectDetail.noMismatches")}</li>}
+                      {resolvedValue44}
                     </ul>
                   </div>
                 </CardContent>
@@ -1724,427 +2890,19 @@ export function ProjectDetailClient({
                 <CardTitle>Jogos comparáveis da Steam</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {project.competitorGames.length > 0 ? project.competitorGames.map((item) => (
-                <div key={item.steamGame.id} className="rounded-2xl border p-4">
-                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <p className="font-medium">{item.steamGame.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Reviews: {formatNumber(item.steamGame.reviewCount)} · Nota: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
-                      </p>
-                    </div>
-                    <p className="text-sm font-medium">
-                      {formatCurrency(item.steamGame.revenueEstimates[0]?.medianNetRevenueCents ?? null)}
-                    </p>
-                  </div>
-                </div>
-              )) : (
-                <p className="text-sm text-muted-foreground">{t("projectDetail.noComparableSet")}</p>
-              )}
+              {resolvedValue45}
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="art" className="space-y-6">
-          {!canRunArtAnalysis ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("projectDetail.artNotIncluded")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  Seu acesso atual não inclui análise de artes. Faça upgrade para benchmark de posicionamento visual,
-                  complexidade de produção e encaixe arte-mercado dentro de cada projeto.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/15">
-                <CardHeader>
-                  <CardTitle>Assets de arte enviados</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid gap-3 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4 lg:grid-cols-[180px_minmax(0,1fr)_220px]">
-                    <div className="space-y-2">
-                      <Label>Tipo de asset</Label>
-                      <Select value={artAssetForm.kind} onValueChange={(value) => setArtAssetForm((current) => ({ ...current, kind: value }))}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="capsule">Cápsula Steam</SelectItem>
-                          <SelectItem value="header">Header/key art</SelectItem>
-                          <SelectItem value="screenshot">Screenshot</SelectItem>
-                          <SelectItem value="character">Personagem</SelectItem>
-                          <SelectItem value="environment">Ambiente</SelectItem>
-                          <SelectItem value="reference">Referência</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="art-asset-notes">Observações</Label>
-                      <Input
-                        id="art-asset-notes"
-                        value={artAssetForm.notes}
-                        onChange={(event) => setArtAssetForm((current) => ({ ...current, notes: event.target.value }))}
-                        placeholder="O que a análise deve observar?"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="art-asset-file">Imagem</Label>
-                      <Input
-                        id="art-asset-file"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        disabled={isUploadingArtAsset}
-                        onChange={(event) => uploadArtAsset(event.target.files?.[0] ?? null)}
-                      />
-                    </div>
-                  </div>
-                  {project.artAssets.length > 0 ? (
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {project.artAssets.map((asset) => (
-                        <div key={asset.id} className="overflow-hidden rounded-2xl border bg-muted/20">
-                          {asset.signedUrl ? (
-                            <img src={asset.signedUrl} alt={asset.originalName} className="h-52 w-full object-cover" />
-                          ) : (
-                            <div className="flex h-52 items-center justify-center bg-muted text-sm text-muted-foreground">Prévia indisponível</div>
-                          )}
-                          <div className="space-y-2 p-4 text-sm">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="font-medium">{(asset.kind ?? "asset").replaceAll("_", " ")}</p>
-                                <p className="text-muted-foreground">{asset.originalName}</p>
-                              </div>
-                              <Button size="sm" variant="ghost" onClick={() => deleteArtAsset(asset.id)}>
-                                Excluir
-                              </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensões indisponíveis"} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                            {asset.visualMetrics ? (
-                              <div className="grid gap-2 rounded-xl border bg-background/60 p-3 text-xs">
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Legibilidade</span>
-                                  <span className="font-medium">{asset.visualMetrics.readabilityScore}/100 · risco {asset.visualMetrics.legibilityRisk}</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Contraste / saturação</span>
-                                  <span className="font-medium">{asset.visualMetrics.contrast} / {asset.visualMetrics.saturation}</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Cor dominante</span>
-                                  <span className="inline-flex items-center gap-2 font-medium">
-                                    <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: asset.visualMetrics.dominantColor }} />
-                                    {asset.visualMetrics.dominantColor}
-                                  </span>
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-muted-foreground">Métricas de pixel indisponíveis para este arquivo. Reenvie para analisar a legibilidade visual.</p>
-                            )}
-                            {asset.notes ? <p className="text-xs text-muted-foreground">{asset.notes}</p> : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                      Envie cápsulas, headers, screenshots, personagens, ambientes ou referências antes de rodar a análise de arte. Sem uploads, o sistema só consegue estimar a partir do texto do projeto e dos comparáveis de mercado.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Distinção</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(project.artAnalysis?.distinctivenessScore ?? null)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Complexidade de produção</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(project.artAnalysis?.productionComplexityScore ?? null)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Fit de mercado</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(project.artAnalysis?.marketFitScore ?? null)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Tendência visual</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(project.artAnalysis?.visualTrendScore ?? null)}
-                  </CardContent>
-                </Card>
-              </div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Evidências dos assets</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Assets enviados</p>
-                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.total ?? project.artAssets.length}</p>
-                  </div>
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Imagens na proporção da loja</p>
-                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.capsuleRatio ?? 0}</p>
-                  </div>
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Score de evidência</p>
-                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.evidenceScore ?? null)}</p>
-                  </div>
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Analisados por pixel</p>
-                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset) => asset.visualMetrics).length}</p>
-                  </div>
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Legibilidade média</p>
-                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
-                  </div>
-                  <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Assets de alto risco</p>
-                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              {uploadedDominantColors.length ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Leitura do sinal visual</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 text-sm md:grid-cols-3">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Contraste médio</p>
-                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageContrast ?? 0}</p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Saturação média</p>
-                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageSaturation ?? 0}</p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Cores dominantes</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {uploadedDominantColors.map((color) => (
-                          <span key={color} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
-                            <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: color }} />
-                            {color}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Análise integrada de direção de arte</CardTitle>
-                  <Button disabled={isAnalyzingArt} onClick={runArtAnalysis}>
-                    {isAnalyzingArt ? t("projectDetail.analyzingArt") : project.artAnalysis ? t("projectDetail.refreshArtAnalysis") : t("projectDetail.runArtAnalysis")}
-                  </Button>
-                </CardHeader>
-                <CardContent className="grid gap-4 text-sm">
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Posicionamento de estilo</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.styleSummary ?? t("projectDetail.artStyleFallback")}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Fit de mercado</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.fitSummary ?? t("projectDetail.artFitFallback")}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Risco de produção</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.productionSummary ?? t("projectDetail.artProductionFallback")}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Recomendação</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.recommendationSummary ?? t("projectDetail.artRecommendationFallback")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Palavras-chave de paleta</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.paletteKeywords?.join(", ") || "Análise pendente."}
-                      </p>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Palavras-chave de clima</p>
-                      <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.moodKeywords?.join(", ") || "Análise pendente."}
-                      </p>
-                    </div>
-                  </div>
-                  {isProArtAnalysis ? (
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Prontidão de cápsula</p>
-                        <p className="mt-2 text-2xl font-semibold">
-                          {formatNumber(artMetadata?.proArtBrief?.capsuleReadinessScore ?? null)}
-                        </p>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          {artMetadata?.proArtBrief?.shelfGapSummary ?? "Rode a camada Pro de arte para pontuar prontidão de loja e lacuna de prateleira."}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Alavancas de produção</p>
-                        <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                          {proProductionLevers.map((item) => (
-                            <p key={item}>• {item}</p>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-              {artMetadata?.aiArtLayer ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Crítica visual da IA</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 text-sm">
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Crítica visual</p>
-                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.visualCritique}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Avaliação de primeira leitura</p>
-                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.firstReadAssessment}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Conselho para cápsula</p>
-                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.capsuleAdvice}</p>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Conselho de produção</p>
-                        <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.productionAdvice}</p>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Posicionamento de mercado</p>
-                      <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.marketPositioningAdvice}</p>
-                      <p className="mt-3 text-xs text-muted-foreground">{artMetadata.aiArtLayer.confidenceNarrative}</p>
-                    </div>
-                    <div className="grid gap-4 lg:grid-cols-3">
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Correções prioritárias</p>
-                        <div className="mt-2 space-y-2 text-muted-foreground">
-                          {aiArtPriorityFixes.map((item) => (
-                            <p key={item}>- {item}</p>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Pontos fortes</p>
-                        <div className="mt-2 space-y-2 text-muted-foreground">
-                          {aiArtStrengths.map((item) => (
-                            <p key={item}>- {item}</p>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Riscos</p>
-                        <div className="mt-2 space-y-2 text-muted-foreground">
-                          {aiArtRisks.map((item) => (
-                            <p key={item}>- {item}</p>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : project.artAssets.length > 0 ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Crítica visual da IA</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      A crítica com IA é opcional. Quando a IA estiver habilitada, a análise de arte vai revisar as imagens enviadas junto com os sinais visuais medidos.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : null}
-              {isProArtAnalysis ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Benchmark Pro de prateleira</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-3">
-                    {proReferenceShelf.length ? proReferenceShelf.map((item) => (
-                      <div key={item.name} className="rounded-2xl border p-4">
-                        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Barra de reviews {formatPercent(item.reviewScore, 1)} · Preço {formatCurrency(item.priceCents)}
-                          </p>
-                        </div>
-                      </div>
-                    )) : (
-                      <p className="text-sm text-muted-foreground">{t("projectDetail.proBenchmarkFallback")}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : null}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Conjunto de referências de arte</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  {project.competitorGames.length > 0 ? project.competitorGames.slice(0, 6).map((item) => (
-                    <div key={item.steamGame.id} className="rounded-2xl border p-4">
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div>
-                          <p className="font-medium">{item.steamGame.name}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {(item.steamGame.genres.map((genre) => genre.steamGenre?.name).filter(Boolean).slice(0, 2).join(", ")) || t("projectDetail.noGenreCoverage")}
-                            {" · "}
-                            {(item.steamGame.tags.map((tag) => tag.steamTag?.name).filter(Boolean).slice(0, 3).join(", ")) || t("projectDetail.noTagCoverage")}
-                          </p>
-                        </div>
-                        <p className="text-sm font-medium">
-                          Barra de reviews: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
-                        </p>
-                      </div>
-                    </div>
-                  )) : (
-                    <p className="text-sm text-muted-foreground">Rode a análise de mercado primeiro para montar o conjunto inicial de referências.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
+          {resolvedValue46}
         </TabsContent>
         <TabsContent value="milestones" className="space-y-4">
           <div className="flex items-center gap-1 rounded-lg border bg-muted/25 p-1">
             <Button
               type="button"
               size="sm"
-              variant={executionView === "board" ? "default" : "ghost"}
+              variant={resolvedValue47}
               onClick={() => setExecutionView("board")}
             >
               {t("projectDetail.executionBoardView")}
@@ -2152,270 +2910,13 @@ export function ProjectDetailClient({
             <Button
               type="button"
               size="sm"
-              variant={executionView === "milestones" ? "default" : "ghost"}
+              variant={resolvedValue48}
               onClick={() => setExecutionView("milestones")}
             >
               {t("projectDetail.executionMilestonesView")}
             </Button>
           </div>
-          {executionView === "board" ? (
-            <ProjectKanbanBoard
-              projectName={project.name}
-              board={board}
-              search={kanbanSearch}
-              setSearch={setKanbanSearch}
-              assigneeFilter={kanbanAssigneeFilter}
-              setAssigneeFilter={setKanbanAssigneeFilter}
-              labelFilter={kanbanLabelFilter}
-              setLabelFilter={setKanbanLabelFilter}
-              newColumn={newColumn}
-              setNewColumn={setNewColumn}
-              createColumn={createColumn}
-              updateColumn={updateColumn}
-              moveColumn={moveColumn}
-              deleteColumn={deleteColumn}
-              newCards={newCards}
-              setNewCards={setNewCards}
-              cardEdits={cardEdits}
-              setCardEdits={setCardEdits}
-              createCard={createCard}
-              saveCard={saveCard}
-              moveCard={moveCard}
-              moveCardInColumn={moveCardInColumn}
-              deleteCard={deleteCard}
-              reorderCard={reorderCard}
-              assigneeOptions={assigneeOptions}
-            />
-          ) : (
-            <>
-              <DemoManagerPageClient
-                projectId={projectId}
-                sections={["Dependências", "Bugs e Bloqueios"]}
-                showHeader={false}
-              />
-              <div className="grid gap-4 md:grid-cols-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Marcos</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(project.milestones.length)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Custo orçado</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatCurrency(milestoneBudgetTotal)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Receita esperada</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatCurrency(milestoneRevenueTotal)}
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Aprovações pendentes</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-2xl font-semibold">
-                    {formatNumber(pendingApprovalsCount)}
-                  </CardContent>
-                </Card>
-              </div>
-              <Card className="overflow-hidden">
-                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-                <CardHeader>
-                  <CardTitle>Criar milestone</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
-                  <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
-                  <ProjectAssigneeSelect
-                    value={newMilestone.ownerLabel}
-                    onChange={(ownerLabel) => setNewMilestone((current) => ({ ...current, ownerLabel }))}
-                    assigneeOptions={assigneeOptions}
-                  />
-                  <Select value={newMilestone.status} onValueChange={(value) => setNewMilestone((current) => ({ ...current, status: value }))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input type="date" value={newMilestone.dueAt} onChange={(event) => setNewMilestone((current) => ({ ...current, dueAt: event.target.value }))} />
-                  <Input type="number" value={newMilestone.budgetedCostCents} onChange={(event) => setNewMilestone((current) => ({ ...current, budgetedCostCents: event.target.value }))} placeholder="Custo orçado em centavos" />
-                  <Input type="number" value={newMilestone.expectedRevenueCents} onChange={(event) => setNewMilestone((current) => ({ ...current, expectedRevenueCents: event.target.value }))} placeholder="Receita esperada em centavos" />
-                  <Textarea className="md:col-span-2" value={newMilestone.description} onChange={(event) => setNewMilestone((current) => ({ ...current, description: event.target.value }))} placeholder="Escopo do marco, critérios de aceite, notas de entrega..." />
-                  <Button className="md:col-span-2" onClick={createMilestone}>Criar marco</Button>
-                </CardContent>
-              </Card>
-              <Card className="overflow-hidden">
-                <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-                <CardHeader>
-                  <CardTitle>Marcos do projeto e ponte financeira</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {project.milestones.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{t("projectDetail.noMilestones")}</p>
-                  ) : (
-                    project.milestones.map((milestone) => (
-                      <div key={milestone.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <Input
-                            value={milestoneEdits[milestone.id]?.title ?? milestone.title}
-                            onChange={(event) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: event.target.value,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                          />
-                          <ProjectAssigneeSelect
-                            value={milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? ""}
-                            onChange={(ownerLabel) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel,
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                            assigneeOptions={assigneeOptions}
-                          />
-                          <Select
-                            value={milestoneEdits[milestone.id]?.status ?? milestone.status}
-                            onValueChange={(value) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: value,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"].map((status) => (
-                                <SelectItem key={status} value={status}>{status}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            type="date"
-                            value={milestoneEdits[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : "")}
-                            onChange={(event) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: event.target.value,
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                          />
-                          <Input
-                            type="number"
-                            value={milestoneEdits[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0)}
-                            onChange={(event) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: event.target.value,
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                          />
-                          <Input
-                            type="number"
-                            value={milestoneEdits[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)}
-                            onChange={(event) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: event.target.value
-                              }
-                            }))}
-                          />
-                          <Textarea
-                            className="md:col-span-2"
-                            value={milestoneEdits[milestone.id]?.description ?? milestone.description ?? ""}
-                            onChange={(event) => setMilestoneEdits((current) => ({
-                              ...current,
-                              [milestone.id]: {
-                                title: current[milestone.id]?.title ?? milestone.title,
-                                description: event.target.value,
-                                ownerLabel: current[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "",
-                                status: current[milestone.id]?.status ?? milestone.status,
-                                dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
-                                budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
-                                expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
-                              }
-                            }))}
-                          />
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                          <div className="text-sm text-muted-foreground">
-                            Orçamento {formatCurrency(milestone.budgetedCostCents)} · Receita {formatCurrency(milestone.expectedRevenueCents)}
-                          </div>
-                          <Button type="button" onClick={() => saveMilestone(milestone.id)}>{t("projectDetail.saveMilestone")}</Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  {project.budgets.length > 0 ? (
-                    <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
-                      <p className="font-medium">Snapshot do orçamento do projeto</p>
-                      <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        {project.budgets.map((budget) => (
-                          <div key={budget.id} className="rounded-xl border border-white/10 bg-background/75 p-3 text-sm">
-                            <p className="font-medium">{budget.name}</p>
-                            <p className="text-muted-foreground">{budget.status}</p>
-                            <p className="mt-2">Planejado {formatCurrency(budget.totalPlannedCents)}</p>
-                            <p>Realizado {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            </>
-          )}
+          {resolvedValue49}
         </TabsContent>
         <TabsContent value="gdd" className="space-y-6">
           <Card className="overflow-hidden">
@@ -2423,22 +2924,11 @@ export function ProjectDetailClient({
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>GDD automatizado</CardTitle>
               <Button disabled={isGeneratingGdd} onClick={generateGdd}>
-                {isGeneratingGdd ? "Gerando..." : latestGdd ? "Gerar novamente" : "Gerar GDD"}
+                {resolvedValue50}
               </Button>
             </CardHeader>
             <CardContent>
-              {latestGdd ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    {latestGdd.title} · Atualizado em {new Date(latestGdd.updatedAt).toLocaleString()}
-                  </p>
-                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-4 text-sm">
-                    {latestGdd.content}
-                  </pre>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Gere o primeiro GDD a partir do projeto atual e da análise de mercado.</p>
-              )}
+              {resolvedValue51}
             </CardContent>
           </Card>
           <DemoManagerPageClient

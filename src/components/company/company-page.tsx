@@ -70,7 +70,56 @@ export function CompanyPage({
     );
   }
 
-  return (
+    let resolvedValue0: any;
+  if (canAccessDocumentVault) {
+    resolvedValue0 = <Badge variant="secondary">Documentos</Badge>;
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (canAccessApprovalsAudit) {
+    resolvedValue1 = <Badge variant="secondary">Auditoria</Badge>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (canAccessDocumentVault) {
+    resolvedValue2 = <TabsTrigger value="documents">Documentos</TabsTrigger>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (canAccessApprovalsAudit) {
+    resolvedValue3 = <TabsTrigger value="audit">Auditoria</TabsTrigger>;
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (canAccessDocumentVault) {
+    resolvedValue4 = (
+          <TabsContent className="space-y-4" value="documents">
+            <CompanyDocumentsPanel
+              canManage={canManage}
+              documents={documents}
+              legalEntities={legalEntities}
+              projects={projects}
+            />
+          </TabsContent>
+        );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (canAccessApprovalsAudit) {
+    resolvedValue5 = (
+          <TabsContent className="space-y-4" value="audit">
+            <CompanyAuditPanel auditEvents={auditEvents} />
+          </TabsContent>
+        );
+  } else {
+    resolvedValue5 = null;
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title="Empresa"
@@ -78,8 +127,8 @@ export function CompanyPage({
         actions={(
           <>
             <Badge variant="secondary">Compliance</Badge>
-            {canAccessDocumentVault ? <Badge variant="secondary">Documentos</Badge> : null}
-            {canAccessApprovalsAudit ? <Badge variant="secondary">Auditoria</Badge> : null}
+            {resolvedValue0}
+            {resolvedValue1}
           </>
         )}
         summary={(
@@ -104,8 +153,8 @@ export function CompanyPage({
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur dark:bg-white/[0.04]">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
-          {canAccessDocumentVault ? <TabsTrigger value="documents">Documentos</TabsTrigger> : null}
-          {canAccessApprovalsAudit ? <TabsTrigger value="audit">Auditoria</TabsTrigger> : null}
+          {resolvedValue2}
+          {resolvedValue3}
         </TabsList>
         <p className="mt-2 text-sm text-muted-foreground">
           Gerencie o perfil legal, conformidade, documentos e trilha de auditoria da organização do estúdio.
@@ -118,16 +167,7 @@ export function CompanyPage({
             organizationDefaultLanguage={organizationDefaultLanguage}
           />
         </TabsContent>
-        {canAccessDocumentVault ? (
-          <TabsContent className="space-y-4" value="documents">
-            <CompanyDocumentsPanel
-              canManage={canManage}
-              documents={documents}
-              legalEntities={legalEntities}
-              projects={projects}
-            />
-          </TabsContent>
-        ) : null}
+        {resolvedValue4}
         <TabsContent className="space-y-4" value="compliance">
           <CompanyCompliancePanel
             canManage={canManage}
@@ -138,11 +178,7 @@ export function CompanyPage({
             projects={projects}
           />
         </TabsContent>
-        {canAccessApprovalsAudit ? (
-          <TabsContent className="space-y-4" value="audit">
-            <CompanyAuditPanel auditEvents={auditEvents} />
-          </TabsContent>
-        ) : null}
+        {resolvedValue5}
       </Tabs>
     </div>
   );

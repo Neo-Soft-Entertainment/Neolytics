@@ -43,7 +43,7 @@ function decryptPayableTitle<T extends {
     supplierIdentifier: decryptFinanceField(title.supplierIdentifier, title.organizationId, "payableTitle.supplierIdentifier") ?? title.supplierIdentifier,
     supplierName: decryptFinanceField(title.supplierName, title.organizationId, "payableTitle.supplierName") ?? title.supplierName,
     notes: decryptFinanceField(title.notes, title.organizationId, "payableTitle.notes"),
-    allocations: title.allocations?.map((allocation) => ({
+    allocations: title.allocations?.map((allocation: any) => ({
       ...allocation,
       natureDescription: decryptFinanceField(allocation.natureDescription, title.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription
     })),
@@ -813,7 +813,7 @@ export async function getFinanceOverview(organizationId: string) {
     cashflow: Array.from(monthlyByKey.values()),
     commercialOperations: {
       revenueChannels: Array.from(revenueChannelMap.values())
-        .map((channel) => ({
+        .map((channel: any) => ({
           sourceType: channel.sourceType,
           sourceName: channel.sourceName,
           entriesCount: channel.entriesCount,
@@ -834,7 +834,7 @@ export async function getFinanceOverview(organizationId: string) {
       }
     },
     projectSnapshots: Array.from(projectMap.values())
-      .filter((item) => item.budgetPlannedCents > 0 || item.revenueNetCents > 0 || item.expensesPaidCents > 0)
+      .filter((item: any) => item.budgetPlannedCents > 0 || item.revenueNetCents > 0 || item.expensesPaidCents > 0)
       .sort((left, right) => right.netCents - left.netCents)
   };
 }
@@ -1565,21 +1565,29 @@ export async function createPayableTitle(params: {
   const additionalAmountCents = params.additionalAmountCents ?? 0;
   const totalAmountCents = params.titleAmountCents + additionalAmountCents;
   const actualDueDate = getNextBusinessDay(params.dueDate);
-  const allocations = params.allocations?.length
-    ? params.allocations
-    : [{
+    let resolvedValue0: any;
+  if (params.allocations?.length) {
+    resolvedValue0 = params.allocations;
+  } else {
+    resolvedValue0 = [{
         costCenterId: params.costCenterId,
         natureDescription: params.natureDescription,
         amountCents: totalAmountCents
       }];
+  }
+const allocations = resolvedValue0 as Array<{
+  costCenterId: string;
+  natureDescription: string;
+  amountCents: number;
+}>;
 
-  const allocatedTotal = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+  const allocatedTotal = allocations.reduce((sum: number, allocation: any) => sum + allocation.amountCents, 0);
 
   if (allocatedTotal !== totalAmountCents) {
     throw new Error("Allocation total must match the title total.");
   }
 
-  const allocationCostCenterIds = [...new Set(allocations.map((allocation) => allocation.costCenterId))];
+  const allocationCostCenterIds = [...new Set(allocations.map((allocation: any) => allocation.costCenterId))];
   const allocationCostCenters = await db.costCenter.count({
     where: {
       organizationId: params.organizationId,
@@ -1617,7 +1625,7 @@ export async function createPayableTitle(params: {
     });
 
     await tx.payableAllocation.createMany({
-      data: allocations.map((allocation) => ({
+      data: allocations.map((allocation: any) => ({
         payableTitleId: created.id,
         costCenterId: allocation.costCenterId,
         natureDescription: encryptFinanceField(allocation.natureDescription, params.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription.trim(),
@@ -1696,21 +1704,29 @@ export async function updatePayableTitle(params: {
   const additionalAmountCents = params.additionalAmountCents ?? 0;
   const totalAmountCents = params.titleAmountCents + additionalAmountCents;
   const actualDueDate = getNextBusinessDay(params.dueDate);
-  const allocations = params.allocations?.length
-    ? params.allocations
-    : [{
+    let resolvedValue1: any;
+  if (params.allocations?.length) {
+    resolvedValue1 = params.allocations;
+  } else {
+    resolvedValue1 = [{
         costCenterId: params.costCenterId,
         natureDescription: params.natureDescription,
         amountCents: totalAmountCents
       }];
+  }
+const allocations = resolvedValue1 as Array<{
+  costCenterId: string;
+  natureDescription: string;
+  amountCents: number;
+}>;
 
-  const allocatedTotal = allocations.reduce((sum, allocation) => sum + allocation.amountCents, 0);
+  const allocatedTotal = allocations.reduce((sum: number, allocation: any) => sum + allocation.amountCents, 0);
 
   if (allocatedTotal !== totalAmountCents) {
     throw new Error("Allocation total must match the title total.");
   }
 
-  const allocationCostCenterIds = [...new Set(allocations.map((allocation) => allocation.costCenterId))];
+  const allocationCostCenterIds = [...new Set(allocations.map((allocation: any) => allocation.costCenterId))];
   const allocationCostCenters = await db.costCenter.count({
     where: {
       organizationId: params.organizationId,
@@ -1724,11 +1740,19 @@ export async function updatePayableTitle(params: {
     throw new Error("One or more allocation cost centers are invalid.");
   }
 
-  const nextStatus = toNumber(title.paidAmountCents) >= totalAmountCents
-    ? PayableTitleStatus.PAID
-    : toNumber(title.paidAmountCents) > 0
-      ? PayableTitleStatus.PARTIALLY_PAID
-      : params.status ?? PayableTitleStatus.OPEN;
+    let resolvedValue2: any;
+  if (toNumber(title.paidAmountCents) >= totalAmountCents) {
+    resolvedValue2 = PayableTitleStatus.PAID;
+  } else {
+        let resolvedValue8: any;
+    if (toNumber(title.paidAmountCents) > 0) {
+      resolvedValue8 = PayableTitleStatus.PARTIALLY_PAID;
+    } else {
+      resolvedValue8 = params.status ?? PayableTitleStatus.OPEN;
+    }
+resolvedValue2 = resolvedValue8;
+  }
+const nextStatus = resolvedValue2;
 
   const updated = await db.$transaction(async (tx) => {
     const saved = await tx.payableTitle.update({
@@ -1763,7 +1787,7 @@ export async function updatePayableTitle(params: {
     });
 
     await tx.payableAllocation.createMany({
-      data: allocations.map((allocation) => ({
+      data: allocations.map((allocation: any) => ({
         payableTitleId: title.id,
         costCenterId: allocation.costCenterId,
         natureDescription: encryptFinanceField(allocation.natureDescription, params.organizationId, "payableAllocation.natureDescription") ?? allocation.natureDescription.trim(),
@@ -1854,11 +1878,19 @@ export async function createPayablePayment(params: {
     });
 
     const paidAmountCents = aggregate._sum.amountPaidCents ?? BigInt(0);
-    const nextStatus = paidAmountCents >= title.totalAmountCents
-      ? PayableTitleStatus.PAID
-      : paidAmountCents > BigInt(0)
-        ? PayableTitleStatus.PARTIALLY_PAID
-        : PayableTitleStatus.OPEN;
+        let resolvedValue3: any;
+    if (paidAmountCents >= title.totalAmountCents) {
+      resolvedValue3 = PayableTitleStatus.PAID;
+    } else {
+            let resolvedValue9: any;
+      if (paidAmountCents > BigInt(0)) {
+        resolvedValue9 = PayableTitleStatus.PARTIALLY_PAID;
+      } else {
+        resolvedValue9 = PayableTitleStatus.OPEN;
+      }
+resolvedValue3 = resolvedValue9;
+    }
+const nextStatus = resolvedValue3;
 
     await tx.payableTitle.update({
       where: {
@@ -2018,11 +2050,19 @@ export async function createReceivablePayment(params: {
     });
 
     const receivedAmountCents = aggregate._sum.amountReceivedCents ?? BigInt(0);
-    const nextStatus = receivedAmountCents >= title.titleAmountCents
-      ? PayableTitleStatus.PAID
-      : receivedAmountCents > BigInt(0)
-        ? PayableTitleStatus.PARTIALLY_PAID
-        : PayableTitleStatus.OPEN;
+        let resolvedValue4: any;
+    if (receivedAmountCents >= title.titleAmountCents) {
+      resolvedValue4 = PayableTitleStatus.PAID;
+    } else {
+            let resolvedValue10: any;
+      if (receivedAmountCents > BigInt(0)) {
+        resolvedValue10 = PayableTitleStatus.PARTIALLY_PAID;
+      } else {
+        resolvedValue10 = PayableTitleStatus.OPEN;
+      }
+resolvedValue4 = resolvedValue10;
+    }
+const nextStatus = resolvedValue4;
 
     await tx.receivableTitle.update({
       where: {
@@ -2071,7 +2111,13 @@ export async function createContract(params: {
 }) {
   await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
 
-  const contract = await db.contract.create({
+    let resolvedValue5: any;
+  if (params.totalValueCents === null || params.totalValueCents === undefined) {
+    resolvedValue5 = null;
+  } else {
+    resolvedValue5 = BigInt(params.totalValueCents);
+  }
+const contract = await db.contract.create({
     data: {
       organizationId: params.organizationId,
       projectId: params.projectId || null,
@@ -2080,7 +2126,7 @@ export async function createContract(params: {
       counterpartyType: params.counterpartyType,
       status: params.status,
       currencyCode: params.currencyCode?.trim().toUpperCase() || "USD",
-      totalValueCents: params.totalValueCents === null || params.totalValueCents === undefined ? null : BigInt(params.totalValueCents),
+      totalValueCents: resolvedValue5,
       startsAt: params.startsAt,
       endsAt: params.endsAt,
       signedAt: params.signedAt,
@@ -2147,7 +2193,13 @@ export async function updateContract(params: {
     throw new Error("Contract not found.");
   }
 
-  const updated = await db.contract.update({
+    let resolvedValue6: any;
+  if (params.totalValueCents === null || params.totalValueCents === undefined) {
+    resolvedValue6 = null;
+  } else {
+    resolvedValue6 = BigInt(params.totalValueCents);
+  }
+const updated = await db.contract.update({
     where: {
       id: contract.id
     },
@@ -2158,7 +2210,7 @@ export async function updateContract(params: {
       counterpartyType: params.counterpartyType,
       status: params.status,
       currencyCode: params.currencyCode?.trim().toUpperCase() || contract.currencyCode,
-      totalValueCents: params.totalValueCents === null || params.totalValueCents === undefined ? null : BigInt(params.totalValueCents),
+      totalValueCents: resolvedValue6,
       startsAt: params.startsAt ?? null,
       endsAt: params.endsAt ?? null,
       signedAt: params.signedAt ?? null,
@@ -2209,7 +2261,13 @@ export async function createRoyaltyAgreement(params: {
 }) {
   await enforceSubscriptionCapability(params.organizationId, "contractsRoyalties");
 
-  const agreement = await db.royaltyAgreement.create({
+    let resolvedValue7: any;
+  if (params.recoupCapCents === null || params.recoupCapCents === undefined) {
+    resolvedValue7 = null;
+  } else {
+    resolvedValue7 = BigInt(params.recoupCapCents);
+  }
+const agreement = await db.royaltyAgreement.create({
     data: {
       organizationId: params.organizationId,
       projectId: params.projectId || null,
@@ -2219,7 +2277,7 @@ export async function createRoyaltyAgreement(params: {
       status: params.status,
       basisPoints: params.basisPoints,
       recoupable: Boolean(params.recoupable),
-      recoupCapCents: params.recoupCapCents === null || params.recoupCapCents === undefined ? null : BigInt(params.recoupCapCents),
+      recoupCapCents: resolvedValue7,
       notes: encryptFinanceField(params.notes, params.organizationId, "royaltyAgreement.notes")
     }
   });

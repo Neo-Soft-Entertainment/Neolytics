@@ -25,11 +25,60 @@ export function ComparePageClient() {
       return;
     }
 
-    setAppIds((current) => [...current, parsed]);
+    setAppIds((current: any) => [...current, parsed]);
     setInputValue("");
   }
 
-  return (
+    let resolvedValue0: any;
+  if (query.isLoading) {
+    resolvedValue0 = (
+            <p className="text-sm text-muted-foreground">{t("compare.loadTwoGames")}</p>
+          );
+  } else {
+        let resolvedValue1: any;
+    if (query.data?.length) {
+      resolvedValue1 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("games.game")}</TableHead>
+                  <TableHead>{t("games.price")}</TableHead>
+                  <TableHead>{t("games.reviewScore")}</TableHead>
+                  <TableHead>{t("games.reviews")}</TableHead>
+                  <TableHead>{t("compare.medianSales")}</TableHead>
+                  <TableHead>{t("compare.medianNetRevenue")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {query.data.map((game: any) => {
+                  let resolvedValue2: any;
+                  if (game.reviewScore) {
+                    resolvedValue2 = `${game.reviewScore.toFixed(1)}%`;
+                  } else {
+                    resolvedValue2 = t("common.na");
+                  }
+                  return (
+                  <TableRow key={game.id}>
+                    <TableCell>{game.name}</TableCell>
+                    <TableCell>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</TableCell>
+                    <TableCell>{resolvedValue2}</TableCell>
+                    <TableCell>{formatNumber(game.reviewCount)}</TableCell>
+                    <TableCell>{formatNumber(game.salesEstimates[0]?.medianEstimate ?? null)}</TableCell>
+                    <TableCell>{formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null)}</TableCell>
+                  </TableRow>
+                );
+                })}
+              </TableBody>
+            </Table>
+          );
+    } else {
+      resolvedValue1 = (
+            <p className="text-sm text-muted-foreground">{t("compare.addTwoGames")}</p>
+          );
+    }
+resolvedValue0 = resolvedValue1;
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title={t("compare.pageTitle")}
@@ -71,13 +120,13 @@ export function ComparePageClient() {
             <Input
               placeholder={t("compare.enterSteamAppId")}
               value={inputValue}
-              onChange={(event) => setInputValue(event.target.value)}
+              onChange={(event: any) => setInputValue(event.target.value)}
             />
             <Button onClick={addAppId}>{t("compare.add")}</Button>
           </div>
           <div className="flex flex-wrap gap-2">
             {appIds.map((appId) => (
-              <Button key={appId} variant="secondary" onClick={() => setAppIds((current) => current.filter((value) => value !== appId))}>
+              <Button key={appId} variant="secondary" onClick={() => setAppIds((current: any) => current.filter((value: any) => value !== appId))}>
                 {appId}
               </Button>
             ))}
@@ -96,36 +145,7 @@ export function ComparePageClient() {
           />
         </CardHeader>
         <CardContent>
-          {query.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("compare.loadTwoGames")}</p>
-          ) : query.data?.length ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("games.game")}</TableHead>
-                  <TableHead>{t("games.price")}</TableHead>
-                  <TableHead>{t("games.reviewScore")}</TableHead>
-                  <TableHead>{t("games.reviews")}</TableHead>
-                  <TableHead>{t("compare.medianSales")}</TableHead>
-                  <TableHead>{t("compare.medianNetRevenue")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {query.data.map((game: any) => (
-                  <TableRow key={game.id}>
-                    <TableCell>{game.name}</TableCell>
-                    <TableCell>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</TableCell>
-                    <TableCell>{game.reviewScore ? `${game.reviewScore.toFixed(1)}%` : t("common.na")}</TableCell>
-                    <TableCell>{formatNumber(game.reviewCount)}</TableCell>
-                    <TableCell>{formatNumber(game.salesEstimates[0]?.medianEstimate ?? null)}</TableCell>
-                    <TableCell>{formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("compare.addTwoGames")}</p>
-          )}
+          {resolvedValue0}
         </CardContent>
       </Card>
     </div>

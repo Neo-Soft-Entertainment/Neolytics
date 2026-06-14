@@ -217,9 +217,21 @@ export function evaluatePrivacyRules(input: PrivacyRulesInput): PrivacyRulesEval
     transformations.push("round_or_noise_metrics");
   }
 
-  return {
-    decision: transformations.length > 0 ? PrivacyDecision.ALLOW_WITH_TRANSFORMATION : PrivacyDecision.ALLOW,
-    reason: transformations.length > 0 ? "Export allowed after privacy transformations." : "Export allowed.",
+    let resolvedValue0: any;
+  if (transformations.length > 0) {
+    resolvedValue0 = PrivacyDecision.ALLOW_WITH_TRANSFORMATION;
+  } else {
+    resolvedValue0 = PrivacyDecision.ALLOW;
+  }
+  let resolvedValue1: any;
+  if (transformations.length > 0) {
+    resolvedValue1 = "Export allowed after privacy transformations.";
+  } else {
+    resolvedValue1 = "Export allowed.";
+  }
+return {
+    decision: resolvedValue0,
+    reason: resolvedValue1,
     blockedFields,
     exportableFields,
     transformations

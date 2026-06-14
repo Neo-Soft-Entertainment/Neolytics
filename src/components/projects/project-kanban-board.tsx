@@ -179,9 +179,27 @@ export function ProjectKanbanBoard({
 
   const visibleCards = filteredColumns.reduce((sum, column) => sum + column.cards.length, 0);
   const totalCards = columns.reduce((sum, column) => sum + column.cards.length, 0);
-  const activeCard = drawer?.mode === "edit" ? cardsById.get(drawer.cardId) : null;
-  const activeDragCard = activeDragCardId ? cardsById.get(activeDragCardId) : null;
-  const createColumnId = drawer?.mode === "create" ? drawer.columnId : columns[0]?.id ?? "";
+    let resolvedValue0: any;
+  if (drawer?.mode === "edit") {
+    resolvedValue0 = cardsById.get(drawer.cardId);
+  } else {
+    resolvedValue0 = null;
+  }
+const activeCard = resolvedValue0;
+    let resolvedValue1: any;
+  if (activeDragCardId) {
+    resolvedValue1 = cardsById.get(activeDragCardId);
+  } else {
+    resolvedValue1 = null;
+  }
+const activeDragCard = resolvedValue1;
+    let resolvedValue2: any;
+  if (drawer?.mode === "create") {
+    resolvedValue2 = drawer.columnId;
+  } else {
+    resolvedValue2 = columns[0]?.id ?? "";
+  }
+const createColumnId = resolvedValue2;
 
   function onDragStart(event: DragStartEvent) {
     setActiveDragCardId(String(event.active.id));
@@ -245,17 +263,25 @@ export function ProjectKanbanBoard({
   }
 
   function openEditDrawer(card: KanbanCard, columnId: string) {
-    setCardEdits((current) => ({
+    setCardEdits((current: any) => {
+      let resolvedValue3: any;
+      if (card.dueDate) {
+        resolvedValue3 = new Date(card.dueDate).toISOString().slice(0, 10);
+      } else {
+        resolvedValue3 = "";
+      }
+      return ({
       ...current,
       [card.id]: current[card.id] ?? {
         title: card.title,
         description: card.description ?? "",
         assigneeLabel: card.assigneeLabel ?? "",
-        dueDate: card.dueDate ? new Date(card.dueDate).toISOString().slice(0, 10) : "",
+        dueDate: resolvedValue3,
         labels: getKanbanCardLabels(card.labels).join(", "),
         columnId
       }
-    }));
+    });
+    });
     setDrawer({ mode: "edit", cardId: card.id });
   }
 
@@ -283,7 +309,25 @@ export function ProjectKanbanBoard({
     );
   }
 
-  return (
+    let resolvedValue4: any;
+  if (assignees.length > 5) {
+    resolvedValue4 = (
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#171b20] bg-slate-700 text-xs text-slate-200">
+                  +{assignees.length - 5}
+                </span>
+              );
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (activeDragCard) {
+    resolvedValue5 = (
+            <KanbanCardDragPreview card={activeDragCard.card} columnIndex={columns.findIndex((column) => column.id === activeDragCard.column.id)} />
+          );
+  } else {
+    resolvedValue5 = null;
+  }
+return (
     <div className="overflow-hidden rounded-lg border bg-[#101418] text-slate-200 shadow-sm">
       <div className="border-b border-slate-800 bg-[#171b20] px-5 py-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -298,11 +342,7 @@ export function ProjectKanbanBoard({
                   {assignee.slice(0, 1).toUpperCase()}
                 </span>
               ))}
-              {assignees.length > 5 ? (
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#171b20] bg-slate-700 text-xs text-slate-200">
-                  +{assignees.length - 5}
-                </span>
-              ) : null}
+              {resolvedValue4}
             </div>
             <Button className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={() => setDrawer({ mode: "create", columnId: columns[0]?.id ?? "" })}>
               <Plus className="mr-2 h-4 w-4" />
@@ -316,7 +356,7 @@ export function ProjectKanbanBoard({
             <Input
               className="border-slate-700 bg-[#11161c] pl-9 text-slate-100 placeholder:text-slate-500"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event: any) => setSearch(event.target.value)}
               placeholder="Pesquisar no quadro"
             />
           </div>
@@ -353,13 +393,13 @@ export function ProjectKanbanBoard({
           <Input
             className="border-slate-700 bg-[#11161c] text-slate-100 placeholder:text-slate-500"
             value={newColumn.name}
-            onChange={(event) => setNewColumn((current) => ({ ...current, name: event.target.value }))}
+            onChange={(event: any) => setNewColumn((current: any) => ({ ...current, name: event.target.value }))}
             placeholder="Nome do novo status"
           />
           <Input
             className="border-slate-700 bg-[#11161c] text-slate-100 placeholder:text-slate-500"
             value={newColumn.color}
-            onChange={(event) => setNewColumn((current) => ({ ...current, color: event.target.value }))}
+            onChange={(event: any) => setNewColumn((current: any) => ({ ...current, color: event.target.value }))}
             placeholder="#38bdf8"
           />
           <Button variant="outline" className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800" onClick={createColumn}>
@@ -399,9 +439,7 @@ export function ProjectKanbanBoard({
           </div>
         </div>
         <DragOverlay dropAnimation={null}>
-          {activeDragCard ? (
-            <KanbanCardDragPreview card={activeDragCard.card} columnIndex={columns.findIndex((column) => column.id === activeDragCard.column.id)} />
-          ) : null}
+          {resolvedValue5}
         </DragOverlay>
       </DndContext>
 
@@ -559,7 +597,51 @@ function KanbanCardView({
   });
   const labels = getKanbanCardLabels(card.labels);
 
-  return (
+    let resolvedValue6: any;
+  if (labels.length > 0) {
+        let resolvedValue27: any;
+    if (labels.length > 3) {
+      resolvedValue27 = <span className="text-[11px] text-slate-500">+{labels.length - 3}</span>;
+    } else {
+      resolvedValue27 = null;
+    }
+resolvedValue6 = (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {labels.slice(0, 3).map((label) => (
+            <span key={label} className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", getLabelClass(label))}>
+              {label}
+            </span>
+          ))}
+          {resolvedValue27}
+        </div>
+      );
+  } else {
+    resolvedValue6 = null;
+  }
+  let resolvedValue7: any;
+  if (card.dueDate) {
+    resolvedValue7 = (
+            <span className="flex items-center gap-1">
+              <CalendarDays className="h-3.5 w-3.5" />
+              {new Date(card.dueDate).toLocaleDateString()}
+            </span>
+          );
+  } else {
+    resolvedValue7 = null;
+  }
+  let resolvedValue8: any;
+  if (card.assigneeLabel) {
+    resolvedValue8 = (
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-[10px] font-semibold text-white">
+              {card.assigneeLabel.slice(0, 1).toUpperCase()}
+            </span>
+          );
+  } else {
+    resolvedValue8 = (
+            <User2 className="h-4 w-4 text-slate-600" />
+          );
+  }
+return (
     <article
       ref={setNodeRef}
       {...attributes}
@@ -586,8 +668,8 @@ function KanbanCardView({
               size="sm"
               variant="ghost"
               className="h-7 w-7 p-0 text-slate-500 opacity-0 hover:bg-slate-700 hover:text-slate-100 group-hover:opacity-100"
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event: any) => event.stopPropagation()}
+              onClick={(event: any) => event.stopPropagation()}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -607,32 +689,12 @@ function KanbanCardView({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {labels.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {labels.slice(0, 3).map((label) => (
-            <span key={label} className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", getLabelClass(label))}>
-              {label}
-            </span>
-          ))}
-          {labels.length > 3 ? <span className="text-[11px] text-slate-500">+{labels.length - 3}</span> : null}
-        </div>
-      ) : null}
+      {resolvedValue6}
       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
         <span className="font-medium text-slate-500">NLY-{columnIndex + 1}{String(card.sortOrder + 1).padStart(2, "0")}</span>
         <div className="flex items-center gap-2">
-          {card.dueDate ? (
-            <span className="flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5" />
-              {new Date(card.dueDate).toLocaleDateString()}
-            </span>
-          ) : null}
-          {card.assigneeLabel ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-[10px] font-semibold text-white">
-              {card.assigneeLabel.slice(0, 1).toUpperCase()}
-            </span>
-          ) : (
-            <User2 className="h-4 w-4 text-slate-600" />
-          )}
+          {resolvedValue7}
+          {resolvedValue8}
         </div>
       </div>
     </article>
@@ -648,10 +710,9 @@ function KanbanCardDragPreview({
 }) {
   const labels = getKanbanCardLabels(card.labels);
 
-  return (
-    <article className="w-[260px] rotate-1 rounded-md border border-sky-500/60 bg-[#22272d] p-3 text-sm text-slate-200 shadow-2xl">
-      <p className="line-clamp-2 font-medium leading-5">{card.title}</p>
-      {labels.length > 0 ? (
+    let resolvedValue9: any;
+  if (labels.length > 0) {
+    resolvedValue9 = (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {labels.slice(0, 3).map((label) => (
             <span key={label} className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", getLabelClass(label))}>
@@ -659,14 +720,27 @@ function KanbanCardDragPreview({
             </span>
           ))}
         </div>
-      ) : null}
-      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
-        <span className="font-medium text-slate-500">NLY-{columnIndex + 1}{String(card.sortOrder + 1).padStart(2, "0")}</span>
-        {card.assigneeLabel ? (
+      );
+  } else {
+    resolvedValue9 = null;
+  }
+  let resolvedValue10: any;
+  if (card.assigneeLabel) {
+    resolvedValue10 = (
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-[10px] font-semibold text-white">
             {card.assigneeLabel.slice(0, 1).toUpperCase()}
           </span>
-        ) : null}
+        );
+  } else {
+    resolvedValue10 = null;
+  }
+return (
+    <article className="w-[260px] rotate-1 rounded-md border border-sky-500/60 bg-[#22272d] p-3 text-sm text-slate-200 shadow-2xl">
+      <p className="line-clamp-2 font-medium leading-5">{card.title}</p>
+      {resolvedValue9}
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
+        <span className="font-medium text-slate-500">NLY-{columnIndex + 1}{String(card.sortOrder + 1).padStart(2, "0")}</span>
+        {resolvedValue10}
       </div>
     </article>
   );
@@ -703,7 +777,13 @@ function KanbanCardDrawer({
 }) {
   const isOpen = Boolean(drawer);
   const isEdit = drawer?.mode === "edit";
-  const editState = activeCard ? cardEdits[activeCard.id] : null;
+    let resolvedValue11: any;
+  if (activeCard) {
+    resolvedValue11 = cardEdits[activeCard.id];
+  } else {
+    resolvedValue11 = null;
+  }
+const editState = resolvedValue11;
   const createState = newCards[createColumnId] ?? {
     title: "",
     description: "",
@@ -711,7 +791,13 @@ function KanbanCardDrawer({
     dueDate: "",
     labels: ""
   };
-  const selectedAssigneeLabel = isEdit ? editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "" : createState.assigneeLabel;
+    let resolvedValue12: any;
+  if (isEdit) {
+    resolvedValue12 = editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "";
+  } else {
+    resolvedValue12 = createState.assigneeLabel;
+  }
+const selectedAssigneeLabel = resolvedValue12;
 
   async function submit() {
     if (drawer?.mode === "create") {
@@ -751,7 +837,7 @@ function KanbanCardDrawer({
       return;
     }
 
-    setNewCards((current) => ({
+    setNewCards((current: any) => ({
       ...current,
       [drawer.columnId]: {
         title: current[drawer.columnId]?.title ?? "",
@@ -769,33 +855,95 @@ function KanbanCardDrawer({
       return;
     }
 
-    setCardEdits((current) => ({
+    setCardEdits((current: any) => {
+      let resolvedValue13: any;
+      if (activeCard.dueDate) {
+        resolvedValue13 = new Date(activeCard.dueDate).toISOString().slice(0, 10);
+      } else {
+        resolvedValue13 = "";
+      }
+      return ({
       ...current,
       [activeCard.id]: {
         title: current[activeCard.id]?.title ?? activeCard.title,
         description: current[activeCard.id]?.description ?? activeCard.description ?? "",
         assigneeLabel: current[activeCard.id]?.assigneeLabel ?? activeCard.assigneeLabel ?? "",
-        dueDate: current[activeCard.id]?.dueDate ?? (activeCard.dueDate ? new Date(activeCard.dueDate).toISOString().slice(0, 10) : ""),
+        dueDate: current[activeCard.id]?.dueDate ?? (resolvedValue13),
         labels: current[activeCard.id]?.labels ?? getKanbanCardLabels(activeCard.labels).join(", "),
         columnId: current[activeCard.id]?.columnId ?? activeCardColumnId,
         [field]: value
       }
-    }));
+    });
+    });
   }
 
-  return (
+    let resolvedValue14: any;
+  if (isEdit) {
+    resolvedValue14 = "Editar card";
+  } else {
+    resolvedValue14 = "Criar card";
+  }
+  let resolvedValue15: any;
+  if (isEdit) {
+    resolvedValue15 = "Atualize os detalhes de execução sem sair do quadro.";
+  } else {
+    resolvedValue15 = "Adicione um item de trabalho ao status selecionado.";
+  }
+  let resolvedValue16: any;
+  if (isEdit) {
+    resolvedValue16 = editState?.columnId ?? activeCardColumnId;
+  } else {
+    resolvedValue16 = createColumnId;
+  }
+  let resolvedValue17: any;
+  if (isEdit) {
+    resolvedValue17 = editState?.title ?? activeCard?.title ?? "";
+  } else {
+    resolvedValue17 = createState.title;
+  }
+  let resolvedValue19: any;
+  if (isEdit) {
+    resolvedValue19 = editState?.description ?? activeCard?.description ?? "";
+  } else {
+    resolvedValue19 = createState.description;
+  }
+  let resolvedValue22: any;
+  if (isEdit) {
+        let resolvedValue28: any;
+    if (activeCard?.dueDate) {
+      resolvedValue28 = new Date(activeCard.dueDate).toISOString().slice(0, 10);
+    } else {
+      resolvedValue28 = "";
+    }
+resolvedValue22 = editState?.dueDate ?? (resolvedValue28);
+  } else {
+    resolvedValue22 = createState.dueDate;
+  }
+  let resolvedValue24: any;
+  if (isEdit) {
+    resolvedValue24 = editState?.labels ?? getKanbanCardLabels(activeCard?.labels).join(", ");
+  } else {
+    resolvedValue24 = createState.labels;
+  }
+  let resolvedValue26: any;
+  if (isEdit) {
+    resolvedValue26 = "Salvar card";
+  } else {
+    resolvedValue26 = "Criar card";
+  }
+return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && setDrawer(null)}>
       <DialogContent className="left-auto right-0 top-0 h-screen max-w-xl translate-x-0 translate-y-0 overflow-y-auto rounded-none border-y-0 border-r-0 bg-card p-0 sm:max-w-xl">
         <DialogHeader className="border-b p-5">
-          <DialogTitle>{isEdit ? "Editar card" : "Criar card"}</DialogTitle>
-          <DialogDescription>{isEdit ? "Atualize os detalhes de execução sem sair do quadro." : "Adicione um item de trabalho ao status selecionado."}</DialogDescription>
+          <DialogTitle>{resolvedValue14}</DialogTitle>
+          <DialogDescription>{resolvedValue15}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 p-5">
           <div className="space-y-2">
             <Label>Status</Label>
             <Select
-              value={isEdit ? editState?.columnId ?? activeCardColumnId : createColumnId}
-              onValueChange={(value) => {
+              value={resolvedValue16}
+              onValueChange={(value: any) => {
                 if (drawer?.mode === "create") {
                   setDrawer({ mode: "create", columnId: value });
                   return;
@@ -817,8 +965,16 @@ function KanbanCardDrawer({
           <div className="space-y-2">
             <Label>Título</Label>
             <Input
-              value={isEdit ? editState?.title ?? activeCard?.title ?? "" : createState.title}
-              onChange={(event) => isEdit ? updateEdit("title", event.target.value) : updateCreate("title", event.target.value)}
+              value={resolvedValue17}
+              onChange={(event: any) => {
+                let resolvedValue18: any;
+                if (isEdit) {
+                  resolvedValue18 = updateEdit("title", event.target.value);
+                } else {
+                  resolvedValue18 = updateCreate("title", event.target.value);
+                }
+                return resolvedValue18;
+              }}
               placeholder="Título do card"
             />
           </div>
@@ -826,8 +982,16 @@ function KanbanCardDrawer({
             <Label>Descrição</Label>
             <Textarea
               className="min-h-32"
-              value={isEdit ? editState?.description ?? activeCard?.description ?? "" : createState.description}
-              onChange={(event) => isEdit ? updateEdit("description", event.target.value) : updateCreate("description", event.target.value)}
+              value={resolvedValue19}
+              onChange={(event: any) => {
+                let resolvedValue20: any;
+                if (isEdit) {
+                  resolvedValue20 = updateEdit("description", event.target.value);
+                } else {
+                  resolvedValue20 = updateCreate("description", event.target.value);
+                }
+                return resolvedValue20;
+              }}
               placeholder="Descreva o trabalho, risco ou decisão."
             />
           </div>
@@ -836,7 +1000,15 @@ function KanbanCardDrawer({
               <Label>Responsável</Label>
               <ProjectAssigneeSelect
                 value={selectedAssigneeLabel}
-                onChange={(value) => isEdit ? updateEdit("assigneeLabel", value) : updateCreate("assigneeLabel", value)}
+                onChange={(value: any) => {
+                  let resolvedValue21: any;
+                  if (isEdit) {
+                    resolvedValue21 = updateEdit("assigneeLabel", value);
+                  } else {
+                    resolvedValue21 = updateCreate("assigneeLabel", value);
+                  }
+                  return resolvedValue21;
+                }}
                 assigneeOptions={assigneeOptions}
                 placeholder="Selecionar usuário"
               />
@@ -845,23 +1017,39 @@ function KanbanCardDrawer({
               <Label>Vencimento</Label>
               <Input
                 type="date"
-                value={isEdit ? editState?.dueDate ?? (activeCard?.dueDate ? new Date(activeCard.dueDate).toISOString().slice(0, 10) : "") : createState.dueDate}
-                onChange={(event) => isEdit ? updateEdit("dueDate", event.target.value) : updateCreate("dueDate", event.target.value)}
+                value={resolvedValue22}
+                onChange={(event: any) => {
+                  let resolvedValue23: any;
+                  if (isEdit) {
+                    resolvedValue23 = updateEdit("dueDate", event.target.value);
+                  } else {
+                    resolvedValue23 = updateCreate("dueDate", event.target.value);
+                  }
+                  return resolvedValue23;
+                }}
               />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Etiquetas</Label>
             <Input
-              value={isEdit ? editState?.labels ?? getKanbanCardLabels(activeCard?.labels).join(", ") : createState.labels}
-              onChange={(event) => isEdit ? updateEdit("labels", event.target.value) : updateCreate("labels", event.target.value)}
+              value={resolvedValue24}
+              onChange={(event: any) => {
+                let resolvedValue25: any;
+                if (isEdit) {
+                  resolvedValue25 = updateEdit("labels", event.target.value);
+                } else {
+                  resolvedValue25 = updateCreate("labels", event.target.value);
+                }
+                return resolvedValue25;
+              }}
               placeholder="billing, feedback, forms"
             />
           </div>
         </div>
         <DialogFooter className="border-t p-5">
           <Button variant="outline" onClick={() => setDrawer(null)}>Cancelar</Button>
-          <Button onClick={submit}>{isEdit ? "Salvar card" : "Criar card"}</Button>
+          <Button onClick={submit}>{resolvedValue26}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

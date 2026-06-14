@@ -17,8 +17,26 @@ export function ProjectAssigneeSelect({
   const selectedValue = value || "none";
   const hasLegacyAssignee = value && assigneeOptions.every((option) => option.label !== value);
 
-  return (
-    <Select value={selectedValue} onValueChange={(nextValue) => onChange(nextValue === "none" ? "" : nextValue)}>
+    let resolvedValue1: any;
+  if (hasLegacyAssignee) {
+    resolvedValue1 = (
+          <SelectItem value={value}>
+            {value} (legado)
+          </SelectItem>
+        );
+  } else {
+    resolvedValue1 = null;
+  }
+return (
+    <Select value={selectedValue} onValueChange={(nextValue) => {
+      let resolvedValue0: any;
+      if (nextValue === "none") {
+        resolvedValue0 = "";
+      } else {
+        resolvedValue0 = nextValue;
+      }
+      return onChange(resolvedValue0);
+    }}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
@@ -29,11 +47,7 @@ export function ProjectAssigneeSelect({
             {option.label}
           </SelectItem>
         ))}
-        {hasLegacyAssignee ? (
-          <SelectItem value={value}>
-            {value} (legado)
-          </SelectItem>
-        ) : null}
+        {resolvedValue1}
       </SelectContent>
     </Select>
   );

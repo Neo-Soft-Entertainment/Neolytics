@@ -24,11 +24,9 @@ export default async function InvitationPage({
   const session = await auth();
   const isExpired = invitation.expiresAt <= new Date();
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.14),_transparent_30%)] p-6">
-      <div className="flex w-full max-w-xl flex-col items-center gap-6">
-        <NeolyticsBrand />
-        {invitation.revokedAt || invitation.acceptedAt || isExpired ? (
+    let resolvedValue0: any;
+  if (invitation.revokedAt || invitation.acceptedAt || isExpired) {
+    resolvedValue0 = (
           <Card className="w-full">
             <CardHeader>
               <CardTitle>Convite indisponível</CardTitle>
@@ -40,7 +38,17 @@ export default async function InvitationPage({
               </Button>
             </CardContent>
           </Card>
-        ) : !session?.user ? (
+        );
+  } else {
+        let resolvedValue1: any;
+    if (!session?.user) {
+            let resolvedValue2: any;
+      if (invitation.permissions.length > 0) {
+        resolvedValue2 = invitation.permissions.map(getOrganizationPermissionLabel).join(", ");
+      } else {
+        resolvedValue2 = "Apenas permissões padrão do cargo";
+      }
+resolvedValue1 = (
           <Card className="w-full">
             <CardHeader>
               <CardTitle>Convite para {invitation.organization.name}</CardTitle>
@@ -50,7 +58,7 @@ export default async function InvitationPage({
                 {invitation.invitedBy.name || invitation.invitedBy.email} convidou {invitation.email} para entrar como {invitation.role}.
               </p>
               <p>
-                Permissões: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Apenas permissões padrão do cargo"}.
+                Permissões: {resolvedValue2}.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
@@ -62,7 +70,9 @@ export default async function InvitationPage({
               </div>
             </CardContent>
           </Card>
-        ) : (
+        );
+    } else {
+      resolvedValue1 = (
           <AcceptInvitationCard
             token={token}
             organizationName={invitation.organization.name}
@@ -70,7 +80,15 @@ export default async function InvitationPage({
             permissions={invitation.permissions.map(getOrganizationPermissionLabel)}
             currentEmail={session.user.email}
           />
-        )}
+        );
+    }
+resolvedValue0 = resolvedValue1;
+  }
+return (
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.14),_transparent_30%)] p-6">
+      <div className="flex w-full max-w-xl flex-col items-center gap-6">
+        <NeolyticsBrand />
+        {resolvedValue0}
       </div>
     </main>
   );

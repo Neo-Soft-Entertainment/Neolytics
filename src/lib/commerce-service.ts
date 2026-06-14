@@ -21,7 +21,13 @@ function toNumber(value: bigint | number | null | undefined) {
 }
 
 function toIso(value: Date | null | undefined) {
-  return value ? value.toISOString() : null;
+    let resolvedValue0: any;
+  if (value) {
+    resolvedValue0 = value.toISOString();
+  } else {
+    resolvedValue0 = null;
+  }
+return resolvedValue0;
 }
 
 export async function getCommerceOverview(organizationId: string) {
@@ -107,11 +113,11 @@ export async function getCommerceOverview(organizationId: string) {
     })
   ]);
 
-  const openOrders = orders.filter((order) => !["FULFILLED", "CANCELED"].includes(order.status)).length;
-  const pendingFulfillment = orders.filter((order) =>
+  const openOrders = orders.filter((order: any) => !["FULFILLED", "CANCELED"].includes(order.status)).length;
+  const pendingFulfillment = orders.filter((order: any) =>
     ["PENDING", "PICKING", "READY_TO_SHIP", "BLOCKED"].includes(order.fulfillmentStatus)
   ).length;
-  const paidOrders = orders.filter((order) => order.paymentStatus === "PAID").length;
+  const paidOrders = orders.filter((order: any) => order.paymentStatus === "PAID").length;
   const netSalesCents = orders.reduce((total, order) => {
     if (order.paymentStatus !== "PAID") {
       return total;
@@ -119,7 +125,7 @@ export async function getCommerceOverview(organizationId: string) {
 
     return total + toNumber(order.netCents);
   }, 0);
-  const activeCampaigns = campaigns.filter((campaign) => campaign.status === "ACTIVE").length;
+  const activeCampaigns = campaigns.filter((campaign: any) => campaign.status === "ACTIVE").length;
   const marketingSpendCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
   const marketingBudgetCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.budgetCents), 0);
   const attributedRevenueCents = campaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
@@ -127,8 +133,8 @@ export async function getCommerceOverview(organizationId: string) {
   const demoDownloads = campaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0);
   const campaignConversions = campaigns.reduce((total, campaign) => total + campaign.conversions, 0);
   const campaignClicks = campaigns.reduce((total, campaign) => total + campaign.clicks, 0);
-  const channelPerformance = [...new Set(campaigns.map((campaign) => campaign.channel))].map((channel) => {
-    const channelCampaigns = campaigns.filter((campaign) => campaign.channel === channel);
+  const channelPerformance = [...new Set(campaigns.map((campaign: any) => campaign.channel))].map((channel: any) => {
+    const channelCampaigns = campaigns.filter((campaign: any) => campaign.channel === channel);
     const spendCents = channelCampaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
     const revenueCents = channelCampaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
     const impressions = channelCampaigns.reduce((total, campaign) => total + campaign.impressions, 0);
@@ -136,7 +142,31 @@ export async function getCommerceOverview(organizationId: string) {
     const channelWishlists = channelCampaigns.reduce((total, campaign) => total + campaign.wishlists, 0);
     const conversions = channelCampaigns.reduce((total, campaign) => total + campaign.conversions, 0);
 
-    return {
+        let resolvedValue1: any;
+    if (spendCents > 0) {
+      resolvedValue1 = revenueCents / spendCents;
+    } else {
+      resolvedValue1 = null;
+    }
+    let resolvedValue2: any;
+    if (impressions > 0) {
+      resolvedValue2 = (clicks / impressions) * 100;
+    } else {
+      resolvedValue2 = null;
+    }
+    let resolvedValue3: any;
+    if (clicks > 0) {
+      resolvedValue3 = (conversions / clicks) * 100;
+    } else {
+      resolvedValue3 = null;
+    }
+    let resolvedValue4: any;
+    if (channelWishlists > 0) {
+      resolvedValue4 = Math.round(spendCents / channelWishlists);
+    } else {
+      resolvedValue4 = null;
+    }
+return {
       channel,
       campaignsCount: channelCampaigns.length,
       spendCents,
@@ -146,30 +176,42 @@ export async function getCommerceOverview(organizationId: string) {
       wishlists: channelWishlists,
       demoDownloads: channelCampaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0),
       conversions,
-      roas: spendCents > 0 ? revenueCents / spendCents : null,
-      clickThroughRate: impressions > 0 ? (clicks / impressions) * 100 : null,
-      conversionRate: clicks > 0 ? (conversions / clicks) * 100 : null,
-      costPerWishlistCents: channelWishlists > 0 ? Math.round(spendCents / channelWishlists) : null
+      roas: resolvedValue1,
+      clickThroughRate: resolvedValue2,
+      conversionRate: resolvedValue3,
+      costPerWishlistCents: resolvedValue4
     };
   }).sort((left, right) => right.revenueCents - left.revenueCents || right.wishlists - left.wishlists);
   const projectSignals = projects.map((project) => {
-    const projectOrders = orders.filter((order) => order.projectId === project.id && order.paymentStatus === "PAID");
-    const projectCampaigns = campaigns.filter((campaign) => campaign.projectId === project.id);
+    const projectOrders = orders.filter((order: any) => order.projectId === project.id && order.paymentStatus === "PAID");
+    const projectCampaigns = campaigns.filter((campaign: any) => campaign.projectId === project.id);
     const salesCents = projectOrders.reduce((total, order) => total + toNumber(order.netCents), 0);
     const spendCents = projectCampaigns.reduce((total, campaign) => total + toNumber(campaign.spendCents), 0);
     const revenueCents = projectCampaigns.reduce((total, campaign) => total + toNumber(campaign.revenueCents), 0);
     const projectWishlists = projectCampaigns.reduce((total, campaign) => total + campaign.wishlists, 0);
     const projectDemos = projectCampaigns.reduce((total, campaign) => total + campaign.demoDownloads, 0);
-    const activeProjectCampaigns = projectCampaigns.filter((campaign) => campaign.status === "ACTIVE").length;
-    const readinessScore = Math.min(
+    const activeProjectCampaigns = projectCampaigns.filter((campaign: any) => campaign.status === "ACTIVE").length;
+        let resolvedValue5: any;
+    if (salesCents + revenueCents > 0) {
+      resolvedValue5 = 15;
+    } else {
+      resolvedValue5 = 0;
+    }
+const readinessScore = Math.min(
       100,
       activeProjectCampaigns * 25 +
       Math.min(projectWishlists, 1000) / 20 +
       Math.min(projectDemos, 500) / 20 +
-      (salesCents + revenueCents > 0 ? 15 : 0)
+      (resolvedValue5)
     );
 
-    return {
+        let resolvedValue6: any;
+    if (spendCents > 0) {
+      resolvedValue6 = revenueCents / spendCents;
+    } else {
+      resolvedValue6 = null;
+    }
+return {
       project,
       activeCampaigns: activeProjectCampaigns,
       salesCents,
@@ -178,17 +220,35 @@ export async function getCommerceOverview(organizationId: string) {
       wishlists: projectWishlists,
       demoDownloads: projectDemos,
       readinessScore: Math.round(readinessScore),
-      roas: spendCents > 0 ? revenueCents / spendCents : null
+      roas: resolvedValue6
     };
   }).sort((left, right) => right.readinessScore - left.readinessScore || right.wishlists - left.wishlists);
 
-  return {
-    channels: channels.map((channel) => ({
+    let resolvedValue7: any;
+  if (marketingSpendCents > 0) {
+    resolvedValue7 = attributedRevenueCents / marketingSpendCents;
+  } else {
+    resolvedValue7 = null;
+  }
+  let resolvedValue8: any;
+  if (campaignClicks > 0) {
+    resolvedValue8 = (campaignConversions / campaignClicks) * 100;
+  } else {
+    resolvedValue8 = null;
+  }
+  let resolvedValue9: any;
+  if (wishlists > 0) {
+    resolvedValue9 = Math.round(marketingSpendCents / wishlists);
+  } else {
+    resolvedValue9 = null;
+  }
+return {
+    channels: channels.map((channel: any) => ({
       ...channel,
       createdAt: channel.createdAt.toISOString(),
       updatedAt: channel.updatedAt.toISOString()
     })),
-    orders: orders.map((order) => ({
+    orders: orders.map((order: any) => ({
       ...order,
       grossCents: toNumber(order.grossCents),
       netCents: toNumber(order.netCents),
@@ -197,7 +257,7 @@ export async function getCommerceOverview(organizationId: string) {
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString()
     })),
-    campaigns: campaigns.map((campaign) => ({
+    campaigns: campaigns.map((campaign: any) => ({
       ...campaign,
       budgetCents: toNumber(campaign.budgetCents),
       spendCents: toNumber(campaign.spendCents),
@@ -222,9 +282,9 @@ export async function getCommerceOverview(organizationId: string) {
       wishlists,
       demoDownloads,
       campaignConversions,
-      roas: marketingSpendCents > 0 ? attributedRevenueCents / marketingSpendCents : null,
-      conversionRate: campaignClicks > 0 ? (campaignConversions / campaignClicks) * 100 : null,
-      costPerWishlistCents: wishlists > 0 ? Math.round(marketingSpendCents / wishlists) : null,
+      roas: resolvedValue7,
+      conversionRate: resolvedValue8,
+      costPerWishlistCents: resolvedValue9,
       commercialRevenueCents: netSalesCents + attributedRevenueCents
     }
   };

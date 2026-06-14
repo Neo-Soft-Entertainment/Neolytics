@@ -202,68 +202,71 @@ export function FinancePage({
     void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("finance.pageTitle")}</h1>
-        {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <KpiCard label={t("finance.activeBudgets")} value={formatNumber(summary.activeBudgetsCount)} />
-        <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(summary.totalBudgetPlannedCents)} />
-        <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(summary.totalRevenueNetCents)} />
-        <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(summary.totalExpensesPaidCents)} />
-        {canAccessInvoiceOps ? <KpiCard label={t("finance.receivablesView")} value={formatCurrency(summary.receivableOpenCents)} /> : null}
-        {canAccessInvoiceOps ? <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(summary.payableOpenCents)} /> : null}
-        {canAccessInvoiceOps ? <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(summary.overduePayablesCount)} /> : null}
-      </div>
-
-      <div ref={progressive.ref}>
-        {!data ? (
+    let resolvedValue0: any;
+  if (message) {
+    resolvedValue0 = <p className="text-sm text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (error) {
+    resolvedValue1 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (canAccessInvoiceOps) {
+    resolvedValue2 = <KpiCard label={t("finance.receivablesView")} value={formatCurrency(summary.receivableOpenCents)} />;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (canAccessInvoiceOps) {
+    resolvedValue3 = <KpiCard label={t("finance.payablesOpenKpi")} value={formatCurrency(summary.payableOpenCents)} />;
+  } else {
+    resolvedValue3 = null;
+  }
+  let resolvedValue4: any;
+  if (canAccessInvoiceOps) {
+    resolvedValue4 = <KpiCard label={t("finance.titlesOverdueKpi")} value={formatNumber(summary.overduePayablesCount)} />;
+  } else {
+    resolvedValue4 = null;
+  }
+  let resolvedValue5: any;
+  if (!data) {
+        let resolvedValue7: any;
+    if (overviewQuery.isError) {
+      resolvedValue7 = t("finance.fullWorkspaceError");
+    } else {
+            let resolvedValue16: any;
+      if (overviewQuery.isFetching) {
+        resolvedValue16 = t("finance.fullWorkspaceLoading");
+      } else {
+        resolvedValue16 = t("finance.fullWorkspaceReady");
+      }
+resolvedValue7 = resolvedValue16;
+    }
+resolvedValue5 = (
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
               <CardTitle>{t("finance.operationalRecords")}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              {overviewQuery.isError
-                ? t("finance.fullWorkspaceError")
-                : overviewQuery.isFetching
-                  ? t("finance.fullWorkspaceLoading")
-                  : t("finance.fullWorkspaceReady")}
+              {resolvedValue7}
             </CardContent>
           </Card>
-        ) : null}
-      </div>
-
-      {data ? (
-        <>
-          <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-muted/25 p-1">
-            {[
-              ["dashboard", t("finance.dashboardView")],
-              ["receivables", t("finance.receivablesView")],
-              ["payables", t("finance.payablesView")],
-              ["budget", t("finance.budgetView")],
-              ["contracts", t("finance.contractsView")],
-              ["invoices", t("finance.invoicesView")],
-              ["approvals", t("finance.approvalsView")]
-            ].map(([value, label]) => (
-              <Button
-                key={value}
-                type="button"
-                size="sm"
-                variant={financeView === value ? "default" : "ghost"}
-                onClick={() => setFinanceView(value as typeof financeView)}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
-
-      {financeView === "receivables" ? (
-        canAccessInvoiceOps ? (
+        );
+  } else {
+    resolvedValue5 = null;
+  }
+  let resolvedValue6: any;
+  if (data) {
+        let resolvedValue9: any;
+    if (financeView === "receivables") {
+            let resolvedValue17: any;
+      if (canAccessInvoiceOps) {
+        resolvedValue17 = (
           <AccountsReceivableSection
             canManage={canManage}
             projects={data.projects}
@@ -274,7 +277,9 @@ export function FinancePage({
               overdueReceivablesCount: data.summary.overdueReceivablesCount
             }}
           />
-        ) : (
+        );
+      } else {
+        resolvedValue17 = (
           <Card className="overflow-hidden border-amber-400/20">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
@@ -284,11 +289,19 @@ export function FinancePage({
               <p>{t("finance.receivablesProOnly")}</p>
             </CardContent>
           </Card>
-        )
-      ) : null}
-
-      {financeView === "payables" ? (
-        canAccessInvoiceOps ? (
+        );
+      }
+resolvedValue9 = (
+        resolvedValue17
+      );
+    } else {
+      resolvedValue9 = null;
+    }
+    let resolvedValue10: any;
+    if (financeView === "payables") {
+            let resolvedValue18: any;
+      if (canAccessInvoiceOps) {
+        resolvedValue18 = (
           <AccountsPayableSection
             canManage={canManage}
             costCenters={data.costCenters}
@@ -300,7 +313,9 @@ export function FinancePage({
               overduePayablesCount: data.summary.overduePayablesCount
             }}
           />
-        ) : (
+        );
+      } else {
+        resolvedValue18 = (
           <Card className="overflow-hidden border-amber-400/20">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
@@ -310,10 +325,98 @@ export function FinancePage({
               <p>{t("finance.payablesProOnly")}</p>
             </CardContent>
           </Card>
-        )
-      ) : null}
-
-      {financeView === "dashboard" ? (
+        );
+      }
+resolvedValue10 = (
+        resolvedValue18
+      );
+    } else {
+      resolvedValue10 = null;
+    }
+    let resolvedValue11: any;
+    if (financeView === "dashboard") {
+            let resolvedValue19: any;
+      if (data.commercialOperations.revenueChannels.length === 0) {
+        resolvedValue19 = (
+            <p className="text-sm text-muted-foreground">
+              {t("finance.noRevenueChannels")}
+            </p>
+          );
+      } else {
+        resolvedValue19 = (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("finance.channel")}</TableHead>
+                  <TableHead>{t("finance.type")}</TableHead>
+                  <TableHead>{t("finance.entries")}</TableHead>
+                  <TableHead>{t("finance.projects")}</TableHead>
+                  <TableHead>{t("finance.received")}</TableHead>
+                  <TableHead>{t("finance.pending")}</TableHead>
+                  <TableHead>{t("finance.lastActivity")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.commercialOperations.revenueChannels.map((channel: any) => {
+                  let resolvedValue27: any;
+                  if (channel.lastReceivedAt) {
+                    resolvedValue27 = new Date(channel.lastReceivedAt).toLocaleDateString();
+                  } else {
+                    resolvedValue27 = "N/A";
+                  }
+                  return (
+                  <TableRow key={`${channel.sourceType}:${channel.sourceName}`}>
+                    <TableCell className="font-medium">{channel.sourceName}</TableCell>
+                    <TableCell>{channel.sourceType}</TableCell>
+                    <TableCell>{formatNumber(channel.entriesCount)}</TableCell>
+                    <TableCell>{formatNumber(channel.linkedProjectsCount)}</TableCell>
+                    <TableCell>{formatCurrency(channel.receivedCents)}</TableCell>
+                    <TableCell>{formatCurrency(channel.pendingCents)}</TableCell>
+                    <TableCell>{resolvedValue27}</TableCell>
+                  </TableRow>
+                );
+                })}
+              </TableBody>
+            </Table>
+          );
+      }
+      let resolvedValue20: any;
+      if (data.projectSnapshots.length === 0) {
+        resolvedValue20 = (
+              <p className="text-sm text-muted-foreground">
+                {t("finance.noProjectFinancialEntries")}
+              </p>
+            );
+      } else {
+        resolvedValue20 = (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("finance.project")}</TableHead>
+                    <TableHead>{t("finance.revenue")}</TableHead>
+                    <TableHead>{t("finance.expenses")}</TableHead>
+                    <TableHead>{t("finance.net")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.projectSnapshots.map((item: any) => (
+                    <TableRow key={item.projectId}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium">{item.projectName}</p>
+                          <p className="text-xs text-muted-foreground">{item.stage.replaceAll("_", " ")}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatCurrency(item.revenueNetCents)}</TableCell>
+                      <TableCell>{formatCurrency(item.expensesPaidCents)}</TableCell>
+                      <TableCell>{formatCurrency(item.netCents)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            );
+      }
+resolvedValue11 = (
         <>
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -337,38 +440,7 @@ export function FinancePage({
             <KpiCard label={t("finance.overdueInvoices")} value={formatNumber(data.commercialOperations.reconciliation.overdueIssuedInvoicesCount)} />
             <KpiCard label={t("finance.royaltiesDue")} value={formatCurrency(data.commercialOperations.reconciliation.royaltiesDueCents)} />
           </div>
-          {data.commercialOperations.revenueChannels.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("finance.noRevenueChannels")}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("finance.channel")}</TableHead>
-                  <TableHead>{t("finance.type")}</TableHead>
-                  <TableHead>{t("finance.entries")}</TableHead>
-                  <TableHead>{t("finance.projects")}</TableHead>
-                  <TableHead>{t("finance.received")}</TableHead>
-                  <TableHead>{t("finance.pending")}</TableHead>
-                  <TableHead>{t("finance.lastActivity")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.commercialOperations.revenueChannels.map((channel) => (
-                  <TableRow key={`${channel.sourceType}:${channel.sourceName}`}>
-                    <TableCell className="font-medium">{channel.sourceName}</TableCell>
-                    <TableCell>{channel.sourceType}</TableCell>
-                    <TableCell>{formatNumber(channel.entriesCount)}</TableCell>
-                    <TableCell>{formatNumber(channel.linkedProjectsCount)}</TableCell>
-                    <TableCell>{formatCurrency(channel.receivedCents)}</TableCell>
-                    <TableCell>{formatCurrency(channel.pendingCents)}</TableCell>
-                    <TableCell>{channel.lastReceivedAt ? new Date(channel.lastReceivedAt).toLocaleDateString() : "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          {resolvedValue19}
         </CardContent>
       </Card>
 
@@ -383,7 +455,7 @@ export function FinancePage({
               <BarChart data={data.cashflow}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
                 <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => `$${Math.round(value / 1000)}k`} />
+                <YAxis tickFormatter={(value: any) => `$${Math.round(value / 1000)}k`} />
                 <Tooltip
                   formatter={(value: number) => formatCurrency(value)}
                   labelStyle={{ color: "#111827" }}
@@ -400,44 +472,190 @@ export function FinancePage({
             <CardTitle>{t("finance.projectPnlSnapshots")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.projectSnapshots.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("finance.noProjectFinancialEntries")}
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("finance.project")}</TableHead>
-                    <TableHead>{t("finance.revenue")}</TableHead>
-                    <TableHead>{t("finance.expenses")}</TableHead>
-                    <TableHead>{t("finance.net")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.projectSnapshots.map((item) => (
-                    <TableRow key={item.projectId}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-medium">{item.projectName}</p>
-                          <p className="text-xs text-muted-foreground">{item.stage.replaceAll("_", " ")}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatCurrency(item.revenueNetCents)}</TableCell>
-                      <TableCell>{formatCurrency(item.expensesPaidCents)}</TableCell>
-                      <TableCell>{formatCurrency(item.netCents)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            {resolvedValue20}
           </CardContent>
         </Card>
       </div>
         </>
-      ) : null}
+      );
+    } else {
+      resolvedValue11 = null;
+    }
+    let resolvedValue12: any;
+    if (financeView === "budget") {
+            let resolvedValue21: any;
+      if (data.budgets.length === 0) {
+        resolvedValue21 = (
+            <p className="text-sm text-muted-foreground">{t("finance.noBudgetsYet")}</p>
+          );
+      } else {
+        resolvedValue21 = (
+            data.budgets.map((budget) => (
+              <div key={budget.id} className="rounded-2xl border p-4">
+                <form
+                  className="grid gap-4 xl:grid-cols-6"
+                  onSubmit={(event: any) => {
+                    event.preventDefault();
+                    const formData = new FormData(event.currentTarget);
+                    void patchJson(`/api/finance/budgets/${budget.id}`, {
+                      projectId: formData.get("projectId") || undefined,
+                      name: formData.get("name"),
+                      status: formData.get("status"),
+                      currencyCode: formData.get("currencyCode"),
+                      startsAt: formData.get("startsAt") || undefined,
+                      endsAt: formData.get("endsAt") || undefined,
+                      notes: formData.get("notes")
+                    }, t("finance.budgetUpdated"));
+                  }}
+                >
+                  <div className="space-y-2 xl:col-span-2">
+                    <Label>{t("finance.name")}</Label>
+                    <Input defaultValue={budget.name} disabled={!canManage} name="name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("finance.project")}</Label>
+                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={budget.projectId ?? ""} disabled={!canManage} name="projectId">
+                      <option value="">{t("finance.organizationWide")}</option>
+                      {data.projects.map((project) => (
+                        <option key={project.id} value={project.id}>{project.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("finance.status")}</Label>
+                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={budget.status} disabled={!canManage} name="status">
+                      {budgetStatuses.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("finance.startsAt")}</Label>
+                    <Input defaultValue={formatDateInput(budget.startsAt)} disabled={!canManage} name="startsAt" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("finance.endsAt")}</Label>
+                    <Input defaultValue={formatDateInput(budget.endsAt)} disabled={!canManage} name="endsAt" type="date" />
+                  </div>
+                  <div className="space-y-2 xl:col-span-2">
+                    <Label>{t("finance.notes")}</Label>
+                    <Textarea defaultValue={budget.notes ?? ""} disabled={!canManage} name="notes" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button disabled={!canManage} type="submit">{t("finance.saveBudget")}</Button>
+                  </div>
+                  <div className="flex items-end justify-end xl:col-span-3">
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <Badge variant="secondary">{t("finance.planned")} {formatCurrency(budget.totalPlannedCents)}</Badge>
+                      <Badge variant="secondary">
+                        {t("finance.actual")} {formatCurrency(budget.lines.reduce((sum: number, line: any) => sum + line.actualCents, 0))}
+                      </Badge>
+                    </div>
+                  </div>
+                </form>
 
-      {financeView === "budget" ? (
+                <div className="mt-4 overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("finance.category")}</TableHead>
+                        <TableHead>{t("common.description")}</TableHead>
+                        <TableHead>{t("finance.planned")}</TableHead>
+                        <TableHead>{t("finance.actual")}</TableHead>
+                        <TableHead>{t("finance.due")}</TableHead>
+                        <TableHead>{t("finance.paid")}</TableHead>
+                        <TableHead>{t("common.save")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {budget.lines.map((line: any) => (
+                        <TableRow key={line.id}>
+                          <TableCell colSpan={7} className="p-0">
+                            <form
+                              className="grid gap-3 p-3 md:grid-cols-[1fr_2fr_repeat(2,minmax(110px,140px))_120px_120px_100px]"
+                              onSubmit={(event: any) => {
+                                event.preventDefault();
+                                const formData = new FormData(event.currentTarget);
+                                void patchJson(`/api/finance/budget-lines/${line.id}`, {
+                                  category: formData.get("category"),
+                                  description: formData.get("description"),
+                                  vendorName: formData.get("vendorName"),
+                                  plannedCents: Number(formData.get("plannedCents") || 0),
+                                  actualCents: Number(formData.get("actualCents") || 0),
+                                  dueAt: formData.get("dueAt") || undefined,
+                                  paidAt: formData.get("paidAt") || undefined
+                                }, t("finance.budgetLineUpdated"));
+                              }}
+                            >
+                              <Input defaultValue={line.category} disabled={!canManage} name="category" />
+                              <div className="space-y-2">
+                                <Input defaultValue={line.description} disabled={!canManage} name="description" />
+                              <Input defaultValue={line.vendorName ?? ""} disabled={!canManage} name="vendorName" placeholder={t("finance.vendor")} />
+                              </div>
+                              <Input defaultValue={line.plannedCents} disabled={!canManage} name="plannedCents" type="number" />
+                              <Input defaultValue={line.actualCents} disabled={!canManage} name="actualCents" type="number" />
+                              <Input defaultValue={formatDateInput(line.dueAt)} disabled={!canManage} name="dueAt" type="date" />
+                              <Input defaultValue={formatDateInput(line.paidAt)} disabled={!canManage} name="paidAt" type="date" />
+                              <Button disabled={!canManage} size="sm" type="submit">{t("common.save")}</Button>
+                            </form>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell colSpan={7} className="p-0">
+                          <form
+                            className="grid gap-3 border-t p-3 md:grid-cols-[1fr_2fr_repeat(2,minmax(110px,140px))_120px_120px_100px]"
+                            onSubmit={(event: any) => {
+                              event.preventDefault();
+                              const formData = new FormData(event.currentTarget);
+                              void submitJson(`/api/finance/budgets/${budget.id}/lines`, {
+                                category: formData.get("category"),
+                                description: formData.get("description"),
+                                vendorName: formData.get("vendorName"),
+                                plannedCents: Number(formData.get("plannedCents") || 0),
+                                actualCents: Number(formData.get("actualCents") || 0),
+                                dueAt: formData.get("dueAt") || undefined,
+                                paidAt: formData.get("paidAt") || undefined
+                              }, t("finance.budgetLineCreated"));
+                            }}
+                          >
+                            <Input disabled={!canManage} name="category" placeholder="Category" />
+                            <div className="space-y-2">
+                              <Input disabled={!canManage} name="description" placeholder="Description" />
+                            <Input disabled={!canManage} name="vendorName" placeholder={t("finance.vendor")} />
+                            </div>
+                            <Input defaultValue={0} disabled={!canManage} name="plannedCents" type="number" />
+                            <Input defaultValue={0} disabled={!canManage} name="actualCents" type="number" />
+                            <Input disabled={!canManage} name="dueAt" type="date" />
+                            <Input disabled={!canManage} name="paidAt" type="date" />
+                            <Button disabled={!canManage} size="sm" type="submit">{t("finance.addLine")}</Button>
+                          </form>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            ))
+          );
+      }
+      let resolvedValue22: any;
+      if (data.revenueEntries.length === 0) {
+        resolvedValue22 = (
+              <p className="text-sm text-muted-foreground">{t("finance.noRevenueEntries")}</p>
+            );
+      } else {
+        resolvedValue22 = null;
+      }
+      let resolvedValue23: any;
+      if (data.expenseEntries.length === 0) {
+        resolvedValue23 = (
+              <p className="text-sm text-muted-foreground">{t("finance.noExpenseEntries")}</p>
+            );
+      } else {
+        resolvedValue23 = null;
+      }
+resolvedValue12 = (
         <>
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-1 overflow-hidden">
@@ -448,7 +666,7 @@ export function FinancePage({
           <CardContent>
             <form
               className="space-y-4"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/budgets", {
@@ -518,7 +736,7 @@ export function FinancePage({
           <CardContent>
             <form
               className="space-y-4"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/revenue", {
@@ -598,7 +816,7 @@ export function FinancePage({
           <CardContent>
             <form
               className="space-y-4"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/expenses", {
@@ -682,157 +900,7 @@ export function FinancePage({
           <CardTitle>{t("finance.budgets")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {data.budgets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("finance.noBudgetsYet")}</p>
-          ) : (
-            data.budgets.map((budget) => (
-              <div key={budget.id} className="rounded-2xl border p-4">
-                <form
-                  className="grid gap-4 xl:grid-cols-6"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    const formData = new FormData(event.currentTarget);
-                    void patchJson(`/api/finance/budgets/${budget.id}`, {
-                      projectId: formData.get("projectId") || undefined,
-                      name: formData.get("name"),
-                      status: formData.get("status"),
-                      currencyCode: formData.get("currencyCode"),
-                      startsAt: formData.get("startsAt") || undefined,
-                      endsAt: formData.get("endsAt") || undefined,
-                      notes: formData.get("notes")
-                    }, t("finance.budgetUpdated"));
-                  }}
-                >
-                  <div className="space-y-2 xl:col-span-2">
-                    <Label>{t("finance.name")}</Label>
-                    <Input defaultValue={budget.name} disabled={!canManage} name="name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("finance.project")}</Label>
-                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={budget.projectId ?? ""} disabled={!canManage} name="projectId">
-                      <option value="">{t("finance.organizationWide")}</option>
-                      {data.projects.map((project) => (
-                        <option key={project.id} value={project.id}>{project.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("finance.status")}</Label>
-                    <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue={budget.status} disabled={!canManage} name="status">
-                      {budgetStatuses.map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("finance.startsAt")}</Label>
-                    <Input defaultValue={formatDateInput(budget.startsAt)} disabled={!canManage} name="startsAt" type="date" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("finance.endsAt")}</Label>
-                    <Input defaultValue={formatDateInput(budget.endsAt)} disabled={!canManage} name="endsAt" type="date" />
-                  </div>
-                  <div className="space-y-2 xl:col-span-2">
-                    <Label>{t("finance.notes")}</Label>
-                    <Textarea defaultValue={budget.notes ?? ""} disabled={!canManage} name="notes" />
-                  </div>
-                  <div className="flex items-end">
-                    <Button disabled={!canManage} type="submit">{t("finance.saveBudget")}</Button>
-                  </div>
-                  <div className="flex items-end justify-end xl:col-span-3">
-                    <div className="flex flex-wrap gap-2 text-sm">
-                      <Badge variant="secondary">{t("finance.planned")} {formatCurrency(budget.totalPlannedCents)}</Badge>
-                      <Badge variant="secondary">
-                        {t("finance.actual")} {formatCurrency(budget.lines.reduce((sum: number, line: any) => sum + line.actualCents, 0))}
-                      </Badge>
-                    </div>
-                  </div>
-                </form>
-
-                <div className="mt-4 overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("finance.category")}</TableHead>
-                        <TableHead>{t("common.description")}</TableHead>
-                        <TableHead>{t("finance.planned")}</TableHead>
-                        <TableHead>{t("finance.actual")}</TableHead>
-                        <TableHead>{t("finance.due")}</TableHead>
-                        <TableHead>{t("finance.paid")}</TableHead>
-                        <TableHead>{t("common.save")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {budget.lines.map((line: any) => (
-                        <TableRow key={line.id}>
-                          <TableCell colSpan={7} className="p-0">
-                            <form
-                              className="grid gap-3 p-3 md:grid-cols-[1fr_2fr_repeat(2,minmax(110px,140px))_120px_120px_100px]"
-                              onSubmit={(event) => {
-                                event.preventDefault();
-                                const formData = new FormData(event.currentTarget);
-                                void patchJson(`/api/finance/budget-lines/${line.id}`, {
-                                  category: formData.get("category"),
-                                  description: formData.get("description"),
-                                  vendorName: formData.get("vendorName"),
-                                  plannedCents: Number(formData.get("plannedCents") || 0),
-                                  actualCents: Number(formData.get("actualCents") || 0),
-                                  dueAt: formData.get("dueAt") || undefined,
-                                  paidAt: formData.get("paidAt") || undefined
-                                }, t("finance.budgetLineUpdated"));
-                              }}
-                            >
-                              <Input defaultValue={line.category} disabled={!canManage} name="category" />
-                              <div className="space-y-2">
-                                <Input defaultValue={line.description} disabled={!canManage} name="description" />
-                              <Input defaultValue={line.vendorName ?? ""} disabled={!canManage} name="vendorName" placeholder={t("finance.vendor")} />
-                              </div>
-                              <Input defaultValue={line.plannedCents} disabled={!canManage} name="plannedCents" type="number" />
-                              <Input defaultValue={line.actualCents} disabled={!canManage} name="actualCents" type="number" />
-                              <Input defaultValue={formatDateInput(line.dueAt)} disabled={!canManage} name="dueAt" type="date" />
-                              <Input defaultValue={formatDateInput(line.paidAt)} disabled={!canManage} name="paidAt" type="date" />
-                              <Button disabled={!canManage} size="sm" type="submit">{t("common.save")}</Button>
-                            </form>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow>
-                        <TableCell colSpan={7} className="p-0">
-                          <form
-                            className="grid gap-3 border-t p-3 md:grid-cols-[1fr_2fr_repeat(2,minmax(110px,140px))_120px_120px_100px]"
-                            onSubmit={(event) => {
-                              event.preventDefault();
-                              const formData = new FormData(event.currentTarget);
-                              void submitJson(`/api/finance/budgets/${budget.id}/lines`, {
-                                category: formData.get("category"),
-                                description: formData.get("description"),
-                                vendorName: formData.get("vendorName"),
-                                plannedCents: Number(formData.get("plannedCents") || 0),
-                                actualCents: Number(formData.get("actualCents") || 0),
-                                dueAt: formData.get("dueAt") || undefined,
-                                paidAt: formData.get("paidAt") || undefined
-                              }, t("finance.budgetLineCreated"));
-                            }}
-                          >
-                            <Input disabled={!canManage} name="category" placeholder="Category" />
-                            <div className="space-y-2">
-                              <Input disabled={!canManage} name="description" placeholder="Description" />
-                            <Input disabled={!canManage} name="vendorName" placeholder={t("finance.vendor")} />
-                            </div>
-                            <Input defaultValue={0} disabled={!canManage} name="plannedCents" type="number" />
-                            <Input defaultValue={0} disabled={!canManage} name="actualCents" type="number" />
-                            <Input disabled={!canManage} name="dueAt" type="date" />
-                            <Input disabled={!canManage} name="paidAt" type="date" />
-                            <Button disabled={!canManage} size="sm" type="submit">{t("finance.addLine")}</Button>
-                          </form>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            ))
-          )}
+          {resolvedValue21}
         </CardContent>
       </Card>
 
@@ -847,7 +915,7 @@ export function FinancePage({
               <form
                 key={entry.id}
                 className="rounded-2xl border p-4"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   const formData = new FormData(event.currentTarget);
                   void patchJson(`/api/finance/revenue/${entry.id}`, {
@@ -892,9 +960,7 @@ export function FinancePage({
                 </div>
               </form>
             ))}
-            {data.revenueEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("finance.noRevenueEntries")}</p>
-            ) : null}
+            {resolvedValue22}
           </CardContent>
         </Card>
 
@@ -908,7 +974,7 @@ export function FinancePage({
               <form
                 key={entry.id}
                 className="rounded-2xl border p-4"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   const formData = new FormData(event.currentTarget);
                   void patchJson(`/api/finance/expenses/${entry.id}`, {
@@ -955,17 +1021,20 @@ export function FinancePage({
                 </div>
               </form>
             ))}
-            {data.expenseEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("finance.noExpenseEntries")}</p>
-            ) : null}
+            {resolvedValue23}
           </CardContent>
           </Card>
       </div>
         </>
-      ) : null}
-
-      {financeView === "contracts" ? (
-      canAccessContractsRoyalties ? (
+      );
+    } else {
+      resolvedValue12 = null;
+    }
+    let resolvedValue13: any;
+    if (financeView === "contracts") {
+            let resolvedValue24: any;
+      if (canAccessContractsRoyalties) {
+        resolvedValue24 = (
         <div className="grid gap-6 xl:grid-cols-2">
           <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -975,7 +1044,7 @@ export function FinancePage({
           <CardContent className="space-y-4">
             <form
               className="grid gap-3 md:grid-cols-2"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/contracts", {
@@ -1028,7 +1097,7 @@ export function FinancePage({
               <form
                 key={contract.id}
                 className="rounded-2xl border p-4"
-                onSubmit={(event) => {
+                onSubmit={(event: any) => {
                   event.preventDefault();
                   const formData = new FormData(event.currentTarget);
                   void patchJson(`/api/finance/contracts/${contract.id}`, {
@@ -1096,7 +1165,7 @@ export function FinancePage({
           <CardContent className="space-y-4">
             <form
               className="grid gap-3 md:grid-cols-2"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/royalties", {
@@ -1142,7 +1211,7 @@ export function FinancePage({
             </form>
             <form
               className="grid gap-3 rounded-2xl border p-4 md:grid-cols-2"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/royalty-statements", {
@@ -1177,29 +1246,51 @@ export function FinancePage({
               <Textarea className="md:col-span-2" disabled={!canManage} name="notes" placeholder="Statement notes" />
               <Button className="md:col-span-2" disabled={!canManage} type="submit">{t("finance.createRoyaltyStatement")}</Button>
             </form>
-            {data.royaltyStatements.map((statement) => (
+            {data.royaltyStatements.map((statement) => {
+              let resolvedValue28: any;
+              if (statement.paidAt) {
+                resolvedValue28 = "default";
+              } else {
+                resolvedValue28 = "secondary";
+              }
+              let resolvedValue29: any;
+              if (statement.paidAt) {
+                resolvedValue29 = t("finance.paid");
+              } else {
+                resolvedValue29 = t("finance.pending");
+              }
+              let resolvedValue30: any;
+              if (statement.paidAt) {
+                resolvedValue30 = `${t("finance.paid")} ${new Date(statement.paidAt).toLocaleDateString()}`;
+              } else {
+                resolvedValue30 = t("finance.awaitingPayout");
+              }
+              return (
               <div key={statement.id} className="rounded-2xl border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-medium">{statement.periodLabel} · {statement.royaltyAgreement.name}</p>
                     <p className="text-muted-foreground">{statement.project?.name ?? t("finance.noProject")} · {statement.royaltyAgreement.partnerName}</p>
                   </div>
-                  <Badge variant={statement.paidAt ? "default" : "secondary"}>
-                    {statement.paidAt ? t("finance.paid") : t("finance.pending")}
+                  <Badge variant={resolvedValue28}>
+                    {resolvedValue29}
                   </Badge>
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-4">
                   <div>{t("finance.gross")} {formatCurrency(statement.grossRevenueCents)}</div>
                   <div>{t("finance.net")} {formatCurrency(statement.netRevenueCents)}</div>
                   <div>{t("finance.royaltyDue")} {formatCurrency(statement.royaltyDueCents)}</div>
-                  <div>{statement.paidAt ? `${t("finance.paid")} ${new Date(statement.paidAt).toLocaleDateString()}` : t("finance.awaitingPayout")}</div>
+                  <div>{resolvedValue30}</div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </CardContent>
         </Card>
       </div>
-      ) : (
+      );
+      } else {
+        resolvedValue24 = (
         <Card className="overflow-hidden border-amber-400/20">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
@@ -1210,11 +1301,19 @@ export function FinancePage({
             <p>{t("finance.contractsRoyaltiesProOnlyDetail")}</p>
           </CardContent>
         </Card>
-      )
-      ) : null}
-
-      {financeView === "invoices" ? (
-      canAccessInvoiceOps ? (
+      );
+      }
+resolvedValue13 = (
+      resolvedValue24
+      );
+    } else {
+      resolvedValue13 = null;
+    }
+    let resolvedValue14: any;
+    if (financeView === "invoices") {
+            let resolvedValue25: any;
+      if (canAccessInvoiceOps) {
+        resolvedValue25 = (
         <div className="grid gap-6 xl:grid-cols-2">
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
@@ -1224,7 +1323,7 @@ export function FinancePage({
           <CardContent className="space-y-4">
             <form
               className="grid gap-3 md:grid-cols-2"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/issued-invoices", {
@@ -1269,7 +1368,26 @@ export function FinancePage({
               <Textarea className="md:col-span-2" disabled={!canManage} name="notes" placeholder={t("finance.invoiceNotes")} />
               <Button className="md:col-span-2" disabled={!canManage} type="submit">{t("finance.createIssuedInvoice")}</Button>
             </form>
-            {data.issuedInvoices.map((invoice) => (
+            {data.issuedInvoices.map((invoice) => {
+              let resolvedValue31: any;
+              if (invoice.issuedAt) {
+                resolvedValue31 = new Date(invoice.issuedAt).toLocaleDateString();
+              } else {
+                resolvedValue31 = t("finance.tbd");
+              }
+              let resolvedValue32: any;
+              if (invoice.dueAt) {
+                resolvedValue32 = new Date(invoice.dueAt).toLocaleDateString();
+              } else {
+                resolvedValue32 = t("finance.tbd");
+              }
+              let resolvedValue33: any;
+              if (invoice.paidAt) {
+                resolvedValue33 = `${t("finance.paid")} ${new Date(invoice.paidAt).toLocaleDateString()}`;
+              } else {
+                resolvedValue33 = t("finance.openStatus");
+              }
+              return (
               <div key={invoice.id} className="rounded-2xl border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -1280,12 +1398,13 @@ export function FinancePage({
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-4">
                   <div>{formatCurrency(invoice.amountCents)}</div>
-                  <div>{t("finance.issued")} {invoice.issuedAt ? new Date(invoice.issuedAt).toLocaleDateString() : t("finance.tbd")}</div>
-                  <div>{t("finance.due")} {invoice.dueAt ? new Date(invoice.dueAt).toLocaleDateString() : t("finance.tbd")}</div>
-                  <div>{invoice.paidAt ? `${t("finance.paid")} ${new Date(invoice.paidAt).toLocaleDateString()}` : t("finance.openStatus")}</div>
+                  <div>{t("finance.issued")} {resolvedValue31}</div>
+                  <div>{t("finance.due")} {resolvedValue32}</div>
+                  <div>{resolvedValue33}</div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </CardContent>
         </Card>
 
@@ -1297,7 +1416,7 @@ export function FinancePage({
           <CardContent className="space-y-4">
             <form
               className="grid gap-3 md:grid-cols-2"
-              onSubmit={(event) => {
+              onSubmit={(event: any) => {
                 event.preventDefault();
                 const formData = new FormData(event.currentTarget);
                 void submitJson("/api/finance/received-invoices", {
@@ -1342,7 +1461,26 @@ export function FinancePage({
               <Textarea className="md:col-span-2" disabled={!canManage} name="notes" placeholder={t("finance.invoiceNotes")} />
               <Button className="md:col-span-2" disabled={!canManage} type="submit">{t("finance.createReceivedInvoice")}</Button>
             </form>
-            {data.receivedInvoices.map((invoice) => (
+            {data.receivedInvoices.map((invoice) => {
+              let resolvedValue34: any;
+              if (invoice.issuedAt) {
+                resolvedValue34 = new Date(invoice.issuedAt).toLocaleDateString();
+              } else {
+                resolvedValue34 = t("finance.tbd");
+              }
+              let resolvedValue35: any;
+              if (invoice.dueAt) {
+                resolvedValue35 = new Date(invoice.dueAt).toLocaleDateString();
+              } else {
+                resolvedValue35 = t("finance.tbd");
+              }
+              let resolvedValue36: any;
+              if (invoice.paidAt) {
+                resolvedValue36 = `${t("finance.paid")} ${new Date(invoice.paidAt).toLocaleDateString()}`;
+              } else {
+                resolvedValue36 = t("finance.openStatus");
+              }
+              return (
               <div key={invoice.id} className="rounded-2xl border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -1353,16 +1491,19 @@ export function FinancePage({
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-4">
                   <div>{formatCurrency(invoice.amountCents)}</div>
-                  <div>{t("finance.issued")} {invoice.issuedAt ? new Date(invoice.issuedAt).toLocaleDateString() : t("finance.tbd")}</div>
-                  <div>{t("finance.due")} {invoice.dueAt ? new Date(invoice.dueAt).toLocaleDateString() : t("finance.tbd")}</div>
-                  <div>{invoice.paidAt ? `${t("finance.paid")} ${new Date(invoice.paidAt).toLocaleDateString()}` : t("finance.openStatus")}</div>
+                  <div>{t("finance.issued")} {resolvedValue34}</div>
+                  <div>{t("finance.due")} {resolvedValue35}</div>
+                  <div>{resolvedValue36}</div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </CardContent>
           </Card>
         </div>
-      ) : (
+      );
+      } else {
+        resolvedValue25 = (
         <Card className="overflow-hidden border-amber-400/20">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
@@ -1372,38 +1513,47 @@ export function FinancePage({
             <p>{t("finance.invoicesProOnly")}</p>
           </CardContent>
         </Card>
-      )
-      ) : null}
-
-      {financeView === "approvals" ? (
-      canAccessApprovalsAudit ? (
-        <Card className="overflow-hidden">
-          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
-          <CardHeader>
-            <CardTitle>{t("finance.approvals")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.approvalRequests.length === 0 ? (
+      );
+      }
+resolvedValue14 = (
+      resolvedValue25
+      );
+    } else {
+      resolvedValue14 = null;
+    }
+    let resolvedValue15: any;
+    if (financeView === "approvals") {
+            let resolvedValue26: any;
+      if (canAccessApprovalsAudit) {
+                let resolvedValue37: any;
+        if (data.approvalRequests.length === 0) {
+          resolvedValue37 = (
               <p className="text-sm text-muted-foreground">{t("finance.noApprovalRequests")}</p>
-            ) : (
-              data.approvalRequests.map((approval) => (
-                <div key={approval.id} className="rounded-2xl border p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-1">
-                      <p className="font-medium">{approval.actionLabel}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {approval.entityType} · {approval.project?.name ?? approval.contract?.title ?? t("finance.organizationWide")} · {t("finance.requestedBy")} {approval.requestedBy.name ?? approval.requestedBy.email}
-                      </p>
-                      {approval.reason ? <p className="text-sm text-muted-foreground">{approval.reason}</p> : null}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={approval.status === ApprovalStatus.PENDING ? "secondary" : "default"}>
-                        {approval.status}
-                      </Badge>
-                      <span className="text-sm font-medium">
-                        {approval.amountCents !== null ? formatCurrency(approval.amountCents) : t("finance.noAmount")}
-                      </span>
-                      {approval.status === ApprovalStatus.PENDING && canManage ? (
+            );
+        } else {
+          resolvedValue37 = (
+              data.approvalRequests.map((approval) => {
+                let resolvedValue38: any;
+                if (approval.reason) {
+                  resolvedValue38 = <p className="text-sm text-muted-foreground">{approval.reason}</p>;
+                } else {
+                  resolvedValue38 = null;
+                }
+                let resolvedValue39: any;
+                if (approval.status === ApprovalStatus.PENDING) {
+                  resolvedValue39 = "secondary";
+                } else {
+                  resolvedValue39 = "default";
+                }
+                let resolvedValue40: any;
+                if (approval.amountCents !== null) {
+                  resolvedValue40 = formatCurrency(approval.amountCents);
+                } else {
+                  resolvedValue40 = t("finance.noAmount");
+                }
+                let resolvedValue41: any;
+                if (approval.status === ApprovalStatus.PENDING && canManage) {
+                  resolvedValue41 = (
                         <>
                           <Button size="sm" type="button" onClick={() => patchApproval(approval.id, ApprovalStatus.APPROVED)}>
                             {t("finance.approve")}
@@ -1412,15 +1562,48 @@ export function FinancePage({
                             {t("finance.reject")}
                           </Button>
                         </>
-                      ) : null}
+                      );
+                } else {
+                  resolvedValue41 = null;
+                }
+                return (
+                <div key={approval.id} className="rounded-2xl border p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="space-y-1">
+                      <p className="font-medium">{approval.actionLabel}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {approval.entityType} · {approval.project?.name ?? approval.contract?.title ?? t("finance.organizationWide")} · {t("finance.requestedBy")} {approval.requestedBy.name ?? approval.requestedBy.email}
+                      </p>
+                      {resolvedValue38}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={resolvedValue39}>
+                        {approval.status}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {resolvedValue40}
+                      </span>
+                      {resolvedValue41}
                     </div>
                   </div>
                 </div>
-              ))
-            )}
+              );
+              })
+            );
+        }
+resolvedValue26 = (
+        <Card className="overflow-hidden">
+          <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+          <CardHeader>
+            <CardTitle>{t("finance.approvals")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {resolvedValue37}
           </CardContent>
         </Card>
-      ) : (
+      );
+      } else {
+        resolvedValue26 = (
         <Card className="overflow-hidden border-amber-400/20">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
@@ -1431,11 +1614,88 @@ export function FinancePage({
             <p>{t("finance.approvalsAuditProOnlyDetail")}</p>
           </CardContent>
         </Card>
-      )
-      ) : null}
+      );
+      }
+resolvedValue15 = (
+      resolvedValue26
+      );
+    } else {
+      resolvedValue15 = null;
+    }
+resolvedValue6 = (
+        <>
+          <div className="flex flex-wrap items-center gap-1 rounded-lg border bg-muted/25 p-1">
+            {[
+              ["dashboard", t("finance.dashboardView")],
+              ["receivables", t("finance.receivablesView")],
+              ["payables", t("finance.payablesView")],
+              ["budget", t("finance.budgetView")],
+              ["contracts", t("finance.contractsView")],
+              ["invoices", t("finance.invoicesView")],
+              ["approvals", t("finance.approvalsView")]
+            ].map(([value, label]) => {
+              let resolvedValue8: any;
+              if (financeView === value) {
+                resolvedValue8 = "default";
+              } else {
+                resolvedValue8 = "ghost";
+              }
+              return (
+              <Button
+                key={value}
+                type="button"
+                size="sm"
+                variant={resolvedValue8}
+                onClick={() => setFinanceView(value as typeof financeView)}
+              >
+                {label}
+              </Button>
+            );
+            })}
+          </div>
+
+      {resolvedValue9}
+
+      {resolvedValue10}
+
+      {resolvedValue11}
+
+      {resolvedValue12}
+
+      {resolvedValue13}
+
+      {resolvedValue14}
+
+      {resolvedValue15}
 
         </>
-      ) : null}
+      );
+  } else {
+    resolvedValue6 = null;
+  }
+return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("finance.pageTitle")}</h1>
+        {resolvedValue0}
+        {resolvedValue1}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <KpiCard label={t("finance.activeBudgets")} value={formatNumber(summary.activeBudgetsCount)} />
+        <KpiCard label={t("finance.plannedBudget")} value={formatCurrency(summary.totalBudgetPlannedCents)} />
+        <KpiCard label={t("finance.revenueReceived")} value={formatCurrency(summary.totalRevenueNetCents)} />
+        <KpiCard label={t("finance.expensesPaid")} value={formatCurrency(summary.totalExpensesPaidCents)} />
+        {resolvedValue2}
+        {resolvedValue3}
+        {resolvedValue4}
+      </div>
+
+      <div ref={progressive.ref}>
+        {resolvedValue5}
+      </div>
+
+      {resolvedValue6}
     </div>
   );
 }

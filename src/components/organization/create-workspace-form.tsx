@@ -53,24 +53,48 @@ export function CreateWorkspaceForm() {
     router.refresh();
   }
 
-  return (
+    let resolvedValue0: any;
+  if (form.formState.errors.name) {
+    resolvedValue0 = (
+          <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+        );
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (message) {
+    resolvedValue1 = <p className="text-sm text-emerald-600">{message}</p>;
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (error) {
+    resolvedValue2 = <p className="text-sm text-destructive">{error}</p>;
+  } else {
+    resolvedValue2 = null;
+  }
+  let resolvedValue3: any;
+  if (form.formState.isSubmitting) {
+    resolvedValue3 = "Criando...";
+  } else {
+    resolvedValue3 = "Criar área de trabalho";
+  }
+return (
     <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
       <div className="space-y-2">
         <Label htmlFor="workspace-name">Nome da área de trabalho</Label>
         <Input id="workspace-name" placeholder="Radar de publicação" {...form.register("name")} />
-        {form.formState.errors.name ? (
-          <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-        ) : null}
+        {resolvedValue0}
       </div>
       <div className="space-y-2">
         <Label htmlFor="workspace-description">Descrição</Label>
         <Textarea id="workspace-description" placeholder="Foco ou mandato opcional da área de trabalho." {...form.register("description")} />
       </div>
-      {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {resolvedValue1}
+      {resolvedValue2}
       <div>
         <Button disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting ? "Criando..." : "Criar área de trabalho"}
+          {resolvedValue3}
         </Button>
       </div>
     </form>

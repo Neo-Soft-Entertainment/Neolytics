@@ -4,7 +4,7 @@ import { fetchSteamAppList } from "@/lib/steam/client";
 import { steamSyncQueue } from "@/jobs/steam/queue";
 
 function getCliLimit() {
-  const raw = process.argv.find((value) => value.startsWith("--limit="));
+  const raw = process.argv.find((value: any) => value.startsWith("--limit="));
 
   if (!raw) {
     return env.STEAM_APP_SYNC_LIMIT;
@@ -12,7 +12,13 @@ function getCliLimit() {
 
   const value = Number(raw.split("=")[1]);
 
-  return Number.isFinite(value) && value > 0 ? value : env.STEAM_APP_SYNC_LIMIT;
+    let resolvedValue0: any;
+  if (Number.isFinite(value) && value > 0) {
+    resolvedValue0 = value;
+  } else {
+    resolvedValue0 = env.STEAM_APP_SYNC_LIMIT;
+  }
+return resolvedValue0;
 }
 
 async function main() {

@@ -69,7 +69,13 @@ export async function POST(request: Request) {
       file,
       folder: "documents"
     });
-    const document = await createCompanyDocument({
+        let resolvedValue0: any;
+    if (body.expiresAt) {
+      resolvedValue0 = new Date(body.expiresAt);
+    } else {
+      resolvedValue0 = null;
+    }
+const document = await createCompanyDocument({
       organizationId: context.organizationId,
       userId: context.userId,
       title: body.title,
@@ -78,7 +84,7 @@ export async function POST(request: Request) {
       projectId: body.projectId,
       issuer: body.issuer,
       documentNumber: body.documentNumber,
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      expiresAt: resolvedValue0,
       storagePath: upload.storagePath,
       originalName: upload.originalName,
       mimeType: upload.mimeType,

@@ -1,21 +1,33 @@
 import { z } from "zod";
 
-const optionalString = z.preprocess((value) => {
+const optionalString = z.preprocess((value: any) => {
   if (typeof value !== "string") {
     return value;
   }
 
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+    let resolvedValue0: any;
+  if (trimmed.length > 0) {
+    resolvedValue0 = trimmed;
+  } else {
+    resolvedValue0 = undefined;
+  }
+return resolvedValue0;
 }, z.string().min(1).optional());
 
-const optionalEmail = z.preprocess((value) => {
+const optionalEmail = z.preprocess((value: any) => {
   if (typeof value !== "string") {
     return value;
   }
 
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+    let resolvedValue1: any;
+  if (trimmed.length > 0) {
+    resolvedValue1 = trimmed;
+  } else {
+    resolvedValue1 = undefined;
+  }
+return resolvedValue1;
 }, z.string().email().optional());
 
 const envSchema = z.object({
@@ -26,21 +38,33 @@ const envSchema = z.object({
   REDIS_URL: optionalString,
   NEXT_PUBLIC_RECAPTCHA_SITE_KEY: optionalString,
   RECAPTCHA_SECRET_KEY: optionalString,
-  RECAPTCHA_MIN_SCORE: z.preprocess((value) => {
+  RECAPTCHA_MIN_SCORE: z.preprocess((value: any) => {
     if (typeof value !== "string") {
       return value;
     }
 
     const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
+        let resolvedValue2: any;
+    if (trimmed.length > 0) {
+      resolvedValue2 = trimmed;
+    } else {
+      resolvedValue2 = undefined;
+    }
+return resolvedValue2;
   }, z.coerce.number().min(0).max(1).default(0.5)),
-  CRON_SECRET: z.preprocess((value) => {
+  CRON_SECRET: z.preprocess((value: any) => {
     if (typeof value !== "string") {
       return value;
     }
 
     const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
+        let resolvedValue3: any;
+    if (trimmed.length > 0) {
+      resolvedValue3 = trimmed;
+    } else {
+      resolvedValue3 = undefined;
+    }
+return resolvedValue3;
   }, z.string().min(16).optional()),
   ENCRYPTION_KEYS: optionalString,
   ACTIVE_ENCRYPTION_KEY_VERSION: optionalString,
@@ -60,7 +84,7 @@ const envSchema = z.object({
   STEAM_CRON_BATCH_SIZE: z.coerce.number().int().positive().max(100).default(25),
   OPENAI_API_KEY: optionalString,
   OPENAI_MARKET_ANALYSIS_MODEL: optionalString,
-  ENABLE_AI_MARKET_ANALYSIS: z.preprocess((value) => {
+  ENABLE_AI_MARKET_ANALYSIS: z.preprocess((value: any) => {
     if (typeof value !== "string") {
       return value;
     }
@@ -68,13 +92,19 @@ const envSchema = z.object({
     return value.trim().toLowerCase() === "true";
   }, z.boolean().default(false)),
   ADMIN_EMAIL: optionalEmail,
-  ADMIN_PASSWORD: z.preprocess((value) => {
+  ADMIN_PASSWORD: z.preprocess((value: any) => {
     if (typeof value !== "string") {
       return value;
     }
 
     const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
+        let resolvedValue4: any;
+    if (trimmed.length > 0) {
+      resolvedValue4 = trimmed;
+    } else {
+      resolvedValue4 = undefined;
+    }
+return resolvedValue4;
   }, z.string().min(8).optional()),
   GITHUB_ID: optionalString,
   GITHUB_SECRET: optionalString,
@@ -88,14 +118,20 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: optionalString,
   STRIPE_PRICE_PLUS_MONTHLY: optionalString,
   STRIPE_PRICE_PRO_MONTHLY: optionalString,
-  SUPABASE_URL: z.preprocess((value) => {
+  SUPABASE_URL: z.preprocess((value: any) => {
     if (typeof value !== "string") {
       return value;
     }
 
     const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  }, z.string().url().optional()).refine((value) => !value || value.startsWith("https://"), {
+        let resolvedValue5: any;
+    if (trimmed.length > 0) {
+      resolvedValue5 = trimmed;
+    } else {
+      resolvedValue5 = undefined;
+    }
+return resolvedValue5;
+  }, z.string().url().optional()).refine((value: any) => !value || value.startsWith("https://"), {
     message: "SUPABASE_URL must use HTTPS."
   }),
   SUPABASE_SERVICE_ROLE_KEY: optionalString,
@@ -109,5 +145,11 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+let resolvedValue6: any;
+if (process.env.VERCEL_URL) {
+  resolvedValue6 = `https://${process.env.VERCEL_URL}`;
+} else {
+  resolvedValue6 = "http://localhost:3000";
+}
 export const appUrl =
-  env.APP_URL ?? env.AUTH_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  env.APP_URL ?? env.AUTH_URL ?? (resolvedValue6);

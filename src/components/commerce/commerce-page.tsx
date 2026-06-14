@@ -249,7 +249,7 @@ export function CommercePage({
       createdAt: new Date().toISOString()
     };
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current) {
         return current;
       }
@@ -282,14 +282,14 @@ export function CommercePage({
       return;
     }
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current || !payload) {
         return current;
       }
 
       return {
         ...current,
-        channels: current.channels.map((channel) => {
+        channels: current.channels.map((channel: any) => {
           if (channel.id !== optimisticChannel.id) {
             return channel;
           }
@@ -313,7 +313,7 @@ export function CommercePage({
     const expectedShipAt = getField(formData, "expectedShipAt");
     const channelId = getField(formData, "channelId");
     const projectId = getField(formData, "projectId");
-    const selectedChannel = data?.channels.find((channel) => channel.id === channelId) ?? null;
+    const selectedChannel = data?.channels.find((channel: any) => channel.id === channelId) ?? null;
     const selectedProject = data?.projects.find((project) => project.id === projectId) ?? null;
     const previousData = data;
     const optimisticOrder = {
@@ -338,7 +338,7 @@ export function CommercePage({
       createdBy: { id: "optimistic-user", name: "Você", email: "Você" }
     };
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current) {
         return current;
       }
@@ -387,14 +387,14 @@ export function CommercePage({
       return;
     }
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current || !payload) {
         return current;
       }
 
       return {
         ...current,
-        orders: current.orders.map((order) => {
+        orders: current.orders.map((order: any) => {
           if (order.id !== optimisticOrder.id) {
             return order;
           }
@@ -444,7 +444,7 @@ export function CommercePage({
       createdBy: { id: "optimistic-user", name: "Você", email: "Você" }
     };
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current) {
         return current;
       }
@@ -506,14 +506,14 @@ export function CommercePage({
       return;
     }
 
-    setData((current) => {
+    setData((current: any) => {
       if (!current || !payload) {
         return current;
       }
 
       return {
         ...current,
-        campaigns: current.campaigns.map((campaign) => {
+        campaigns: current.campaigns.map((campaign: any) => {
           if (campaign.id !== optimisticCampaign.id) {
             return campaign;
           }
@@ -557,7 +557,254 @@ export function CommercePage({
     return null;
   }
 
-  return (
+    let resolvedValue0: any;
+  if (data.summary.costPerWishlistCents) {
+    resolvedValue0 = `${formatCurrency(data.summary.costPerWishlistCents)} CPW`;
+  } else {
+    resolvedValue0 = "Captação de wishlist";
+  }
+  let resolvedValue1: any;
+  if ((message || error)) {
+        let resolvedValue11: any;
+    if (message) {
+      resolvedValue11 = <p className="text-emerald-600">{message}</p>;
+    } else {
+      resolvedValue11 = null;
+    }
+    let resolvedValue12: any;
+    if (error) {
+      resolvedValue12 = <p className="text-destructive">{error}</p>;
+    } else {
+      resolvedValue12 = null;
+    }
+resolvedValue1 = (
+        <div className="rounded-lg border border-white/10 bg-white/55 px-4 py-3 text-sm dark:bg-white/[0.04]">
+          {resolvedValue11}
+          {resolvedValue12}
+        </div>
+      );
+  } else {
+    resolvedValue1 = null;
+  }
+  let resolvedValue2: any;
+  if (data.projectSignals.length > 0) {
+    resolvedValue2 = data.projectSignals.map((signal) => {
+      let resolvedValue13: any;
+      if (signal.readinessScore >= 70) {
+        resolvedValue13 = "default";
+      } else {
+        resolvedValue13 = "secondary";
+      }
+      return (
+                      <TableRow key={signal.project.id}>
+                        <TableCell>
+                          <p className="font-medium">{signal.project.name}</p>
+                          <p className="text-xs text-muted-foreground">{signal.project.stage.replaceAll("_", " ")}</p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={resolvedValue13}>{signal.readinessScore}/100</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{formatNumber(signal.wishlists)}</TableCell>
+                        <TableCell className="text-right">{formatNumber(signal.demoDownloads)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(signal.marketingSpendCents)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(signal.salesCents + signal.attributedRevenueCents)}</TableCell>
+                      </TableRow>
+                    );
+    });
+  } else {
+    resolvedValue2 = (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-muted-foreground">
+                          Ainda não há sinais de marketing por projeto.
+                        </TableCell>
+                      </TableRow>
+                    );
+  }
+  let resolvedValue3: any;
+  if (data.channelPerformance.length > 0) {
+    resolvedValue3 = data.channelPerformance.map((channel: any) => {
+      let resolvedValue14: any;
+      if (channel.costPerWishlistCents) {
+        resolvedValue14 = formatCurrency(channel.costPerWishlistCents);
+      } else {
+        resolvedValue14 = "N/A";
+      }
+      return (
+                      <TableRow key={channel.channel}>
+                        <TableCell>
+                          <p className="font-medium">{labelFor(channel.channel)}</p>
+                          <p className="text-xs text-muted-foreground">{channel.campaignsCount} campanhas</p>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(channel.spendCents)}</TableCell>
+                        <TableCell className="text-right">{formatRatio(channel.roas)}</TableCell>
+                        <TableCell className="text-right">{formatPercent(channel.clickThroughRate)}</TableCell>
+                        <TableCell className="text-right">{formatNumber(channel.wishlists)}</TableCell>
+                        <TableCell className="text-right">{resolvedValue14}</TableCell>
+                      </TableRow>
+                    );
+    });
+  } else {
+    resolvedValue3 = (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-muted-foreground">
+                          Ainda não há dados de canais de marketing.
+                        </TableCell>
+                      </TableRow>
+                    );
+  }
+  let resolvedValue4: any;
+  if (data.projectSignals.length > 0) {
+    resolvedValue4 = data.projectSignals.map((signal) => (
+                      <TableRow key={signal.project.id}>
+                        <TableCell className="font-medium">{signal.project.name}</TableCell>
+                        <TableCell className="text-right">{formatNumber(signal.activeCampaigns)}</TableCell>
+                        <TableCell className="text-right">{formatRatio(signal.roas)}</TableCell>
+                        <TableCell className="text-right">{formatNumber(signal.wishlists)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(signal.attributedRevenueCents)}</TableCell>
+                      </TableRow>
+                    ));
+  } else {
+    resolvedValue4 = (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-muted-foreground">
+                          Ainda não há dados de marketing por projeto.
+                        </TableCell>
+                      </TableRow>
+                    );
+  }
+  let resolvedValue5: any;
+  if (data.campaigns.length > 0) {
+    resolvedValue5 = data.campaigns.map((campaign: any) => {
+      let resolvedValue15: any;
+      if (campaign.status === "ACTIVE") {
+        resolvedValue15 = "default";
+      } else {
+        resolvedValue15 = "secondary";
+      }
+      return (
+                    <TableRow key={campaign.id}>
+                      <TableCell>
+                        <p className="font-medium">{campaign.name}</p>
+                        <p className="text-xs text-muted-foreground">{labelFor(campaign.channel)}</p>
+                      </TableCell>
+                      <TableCell>{campaign.project?.name ?? "Sem projeto"}</TableCell>
+                      <TableCell>{labelFor(campaign.objective)}</TableCell>
+                      <TableCell>
+                        <Badge variant={resolvedValue15}>{labelFor(campaign.status)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{formatCurrency(campaign.spendCents, campaign.currencyCode)}</TableCell>
+                      <TableCell className="text-right">{formatNumber(campaign.wishlists)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(campaign.revenueCents, campaign.currencyCode)}</TableCell>
+                    </TableRow>
+                  );
+    });
+  } else {
+    resolvedValue5 = (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-muted-foreground">
+                        Ainda não há campanhas de marketing.
+                      </TableCell>
+                    </TableRow>
+                  );
+  }
+  let resolvedValue6: any;
+  if (data.orders.length > 0) {
+    resolvedValue6 = data.orders.map((order: any) => {
+      let resolvedValue16: any;
+      if (order.paymentStatus === "PAID") {
+        resolvedValue16 = "default";
+      } else {
+        resolvedValue16 = "secondary";
+      }
+      let resolvedValue17: any;
+      if (order.fulfillmentStatus === "BLOCKED") {
+        resolvedValue17 = "destructive";
+      } else {
+        resolvedValue17 = "secondary";
+      }
+      return (
+                    <TableRow key={order.id}>
+                      <TableCell>
+                        <p className="font-medium">{order.orderNumber}</p>
+                        <p className="text-xs text-muted-foreground">{order.customerName}</p>
+                      </TableCell>
+                      <TableCell>{order.channel?.name ?? "Direto"}</TableCell>
+                      <TableCell>{order.project?.name ?? "Sem projeto"}</TableCell>
+                      <TableCell>
+                        <Badge variant={resolvedValue16}>{labelFor(order.paymentStatus)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={resolvedValue17}>{labelFor(order.fulfillmentStatus)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{formatCurrency(order.netCents, order.currencyCode)}</TableCell>
+                      <TableCell>{formatDate(order.expectedShipAt)}</TableCell>
+                    </TableRow>
+                  );
+    });
+  } else {
+    resolvedValue6 = (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-muted-foreground">
+                        Ainda não há pedidos comerciais.
+                      </TableCell>
+                    </TableRow>
+                  );
+  }
+  let resolvedValue7: any;
+  if (data.channels.length > 0) {
+    resolvedValue7 = data.channels.map((channel: any) => {
+      let resolvedValue18: any;
+      if (channel.active) {
+        resolvedValue18 = "default";
+      } else {
+        resolvedValue18 = "secondary";
+      }
+      let resolvedValue19: any;
+      if (channel.active) {
+        resolvedValue19 = "Ativo";
+      } else {
+        resolvedValue19 = "Inativo";
+      }
+      return (
+                    <TableRow key={channel.id}>
+                      <TableCell className="font-medium">{channel.name}</TableCell>
+                      <TableCell>{labelFor(channel.type)}</TableCell>
+                      <TableCell>{channel.externalCode || "N/A"}</TableCell>
+                      <TableCell>
+                        <Badge variant={resolvedValue18}>{resolvedValue19}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-[320px] truncate">{channel.notes || "N/A"}</TableCell>
+                    </TableRow>
+                  );
+    });
+  } else {
+    resolvedValue7 = (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-muted-foreground">
+                        Ainda não há canais de venda.
+                      </TableCell>
+                    </TableRow>
+                  );
+  }
+  let resolvedValue8: any;
+  if (isSubmitting) {
+    resolvedValue8 = "Salvando...";
+  } else {
+    resolvedValue8 = "Criar campanha";
+  }
+  let resolvedValue9: any;
+  if (isSubmitting) {
+    resolvedValue9 = "Salvando...";
+  } else {
+    resolvedValue9 = "Criar pedido";
+  }
+  let resolvedValue10: any;
+  if (isSubmitting) {
+    resolvedValue10 = "Salvando...";
+  } else {
+    resolvedValue10 = "Criar";
+  }
+return (
     <div className="space-y-6">
       <PageHero
         title="Operações comerciais"
@@ -574,16 +821,11 @@ export function CommercePage({
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Receita comercial" value={formatCurrency(data.summary.commercialRevenueCents)} hint="Pedidos pagos + atribuição de campanha" />
         <KpiCard label="ROAS de marketing" value={formatRatio(data.summary.roas)} hint={`${formatCurrency(data.summary.marketingSpendCents)} investidos`} />
-        <KpiCard label="Wishlists" value={formatNumber(data.summary.wishlists)} hint={data.summary.costPerWishlistCents ? `${formatCurrency(data.summary.costPerWishlistCents)} CPW` : "Captação de wishlist"} />
+        <KpiCard label="Wishlists" value={formatNumber(data.summary.wishlists)} hint={resolvedValue0} />
         <KpiCard label="Campanhas ativas" value={formatNumber(data.summary.activeCampaigns)} hint={`${formatNumber(data.summary.demoDownloads)} downloads de demo`} />
       </div>
 
-      {(message || error) ? (
-        <div className="rounded-lg border border-white/10 bg-white/55 px-4 py-3 text-sm dark:bg-white/[0.04]">
-          {message ? <p className="text-emerald-600">{message}</p> : null}
-          {error ? <p className="text-destructive">{error}</p> : null}
-        </div>
-      ) : null}
+      {resolvedValue1}
 
       <Tabs defaultValue="command">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur dark:bg-white/[0.04]">
@@ -619,27 +861,7 @@ export function CommercePage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.projectSignals.length > 0 ? data.projectSignals.map((signal) => (
-                      <TableRow key={signal.project.id}>
-                        <TableCell>
-                          <p className="font-medium">{signal.project.name}</p>
-                          <p className="text-xs text-muted-foreground">{signal.project.stage.replaceAll("_", " ")}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={signal.readinessScore >= 70 ? "default" : "secondary"}>{signal.readinessScore}/100</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">{formatNumber(signal.wishlists)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(signal.demoDownloads)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(signal.marketingSpendCents)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(signal.salesCents + signal.attributedRevenueCents)}</TableCell>
-                      </TableRow>
-                    )) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-muted-foreground">
-                          Ainda não há sinais de marketing por projeto.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {resolvedValue2}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -703,25 +925,7 @@ export function CommercePage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.channelPerformance.length > 0 ? data.channelPerformance.map((channel) => (
-                      <TableRow key={channel.channel}>
-                        <TableCell>
-                          <p className="font-medium">{labelFor(channel.channel)}</p>
-                          <p className="text-xs text-muted-foreground">{channel.campaignsCount} campanhas</p>
-                        </TableCell>
-                        <TableCell className="text-right">{formatCurrency(channel.spendCents)}</TableCell>
-                        <TableCell className="text-right">{formatRatio(channel.roas)}</TableCell>
-                        <TableCell className="text-right">{formatPercent(channel.clickThroughRate)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(channel.wishlists)}</TableCell>
-                        <TableCell className="text-right">{channel.costPerWishlistCents ? formatCurrency(channel.costPerWishlistCents) : "N/A"}</TableCell>
-                      </TableRow>
-                    )) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-muted-foreground">
-                          Ainda não há dados de canais de marketing.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {resolvedValue3}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -743,21 +947,7 @@ export function CommercePage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.projectSignals.length > 0 ? data.projectSignals.map((signal) => (
-                      <TableRow key={signal.project.id}>
-                        <TableCell className="font-medium">{signal.project.name}</TableCell>
-                        <TableCell className="text-right">{formatNumber(signal.activeCampaigns)}</TableCell>
-                        <TableCell className="text-right">{formatRatio(signal.roas)}</TableCell>
-                        <TableCell className="text-right">{formatNumber(signal.wishlists)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(signal.attributedRevenueCents)}</TableCell>
-                      </TableRow>
-                    )) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-muted-foreground">
-                          Ainda não há dados de marketing por projeto.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {resolvedValue4}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -784,28 +974,7 @@ export function CommercePage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.campaigns.length > 0 ? data.campaigns.map((campaign) => (
-                    <TableRow key={campaign.id}>
-                      <TableCell>
-                        <p className="font-medium">{campaign.name}</p>
-                        <p className="text-xs text-muted-foreground">{labelFor(campaign.channel)}</p>
-                      </TableCell>
-                      <TableCell>{campaign.project?.name ?? "Sem projeto"}</TableCell>
-                      <TableCell>{labelFor(campaign.objective)}</TableCell>
-                      <TableCell>
-                        <Badge variant={campaign.status === "ACTIVE" ? "default" : "secondary"}>{labelFor(campaign.status)}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(campaign.spendCents, campaign.currencyCode)}</TableCell>
-                      <TableCell className="text-right">{formatNumber(campaign.wishlists)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(campaign.revenueCents, campaign.currencyCode)}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-muted-foreground">
-                        Ainda não há campanhas de marketing.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {resolvedValue5}
                 </TableBody>
               </Table>
             </CardContent>
@@ -831,30 +1000,7 @@ export function CommercePage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.orders.length > 0 ? data.orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <p className="font-medium">{order.orderNumber}</p>
-                        <p className="text-xs text-muted-foreground">{order.customerName}</p>
-                      </TableCell>
-                      <TableCell>{order.channel?.name ?? "Direto"}</TableCell>
-                      <TableCell>{order.project?.name ?? "Sem projeto"}</TableCell>
-                      <TableCell>
-                        <Badge variant={order.paymentStatus === "PAID" ? "default" : "secondary"}>{labelFor(order.paymentStatus)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={order.fulfillmentStatus === "BLOCKED" ? "destructive" : "secondary"}>{labelFor(order.fulfillmentStatus)}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(order.netCents, order.currencyCode)}</TableCell>
-                      <TableCell>{formatDate(order.expectedShipAt)}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-muted-foreground">
-                        Ainda não há pedidos comerciais.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {resolvedValue6}
                 </TableBody>
               </Table>
             </CardContent>
@@ -878,23 +1024,7 @@ export function CommercePage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.channels.length > 0 ? data.channels.map((channel) => (
-                    <TableRow key={channel.id}>
-                      <TableCell className="font-medium">{channel.name}</TableCell>
-                      <TableCell>{labelFor(channel.type)}</TableCell>
-                      <TableCell>{channel.externalCode || "N/A"}</TableCell>
-                      <TableCell>
-                        <Badge variant={channel.active ? "default" : "secondary"}>{channel.active ? "Ativo" : "Inativo"}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[320px] truncate">{channel.notes || "N/A"}</TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground">
-                        Ainda não há canais de venda.
-                      </TableCell>
-                    </TableRow>
-                  )}
+                  {resolvedValue7}
                 </TableBody>
               </Table>
             </CardContent>
@@ -932,7 +1062,7 @@ export function CommercePage({
                 <div className="space-y-2">
                   <Label htmlFor="campaignChannel">Canal</Label>
                   <select id="campaignChannel" name="channel" className={getSelectClassName()} defaultValue={MarketingCampaignChannel.STEAM_STORE} disabled={!canManage}>
-                    {campaignChannels.map((channel) => (
+                    {campaignChannels.map((channel: any) => (
                       <option key={channel} value={channel}>{labelFor(channel)}</option>
                     ))}
                   </select>
@@ -995,7 +1125,7 @@ export function CommercePage({
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Salvando..." : "Criar campanha"}
+                    {resolvedValue8}
                   </Button>
                 </div>
               </form>
@@ -1026,7 +1156,7 @@ export function CommercePage({
                   <Label htmlFor="channelId">Canal</Label>
                   <select id="channelId" name="channelId" className={getSelectClassName()} disabled={!canManage}>
                     <option value="">Direto</option>
-                    {data.channels.map((channel) => (
+                    {data.channels.map((channel: any) => (
                       <option key={channel.id} value={channel.id}>{channel.name}</option>
                     ))}
                   </select>
@@ -1090,7 +1220,7 @@ export function CommercePage({
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Salvando..." : "Criar pedido"}
+                    {resolvedValue9}
                   </Button>
                 </div>
               </form>
@@ -1123,7 +1253,7 @@ export function CommercePage({
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Salvando..." : "Criar"}
+                    {resolvedValue10}
                   </Button>
                 </div>
                 <div className="space-y-2 lg:col-span-4">

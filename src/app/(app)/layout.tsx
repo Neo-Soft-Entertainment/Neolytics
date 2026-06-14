@@ -12,8 +12,9 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const [session, organization] = await Promise.all([auth(), getCurrentOrganization()]);
-  const currentUser = session?.user?.id
-    ? await db.user.findUnique({
+    let resolvedValue0: any;
+  if (session?.user?.id) {
+    resolvedValue0 = await db.user.findUnique({
         where: {
           id: session.user.id
         },
@@ -23,10 +24,14 @@ export default async function AppLayout({
           image: true,
           preferredLanguage: true
         }
-      })
-    : null;
-  const organizations = session?.user?.id
-    ? await db.organizationMember.findMany({
+      });
+  } else {
+    resolvedValue0 = null;
+  }
+const currentUser = resolvedValue0;
+    let resolvedValue1: any;
+  if (session?.user?.id) {
+    resolvedValue1 = await db.organizationMember.findMany({
         where: {
           userId: session.user.id
         },
@@ -36,8 +41,11 @@ export default async function AppLayout({
         orderBy: {
           joinedAt: "asc"
         }
-      })
-    : [];
+      });
+  } else {
+    resolvedValue1 = [];
+  }
+const organizations = resolvedValue1;
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -49,7 +57,7 @@ export default async function AppLayout({
             organizationName={organization.name}
             currentWorkspaceId={organization.currentWorkspace?.id ?? null}
             currentWorkspaceName={organization.currentWorkspace?.name ?? null}
-            organizations={organizations.map((membership) => ({
+            organizations={organizations.map((membership: any) => ({
               id: membership.organization.id,
               name: membership.organization.name,
               role: membership.role,

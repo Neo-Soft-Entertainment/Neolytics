@@ -20,16 +20,20 @@ export default async function SignupPage({
   }
 
   const { inviteToken } = await searchParams;
-  const invitation = inviteToken ? await getOrganizationInvitationByToken(inviteToken) : null;
+    let resolvedValue0: any;
+  if (inviteToken) {
+    resolvedValue0 = await getOrganizationInvitationByToken(inviteToken);
+  } else {
+    resolvedValue0 = null;
+  }
+const invitation = resolvedValue0;
   const invalidInvitation = Boolean(
     inviteToken && (!invitation || invitation.revokedAt || invitation.acceptedAt || invitation.expiresAt <= new Date())
   );
 
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_30%)] p-6">
-      <div className="flex w-full max-w-lg flex-col items-center gap-5">
-        <NeolyticsBrand />
-        {invalidInvitation ? (
+    let resolvedValue1: any;
+  if (invalidInvitation) {
+    resolvedValue1 = (
           <Card className="w-full">
             <CardHeader>
               <CardTitle>Convite indisponível</CardTitle>
@@ -41,7 +45,9 @@ export default async function SignupPage({
               </Button>
             </CardContent>
           </Card>
-        ) : (
+        );
+  } else {
+    resolvedValue1 = (
           <SignupForm
             inviteToken={inviteToken}
             hasGoogleLogin={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)}
@@ -50,7 +56,13 @@ export default async function SignupPage({
             invitedOrganizationName={invitation?.organization.name}
             invitedEmail={invitation?.email}
           />
-        )}
+        );
+  }
+return (
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_30%)] p-6">
+      <div className="flex w-full max-w-lg flex-col items-center gap-5">
+        <NeolyticsBrand />
+        {resolvedValue1}
       </div>
     </main>
   );

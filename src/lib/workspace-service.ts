@@ -90,7 +90,7 @@ export async function createCompetitorSet(params: {
       name: params.name,
       description: params.description,
       games: {
-        create: games.map((game) => ({
+        create: games.map((game: any) => ({
           steamGameId: game.id
         }))
       }
@@ -162,16 +162,26 @@ function reportGamePrice(game: MarketReportGame) {
 
   const price = game.priceCurrent?.finalPriceCents ?? 0;
 
-  return price > 0 ? reportMoney(price) : "sem preço visível";
+    let resolvedValue0: any;
+  if (price > 0) {
+    resolvedValue0 = reportMoney(price);
+  } else {
+    resolvedValue0 = "sem preço visível";
+  }
+return resolvedValue0;
 }
 
 function reportTopTerms(games: MarketReportGame[], field: "genres" | "tags") {
   const counts = new Map<string, number>();
 
   for (const game of games) {
-    const terms = field === "genres"
-      ? game.genres.map((genre) => genre.steamGenre.name)
-      : game.tags.map((tag) => tag.steamTag.name);
+        let resolvedValue1: any;
+    if (field === "genres") {
+      resolvedValue1 = game.genres.map((genre: any) => genre.steamGenre.name);
+    } else {
+      resolvedValue1 = game.tags.map((tag: any) => tag.steamTag.name);
+    }
+const terms = resolvedValue1;
 
     for (const term of terms) {
       counts.set(term, (counts.get(term) ?? 0) + 1);
@@ -186,7 +196,13 @@ function reportTopTerms(games: MarketReportGame[], field: "genres" | "tags") {
 
 function reportGameLine(game: MarketReportGame, index: number) {
   const revenue = reportGameRevenue(game);
-  const score = game.reviewScore !== null ? `${game.reviewScore}%` : "sem nota";
+    let resolvedValue2: any;
+  if (game.reviewScore !== null) {
+    resolvedValue2 = `${game.reviewScore}%`;
+  } else {
+    resolvedValue2 = "sem nota";
+  }
+const score = resolvedValue2;
   const reviews = game.reviewCount?.toLocaleString("en-US") ?? "0";
 
   return `${index + 1}. ${game.name} - ${reportMoney(revenue)} receita estimada, ${score}, ${reviews} reviews, ${reportGamePrice(game)}`;
@@ -209,10 +225,9 @@ export async function generateBasicMarketReport(params: {
     }
   });
   const isProPlan = organization.subscriptionPlan === SubscriptionPlan.PRO;
-  const topGames = await db.steamGame.findMany({
-    where: {
-      ...(params.genre
-        ? {
+    let resolvedValue3: any;
+  if (params.genre) {
+    resolvedValue3 = {
             genres: {
               some: {
                 steamGenre: {
@@ -220,10 +235,13 @@ export async function generateBasicMarketReport(params: {
                 }
               }
             }
-          }
-        : {}),
-      ...(params.tag
-        ? {
+          };
+  } else {
+    resolvedValue3 = {};
+  }
+  let resolvedValue4: any;
+  if (params.tag) {
+    resolvedValue4 = {
             tags: {
               some: {
                 steamTag: {
@@ -231,8 +249,14 @@ export async function generateBasicMarketReport(params: {
                 }
               }
             }
-          }
-        : {})
+          };
+  } else {
+    resolvedValue4 = {};
+  }
+const topGames = await db.steamGame.findMany({
+    where: {
+      ...(resolvedValue3),
+      ...(resolvedValue4)
     },
     include: {
       priceCurrent: true,
@@ -269,27 +293,39 @@ export async function generateBasicMarketReport(params: {
     genre: params.genre,
     tag: params.tag,
     segment,
-    leaders: leaders.map((game) => ({
+    leaders: leaders.map((game: any) => ({
       name: game.name,
       priceCents: game.priceCurrent?.finalPriceCents ?? null,
       reviewScore: game.reviewScore,
       reviewCount: game.reviewCount,
       medianRevenueCents: Number(game.revenueEstimates[0]?.medianNetRevenueCents ?? 0n),
-      genres: game.genres.map((genre) => genre.steamGenre.name),
-      tags: game.tags.map((tag) => tag.steamTag.name)
+      genres: game.genres.map((genre: any) => genre.steamGenre.name),
+      tags: game.tags.map((tag: any) => tag.steamTag.name)
     }))
   });
-  const segmentName = [params.genre ? `gênero ${params.genre}` : null, params.tag ? `tag ${params.tag}` : null].filter(Boolean).join(" + ") || "mercado Steam analisado";
+    let resolvedValue5: any;
+  if (params.genre) {
+    resolvedValue5 = `gênero ${params.genre}`;
+  } else {
+    resolvedValue5 = null;
+  }
+  let resolvedValue6: any;
+  if (params.tag) {
+    resolvedValue6 = `tag ${params.tag}`;
+  } else {
+    resolvedValue6 = null;
+  }
+const segmentName = [resolvedValue5, resolvedValue6].filter(Boolean).join(" + ") || "mercado Steam analisado";
   const revenueLeaders = [...topGames].sort((left, right) => reportGameRevenue(right) - reportGameRevenue(left));
   const demandLeaders = [...topGames].sort((left, right) => (right.reviewCount ?? 0) - (left.reviewCount ?? 0)).slice(0, 5);
   const topTags = reportTopTerms(topGames, "tags");
   const topGenres = reportTopTerms(topGames, "genres");
   const qualityGaps = [...topGames]
-    .filter((game) => (game.reviewScore ?? 0) >= Math.max(78, segment.averageReviewScore) && reportGameRevenue(game) > 0 && reportGameRevenue(game) <= Math.max(segment.medianRevenueCents, 1))
+    .filter((game: any) => (game.reviewScore ?? 0) >= Math.max(78, segment.averageReviewScore) && reportGameRevenue(game) > 0 && reportGameRevenue(game) <= Math.max(segment.medianRevenueCents, 1))
     .sort((left, right) => (right.reviewScore ?? 0) - (left.reviewScore ?? 0))
     .slice(0, 5);
   const expensiveWeakSpots = revenueLeaders
-    .filter((game) => reportGameRevenue(game) > 0 && (game.reviewScore ?? 100) < Math.max(70, segment.averageReviewScore - 5))
+    .filter((game: any) => reportGameRevenue(game) > 0 && (game.reviewScore ?? 100) < Math.max(70, segment.averageReviewScore - 5))
     .slice(0, 5);
   const priceBands = [
     { label: "abaixo de $10", count: segment.priceBandDistribution.under10 },
@@ -298,21 +334,45 @@ export async function generateBasicMarketReport(params: {
     { label: "$30+", count: segment.priceBandDistribution.over30 }
   ];
   const dominantPriceBand = [...priceBands].sort((left, right) => right.count - left.count)[0]?.label ?? "sem padrão claro";
-  const decisionRecommendation = topGames.length === 0
-    ? "Não tomar decisão de produção: não há comparáveis suficientes para sustentar uma tese."
-    : segment.opportunityScore >= 70 && segment.riskScore < 55
-      ? "Avançar para protótipo comercial focado, com escopo pequeno e teste de página Steam antes de ampliar produção."
-      : segment.opportunityScore >= 55
-        ? "Manter como tese condicional: validar posicionamento, cápsula e preço antes de aprovar produção completa."
-        : "Não escalar produção agora: usar o segmento apenas como referência até encontrar uma lacuna mais clara.";
-  const marketThesis = topTags.length > 0
-    ? `A prateleira parece responder a ${topTags.slice(0, 3).map((term) => term.name).join(", ")}; a entrada precisa prometer uma diferença legível dentro desse vocabulário em vez de tentar competir genericamente.`
-    : "A amostra não mostra tags recorrentes suficientes; a primeira tarefa é melhorar o recorte do segmento.";
-  const mainRisk = segment.revenueConcentrationPercent >= 65
-    ? `Risco principal: winner-takes-most. Os 3 líderes concentram ${segment.revenueConcentrationPercent}% da receita estimada, então uma entrada mediana tende a desaparecer.`
-    : segment.averageReviewScore < 72
-      ? `Risco principal: baixa satisfação média (${segment.averageReviewScore.toFixed(1)}%). O segmento pode ter demanda, mas o produto precisa provar qualidade cedo.`
-      : `Risco principal: diferenciação. O segmento não parece impossível, mas exige uma promessa clara para não virar mais um comparável.`;
+    let resolvedValue7: any;
+  if (topGames.length === 0) {
+    resolvedValue7 = "Não tomar decisão de produção: não há comparáveis suficientes para sustentar uma tese.";
+  } else {
+        let resolvedValue20: any;
+    if (segment.opportunityScore >= 70 && segment.riskScore < 55) {
+      resolvedValue20 = "Avançar para protótipo comercial focado, com escopo pequeno e teste de página Steam antes de ampliar produção.";
+    } else {
+            let resolvedValue25: any;
+      if (segment.opportunityScore >= 55) {
+        resolvedValue25 = "Manter como tese condicional: validar posicionamento, cápsula e preço antes de aprovar produção completa.";
+      } else {
+        resolvedValue25 = "Não escalar produção agora: usar o segmento apenas como referência até encontrar uma lacuna mais clara.";
+      }
+resolvedValue20 = resolvedValue25;
+    }
+resolvedValue7 = resolvedValue20;
+  }
+const decisionRecommendation = resolvedValue7;
+    let resolvedValue8: any;
+  if (topTags.length > 0) {
+    resolvedValue8 = `A prateleira parece responder a ${topTags.slice(0, 3).map((term) => term.name).join(", ")}; a entrada precisa prometer uma diferença legível dentro desse vocabulário em vez de tentar competir genericamente.`;
+  } else {
+    resolvedValue8 = "A amostra não mostra tags recorrentes suficientes; a primeira tarefa é melhorar o recorte do segmento.";
+  }
+const marketThesis = resolvedValue8;
+    let resolvedValue9: any;
+  if (segment.revenueConcentrationPercent >= 65) {
+    resolvedValue9 = `Risco principal: winner-takes-most. Os 3 líderes concentram ${segment.revenueConcentrationPercent}% da receita estimada, então uma entrada mediana tende a desaparecer.`;
+  } else {
+        let resolvedValue21: any;
+    if (segment.averageReviewScore < 72) {
+      resolvedValue21 = `Risco principal: baixa satisfação média (${segment.averageReviewScore.toFixed(1)}%). O segmento pode ter demanda, mas o produto precisa provar qualidade cedo.`;
+    } else {
+      resolvedValue21 = `Risco principal: diferenciação. O segmento não parece impossível, mas exige uma promessa clara para não virar mais um comparável.`;
+    }
+resolvedValue9 = resolvedValue21;
+  }
+const mainRisk = resolvedValue9;
   const nextMoves = [
     `Montar uma página Steam fake ou rascunho com promessa baseada em ${topTags[0]?.name ?? params.tag ?? params.genre ?? "o principal sinal de demanda"} e medir CTR/wishlist.`,
     `Comparar a cápsula e primeira frase contra ${revenueLeaders[0]?.name ?? "o líder do segmento"} e ${demandLeaders[0]?.name ?? "o jogo com mais reviews"}.`,
@@ -325,24 +385,123 @@ export async function generateBasicMarketReport(params: {
     mainRisk,
     nextMoves
   };
-  const operatingBrief = isProPlan
-    ? {
+    let resolvedValue10: any;
+  if (isProPlan) {
+        let resolvedValue22: any;
+    if (segment.opportunityScore >= 70) {
+      resolvedValue22 = "Trate isso como uma aposta de crescimento em nível de board, mas inclua checkpoints de lançamento mais rigorosos e uma revisão de prontidão de produção mais forte.";
+    } else {
+      resolvedValue22 = "Trate isso como uma tese controlada. Busque um posicionamento mais claro antes de comprometer um grande orçamento de produção.";
+    }
+    let resolvedValue23: any;
+    if (segment.revenueConcentrationPercent >= 65) {
+      resolvedValue23 = "O planejamento comercial deve assumir uma prateleira em que poucos vencedores capturam a maior parte, então mensagem, qualidade da cápsula e timing de lançamento precisam ser melhores que a entrada mediana do segmento.";
+    } else {
+      resolvedValue23 = "O planejamento comercial pode sustentar um resultado intermediário, então a equipe pode vencer por foco, clareza e precificação disciplinada em vez de escopo blockbuster.";
+    }
+    let resolvedValue24: any;
+    if (segment.executionBarScore >= 70) {
+      resolvedValue24 = "Financeiro, aprovações e governança de milestones devem estar prontos antes do plano de produção escalar.";
+    } else {
+      resolvedValue24 = "A carga operacional é moderada o suficiente para sustentar uma estrutura de estúdio mais enxuta enquanto a tese ainda é provada.";
+    }
+resolvedValue10 = {
         boardDirective:
-          segment.opportunityScore >= 70
-            ? "Trate isso como uma aposta de crescimento em nível de board, mas inclua checkpoints de lançamento mais rigorosos e uma revisão de prontidão de produção mais forte."
-            : "Trate isso como uma tese controlada. Busque um posicionamento mais claro antes de comprometer um grande orçamento de produção.",
+          resolvedValue22,
         commercialDirective:
-          segment.revenueConcentrationPercent >= 65
-            ? "O planejamento comercial deve assumir uma prateleira em que poucos vencedores capturam a maior parte, então mensagem, qualidade da cápsula e timing de lançamento precisam ser melhores que a entrada mediana do segmento."
-            : "O planejamento comercial pode sustentar um resultado intermediário, então a equipe pode vencer por foco, clareza e precificação disciplinada em vez de escopo blockbuster.",
+          resolvedValue23,
         operatingDirective:
-          segment.executionBarScore >= 70
-            ? "Financeiro, aprovações e governança de milestones devem estar prontos antes do plano de produção escalar."
-            : "A carga operacional é moderada o suficiente para sustentar uma estrutura de estúdio mais enxuta enquanto a tese ainda é provada."
-      }
-    : null;
+          resolvedValue24
+      };
+  } else {
+    resolvedValue10 = null;
+  }
+const operatingBrief = resolvedValue10;
 
-  const content = [
+    let resolvedValue11: any;
+  if (revenueLeaders.length > 0) {
+    resolvedValue11 = `Os líderes de receita para este recorte são ${revenueLeaders.slice(0, 3).map((game: any) => game.name).join(", ")}. Eles definem a barra comercial, não a média do segmento.`;
+  } else {
+    resolvedValue11 = "Não há líderes claros porque a amostra não trouxe receita estimada suficiente.";
+  }
+  let resolvedValue12: any;
+  if (demandLeaders.length > 0) {
+    resolvedValue12 = `Os jogos com mais prova pública de demanda são ${demandLeaders.slice(0, 3).map((game: any) => game.name).join(", ")}. Use-os para entender promessa de loja, volume de reviews e expectativa de comunidade.`;
+  } else {
+    resolvedValue12 = "Não há demanda pública suficiente na amostra para formar tese.";
+  }
+  let resolvedValue14: any;
+  if (topTags.length > 0) {
+    resolvedValue14 = topTags.map((term) => `${term.name} (${term.count})`).join(", ");
+  } else {
+    resolvedValue14 = "sem padrão forte";
+  }
+  let resolvedValue15: any;
+  if (topGenres.length > 0) {
+    resolvedValue15 = topGenres.map((term) => `${term.name} (${term.count})`).join(", ");
+  } else {
+    resolvedValue15 = "sem padrão forte";
+  }
+  let resolvedValue16: any;
+  if (qualityGaps.length > 0) {
+    resolvedValue16 = "Há jogos bem avaliados abaixo da mediana de receita. Isso pode indicar lacuna de marketing, cápsula, timing ou escala comercial, não necessariamente falta de demanda.";
+  } else {
+    resolvedValue16 = "A amostra não mostrou uma lacuna óbvia de jogos muito bem avaliados e submonetizados.";
+  }
+  let resolvedValue17: any;
+  if (expensiveWeakSpots.length > 0) {
+    resolvedValue17 = "Também existem líderes de receita com avaliação fraca. Se forem relevantes para a sua tese, a oportunidade pode estar em entregar melhor satisfação sem copiar escopo.";
+  } else {
+    resolvedValue17 = "Não há líderes grandes com avaliação fraca o bastante para virar uma tese óbvia de 'fazer melhor'.";
+  }
+  let resolvedValue18: any;
+  if (aiNarrative) {
+    resolvedValue18 = [
+          "",
+          "## Leitura estratégica da IA",
+          aiNarrative.executiveSummary,
+          "",
+          "### Gatilhos de demanda",
+          aiNarrative.demandDrivers,
+          "",
+          "### Saturação",
+          aiNarrative.saturationRead,
+          "",
+          "### Precificação",
+          aiNarrative.pricingRead,
+          "",
+          "### Janela de lançamento",
+          aiNarrative.launchWindowAdvice,
+          "",
+          "### Monetização",
+          aiNarrative.monetizationRead,
+          "",
+          "### Confiança",
+          aiNarrative.confidenceNarrative,
+          "",
+          "### Próximos movimentos recomendados",
+          ...aiNarrative.actionItems.map((item: any) => `- ${item}`)
+        ];
+  } else {
+    resolvedValue18 = [];
+  }
+  let resolvedValue19: any;
+  if (operatingBrief) {
+    resolvedValue19 = [
+          "",
+          "## Brief operacional Pro",
+          operatingBrief.boardDirective,
+          "",
+          "### Diretriz comercial",
+          operatingBrief.commercialDirective,
+          "",
+          "### Diretriz operacional",
+          operatingBrief.operatingDirective
+        ];
+  } else {
+    resolvedValue19 = [];
+  }
+const content = [
     `# ${params.title}`,
     "",
     "## Decisão executiva",
@@ -351,36 +510,34 @@ export async function generateBasicMarketReport(params: {
     `**Risco real:** ${mainRisk}`,
     "",
     "## O que fazer agora",
-    ...nextMoves.map((item) => `- ${item}`),
+    ...nextMoves.map((item: any) => `- ${item}`),
     "",
     "## Comparáveis que realmente importam",
-    revenueLeaders.length > 0
-      ? `Os líderes de receita para este recorte são ${revenueLeaders.slice(0, 3).map((game) => game.name).join(", ")}. Eles definem a barra comercial, não a média do segmento.`
-      : "Não há líderes claros porque a amostra não trouxe receita estimada suficiente.",
+    resolvedValue11,
     ...revenueLeaders.slice(0, 5).map(reportGameLine),
     "",
     "## Demanda visível",
-    demandLeaders.length > 0
-      ? `Os jogos com mais prova pública de demanda são ${demandLeaders.slice(0, 3).map((game) => game.name).join(", ")}. Use-os para entender promessa de loja, volume de reviews e expectativa de comunidade.`
-      : "Não há demanda pública suficiente na amostra para formar tese.",
+    resolvedValue12,
     ...demandLeaders.map((game, index) => {
-      const release = game.releaseDate ? game.releaseDate.toISOString().slice(0, 10) : "data desconhecida";
+            let resolvedValue13: any;
+      if (game.releaseDate) {
+        resolvedValue13 = game.releaseDate.toISOString().slice(0, 10);
+      } else {
+        resolvedValue13 = "data desconhecida";
+      }
+const release = resolvedValue13;
       return `${index + 1}. ${game.name} - ${(game.reviewCount ?? 0).toLocaleString("en-US")} reviews, ${game.reviewScore ?? "sem nota"}%, lançado em ${release}`;
     }),
     "",
     "## Vocabulário de posicionamento",
-    `- Tags recorrentes: ${topTags.length > 0 ? topTags.map((term) => `${term.name} (${term.count})`).join(", ") : "sem padrão forte"}`,
-    `- Gêneros recorrentes: ${topGenres.length > 0 ? topGenres.map((term) => `${term.name} (${term.count})`).join(", ") : "sem padrão forte"}`,
+    `- Tags recorrentes: ${resolvedValue14}`,
+    `- Gêneros recorrentes: ${resolvedValue15}`,
     `- Faixa de preço dominante: ${dominantPriceBand}`,
     "",
     "## Lacunas e alertas",
-    qualityGaps.length > 0
-      ? "Há jogos bem avaliados abaixo da mediana de receita. Isso pode indicar lacuna de marketing, cápsula, timing ou escala comercial, não necessariamente falta de demanda."
-      : "A amostra não mostrou uma lacuna óbvia de jogos muito bem avaliados e submonetizados.",
+    resolvedValue16,
     ...qualityGaps.map((game, index) => reportGameLine(game, index)),
-    expensiveWeakSpots.length > 0
-      ? "Também existem líderes de receita com avaliação fraca. Se forem relevantes para a sua tese, a oportunidade pode estar em entregar melhor satisfação sem copiar escopo."
-      : "Não há líderes grandes com avaliação fraca o bastante para virar uma tese óbvia de 'fazer melhor'.",
+    resolvedValue17,
     ...expensiveWeakSpots.map((game, index) => reportGameLine(game, index)),
     "",
     "## Critérios de corte",
@@ -413,47 +570,8 @@ export async function generateBasicMarketReport(params: {
     "",
     "## Leitura estratégica",
     `Este relatório analisou ${topGames.length} jogos para ${segmentName}. A decisão acima deve guiar produção, marketing e orçamento antes de qualquer expansão de escopo.`,
-    ...(aiNarrative
-      ? [
-          "",
-          "## Leitura estratégica da IA",
-          aiNarrative.executiveSummary,
-          "",
-          "### Gatilhos de demanda",
-          aiNarrative.demandDrivers,
-          "",
-          "### Saturação",
-          aiNarrative.saturationRead,
-          "",
-          "### Precificação",
-          aiNarrative.pricingRead,
-          "",
-          "### Janela de lançamento",
-          aiNarrative.launchWindowAdvice,
-          "",
-          "### Monetização",
-          aiNarrative.monetizationRead,
-          "",
-          "### Confiança",
-          aiNarrative.confidenceNarrative,
-          "",
-          "### Próximos movimentos recomendados",
-          ...aiNarrative.actionItems.map((item) => `- ${item}`)
-        ]
-      : []),
-    ...(operatingBrief
-      ? [
-          "",
-          "## Brief operacional Pro",
-          operatingBrief.boardDirective,
-          "",
-          "### Diretriz comercial",
-          operatingBrief.commercialDirective,
-          "",
-          "### Diretriz operacional",
-          operatingBrief.operatingDirective
-        ]
-      : []),
+    ...(resolvedValue18),
+    ...(resolvedValue19),
     "",
     "## Distribuição de preço",
     `- Abaixo de $10: ${segment.priceBandDistribution.under10}`,

@@ -11,34 +11,44 @@ export default async function CompanyRoute() {
   const canAccessCompanyHub = hasSubscriptionCapability(organization.subscriptionPlan, "companyHub");
   const canAccessDocumentVault = hasSubscriptionCapability(organization.subscriptionPlan, "documentVault");
   const canAccessApprovalsAudit = hasSubscriptionCapability(organization.subscriptionPlan, "approvalsAudit");
-  const [membership, data] = await Promise.all([
-    session?.user?.id
-      ? db.organizationMember.findUnique({
+    let resolvedValue0: any;
+  if (session?.user?.id) {
+    resolvedValue0 = db.organizationMember.findUnique({
           where: {
             organizationId_userId: {
               organizationId: organization.id,
               userId: session.user.id
             }
           }
-        })
-      : null,
-    canAccessCompanyHub ? getCompanyModuleData(organization.id) : null
+        });
+  } else {
+    resolvedValue0 = null;
+  }
+  let resolvedValue1: any;
+  if (canAccessCompanyHub) {
+    resolvedValue1 = getCompanyModuleData(organization.id);
+  } else {
+    resolvedValue1 = null;
+  }
+const [membership, data] = await Promise.all([
+    resolvedValue0,
+    resolvedValue1
   ]);
 
   const legalEntities = JSON.parse(JSON.stringify(data?.legalEntities ?? [])) as CompanyLegalEntityRecord[];
-  const documents = (data?.documents ?? []).map((document) => ({
+  const documents = (data?.documents ?? []).map((document: any) => ({
     ...JSON.parse(JSON.stringify(document)),
     expiresAt: document.expiresAt?.toISOString() ?? null,
-    versions: document.versions.map((version) => ({
+    versions: document.versions.map((version: any) => ({
       ...JSON.parse(JSON.stringify(version)),
       createdAt: version.createdAt.toISOString()
     }))
   })) as CompanyDocumentRecord[];
-  const complianceItems = (data?.complianceItems ?? []).map((item) => ({
+  const complianceItems = (data?.complianceItems ?? []).map((item: any) => ({
     ...JSON.parse(JSON.stringify(item)),
     dueAt: item.dueAt?.toISOString() ?? null
   })) as CompanyComplianceRecord[];
-  const auditEvents = (data?.auditEvents ?? []).map((event) => ({
+  const auditEvents = (data?.auditEvents ?? []).map((event: any) => ({
     ...JSON.parse(JSON.stringify(event)),
     createdAt: event.createdAt.toISOString()
   })) as CompanyAuditRecord[];

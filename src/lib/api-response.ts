@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 
 function serializeResponseData<T>(data: T) {
   return JSON.parse(
-    JSON.stringify(data, (_, value) => (typeof value === "bigint" ? Number(value) : value))
+    JSON.stringify(data, (_, value) => {
+      let resolvedValue0: any;
+      if (typeof value === "bigint") {
+        resolvedValue0 = Number(value);
+      } else {
+        resolvedValue0 = value;
+      }
+      return (resolvedValue0);
+    })
   ) as T;
 }
 

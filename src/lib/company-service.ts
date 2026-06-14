@@ -448,13 +448,19 @@ export async function createLegalEntityShareholder(params: {
     throw new Error("Legal entity not found.");
   }
 
-  const shareholder = await db.legalEntityShareholder.create({
+    let resolvedValue0: any;
+  if (typeof params.ownershipPercent === "number") {
+    resolvedValue0 = params.ownershipPercent;
+  } else {
+    resolvedValue0 = null;
+  }
+const shareholder = await db.legalEntityShareholder.create({
     data: {
       legalEntityId: entity.id,
       name: encryptCompanyField(params.name, params.organizationId, "legalEntityShareholder.name") ?? params.name.trim(),
       documentNumber: encryptCompanyField(params.documentNumber, params.organizationId, "legalEntityShareholder.documentNumber") ?? params.documentNumber.trim(),
       role: encryptCompanyField(params.role, params.organizationId, "legalEntityShareholder.role"),
-      ownershipPercent: typeof params.ownershipPercent === "number" ? params.ownershipPercent : null
+      ownershipPercent: resolvedValue0
     }
   });
 
@@ -702,14 +708,20 @@ export async function updateComplianceItem(params: {
     throw new Error("Compliance item not found.");
   }
 
-  const updated = await db.complianceItem.update({
+    let resolvedValue1: any;
+  if (params.status === ComplianceStatus.COMPLETED) {
+    resolvedValue1 = new Date();
+  } else {
+    resolvedValue1 = null;
+  }
+const updated = await db.complianceItem.update({
     where: {
       id: item.id
     },
     data: {
       status: params.status,
       notes: params.notes?.trim() || item.notes,
-      completedAt: params.status === ComplianceStatus.COMPLETED ? new Date() : null
+      completedAt: resolvedValue1
     }
   });
 

@@ -16,7 +16,13 @@ export type EncryptedPayload = {
 
 function decodeKey(value: string) {
   const trimmed = value.trim();
-  const hex = /^[a-f0-9]{64}$/i.test(trimmed) ? Buffer.from(trimmed, "hex") : null;
+    let resolvedValue0: any;
+  if (/^[a-f0-9]{64}$/i.test(trimmed)) {
+    resolvedValue0 = Buffer.from(trimmed, "hex");
+  } else {
+    resolvedValue0 = null;
+  }
+const hex = resolvedValue0;
 
   if (hex) {
     return hex;
@@ -159,7 +165,13 @@ export function maskSecret(value?: string | null) {
     return null;
   }
 
-  const decrypted = isEncryptedString(value) ? "[encrypted]" : value;
+    let resolvedValue1: any;
+  if (isEncryptedString(value)) {
+    resolvedValue1 = "[encrypted]";
+  } else {
+    resolvedValue1 = value;
+  }
+const decrypted = resolvedValue1;
 
   if (decrypted === "[encrypted]") {
     return decrypted;
