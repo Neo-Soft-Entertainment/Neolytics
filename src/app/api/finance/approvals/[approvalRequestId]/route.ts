@@ -43,6 +43,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid approval payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update approval.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar a aprovação.");
   }
 }

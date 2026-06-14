@@ -25,28 +25,28 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 
 const tourSteps = [
   {
-    title: "Market radar",
-    description: "Use Games, Opportunities, and Compare to read demand, pricing, competitors, launches, and player signals.",
+    title: "Radar de mercado",
+    description: "Use Jogos, Oportunidades e Comparar para ler demanda, preços, concorrentes, lançamentos e sinais de jogadores.",
     href: "/games",
-    action: "Open games"
+    action: "Abrir jogos"
   },
   {
-    title: "Project command",
-    description: "Turn a thesis into a project, run viability and art analysis, manage milestones, GDDs, and the production board.",
+    title: "Comando de projeto",
+    description: "Transforme uma tese em projeto, rode análises de viabilidade e arte, gerencie marcos, GDDs e o quadro de produção.",
     href: "/projects",
-    action: "Open projects"
+    action: "Abrir projetos"
   },
   {
-    title: "Studio operations",
-    description: "Manage finance, company records, documents, contracts, invoices, approvals, and audit trails from the operating layer.",
+    title: "Operações do estúdio",
+    description: "Gerencie financeiro, registros da empresa, documentos, contratos, faturas, aprovações e trilhas de auditoria pela camada operacional.",
     href: "/finance",
-    action: "Open finance"
+    action: "Abrir financeiro"
   },
   {
-    title: "Community and reports",
-    description: "Share signals with the organization or global feed, discuss posts, export dashboards, and build market reports.",
+    title: "Comunidade e relatórios",
+    description: "Compartilhe sinais com a organização ou feed global, discuta posts, exporte painéis e crie relatórios de mercado.",
     href: "/community",
-    action: "Open community"
+    action: "Abrir comunidade"
   }
 ];
 
@@ -57,11 +57,11 @@ export function DashboardClient() {
   const detailsQuery = useDashboardDetails(progressive.shouldLoad);
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading dashboard...</p>;
+    return <p className="text-sm text-muted-foreground">Carregando painel...</p>;
   }
 
   if (query.isError) {
-    return <ErrorState title="Dashboard unavailable" description="We could not load dashboard data." />;
+    return <ErrorState title="Painel indisponível" description="Não foi possível carregar os dados do painel." />;
   }
 
   const data = query.data;
@@ -70,8 +70,8 @@ export function DashboardClient() {
   if (!data) {
     return (
       <EmptyState
-        title="Catalog is still warming up"
-        description="Neolytics is ready, but the Steam dataset has not been populated in this environment yet."
+        title="O catálogo ainda está aquecendo"
+        description="A Neolytics está pronta, mas o dataset da Steam ainda não foi populado neste ambiente."
       />
     );
   }
@@ -79,30 +79,30 @@ export function DashboardClient() {
   return (
     <div className="space-y-6">
       <PageHero
-        title="Studio command center"
-        description="Run market intelligence, production, finance, and company governance from one operating layer."
+        title="Central de comando do estúdio"
+        description="Rode inteligência de mercado, produção, financeiro e governança da empresa em uma camada operacional."
         actions={(
           <>
-            <Badge variant="secondary">{data.planLabel} plan</Badge>
+            <Badge variant="secondary">Plano {data.planLabel}</Badge>
             <Button asChild>
-              <Link href="/games">Browse games</Link>
+              <Link href="/games">Explorar jogos</Link>
             </Button>
             {data.canAccessFinanceWorkspace ? (
               <Button asChild variant="outline">
-                <Link href="/finance">Open finance</Link>
+                <Link href="/finance">Abrir financeiro</Link>
               </Button>
             ) : null}
             <Button asChild variant="outline">
-              <Link href="/opportunities">Open opportunities</Link>
+              <Link href="/opportunities">Abrir oportunidades</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/compare">Compare games</Link>
+              <Link href="/compare">Comparar jogos</Link>
             </Button>
             <Button type="button" variant="outline" onClick={() => setIsTourOpen(true)}>
-              Optional tour
+              Tour opcional
             </Button>
             <ExportActions
-              label="Export"
+              label="Exportar"
               xlsxHref="/api/exports/dashboard?format=xlsx"
               csvHref="/api/exports/dashboard?format=csv"
               googleSheetsEndpoint="/api/exports/dashboard"
@@ -111,49 +111,49 @@ export function DashboardClient() {
         )}
       />
       <div className="grid gap-3 md:grid-cols-4">
-        <KpiCard label="Catalog games" value={formatNumber(data.marketOverview.totalGames)} />
+        <KpiCard label="Jogos no catálogo" value={formatNumber(data.marketOverview.totalGames)} />
         <KpiCard
-          label="Average review score"
+          label="Nota média das avaliações"
           value={`${data.marketOverview.averageReviewScore.toFixed(1)}%`}
         />
-        <KpiCard label="Saved games" value={formatNumber(data.marketOverview.trackedGamesCount)} />
-        <KpiCard label="Recent launches" value={formatNumber(data.recentLaunchesCount)} />
+        <KpiCard label="Jogos salvos" value={formatNumber(data.marketOverview.trackedGamesCount)} />
+        <KpiCard label="Lançamentos recentes" value={formatNumber(data.recentLaunchesCount)} />
       </div>
       {data.canAccessFinanceWorkspace ? (
         <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label="Net cash" value={formatCurrency(data.financeSnapshot.netCashCents)} />
-          <KpiCard label="Pending receivables" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
-          <KpiCard label="Pending payables" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
-          <KpiCard label="Active budgets" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
+          <KpiCard label="Caixa líquido" value={formatCurrency(data.financeSnapshot.netCashCents)} />
+          <KpiCard label="Recebíveis pendentes" value={formatCurrency(data.financeSnapshot.pendingRevenueCents)} />
+          <KpiCard label="Pagáveis pendentes" value={formatCurrency(data.financeSnapshot.pendingExpenseCents)} />
+          <KpiCard label="Orçamentos ativos" value={formatNumber(data.financeSnapshot.activeBudgetsCount)} />
         </div>
       ) : (
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="font-medium">Finance workspace unlocks on Plus</p>
-              <p className="mt-1 text-sm text-muted-foreground">Upgrade to run budgets, invoices, and company ops here.</p>
+              <p className="font-medium">Área financeira libera no Plus</p>
+              <p className="mt-1 text-sm text-muted-foreground">Faça upgrade para rodar orçamentos, faturas e operações da empresa aqui.</p>
             </div>
             <Button asChild variant="outline">
-              <Link href="/settings">Review plans</Link>
+              <Link href="/settings">Ver planos</Link>
             </Button>
           </CardContent>
         </Card>
       )}
       {data.portfolioReadiness ? (
         <div className="grid gap-4 md:grid-cols-4">
-          <KpiCard label="Portfolio opportunity" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
-          <KpiCard label="Portfolio risk" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
-          <KpiCard label="Portfolio fit" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
-          <KpiCard label="Analyzed theses" value={formatNumber(data.projectSignalsCount)} />
+          <KpiCard label="Oportunidade do portfólio" value={formatNumber(data.portfolioReadiness.averageOpportunityScore)} />
+          <KpiCard label="Risco do portfólio" value={formatNumber(data.portfolioReadiness.averageRiskScore)} />
+          <KpiCard label="Fit do portfólio" value={formatNumber(data.portfolioReadiness.averageFitScore)} />
+          <KpiCard label="Teses analisadas" value={formatNumber(data.projectSignalsCount)} />
         </div>
       ) : null}
       <Dialog open={isTourOpen} onOpenChange={setIsTourOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Optional tour</DialogTitle>
+            <DialogTitle>Tour opcional</DialogTitle>
             <DialogDescription>
-              A quick map of the main operating areas. Nothing here changes your workspace.
+              Um mapa rápido das principais áreas operacionais. Nada aqui altera sua área de trabalho.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -175,27 +175,27 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Project board</CardTitle>
+            <CardTitle>Quadro de projetos</CardTitle>
           </CardHeader>
           <CardContent>
             {!details ? (
-              <p className="text-sm text-muted-foreground">Loading project signals in background...</p>
+              <p className="text-sm text-muted-foreground">Carregando sinais de projetos em segundo plano...</p>
             ) : details.projectSignals.length === 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Run market analysis on one project to start the board.</p>
+                <p className="text-sm text-muted-foreground">Rode análise de mercado em um projeto para iniciar o quadro.</p>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/projects">Open projects</Link>
+                  <Link href="/projects">Abrir projetos</Link>
                 </Button>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Opportunity</TableHead>
-                    <TableHead>Risk</TableHead>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Oportunidade</TableHead>
+                    <TableHead>Risco</TableHead>
                     <TableHead>Fit</TableHead>
-                    <TableHead>Confidence</TableHead>
+                    <TableHead>Confiança</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -220,24 +220,24 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Tracked games</CardTitle>
+            <CardTitle>Jogos acompanhados</CardTitle>
           </CardHeader>
           <CardContent>
             {!details ? (
-              <p className="text-sm text-muted-foreground">Loading saved games in background...</p>
+              <p className="text-sm text-muted-foreground">Carregando jogos salvos em segundo plano...</p>
             ) : details.trackedGames.length === 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">No games saved yet. Start with a shortlist.</p>
+                <p className="text-sm text-muted-foreground">Nenhum jogo salvo ainda. Comece com uma shortlist.</p>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/games">Build a shortlist</Link>
+                  <Link href="/games">Criar shortlist</Link>
                 </Button>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Game</TableHead>
-                    <TableHead>Reviews</TableHead>
+                    <TableHead>Jogo</TableHead>
+                    <TableHead>Avaliações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -259,17 +259,17 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Recent launches</CardTitle>
+            <CardTitle>Lançamentos recentes</CardTitle>
           </CardHeader>
           <CardContent>
             {!details ? (
-              <p className="text-sm text-muted-foreground">Loading recent launches in background...</p>
+              <p className="text-sm text-muted-foreground">Carregando lançamentos recentes em segundo plano...</p>
             ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Game</TableHead>
-                  <TableHead>Release date</TableHead>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Data de lançamento</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -293,17 +293,17 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Top current thesis</CardTitle>
+            <CardTitle>Principal tese atual</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-lg font-semibold">{data.portfolioReadiness.topThesis.projectName}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Stage: {data.portfolioReadiness.topThesis.stage.replaceAll("_", " ")} · Opportunity {formatNumber(data.portfolioReadiness.topThesis.opportunityScore)} · Fit {formatNumber(data.portfolioReadiness.topThesis.fitScore)}
+                Estágio: {data.portfolioReadiness.topThesis.stage.replaceAll("_", " ")} · Oportunidade {formatNumber(data.portfolioReadiness.topThesis.opportunityScore)} · Fit {formatNumber(data.portfolioReadiness.topThesis.fitScore)}
               </p>
             </div>
             <Button asChild>
-              <Link href={`/projects/${data.portfolioReadiness.topThesis.projectId}`}>Open thesis</Link>
+              <Link href={`/projects/${data.portfolioReadiness.topThesis.projectId}`}>Abrir tese</Link>
             </Button>
           </CardContent>
         </Card>
@@ -312,17 +312,17 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Top revenue</CardTitle>
+            <CardTitle>Maiores receitas</CardTitle>
           </CardHeader>
           <CardContent>
             {!details ? (
-              <p className="text-sm text-muted-foreground">Loading revenue ranking in background...</p>
+              <p className="text-sm text-muted-foreground">Carregando ranking de receita em segundo plano...</p>
             ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Game</TableHead>
-                  <TableHead>Estimated net revenue</TableHead>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Receita líquida estimada</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -344,17 +344,17 @@ export function DashboardClient() {
         <Card className="overflow-hidden">
           <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
           <CardHeader>
-            <CardTitle>Fastest review growth</CardTitle>
+            <CardTitle>Maior crescimento de avaliações</CardTitle>
           </CardHeader>
           <CardContent>
             {!details ? (
-              <p className="text-sm text-muted-foreground">Loading growth signals in background...</p>
+              <p className="text-sm text-muted-foreground">Carregando sinais de crescimento em segundo plano...</p>
             ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Game</TableHead>
-                  <TableHead>Total reviews</TableHead>
+                  <TableHead>Jogo</TableHead>
+                  <TableHead>Total de avaliações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

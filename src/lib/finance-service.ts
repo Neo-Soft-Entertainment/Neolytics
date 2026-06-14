@@ -2464,7 +2464,7 @@ export async function createProjectMilestone(params: {
   });
 
   if (!project) {
-    throw new Error("Project not found.");
+    throw new Error("Projeto não encontrado.");
   }
 
   await db.projectMilestone.create({

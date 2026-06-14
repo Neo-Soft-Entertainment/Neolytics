@@ -120,7 +120,7 @@ export function CompanyCompliancePanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to create compliance item.");
+      setError(payload?.message ?? "Não foi possível criar o item de conformidade.");
       return;
     }
 
@@ -133,21 +133,21 @@ export function CompanyCompliancePanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Compliance control center</CardTitle>
+          <CardTitle>Central de controle de conformidade</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm md:grid-cols-4">
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Total items</p>
+            <p className="text-muted-foreground">Itens totais</p>
             <p className="mt-1 text-2xl font-semibold">{complianceItems.length}</p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Open items</p>
+            <p className="text-muted-foreground">Itens abertos</p>
             <p className="mt-1 text-2xl font-semibold">
               {complianceItems.filter((item) => item.status === "PENDING" || item.status === "IN_PROGRESS").length}
             </p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Overdue</p>
+            <p className="text-muted-foreground">Vencidos</p>
             <p className="mt-1 text-2xl font-semibold">
               {
                 complianceItems.filter((item) => {
@@ -161,7 +161,7 @@ export function CompanyCompliancePanel({
             </p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Completed</p>
+            <p className="text-muted-foreground">Concluídos</p>
             <p className="mt-1 text-2xl font-semibold">
               {complianceItems.filter((item) => item.status === "COMPLETED").length}
             </p>
@@ -171,7 +171,7 @@ export function CompanyCompliancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>Create compliance item</CardTitle>
+          <CardTitle>Criar item de conformidade</CardTitle>
         </CardHeader>
         <CardContent>
           <form
@@ -183,11 +183,11 @@ export function CompanyCompliancePanel({
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="compliance-title">Title</Label>
-              <Input disabled={!canManage || isCreating} id="compliance-title" name="title" placeholder="Renew tax certificate" />
+              <Label htmlFor="compliance-title">Título</Label>
+              <Input disabled={!canManage || isCreating} id="compliance-title" name="title" placeholder="Renovar certificado fiscal" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-type">Type</Label>
+              <Label htmlFor="compliance-type">Tipo</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
@@ -202,18 +202,18 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-due-date">Due date</Label>
+              <Label htmlFor="compliance-due-date">Vencimento</Label>
               <Input disabled={!canManage || isCreating} id="compliance-due-date" name="dueAt" type="date" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-entity">Legal entity</Label>
+              <Label htmlFor="compliance-entity">Entidade legal</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="compliance-entity"
                 name="legalEntityId"
               >
-                <option value="">None</option>
+                <option value="">Nenhuma</option>
                 {legalEntities.map((entity) => (
                   <option key={entity.id} value={entity.id}>
                     {entity.name}
@@ -222,14 +222,14 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-project">Project</Label>
+              <Label htmlFor="compliance-project">Projeto</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="compliance-project"
                 name="projectId"
               >
-                <option value="">None</option>
+                <option value="">Nenhum</option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -238,14 +238,14 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-owner">Owner</Label>
+              <Label htmlFor="compliance-owner">Responsável</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="compliance-owner"
                 name="ownerUserId"
               >
-                <option value="">Unassigned</option>
+                <option value="">Sem responsável</option>
                 {members.map((member) => (
                   <option key={member.user.id} value={member.user.id}>
                     {member.user.name || member.user.email}
@@ -254,14 +254,14 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-source-document">Source document</Label>
+              <Label htmlFor="compliance-source-document">Documento de origem</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="compliance-source-document"
                 name="sourceDocumentId"
               >
-                <option value="">None</option>
+                <option value="">Nenhum</option>
                 {documents.map((document) => (
                   <option key={document.id} value={document.id}>
                     {document.title}
@@ -270,12 +270,12 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2 md:col-span-2 xl:col-span-3">
-              <Label htmlFor="compliance-notes">Notes</Label>
-              <Textarea disabled={!canManage || isCreating} id="compliance-notes" name="notes" placeholder="What needs to be delivered or checked?" />
+              <Label htmlFor="compliance-notes">Observações</Label>
+              <Textarea disabled={!canManage || isCreating} id="compliance-notes" name="notes" placeholder="O que precisa ser entregue ou conferido?" />
             </div>
             <div className="md:col-span-2 xl:col-span-3">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Creating..." : "Create compliance item"}
+                {isCreating ? "Criando..." : "Criar item de conformidade"}
               </Button>
             </div>
           </form>
@@ -285,16 +285,16 @@ export function CompanyCompliancePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>Compliance backlog</CardTitle>
+          <CardTitle>Backlog de conformidade</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="compliance-query">Search</Label>
+              <Label htmlFor="compliance-query">Pesquisar</Label>
               <Input
                 id="compliance-query"
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by title, owner, entity, project, or notes"
+                placeholder="Pesquisar por título, responsável, entidade, projeto ou observações"
                 value={query}
               />
             </div>
@@ -306,7 +306,7 @@ export function CompanyCompliancePanel({
                 onChange={(event) => setStatusFilter(event.target.value)}
                 value={statusFilter}
               >
-                <option value="ALL">All</option>
+                <option value="ALL">Todos</option>
                 {complianceStatuses.map((statusOption) => (
                   <option key={statusOption} value={statusOption}>
                     {statusOption}
@@ -315,14 +315,14 @@ export function CompanyCompliancePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compliance-type-filter">Type</Label>
+              <Label htmlFor="compliance-type-filter">Tipo</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 id="compliance-type-filter"
                 onChange={(event) => setTypeFilter(event.target.value)}
                 value={typeFilter}
               >
-                <option value="ALL">All</option>
+                <option value="ALL">Todos</option>
                 {complianceTypes.map((type) => (
                   <option key={type} value={type}>
                     {type}
@@ -335,10 +335,10 @@ export function CompanyCompliancePanel({
             <TableHeader>
               <TableRow>
                 <TableHead>Item</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Scope</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Due date</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Escopo</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead>Vencimento</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -349,7 +349,7 @@ export function CompanyCompliancePanel({
               {filteredItems.length === 0 ? (
                 <TableRow>
                   <TableCell className="text-muted-foreground" colSpan={6}>
-                    No compliance items matched the current filters.
+                    Nenhum item de conformidade corresponde aos filtros atuais.
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -396,11 +396,11 @@ function ComplianceRow({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to update compliance item.");
+      setMessage(payload?.message ?? "Não foi possível atualizar o item de conformidade.");
       return;
     }
 
-    setMessage("Saved.");
+    setMessage("Salvo.");
     router.refresh();
   }
 
@@ -418,7 +418,7 @@ function ComplianceRow({
       <TableCell>
         <Badge variant="secondary">{item.type}</Badge>
       </TableCell>
-      <TableCell>{item.project?.name || item.legalEntity?.name || "Organization"}</TableCell>
+      <TableCell>{item.project?.name || item.legalEntity?.name || "Organização"}</TableCell>
       <TableCell>{item.ownerUser?.name || item.ownerUser?.email || "Unassigned"}</TableCell>
       <TableCell>{item.dueAt ? new Date(item.dueAt).toLocaleDateString() : "—"}</TableCell>
       <TableCell>
@@ -436,7 +436,7 @@ function ComplianceRow({
             ))}
           </select>
           <Button disabled={!canManage || isSaving} onClick={saveStatus} size="sm" type="button">
-            {isSaving ? "..." : "Save"}
+            {isSaving ? "..." : "Salvar"}
           </Button>
         </div>
       </TableCell>

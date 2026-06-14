@@ -111,6 +111,6 @@ export async function POST(request: Request) {
       image: user.image
     });
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Unable to upload avatar.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o avatar.");
   }
 }

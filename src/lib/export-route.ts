@@ -45,7 +45,7 @@ export async function createWorkbookDownloadResponse(
     }
 
     if (context && !canExportData(context.organizationRole, context.organizationPermissions)) {
-      return badRequest("This role cannot export organization data.");
+      return badRequest("Este cargo não pode exportar dados da organização.");
     }
 
     if (format === "pdf") {
@@ -85,7 +85,7 @@ export async function createWorkbookDownloadResponse(
       return entitlementErrorResponse(error);
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to export workbook.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
   }
 }
 
@@ -106,7 +106,7 @@ export async function createGoogleSheetsPublishResponse(
     const context = await getApiContext();
 
     if (context && !canExportData(context.organizationRole, context.organizationPermissions)) {
-      return badRequest("This role cannot export organization data.");
+      return badRequest("Este cargo não pode exportar dados da organização.");
     }
 
     const workbook = await buildWorkbook();
@@ -128,6 +128,6 @@ export async function createGoogleSheetsPublishResponse(
       return badRequest(error.message);
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to publish Google Sheets export.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível publicar a exportação no Google Sheets.");
   }
 }

@@ -29,7 +29,7 @@ export async function POST(
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
-    return forbidden("This role cannot export data products.");
+    return forbidden("Este cargo não pode exportar produtos de dados.");
   }
 
   try {
@@ -71,6 +71,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid export payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to export data product.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível exportar o produto de dados.");
   }
 }

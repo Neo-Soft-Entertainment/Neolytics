@@ -14,7 +14,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot import Demo Manager data.");
+    return forbidden("Visualizadores não podem importar dados do Demo Manager.");
   }
 
   try {
@@ -23,7 +23,7 @@ export async function POST(
     const data = await importDemoManager(context.workspace.id, projectId, body);
 
     if (!data) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(data);
@@ -32,6 +32,6 @@ export async function POST(
       return badRequest(error.message || "Invalid Demo Manager JSON.");
     }
 
-    return serverError("Unable to import Demo Manager data.");
+    return serverError("Não foi possível importar os dados do Demo Manager.");
   }
 }

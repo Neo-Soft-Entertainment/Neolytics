@@ -27,7 +27,7 @@ export async function GET() {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_privacy_incidents")) {
-    return forbidden("This role cannot access incidents.");
+    return forbidden("Este cargo não pode acessar incidentes.");
   }
 
   const incidents = await db.privacyIncident.findMany({
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_privacy_incidents")) {
-    return forbidden("This role cannot create incidents.");
+    return forbidden("Este cargo não pode criar incidentes.");
   }
 
   try {
@@ -94,6 +94,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid incident payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create incident.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o incidente.");
   }
 }

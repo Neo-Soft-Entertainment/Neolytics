@@ -52,6 +52,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid royalty payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create royalty agreement.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o acordo de royalties.");
   }
 }

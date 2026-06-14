@@ -27,6 +27,6 @@ export async function PATCH(
 
     return ok(consent);
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Unable to revoke consent.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível revogar o consentimento.");
   }
 }

@@ -997,7 +997,7 @@ export async function buildProjectWorkbook(projectId: string, workspaceId: strin
   const project = await getProjectById(projectId, workspaceId);
 
   if (!project) {
-    throw new Error("Project not found.");
+    throw new Error("Projeto não encontrado.");
   }
 
   const latestGdd = project.gdds[0] ?? null;

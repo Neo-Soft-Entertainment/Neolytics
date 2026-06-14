@@ -256,7 +256,7 @@ export async function createCommunityPost(params: {
     embeds: [
       {
         title: "Community update",
-        description: "Open Neolytics to review the internal post.",
+        description: "Abra a Neolytics para revisar a postagem interna.",
         color: 3978097,
         fields: [
           {
@@ -297,7 +297,7 @@ export async function deleteCommunityPost(params: {
   });
 
   if (post.authorId !== params.userId && !(post.organizationId === params.organizationId && params.canManage)) {
-    throw new Error("You can only delete your own community posts.");
+    throw new Error("Você só pode excluir seus próprios posts da comunidade.");
   }
 
   await db.communityPost.delete({

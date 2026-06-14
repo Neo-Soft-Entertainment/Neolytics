@@ -33,6 +33,6 @@ export async function POST(request: Request) {
       return badRequest(error.message);
     }
 
-    return serverError("Unable to accept invitation.");
+    return serverError("Não foi possível aceitar o convite.");
   }
 }

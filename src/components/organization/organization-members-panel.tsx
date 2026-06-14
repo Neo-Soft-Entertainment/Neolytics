@@ -22,7 +22,7 @@ function canCopyInvitationToken(token: string) {
 
 function PermissionBadges({ permissions }: { permissions: OrganizationPermission[] }) {
   if (permissions.length === 0) {
-    return <p className="text-xs text-muted-foreground">Role defaults only</p>;
+    return <p className="text-xs text-muted-foreground">Apenas permissões padrão do cargo</p>;
   }
 
   return (
@@ -88,7 +88,7 @@ export function OrganizationMembersPanel({
 
   async function createInvite() {
     if (!email.trim()) {
-      setError("Email is required.");
+      setError("Email é obrigatório.");
       return;
     }
 
@@ -113,7 +113,7 @@ export function OrganizationMembersPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string; token?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create invitation.");
+      setError(payload?.message ?? "Não foi possível criar o convite.");
       return;
     }
 
@@ -123,7 +123,7 @@ export function OrganizationMembersPanel({
     setEmail("");
     updateRole(OrganizationRole.MEMBER);
     setLastInviteUrl(inviteUrl);
-    setMessage("Invitation created. The invite link was copied to your clipboard.");
+    setMessage("Convite criado. O link foi copiado para a área de transferência.");
     router.refresh();
   }
 
@@ -138,11 +138,11 @@ export function OrganizationMembersPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to revoke invitation.");
+      setError(payload?.message ?? "Não foi possível revogar o convite.");
       return;
     }
 
-    setMessage("Invitation revoked.");
+    setMessage("Convite revogado.");
     router.refresh();
   }
 
@@ -151,7 +151,7 @@ export function OrganizationMembersPanel({
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
-          <CardTitle>Organization members ({members.length})</CardTitle>
+          <CardTitle>Membros da organização ({members.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {members.map((member) => (
@@ -162,7 +162,7 @@ export function OrganizationMembersPanel({
               </p>
               <PermissionBadges permissions={member.permissions} />
               <p className="mt-1 text-muted-foreground">
-                Joined {new Date(member.joinedAt).toLocaleDateString()}
+                Entrou em {new Date(member.joinedAt).toLocaleDateString()}
               </p>
             </div>
           ))}
@@ -171,14 +171,14 @@ export function OrganizationMembersPanel({
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
-          <CardTitle>Pending invitations ({invitations.length})</CardTitle>
+          <CardTitle>Convites pendentes ({invitations.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {invitations.length > 0 ? invitations.map((invitation) => (
             <div key={invitation.id} className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
               <p className="font-medium">{invitation.email}</p>
               <p className="mt-1 text-muted-foreground">
-                Role: {invitation.role} · Expires {new Date(invitation.expiresAt).toLocaleDateString()}
+                Cargo: {invitation.role} · Expira em {new Date(invitation.expiresAt).toLocaleDateString()}
               </p>
               <PermissionBadges permissions={invitation.permissions} />
               <div className="mt-3 flex flex-wrap gap-2">
@@ -188,32 +188,32 @@ export function OrganizationMembersPanel({
                     onClick={async () => {
                       const inviteUrl = `${window.location.origin}/invite/${invitation.token}`;
                       await navigator.clipboard.writeText(inviteUrl).catch(() => {});
-                      setMessage("Invitation link copied.");
+                      setMessage("Link do convite copiado.");
                     }}
                   >
-                    Copy link
+                    Copiar link
                   </Button>
                 ) : (
                   <p className="rounded-full border border-white/10 px-3 py-2 text-xs text-muted-foreground">
-                    Link is hidden. Revoke and recreate to copy a new invite.
+                    O link está oculto. Revogue e recrie para copiar um novo convite.
                   </p>
                 )}
                 {canManage ? (
                   <Button variant="outline" onClick={() => revokeInvite(invitation.id)}>
-                    Revoke
+                    Revogar
                   </Button>
                 ) : null}
               </div>
             </div>
           )) : (
-            <p className="text-muted-foreground">No pending invitations.</p>
+            <p className="text-muted-foreground">Nenhum convite pendente.</p>
           )}
         </CardContent>
       </Card>
       <Card className="overflow-hidden">
         <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
         <CardHeader>
-          <CardTitle>Invite teammate</CardTitle>
+          <CardTitle>Convidar colega de equipe</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
           <div className="space-y-2">
@@ -227,31 +227,31 @@ export function OrganizationMembersPanel({
             />
           </div>
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>Cargo</Label>
             <Select value={role} onValueChange={(value) => updateRole(value as OrganizationRole)} disabled={!canManage}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={OrganizationRole.ADMIN}>ADMIN</SelectItem>
-                <SelectItem value={OrganizationRole.MEMBER}>MEMBER</SelectItem>
-                <SelectItem value={OrganizationRole.VIEWER}>VIEWER</SelectItem>
+                <SelectItem value={OrganizationRole.ADMIN}>Administrador</SelectItem>
+                <SelectItem value={OrganizationRole.MEMBER}>Membro</SelectItem>
+                <SelectItem value={OrganizationRole.VIEWER}>Visualizador</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-end">
             <Button className="w-full" disabled={!canManage || isSubmitting} onClick={createInvite}>
-              {isSubmitting ? "Inviting..." : "Invite"}
+              {isSubmitting ? "Convidando..." : "Convidar"}
             </Button>
           </div>
           <div className="space-y-3 rounded-lg border border-white/10 bg-white/35 p-3 lg:col-span-3 dark:bg-white/[0.03]">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium">Permissions</p>
-                <p className="mt-1 text-xs text-muted-foreground">Access applied when the invitation is accepted.</p>
+                <p className="text-sm font-medium">Permissões</p>
+                <p className="mt-1 text-xs text-muted-foreground">Acesso aplicado quando o convite for aceito.</p>
               </div>
               <Badge variant="secondary" className="w-fit border-white/10 bg-white/55 dark:bg-white/[0.04]">
-                {permissions.length} selected
+                {permissions.length} selecionadas
               </Badge>
             </div>
             <div className="grid gap-1.5 md:grid-cols-2">
@@ -277,7 +277,7 @@ export function OrganizationMembersPanel({
           </div>
           {lastInviteUrl ? (
             <div className="space-y-2 lg:col-span-3">
-              <Label htmlFor="invite-link">Last invite link</Label>
+              <Label htmlFor="invite-link">Último link de convite</Label>
               <div className="flex flex-col gap-2 md:flex-row">
                 <Input id="invite-link" readOnly value={lastInviteUrl} />
                 <Button
@@ -285,17 +285,17 @@ export function OrganizationMembersPanel({
                   variant="outline"
                   onClick={async () => {
                     await navigator.clipboard.writeText(lastInviteUrl).catch(() => {});
-                    setMessage("Invitation link copied.");
+                    setMessage("Link do convite copiado.");
                   }}
                 >
-                  Copy link
+                  Copiar link
                 </Button>
               </div>
             </div>
           ) : null}
           {!canManage ? (
             <p className="text-sm text-muted-foreground lg:col-span-3">
-              Only organization admins can invite new members.
+              Apenas administradores da organização podem convidar novos membros.
             </p>
           ) : null}
           {message ? <p className="text-sm text-emerald-600 lg:col-span-3">{message}</p> : null}

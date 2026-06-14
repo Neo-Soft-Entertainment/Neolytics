@@ -9,7 +9,7 @@ const publicApiWindowMs = 60 * 1000;
 const publicApiMaxAttempts = 120;
 
 export class AuthRateLimitError extends Error {
-  constructor(message = "Too many authentication attempts. Try again later.") {
+  constructor(message = "Muitas tentativas de autenticação. Tente novamente mais tarde.") {
     super(message);
     this.name = "AuthRateLimitError";
   }
@@ -103,7 +103,7 @@ export async function assertPublicApiRateLimit(key: string) {
 
   if (existing && now.getTime() - existing.lastAttemptAt.getTime() <= publicApiWindowMs) {
     if (existing.attempts >= publicApiMaxAttempts) {
-      throw new AuthRateLimitError("Too many requests. Try again later.");
+      throw new AuthRateLimitError("Muitas requisições. Tente novamente mais tarde.");
     }
 
     await db.authRateLimit.update({

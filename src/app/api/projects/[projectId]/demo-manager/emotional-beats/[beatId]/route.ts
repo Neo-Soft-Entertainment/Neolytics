@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit emotional beats.");
+    return forbidden("Visualizadores não podem editar beats emocionais.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid emotional beat payload.");
     }
 
-    return serverError("Unable to update emotional beat.");
+    return serverError("Não foi possível atualizar o beat emocional.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete emotional beats.");
+    return forbidden("Visualizadores não podem excluir beats emocionais.");
   }
 
   const { projectId, beatId } = await params;

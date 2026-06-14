@@ -59,7 +59,7 @@ export function SignupForm({
       email: invitedEmail ?? "",
       password: "",
       organizationName: "",
-      workspaceName: "Default Workspace",
+      workspaceName: "Área de trabalho padrão",
       plan: SubscriptionPlan.FREE
     }
   });
@@ -117,7 +117,7 @@ export function SignupForm({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to create account.");
+      setError(payload?.message ?? "Não foi possível criar a conta.");
       return;
     }
 
@@ -164,7 +164,7 @@ export function SignupForm({
         <CardTitle>{inviteToken ? t("auth.joinOrganization") : t("auth.createWorkspace")}</CardTitle>
         <CardDescription>
           {inviteToken
-            ? `Create your account and join ${invitedOrganizationName ?? "this organization"}.`
+            ? `Crie sua conta e entre em ${invitedOrganizationName ?? "esta organização"}.`
             : t("auth.signupDescription")}
         </CardDescription>
       </CardHeader>
@@ -249,13 +249,13 @@ export function SignupForm({
           </div>
           {inviteToken ? (
             <div className="rounded-2xl border bg-muted/30 p-3 text-sm text-muted-foreground md:col-span-2">
-              Joining
+              Entrando em
               {" "}
-              <span className="font-medium text-foreground">{invitedOrganizationName ?? "this organization"}</span>
+              <span className="font-medium text-foreground">{invitedOrganizationName ?? "esta organização"}</span>
               {invitedEmail ? (
                 <>
                   {" "}
-                  with
+                  com
                   {" "}
                   <span className="font-medium text-foreground">{invitedEmail}</span>.
                 </>
@@ -272,7 +272,7 @@ export function SignupForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="workspaceName">{t("auth.firstWorkspace")}</Label>
-                <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
+                <Input id="workspaceName" placeholder="Portfólio principal" {...form.register("workspaceName")} />
                 {form.formState.errors.workspaceName ? (
                   <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
                 ) : null}
@@ -301,7 +301,7 @@ export function SignupForm({
                           <p className="text-sm font-semibold">{plan.priceLabel}</p>
                         </div>
                         <p className="mt-3 text-xs text-muted-foreground">
-                          {planId === SubscriptionPlan.FREE ? "Starts immediately." : "Starts with a 7-day free trial in Stripe Checkout."}
+                          {planId === SubscriptionPlan.FREE ? "Começa imediatamente." : "Começa com 7 dias de teste gratuito no Stripe Checkout."}
                         </p>
                       </button>
                     );

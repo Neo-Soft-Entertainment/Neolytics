@@ -34,6 +34,6 @@ export async function DELETE(
       return forbidden(error.message);
     }
 
-    return serverError("Unable to delete community post.");
+    return serverError("Não foi possível excluir a postagem da comunidade.");
   }
 }

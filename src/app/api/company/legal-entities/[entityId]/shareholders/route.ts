@@ -43,6 +43,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid shareholder payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to create shareholder.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o sócio.");
   }
 }

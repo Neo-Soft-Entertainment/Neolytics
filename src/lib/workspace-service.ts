@@ -205,106 +205,106 @@ export async function generateBasicMarketReport(params: {
     ? {
         boardDirective:
           segment.opportunityScore >= 70
-            ? "Treat this as a board-level growth bet, but attach tighter launch checkpoints and a stronger production readiness review."
-            : "Treat this as a controlled thesis. Push for sharper positioning before committing major production budget.",
+            ? "Trate isso como uma aposta de crescimento em nível de board, mas inclua checkpoints de lançamento mais rigorosos e uma revisão de prontidão de produção mais forte."
+            : "Trate isso como uma tese controlada. Busque um posicionamento mais claro antes de comprometer um grande orçamento de produção.",
         commercialDirective:
           segment.revenueConcentrationPercent >= 65
-            ? "Commercial planning should assume a winner-takes-most shelf, so messaging, capsule quality, and launch timing must be sharper than the median segment entry."
-            : "Commercial planning can support a mid-tier outcome, so the team can win through focus, clarity, and disciplined pricing rather than blockbuster scope.",
+            ? "O planejamento comercial deve assumir uma prateleira em que poucos vencedores capturam a maior parte, então mensagem, qualidade da cápsula e timing de lançamento precisam ser melhores que a entrada mediana do segmento."
+            : "O planejamento comercial pode sustentar um resultado intermediário, então a equipe pode vencer por foco, clareza e precificação disciplinada em vez de escopo blockbuster.",
         operatingDirective:
           segment.executionBarScore >= 70
-            ? "Finance, approvals, and milestone governance should be in place before the production plan scales."
-            : "The operating burden is moderate enough to support a leaner studio setup while the thesis is still being proven."
+            ? "Financeiro, aprovações e governança de milestones devem estar prontos antes do plano de produção escalar."
+            : "A carga operacional é moderada o suficiente para sustentar uma estrutura de estúdio mais enxuta enquanto a tese ainda é provada."
       }
     : null;
 
   const content = [
     `# ${params.title}`,
     "",
-    "## Summary",
-    `This report summarizes ${topGames.length} matched Steam games${params.genre ? ` in the ${params.genre} segment` : ""}${params.tag ? ` tagged with ${params.tag}` : ""}.`,
+    "## Resumo",
+    `Este relatório resume ${topGames.length} jogos da Steam correspondentes${params.genre ? ` no segmento ${params.genre}` : ""}${params.tag ? ` com a tag ${params.tag}` : ""}.`,
     "",
-    "## Market Depth",
-    `- Segment size: ${segment.segmentSize} tracked games`,
-    `- Market size: ${segment.marketSizeLabel} (${(segment.marketSizeCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })})`,
-    `- Median revenue: ${(segment.medianRevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
-    `- P75 revenue: ${(segment.p75RevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
-    `- Avg review score: ${segment.averageReviewScore.toFixed(1)}%`,
-    `- Launch cohorts: ${segment.launches90} in 90d, ${segment.launches180} in 180d, ${segment.launches365} in 365d`,
+    "## Profundidade de mercado",
+    `- Tamanho do segmento: ${segment.segmentSize} jogos acompanhados`,
+    `- Tamanho de mercado: ${segment.marketSizeLabel} (${(segment.marketSizeCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })})`,
+    `- Receita mediana: ${(segment.medianRevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
+    `- Receita P75: ${(segment.p75RevenueCents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}`,
+    `- Nota média das avaliações: ${segment.averageReviewScore.toFixed(1)}%`,
+    `- Coortes de lançamento: ${segment.launches90} em 90d, ${segment.launches180} em 180d, ${segment.launches365} em 365d`,
     "",
-    "## Competition Layer",
-    `- Crowdedness score: ${segment.crowdednessScore}`,
-    `- Revenue concentration: ${segment.revenueConcentrationPercent}% in the top 3 revenue leaders`,
-    `- Quality bar: ${segment.qualityBarScore}`,
-    `- Premium share: ${segment.premiumSharePercent}%`,
+    "## Camada competitiva",
+    `- Score de saturação: ${segment.crowdednessScore}`,
+    `- Concentração de receita: ${segment.revenueConcentrationPercent}% nos 3 líderes de receita`,
+    `- Barra de qualidade: ${segment.qualityBarScore}`,
+    `- Participação premium: ${segment.premiumSharePercent}%`,
     "",
-    "## Opportunity Layer",
-    `- Opportunity score: ${segment.opportunityScore}`,
-    `- Revenue potential: ${segment.revenuePotentialScore}`,
-    `- Underserved score: ${segment.underservedScore}`,
-    `- Execution bar: ${segment.executionBarScore}`,
-    `- Risk score: ${segment.riskScore}`,
-    `- Confidence: ${segment.confidenceLabel} (${segment.confidenceScore})`,
+    "## Camada de oportunidade",
+    `- Score de oportunidade: ${segment.opportunityScore}`,
+    `- Potencial de receita: ${segment.revenuePotentialScore}`,
+    `- Score de nicho mal atendido: ${segment.underservedScore}`,
+    `- Barra de execução: ${segment.executionBarScore}`,
+    `- Score de risco: ${segment.riskScore}`,
+    `- Confiança: ${segment.confidenceLabel} (${segment.confidenceScore})`,
     "",
-    "## Strategic Read",
+    "## Leitura estratégica",
     segment.opportunityScore >= 70
-      ? "This segment shows strong upside and the data suggests room for a sharp entrant, but the team still has to clear a meaningful execution bar."
-      : "This segment is viable, but the data suggests the edge has to come from positioning and execution rather than from a structurally open market.",
+      ? "Este segmento mostra upside forte e os dados sugerem espaço para uma entrada bem posicionada, mas a equipe ainda precisa superar uma barra de execução relevante."
+      : "Este segmento é viável, mas os dados sugerem que a vantagem precisa vir de posicionamento e execução, não de um mercado estruturalmente aberto.",
     segment.revenueConcentrationPercent >= 65
-      ? "Revenue is concentrated in a few leaders, so beating the winners on shelf clarity and quality is more important than simply matching the average feature set."
-      : "Revenue is relatively spread across the segment, which means there is a healthier path for mid-tier entrants to carve out a business.",
+      ? "A receita está concentrada em poucos líderes, então superar os vencedores em clareza de prateleira e qualidade é mais importante que apenas igualar o conjunto médio de features."
+      : "A receita é relativamente distribuída pelo segmento, o que cria um caminho mais saudável para entradas intermediárias construírem negócio.",
     ...(aiNarrative
       ? [
           "",
-          "## AI Strategic Read",
+          "## Leitura estratégica da IA",
           aiNarrative.executiveSummary,
           "",
-          "### Demand drivers",
+          "### Gatilhos de demanda",
           aiNarrative.demandDrivers,
           "",
-          "### Saturation",
+          "### Saturação",
           aiNarrative.saturationRead,
           "",
-          "### Pricing",
+          "### Precificação",
           aiNarrative.pricingRead,
           "",
-          "### Launch window",
+          "### Janela de lançamento",
           aiNarrative.launchWindowAdvice,
           "",
-          "### Monetization",
+          "### Monetização",
           aiNarrative.monetizationRead,
           "",
-          "### Confidence",
+          "### Confiança",
           aiNarrative.confidenceNarrative,
           "",
-          "### Recommended next moves",
+          "### Próximos movimentos recomendados",
           ...aiNarrative.actionItems.map((item) => `- ${item}`)
         ]
       : []),
     ...(operatingBrief
       ? [
           "",
-          "## Pro Operating Brief",
+          "## Brief operacional Pro",
           operatingBrief.boardDirective,
           "",
-          "### Commercial directive",
+          "### Diretriz comercial",
           operatingBrief.commercialDirective,
           "",
-          "### Operating directive",
+          "### Diretriz operacional",
           operatingBrief.operatingDirective
         ]
       : []),
     "",
-    "## Price Distribution",
-    `- Under $10: ${segment.priceBandDistribution.under10}`,
+    "## Distribuição de preço",
+    `- Abaixo de $10: ${segment.priceBandDistribution.under10}`,
     `- $10-$20: ${segment.priceBandDistribution.between10And20}`,
     `- $20-$30: ${segment.priceBandDistribution.between20And30}`,
     `- $30+: ${segment.priceBandDistribution.over30}`,
     "",
-    "## Top estimated net revenue titles",
+    "## Títulos com maior receita líquida estimada",
     ...leaders.map((game, index) => {
       const revenue = Number(game.revenueEstimates[0]?.medianNetRevenueCents ?? 0n);
-      return `${index + 1}. ${game.name} - estimated net revenue ${(revenue / 100).toLocaleString("en-US", {
+      return `${index + 1}. ${game.name} - receita líquida estimada ${(revenue / 100).toLocaleString("en-US", {
         style: "currency",
         currency: "USD",
         maximumFractionDigits: 0
@@ -340,11 +340,11 @@ export async function generateBasicMarketReport(params: {
   });
 
   await notifyOrganizationDiscordWebhook(params.organizationId, {
-    content: `Market report **${report.title}** is ready in Neolytics.`,
+    content: `Relatório de mercado **${report.title}** pronto na Neolytics.`,
     embeds: [
       {
-        title: "Market report generated",
-        description: `Open ${appUrl}/reports to review **${report.title}**.`,
+        title: "Relatório de mercado gerado",
+        description: `Abra ${appUrl}/reports para revisar **${report.title}**.`,
         color: 10181046,
         timestamp: new Date().toISOString()
       }

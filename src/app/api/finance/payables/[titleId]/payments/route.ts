@@ -57,6 +57,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid payable payment payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create payable payment.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível registrar o pagamento a pagar.");
   }
 }

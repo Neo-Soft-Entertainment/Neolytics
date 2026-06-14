@@ -48,20 +48,20 @@ export function CompanyAuditPanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Audit activity</CardTitle>
+          <CardTitle>Atividade de auditoria</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="audit-query">Search</Label>
+            <Label htmlFor="audit-query">Pesquisar</Label>
             <Input
               id="audit-query"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by action, user, entity, or metadata"
+              placeholder="Pesquisar por ação, usuário, entidade ou metadados"
               value={query}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="audit-entity-type">Entity type</Label>
+            <Label htmlFor="audit-entity-type">Tipo de entidade</Label>
             <select
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               id="audit-entity-type"
@@ -70,7 +70,7 @@ export function CompanyAuditPanel({
             >
               {entityTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {type === "ALL" ? "Todos" : type}
                 </option>
               ))}
             </select>
@@ -83,11 +83,11 @@ export function CompanyAuditPanel({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>When</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Entity</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Metadata</TableHead>
+                <TableHead>Quando</TableHead>
+                <TableHead>Ação</TableHead>
+                <TableHead>Entidade</TableHead>
+                <TableHead>Usuário</TableHead>
+                <TableHead>Metadados</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -101,7 +101,7 @@ export function CompanyAuditPanel({
                       <p className="text-xs text-muted-foreground">{event.entityId}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{event.user?.name || event.user?.email || "System"}</TableCell>
+                  <TableCell>{event.user?.name || event.user?.email || "Sistema"}</TableCell>
                   <TableCell className="max-w-[320px]">
                     <pre className="whitespace-pre-wrap break-words text-xs text-muted-foreground">
                       {event.metadata ? JSON.stringify(event.metadata, null, 2) : "—"}
@@ -112,7 +112,7 @@ export function CompanyAuditPanel({
               {filteredEvents.length === 0 ? (
                 <TableRow>
                   <TableCell className="text-muted-foreground" colSpan={5}>
-                    No audit events matched the current filters.
+                    Nenhum evento de auditoria corresponde aos filtros atuais.
                   </TableCell>
                 </TableRow>
               ) : null}

@@ -21,11 +21,11 @@ export type CommunityMediaItem = {
 
 function getStorageClient() {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Community media storage is not configured. Add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    throw new Error("O armazenamento de mídia da comunidade não está configurado. Adicione SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.");
   }
 
   if (env.SUPABASE_SERVICE_ROLE_KEY.split(".").length !== 3) {
-    throw new Error("Community media storage key is invalid. Use the Supabase service_role API key.");
+    throw new Error("A chave do armazenamento de mídia da comunidade é inválida. Use a chave de API service_role do Supabase.");
   }
 
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
@@ -59,15 +59,15 @@ async function ensureBucket() {
 
 function validateCommunityImage(file: File) {
   if (file.size <= 0) {
-    throw new Error("Image file is empty.");
+    throw new Error("O arquivo de imagem está vazio.");
   }
 
   if (file.size > maxCommunityImageBytes) {
-    throw new Error("Each image must be 8 MB or smaller.");
+    throw new Error("Cada imagem deve ter 8 MB ou menos.");
   }
 
   if (!allowedCommunityImageTypes.has(file.type)) {
-    throw new Error("Only JPG, PNG, WebP, and GIF images are allowed.");
+    throw new Error("Apenas imagens JPG, PNG, WebP e GIF são permitidas.");
   }
 }
 
@@ -77,7 +77,7 @@ export async function uploadCommunityImages(params: {
   files: File[];
 }) {
   if (params.files.length > 4) {
-    throw new Error("Community posts support up to 4 images.");
+    throw new Error("Posts da comunidade aceitam até 4 imagens.");
   }
 
   const { supabase, bucket } = await ensureBucket();

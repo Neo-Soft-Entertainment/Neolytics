@@ -9,7 +9,7 @@ import { parseJsonBody } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
-  content: z.string().trim().min(1, "Write a comment before sending.").max(2000, "Comments must be 2,000 characters or less.")
+  content: z.string().trim().min(1, "Escreva um comentário antes de enviar.").max(2000, "Comentários devem ter 2.000 caracteres ou menos.")
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ postId: string }> }) {
@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
 
   try {
     if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-      return forbidden("Viewers cannot comment on community posts.");
+      return forbidden("Visualizadores não podem comentar nas postagens da comunidade.");
     }
 
     await assertCanUseFeature({
@@ -53,6 +53,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ pos
       return entitlementErrorResponse(error);
     }
 
-    return serverError("Unable to create community comment.");
+    return serverError("Não foi possível criar o comentário na comunidade.");
   }
 }

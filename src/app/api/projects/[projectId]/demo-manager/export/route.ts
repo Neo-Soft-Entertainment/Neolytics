@@ -20,7 +20,7 @@ export async function GET(
     const data = await exportDemoManager(context.workspace.id, projectId);
 
     if (!data) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return NextResponse.json(data, {
@@ -29,6 +29,6 @@ export async function GET(
       }
     });
   } catch {
-    return serverError("Unable to export Demo Manager data.");
+    return serverError("Não foi possível exportar os dados do Demo Manager.");
   }
 }

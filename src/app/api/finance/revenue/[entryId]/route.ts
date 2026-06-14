@@ -57,6 +57,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid revenue payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update revenue entry.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o lançamento de receita.");
   }
 }

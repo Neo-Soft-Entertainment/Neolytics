@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit dependencies.");
+    return forbidden("Visualizadores não podem editar dependências.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid dependency payload.");
     }
 
-    return serverError("Unable to update dependency.");
+    return serverError("Não foi possível atualizar a dependência.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete dependencies.");
+    return forbidden("Visualizadores não podem excluir dependências.");
   }
 
   const { projectId, dependencyId } = await params;

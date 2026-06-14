@@ -21,19 +21,19 @@ export default async function SetupPage() {
         <NeolyticsBrand />
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Finish your organization setup</CardTitle>
+            <CardTitle>Finalize a configuração da organização</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <p>
-              Your account is live, but it is not attached to an organization with an active workspace yet.
-              Create the first organization now and Neolytics will take you straight into the product.
+              Sua conta está ativa, mas ainda não está vinculada a uma organização com área de trabalho ativa.
+              Crie a primeira organização agora e a Neolytics levará você direto para o produto.
             </p>
             <div className="rounded-2xl border bg-muted/30 p-4">
               <CreateOrganizationForm compact />
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="outline">
-                <Link href="/">Back to home</Link>
+                <Link href="/">Voltar para o início</Link>
               </Button>
               <SignOutButton />
             </div>

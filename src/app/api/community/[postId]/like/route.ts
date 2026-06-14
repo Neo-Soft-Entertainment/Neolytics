@@ -28,6 +28,6 @@ export async function POST(
       return badRequest(error.message);
     }
 
-    return serverError("Unable to update post reaction.");
+    return serverError("Não foi possível atualizar a reação da postagem.");
   }
 }

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     await assertPublicApiRateLimit(getPublicApiRateLimitKey(request, "privacy-consents"));
 
     if (!["OWNER", "ADMIN", "MEMBER"].includes(context.organizationRole)) {
-      return forbidden("This role cannot manage optional consents.");
+      return forbidden("Este cargo não pode gerenciar consentimentos opcionais.");
     }
 
     const body = await parseJsonBody(request, schema);
@@ -56,6 +56,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid consent payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to grant consent.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível conceder o consentimento.");
   }
 }

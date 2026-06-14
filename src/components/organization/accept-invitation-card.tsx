@@ -40,7 +40,7 @@ export function AcceptInvitationCard({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to accept invitation.");
+      setMessage(payload?.message ?? "Não foi possível aceitar o convite.");
       return;
     }
 
@@ -51,18 +51,18 @@ export function AcceptInvitationCard({
   return (
     <Card className="w-full max-w-xl">
       <CardHeader>
-        <CardTitle>Join {organizationName}</CardTitle>
+        <CardTitle>Entrar em {organizationName}</CardTitle>
         <CardDescription>
-          Accept this invitation to join the organization and access the shared Neolytics workspace.
+          Aceite este convite para entrar na organização e acessar a área de trabalho compartilhada da Neolytics.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm text-muted-foreground">
-        <p>Invited email: {invitedEmail}</p>
-        <p>Permissions: {permissions.length > 0 ? permissions.join(", ") : "Role defaults only"}</p>
-        <p>Signed in as: {currentEmail ?? "Unknown user"}</p>
+        <p>Email convidado: {invitedEmail}</p>
+        <p>Permissões: {permissions.length > 0 ? permissions.join(", ") : "Apenas permissões padrão do cargo"}</p>
+        <p>Logado como: {currentEmail ?? "Usuário desconhecido"}</p>
         {message ? <p className="text-destructive">{message}</p> : null}
         <Button disabled={isSubmitting} onClick={acceptInvite}>
-          {isSubmitting ? "Accepting..." : "Accept invitation"}
+          {isSubmitting ? "Aceitando..." : "Aceitar convite"}
         </Button>
       </CardContent>
     </Card>

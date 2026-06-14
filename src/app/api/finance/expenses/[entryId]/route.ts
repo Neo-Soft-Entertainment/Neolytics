@@ -67,6 +67,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid expense payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update expense entry.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o lançamento de despesa.");
   }
 }

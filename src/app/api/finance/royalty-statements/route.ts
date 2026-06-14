@@ -57,6 +57,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid royalty statement payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create royalty statement.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o demonstrativo de royalties.");
   }
 }

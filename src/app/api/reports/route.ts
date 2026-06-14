@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-      return forbidden("Viewers cannot generate reports.");
+      return forbidden("Visualizadores não podem gerar relatórios.");
     }
 
     const body = await parseJsonBody(request, schema);

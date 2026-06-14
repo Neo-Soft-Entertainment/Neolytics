@@ -30,6 +30,6 @@ export async function DELETE(
       return badRequest(error.message);
     }
 
-    return serverError("Unable to revoke invitation.");
+    return serverError("Não foi possível revogar o convite.");
   }
 }

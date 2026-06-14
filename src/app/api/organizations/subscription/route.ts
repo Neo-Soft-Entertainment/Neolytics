@@ -42,6 +42,6 @@ export async function PATCH(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid subscription payload.");
     }
 
-    return serverError("Unable to update subscription plan.");
+    return serverError("Não foi possível atualizar o plano da assinatura.");
   }
 }

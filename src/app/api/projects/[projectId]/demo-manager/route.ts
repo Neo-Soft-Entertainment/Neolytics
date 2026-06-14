@@ -22,7 +22,7 @@ export async function GET(
   const data = await getDemoManagerData(context.workspace.id, projectId);
 
   if (!data) {
-    return notFound("Project not found.");
+    return notFound("Projeto não encontrado.");
   }
 
   return ok(data);
@@ -39,7 +39,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit Demo Manager.");
+    return forbidden("Visualizadores não podem editar o Demo Manager.");
   }
 
   try {
@@ -48,7 +48,7 @@ export async function PATCH(
     const plan = await updateDemoPlan(context.workspace.id, projectId, body);
 
     if (!plan) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(plan);
@@ -57,6 +57,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid Demo Manager payload.");
     }
 
-    return serverError("Unable to update Demo Manager.");
+    return serverError("Não foi possível atualizar o Demo Manager.");
   }
 }

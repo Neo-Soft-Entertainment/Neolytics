@@ -32,12 +32,12 @@ export default async function SignupPage({
         {invalidInvitation ? (
           <Card className="w-full">
             <CardHeader>
-              <CardTitle>Invitation unavailable</CardTitle>
+              <CardTitle>Convite indisponível</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <p>This invitation is no longer valid. You can still create a new organization from scratch.</p>
+              <p>Este convite não é mais válido. Você ainda pode criar uma nova organização do zero.</p>
               <Button asChild variant="outline">
-                <Link href="/signup">Continue without invitation</Link>
+                <Link href="/signup">Continuar sem convite</Link>
               </Button>
             </CardContent>
           </Card>

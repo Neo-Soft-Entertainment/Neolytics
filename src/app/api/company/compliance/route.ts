@@ -31,7 +31,7 @@ export async function GET() {
     const data = await getCompanyModuleData(context.organizationId);
     return ok({ complianceItems: data.complianceItems });
   } catch {
-    return serverError("Unable to load compliance items.");
+    return serverError("Não foi possível carregar os itens de conformidade.");
   }
 }
 
@@ -68,6 +68,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid compliance payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to create compliance item.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o item de conformidade.");
   }
 }

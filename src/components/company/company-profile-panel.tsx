@@ -71,7 +71,7 @@ export function CompanyProfilePanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setDefaultsMessage(payload?.message ?? "Unable to save company defaults.");
+      setDefaultsMessage(payload?.message ?? "Não foi possível salvar os padrões da empresa.");
       return;
     }
 
@@ -112,7 +112,7 @@ export function CompanyProfilePanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setCreateError(payload?.message ?? "Unable to create legal entity.");
+      setCreateError(payload?.message ?? "Não foi possível criar a entidade legal.");
       return;
     }
 
@@ -126,7 +126,7 @@ export function CompanyProfilePanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Organization defaults</CardTitle>
+          <CardTitle>Padrões da organização</CardTitle>
         </CardHeader>
         <CardContent>
           <form
@@ -137,7 +137,7 @@ export function CompanyProfilePanel({
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="organization-default-language">Default language</Label>
+              <Label htmlFor="organization-default-language">Idioma padrão</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 defaultValue={organizationDefaultLanguage}
@@ -153,7 +153,7 @@ export function CompanyProfilePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="organization-country-code">Home country</Label>
+              <Label htmlFor="organization-country-code">País principal</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 defaultValue={organizationCountryCode}
@@ -169,12 +169,12 @@ export function CompanyProfilePanel({
               </select>
             </div>
             <div className="text-sm text-muted-foreground xl:col-span-2">
-              These defaults define the initial language and country context for company compliance.
-              Each legal entity can still override its country based on its own registration and address.
+              Esses padrões definem o idioma inicial e o contexto de país para conformidade da empresa.
+              Cada entidade legal ainda pode substituir o país com base no próprio registro e endereço.
             </div>
             <div className="md:col-span-2 xl:col-span-4">
               <Button disabled={!canManage || isSavingDefaults} type="submit">
-                {isSavingDefaults ? "Saving..." : "Save organization defaults"}
+                {isSavingDefaults ? "Salvando..." : "Salvar padrões da organização"}
               </Button>
             </div>
           </form>
@@ -184,27 +184,27 @@ export function CompanyProfilePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>Company dossier</CardTitle>
+          <CardTitle>Dossiê da empresa</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm md:grid-cols-4">
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Legal entities</p>
+            <p className="text-muted-foreground">Entidades legais</p>
             <p className="mt-1 text-2xl font-semibold">{legalEntities.length}</p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Branches</p>
+            <p className="text-muted-foreground">Filiais</p>
             <p className="mt-1 text-2xl font-semibold">
               {legalEntities.reduce((total, entity) => total + entity.branches.length, 0)}
             </p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Shareholders</p>
+            <p className="text-muted-foreground">Sócios</p>
             <p className="mt-1 text-2xl font-semibold">
               {legalEntities.reduce((total, entity) => total + entity.shareholders.length, 0)}
             </p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Officers</p>
+            <p className="text-muted-foreground">Diretores</p>
             <p className="mt-1 text-2xl font-semibold">
               {legalEntities.reduce((total, entity) => total + entity.officers.length, 0)}
             </p>
@@ -214,7 +214,7 @@ export function CompanyProfilePanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>Create legal entity</CardTitle>
+          <CardTitle>Criar entidade legal</CardTitle>
         </CardHeader>
         <CardContent>
           <form
@@ -226,11 +226,11 @@ export function CompanyProfilePanel({
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="entity-name">Legal name</Label>
+              <Label htmlFor="entity-name">Razão social</Label>
               <Input disabled={!canManage || isCreating} id="entity-name" name="name" placeholder="Northstar Studios LLC" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-trade-name">Trade name</Label>
+              <Label htmlFor="entity-trade-name">Nome fantasia</Label>
               <Input disabled={!canManage || isCreating} id="entity-trade-name" name="tradeName" placeholder="Northstar" />
             </div>
             <div className="space-y-2">
@@ -243,7 +243,7 @@ export function CompanyProfilePanel({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-country">Country</Label>
+              <Label htmlFor="entity-country">País</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
@@ -260,7 +260,7 @@ export function CompanyProfilePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-tax-regime">Tax regime</Label>
+              <Label htmlFor="entity-tax-regime">Regime tributário</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 defaultValue="OTHER"
@@ -276,8 +276,8 @@ export function CompanyProfilePanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-legal-nature">Legal nature</Label>
-              <Input disabled={!canManage || isCreating} id="entity-legal-nature" name="legalNature" placeholder="Limited liability company" />
+              <Label htmlFor="entity-legal-nature">Natureza jurídica</Label>
+              <Input disabled={!canManage || isCreating} id="entity-legal-nature" name="legalNature" placeholder="Sociedade de responsabilidade limitada" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="entity-cnae">{getBusinessActivityLabel(createCountryCode)}</Label>
@@ -293,7 +293,7 @@ export function CompanyProfilePanel({
               <Input disabled={!canManage || isCreating} id="entity-email" name="email" placeholder="finance@studio.com" type="email" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-phone">Phone</Label>
+              <Label htmlFor="entity-phone">Telefone</Label>
               <Input disabled={!canManage || isCreating} id="entity-phone" name="phone" placeholder="+1 415 555 0101" />
             </div>
             <div className="space-y-2">
@@ -301,22 +301,22 @@ export function CompanyProfilePanel({
               <Input disabled={!canManage || isCreating} id="entity-website" name="websiteUrl" placeholder="https://studio.com" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-city">City</Label>
+              <Label htmlFor="entity-city">Cidade</Label>
               <Input disabled={!canManage || isCreating} id="entity-city" name="city" placeholder="San Francisco" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="entity-state">State / province</Label>
+              <Label htmlFor="entity-state">Estado / província</Label>
               <Input disabled={!canManage || isCreating} id="entity-state" name="state" placeholder="CA" />
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Creating..." : "Create legal entity"}
+                {isCreating ? "Criando..." : "Criar entidade legal"}
               </Button>
             </div>
           </form>
           {createError ? <p className="mt-3 text-sm text-destructive">{createError}</p> : null}
           {!canManage ? (
-            <p className="mt-3 text-sm text-muted-foreground">Only organization admins can create or edit company records.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Apenas administradores da organização podem criar ou editar registros da empresa.</p>
           ) : null}
         </CardContent>
       </Card>
@@ -324,7 +324,7 @@ export function CompanyProfilePanel({
       {legalEntities.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-sm text-muted-foreground">
-            No legal entities yet. Create the main company record to start the registration and document workflow.
+            Ainda não há entidades legais. Crie o registro principal da empresa para iniciar o fluxo de cadastro e documentos.
           </CardContent>
         </Card>
       ) : null}
@@ -393,7 +393,7 @@ function LegalEntityCard({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to save legal entity.");
+      setMessage(payload?.message ?? "Não foi possível salvar a entidade legal.");
       return;
     }
 
@@ -419,7 +419,7 @@ function LegalEntityCard({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to save record.");
+      setMessage(payload?.message ?? "Não foi possível salvar o registro.");
       return;
     }
 
@@ -433,7 +433,7 @@ function LegalEntityCard({
         <div>
           <CardTitle>{entity.name}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            {entity.tradeName || "No trade name"} · {entity.cnpj || getRegistrationPendingLabel(countryCode)}
+            {entity.tradeName || "Sem nome fantasia"} · {entity.cnpj || getRegistrationPendingLabel(countryCode)}
           </p>
         </div>
         <Badge variant="secondary">{entity.taxRegime}</Badge>
@@ -447,11 +447,11 @@ function LegalEntityCard({
           }}
         >
           <div className="space-y-2">
-            <Label>Legal name</Label>
+            <Label>Razão social</Label>
             <Input defaultValue={entity.name} disabled={!canManage || isSaving} name="name" />
           </div>
           <div className="space-y-2">
-            <Label>Trade name</Label>
+            <Label>Nome fantasia</Label>
             <Input defaultValue={entity.tradeName ?? ""} disabled={!canManage || isSaving} name="tradeName" />
           </div>
           <div className="space-y-2">
@@ -464,7 +464,7 @@ function LegalEntityCard({
             />
           </div>
           <div className="space-y-2">
-            <Label>Country</Label>
+            <Label>País</Label>
             <select
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               disabled={!canManage || isSaving}
@@ -480,7 +480,7 @@ function LegalEntityCard({
             </select>
           </div>
           <div className="space-y-2">
-            <Label>Tax regime</Label>
+            <Label>Regime tributário</Label>
             <select
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               defaultValue={entity.taxRegime}
@@ -495,7 +495,7 @@ function LegalEntityCard({
             </select>
           </div>
           <div className="space-y-2">
-            <Label>Legal nature</Label>
+            <Label>Natureza jurídica</Label>
             <Input defaultValue={entity.legalNature ?? ""} disabled={!canManage || isSaving} name="legalNature" />
           </div>
           <div className="space-y-2">
@@ -512,7 +512,7 @@ function LegalEntityCard({
             <Input defaultValue={entity.email ?? ""} disabled={!canManage || isSaving} name="email" type="email" />
           </div>
           <div className="space-y-2">
-            <Label>Phone</Label>
+            <Label>Telefone</Label>
             <Input defaultValue={entity.phone ?? ""} disabled={!canManage || isSaving} name="phone" />
           </div>
           <div className="space-y-2">
@@ -520,32 +520,32 @@ function LegalEntityCard({
             <Input defaultValue={entity.websiteUrl ?? ""} disabled={!canManage || isSaving} name="websiteUrl" />
           </div>
           <div className="space-y-2">
-            <Label>Address</Label>
+            <Label>Endereço</Label>
             <Input defaultValue={entity.addressLine1 ?? ""} disabled={!canManage || isSaving} name="addressLine1" />
           </div>
           <div className="space-y-2">
-            <Label>Region / district</Label>
+            <Label>Região / bairro</Label>
             <Input defaultValue={entity.district ?? ""} disabled={!canManage || isSaving} name="district" />
           </div>
           <div className="space-y-2">
-            <Label>Postal code</Label>
+            <Label>CEP / código postal</Label>
             <Input defaultValue={entity.postalCode ?? ""} disabled={!canManage || isSaving} name="postalCode" />
           </div>
           <div className="space-y-2">
-            <Label>City</Label>
+            <Label>Cidade</Label>
             <Input defaultValue={entity.city ?? ""} disabled={!canManage || isSaving} name="city" />
           </div>
           <div className="space-y-2">
-            <Label>State / province</Label>
+            <Label>Estado / província</Label>
             <Input defaultValue={entity.state ?? ""} disabled={!canManage || isSaving} name="state" />
           </div>
           <div className="space-y-2 md:col-span-2 xl:col-span-3">
-            <Label>Notes</Label>
+            <Label>Observações</Label>
             <Textarea defaultValue={entity.notes ?? ""} disabled={!canManage || isSaving} name="notes" />
           </div>
           <div className="md:col-span-2 xl:col-span-3">
             <Button disabled={!canManage || isSaving} type="submit">
-              {isSaving ? "Saving..." : "Save company profile"}
+              {isSaving ? "Salvando..." : "Salvar perfil da empresa"}
             </Button>
           </div>
         </form>
@@ -555,15 +555,15 @@ function LegalEntityCard({
         <div className="grid gap-4 xl:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Branches</CardTitle>
+              <CardTitle className="text-base">Filiais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Localização</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -577,7 +577,7 @@ function LegalEntityCard({
                   {entity.branches.length === 0 ? (
                     <TableRow>
                       <TableCell className="text-muted-foreground" colSpan={3}>
-                        No branches registered.
+                        Nenhuma filial registrada.
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -590,18 +590,18 @@ function LegalEntityCard({
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/branches`,
                     new FormData(event.currentTarget),
-                    "Branch created."
+                    "Filial criada."
                   );
                 }}
               >
-                <Input disabled={!canManage} name="name" placeholder="Branch name" />
-                <Input disabled={!canManage} name="code" placeholder="Code" />
+                <Input disabled={!canManage} name="name" placeholder="Nome da filial" />
+                <Input disabled={!canManage} name="code" placeholder="Código" />
                 <div className="grid grid-cols-2 gap-2">
-                  <Input disabled={!canManage} name="city" placeholder="City" />
-                  <Input disabled={!canManage} name="state" placeholder="State / province" />
+                  <Input disabled={!canManage} name="city" placeholder="Cidade" />
+                  <Input disabled={!canManage} name="state" placeholder="Estado / província" />
                 </div>
                 <Button disabled={!canManage} size="sm" type="submit">
-                  Add branch
+                  Adicionar filial
                 </Button>
               </form>
             </CardContent>
@@ -609,15 +609,15 @@ function LegalEntityCard({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Shareholders</CardTitle>
+              <CardTitle className="text-base">Sócios</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Ownership</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Cargo</TableHead>
+                    <TableHead>Participação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -631,7 +631,7 @@ function LegalEntityCard({
                   {entity.shareholders.length === 0 ? (
                     <TableRow>
                       <TableCell className="text-muted-foreground" colSpan={3}>
-                        No shareholders registered.
+                        Nenhum sócio registrado.
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -644,18 +644,18 @@ function LegalEntityCard({
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/shareholders`,
                     new FormData(event.currentTarget),
-                    "Shareholder created."
+                    "Sócio criado."
                   );
                 }}
               >
-                <Input disabled={!canManage} name="name" placeholder="Shareholder name" />
-                <Input disabled={!canManage} name="documentNumber" placeholder="National ID or tax ID" />
+                <Input disabled={!canManage} name="name" placeholder="Nome do sócio" />
+                <Input disabled={!canManage} name="documentNumber" placeholder="Documento nacional ou fiscal" />
                 <div className="grid grid-cols-2 gap-2">
-                  <Input disabled={!canManage} name="role" placeholder="Role" />
-                  <Input disabled={!canManage} name="ownershipPercent" placeholder="Ownership %" type="number" />
+                  <Input disabled={!canManage} name="role" placeholder="Cargo" />
+                  <Input disabled={!canManage} name="ownershipPercent" placeholder="Participação %" type="number" />
                 </div>
                 <Button disabled={!canManage} size="sm" type="submit">
-                  Add shareholder
+                  Adicionar sócio
                 </Button>
               </form>
             </CardContent>
@@ -663,14 +663,14 @@ function LegalEntityCard({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Officers</CardTitle>
+              <CardTitle className="text-base">Diretores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Title</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Título</TableHead>
                     <TableHead>Email</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -685,7 +685,7 @@ function LegalEntityCard({
                   {entity.officers.length === 0 ? (
                     <TableRow>
                       <TableCell className="text-muted-foreground" colSpan={3}>
-                        No officers registered.
+                        Nenhum diretor registrado.
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -698,15 +698,15 @@ function LegalEntityCard({
                   void submitMiniForm(
                     `/api/company/legal-entities/${entity.id}/officers`,
                     new FormData(event.currentTarget),
-                    "Officer created."
+                    "Diretor criado."
                   );
                 }}
               >
-                <Input disabled={!canManage} name="name" placeholder="Officer name" />
-                <Input disabled={!canManage} name="title" placeholder="Title" />
+                <Input disabled={!canManage} name="name" placeholder="Nome do diretor" />
+                <Input disabled={!canManage} name="title" placeholder="Título" />
                 <Input disabled={!canManage} name="email" placeholder="Email" type="email" />
                 <Button disabled={!canManage} size="sm" type="submit">
-                  Add officer
+                  Adicionar diretor
                 </Button>
               </form>
             </CardContent>

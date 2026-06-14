@@ -17,7 +17,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot run project analyses.");
+    return forbidden("Visualizadores não podem rodar análises de projeto.");
   }
 
   try {
@@ -25,7 +25,7 @@ export async function POST(
     const project = await analyzeProject(projectId, context.workspace.id, context.userId);
 
     if (!project) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(project);
@@ -38,6 +38,6 @@ export async function POST(
       return entitlementErrorResponse(error);
     }
 
-    return serverError("Unable to analyze project.");
+    return serverError("Não foi possível analisar o projeto.");
   }
 }

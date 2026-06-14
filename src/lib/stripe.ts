@@ -171,7 +171,7 @@ export async function syncStripeSubscriptionRecord(subscription: Stripe.Subscrip
   const canceledAt = subscription.cancel_at ?? subscription.canceled_at;
 
   if (!plan) {
-    throw new Error("Unable to map the Stripe subscription back to a Neolytics plan.");
+    throw new Error("Não foi possível mapear a assinatura da Stripe para um plano da Neolytics.");
   }
 
   return syncOrganizationSubscriptionFromStripe({

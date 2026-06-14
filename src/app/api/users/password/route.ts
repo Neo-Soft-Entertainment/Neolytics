@@ -62,6 +62,6 @@ export async function PATCH(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid password payload.");
     }
 
-    return serverError("Unable to update password.");
+    return serverError("Não foi possível atualizar a senha.");
   }
 }

@@ -15,7 +15,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete art assets.");
+    return forbidden("Visualizadores não podem excluir assets de arte.");
   }
 
   try {
@@ -28,6 +28,6 @@ export async function DELETE(
 
     return ok(result);
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Unable to delete art asset.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível excluir o asset de arte.");
   }
 }

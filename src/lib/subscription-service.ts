@@ -12,16 +12,16 @@ import {
 type DbClient = Prisma.TransactionClient | typeof db;
 
 const metricLabels: Record<SubscriptionMetric, string> = {
-  seats: "seat limit",
-  workspaces: "workspace limit",
-  savedGames: "saved games limit",
-  competitorSets: "competitor sets limit",
-  projects: "active projects limit",
-  reportsGenerated: "monthly report limit",
-  exportsGenerated: "monthly export limit",
-  projectAnalysesRun: "monthly market analysis limit",
-  gddsGenerated: "monthly GDD limit",
-  artAnalysesRun: "monthly art analysis limit"
+  seats: "limite de assentos",
+  workspaces: "limite de workspaces",
+  savedGames: "limite de jogos salvos",
+  competitorSets: "limite de conjuntos de concorrentes",
+  projects: "limite de projetos ativos",
+  reportsGenerated: "limite mensal de relatórios",
+  exportsGenerated: "limite mensal de exportações",
+  projectAnalysesRun: "limite mensal de análises de mercado",
+  gddsGenerated: "limite mensal de GDDs",
+  artAnalysesRun: "limite mensal de análises de arte"
 };
 
 export class SubscriptionLimitError extends Error {
@@ -55,7 +55,7 @@ async function getOrganizationPlan(client: DbClient, organizationId: string) {
   });
 
   if (organization.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
-    throw new SubscriptionLimitError("This organization does not have an active subscription.");
+    throw new SubscriptionLimitError("Esta organização não tem uma assinatura ativa.");
   }
 
   return organization.subscriptionPlan;
@@ -139,7 +139,7 @@ export async function enforceSubscriptionCapacity(
     return;
   }
 
-  throw new SubscriptionLimitError(`Your ${metricLabels[metric]} was reached on the ${plan.toLowerCase()} plan.`);
+  throw new SubscriptionLimitError(`Seu ${metricLabels[metric]} foi atingido no plano ${plan.toLowerCase()}.`);
 }
 
 export async function consumeSubscriptionUsage(
@@ -180,7 +180,7 @@ export async function consumeSubscriptionUsage(
             : usage.artAnalysesRun;
 
   if (current >= limit) {
-    throw new SubscriptionLimitError(`Your ${metricLabels[metric]} was reached on the ${plan.toLowerCase()} plan.`);
+    throw new SubscriptionLimitError(`Seu ${metricLabels[metric]} foi atingido no plano ${plan.toLowerCase()}.`);
   }
 
   const data: Prisma.OrganizationSubscriptionUsageUpdateInput =
@@ -251,7 +251,7 @@ export async function enforceSubscriptionCapability(
     return;
   }
 
-  throw new SubscriptionLimitError(`This feature is not available on the ${plan.toLowerCase()} plan.`);
+  throw new SubscriptionLimitError(`Este recurso não está disponível no plano ${plan.toLowerCase()}.`);
 }
 
 export async function getOrganizationSubscriptionSnapshot(organizationId: string) {

@@ -18,7 +18,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create bugs.");
+    return forbidden("Visualizadores não podem criar bugs.");
   }
 
   try {
@@ -27,7 +27,7 @@ export async function POST(
     const bug = await createBug(context.workspace.id, projectId, body);
 
     if (!bug) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(bug, { status: 201 });
@@ -36,6 +36,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid bug payload.");
     }
 
-    return serverError("Unable to create bug.");
+    return serverError("Não foi possível criar o bug.");
   }
 }

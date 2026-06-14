@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "view_privacy_audit_logs")) {
-    return forbidden("This role cannot access the privacy admin dashboard.");
+    return forbidden("Este cargo não pode acessar o painel administrativo de privacidade.");
   }
 
   const [consents, requests, products, incidents, auditLogs, legalHolds] = await Promise.all([

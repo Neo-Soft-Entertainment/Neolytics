@@ -299,7 +299,7 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(errorPayload?.message ?? "Unable to upload art asset.");
+      setFeedback(errorPayload?.message ?? "Não foi possível enviar o asset de arte.");
       return;
     }
 
@@ -307,7 +307,7 @@ export function ProjectDetailClient({
       kind: "capsule",
       notes: ""
     });
-    setFeedback("Art asset uploaded.");
+    setFeedback("Asset de arte enviado.");
     await query.refetch();
   }
 
@@ -320,11 +320,11 @@ export function ProjectDetailClient({
 
     if (!response.ok) {
       const errorPayload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(errorPayload?.message ?? "Unable to delete art asset.");
+      setFeedback(errorPayload?.message ?? "Não foi possível excluir o asset de arte.");
       return;
     }
 
-    setFeedback("Art asset deleted.");
+    setFeedback("Asset de arte excluído.");
     await query.refetch();
   }
 
@@ -808,15 +808,15 @@ export function ProjectDetailClient({
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader>
-              <CardTitle>Project definition</CardTitle>
+              <CardTitle>Definição do projeto</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-name">Project name</Label>
+                <Label htmlFor="detail-name">Nome do projeto</Label>
                 <Input id="detail-name" value={projectForm.name} onChange={(event) => setProjectForm((current) => ({ ...current, name: event.target.value }))} />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-pitch">Elevator pitch</Label>
+                <Label htmlFor="detail-pitch">Pitch curto</Label>
                 <Textarea id="detail-pitch" value={projectForm.elevatorPitch} onChange={(event) => setProjectForm((current) => ({ ...current, elevatorPitch: event.target.value }))} />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -824,7 +824,7 @@ export function ProjectDetailClient({
                 <Textarea id="detail-description" value={projectForm.description} onChange={(event) => setProjectForm((current) => ({ ...current, description: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-genres">Genres</Label>
+                <Label htmlFor="detail-genres">Gêneros</Label>
                 <Input id="detail-genres" value={projectForm.genreInput} onChange={(event) => setProjectForm((current) => ({ ...current, genreInput: event.target.value }))} />
               </div>
               <div className="space-y-2">
@@ -832,35 +832,35 @@ export function ProjectDetailClient({
                 <Input id="detail-tags" value={projectForm.tagInput} onChange={(event) => setProjectForm((current) => ({ ...current, tagInput: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-audience">Target audience</Label>
+                <Label htmlFor="detail-audience">Público-alvo</Label>
                 <Textarea id="detail-audience" value={projectForm.targetAudience} onChange={(event) => setProjectForm((current) => ({ ...current, targetAudience: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-core-loop">Core loop</Label>
+                <Label htmlFor="detail-core-loop">Loop principal</Label>
                 <Textarea id="detail-core-loop" value={projectForm.coreLoop} onChange={(event) => setProjectForm((current) => ({ ...current, coreLoop: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-differentiator">Differentiator</Label>
+                <Label htmlFor="detail-differentiator">Diferencial</Label>
                 <Textarea id="detail-differentiator" value={projectForm.differentiator} onChange={(event) => setProjectForm((current) => ({ ...current, differentiator: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-fantasy">Player fantasy</Label>
+                <Label htmlFor="detail-fantasy">Fantasia do jogador</Label>
                 <Textarea id="detail-fantasy" value={projectForm.playerFantasy} onChange={(event) => setProjectForm((current) => ({ ...current, playerFantasy: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-monetization">Monetization</Label>
+                <Label htmlFor="detail-monetization">Monetização</Label>
                 <Input id="detail-monetization" value={projectForm.monetizationModel} onChange={(event) => setProjectForm((current) => ({ ...current, monetizationModel: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-art">Art direction</Label>
+                <Label htmlFor="detail-art">Direção de arte</Label>
                 <Input id="detail-art" value={projectForm.artDirection} onChange={(event) => setProjectForm((current) => ({ ...current, artDirection: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-price">Price target (cents)</Label>
+                <Label htmlFor="detail-price">Preço alvo (centavos)</Label>
                 <Input id="detail-price" value={projectForm.pricePointCents} onChange={(event) => setProjectForm((current) => ({ ...current, pricePointCents: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Stage</Label>
+                <Label>Estágio</Label>
                 <Select value={projectForm.stage} onValueChange={(value) => setProjectForm((current) => ({ ...current, stage: value }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -891,7 +891,7 @@ export function ProjectDetailClient({
           <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Opportunity</CardTitle>
+                <CardTitle className="text-base">Oportunidade</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatNumber(opportunityLayer?.opportunityScore ?? null)}
@@ -899,7 +899,7 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Risk</CardTitle>
+                <CardTitle className="text-base">Risco</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatNumber(opportunityLayer?.riskScore ?? null)}
@@ -907,7 +907,7 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Direct comps</CardTitle>
+                <CardTitle className="text-base">Comparáveis diretos</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatNumber(competitionLayer?.directComparableCount ?? project.analysis?.competitionCount ?? null)}
@@ -915,7 +915,7 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Median revenue</CardTitle>
+                <CardTitle className="text-base">Receita mediana</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatCurrency(project.analysis?.medianRevenueCents ?? null)}
@@ -923,7 +923,7 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Market confidence</CardTitle>
+                <CardTitle className="text-base">Confiança de mercado</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatNumber(marketDepth?.confidenceScore ?? null)}
@@ -931,7 +931,7 @@ export function ProjectDetailClient({
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Project fit</CardTitle>
+                <CardTitle className="text-base">Fit do projeto</CardTitle>
               </CardHeader>
               <CardContent className="text-2xl font-semibold">
                 {formatNumber(projectFitLayer?.overallFitScore ?? null)}
@@ -940,41 +940,41 @@ export function ProjectDetailClient({
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Integrated market analysis</CardTitle>
+              <CardTitle>Análise de mercado integrada</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 text-sm">
-              <p>{project.analysis?.marketSummary ?? "Run market analysis to populate this section."}</p>
+              <p>{project.analysis?.marketSummary ?? "Rode a análise de mercado para preencher esta seção."}</p>
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Opportunity</p>
-                    <p className="mt-2 text-muted-foreground">{project.analysis?.opportunitySummary ?? "Pending analysis."}</p>
+                    <p className="font-medium">Oportunidade</p>
+                    <p className="mt-2 text-muted-foreground">{project.analysis?.opportunitySummary ?? "Análise pendente."}</p>
                   </div>
                 <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Risk</p>
-                  <p className="mt-2 text-muted-foreground">{project.analysis?.riskSummary ?? "Pending analysis."}</p>
+                  <p className="font-medium">Risco</p>
+                  <p className="mt-2 text-muted-foreground">{project.analysis?.riskSummary ?? "Análise pendente."}</p>
                 </div>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Autofill audience</p>
-                  <p className="mt-2 text-muted-foreground">{project.analysis?.audienceAutofill ?? "Pending analysis."}</p>
+                  <p className="font-medium">Público sugerido</p>
+                  <p className="mt-2 text-muted-foreground">{project.analysis?.audienceAutofill ?? "Análise pendente."}</p>
                 </div>
                 <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Autofill core loop</p>
-                  <p className="mt-2 text-muted-foreground">{project.analysis?.coreLoopAutofill ?? "Pending analysis."}</p>
+                  <p className="font-medium">Loop principal sugerido</p>
+                  <p className="mt-2 text-muted-foreground">{project.analysis?.coreLoopAutofill ?? "Análise pendente."}</p>
                 </div>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Suggested genres</p>
+                  <p className="font-medium">Gêneros sugeridos</p>
                   <p className="mt-2 text-muted-foreground">
-                    {project.analysis?.suggestedGenres?.join(", ") || "Pending analysis."}
+                    {project.analysis?.suggestedGenres?.join(", ") || "Análise pendente."}
                   </p>
                 </div>
                 <div className="rounded-2xl border p-4">
-                  <p className="font-medium">Suggested tags</p>
+                  <p className="font-medium">Tags sugeridas</p>
                   <p className="mt-2 text-muted-foreground">
-                    {project.analysis?.suggestedTags?.join(", ") || "Pending analysis."}
+                    {project.analysis?.suggestedTags?.join(", ") || "Análise pendente."}
                   </p>
                   </div>
                 </div>
@@ -982,37 +982,37 @@ export function ProjectDetailClient({
                   <>
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">AI strategic read</p>
+                        <p className="font-medium">Leitura estratégica da IA</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.strategicNarrative}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Positioning wedge</p>
+                        <p className="font-medium">Diferencial de posicionamento</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.positioningSummary}</p>
                       </div>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Launch strategy</p>
+                        <p className="font-medium">Estratégia de lançamento</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.launchStrategy}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Pricing and offer design</p>
+                        <p className="font-medium">Preço e desenho da oferta</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.pricingNarrative}</p>
                       </div>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Store capsule and messaging</p>
+                        <p className="font-medium">Cápsula da loja e mensagem</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.storeCapsuleAdvice}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">AI confidence read</p>
+                        <p className="font-medium">Leitura de confiança da IA</p>
                         <p className="mt-2 text-muted-foreground">{aiLayer.confidenceNarrative}</p>
                       </div>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Creative angles</p>
+                        <p className="font-medium">Ângulos criativos</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
                           {aiLayer.creativeAngles.map((item) => (
                             <li key={item}>- {item}</li>
@@ -1020,7 +1020,7 @@ export function ProjectDetailClient({
                         </ul>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Acquisition channels</p>
+                        <p className="font-medium">Canais de aquisição</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
                           {aiLayer.acquisitionChannels.map((item) => (
                             <li key={item}>- {item}</li>
@@ -1030,7 +1030,7 @@ export function ProjectDetailClient({
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Wishlist drivers</p>
+                        <p className="font-medium">Gatilhos de wishlist</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
                           {aiLayer.wishlistDrivers.map((item) => (
                             <li key={item}>- {item}</li>
@@ -1038,7 +1038,7 @@ export function ProjectDetailClient({
                         </ul>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">AI red flags</p>
+                        <p className="font-medium">Alertas da IA</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
                           {aiLayer.redFlags.map((item) => (
                             <li key={item}>- {item}</li>
@@ -1053,36 +1053,36 @@ export function ProjectDetailClient({
             {hybridMarketIntelligence ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Quantitative market intelligence</CardTitle>
+                  <CardTitle>Inteligência quantitativa de mercado</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-5 text-sm">
                   <div className="grid gap-4 lg:grid-cols-4">
                     <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Opportunity score</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Score de oportunidade</p>
                       <p className="mt-2 text-3xl font-semibold">{hybridMarketIntelligence.opportunityScoring.score}</p>
                       <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring.label}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Classification</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Classificação</p>
                       <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment.classification}</p>
-                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment.confidenceLevel} confidence</p>
+                      <p className="mt-1 text-muted-foreground">Confiança {hybridMarketIntelligence.probabilisticAssessment.confidenceLevel}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Demand</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Demanda</p>
                       <p className="mt-2 text-2xl font-semibold">{hybridMarketIntelligence.demandModel.demandScore}</p>
-                      <p className="mt-1 text-muted-foreground">Wishlist proxy {hybridMarketIntelligence.demandModel.wishlistProxy.score}</p>
+                      <p className="mt-1 text-muted-foreground">Proxy de wishlist {hybridMarketIntelligence.demandModel.wishlistProxy.score}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Revenue range</p>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Faixa de receita</p>
                       <p className="mt-2 font-medium">
                         {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.lowCents)} - {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.highCents)}
                       </p>
-                      <p className="mt-1 text-muted-foreground">Median {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.medianCents)}</p>
+                      <p className="mt-1 text-muted-foreground">Mediana {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.medianCents)}</p>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Probabilistic conclusion</p>
+                    <p className="font-medium">Conclusão probabilística</p>
                     <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment.conclusion}</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
                       {Object.entries(hybridMarketIntelligence.probabilisticAssessment.probabilities).map(([key, value]) => (
@@ -1096,13 +1096,13 @@ export function ProjectDetailClient({
 
                   <div className="grid gap-4 xl:grid-cols-2">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Weighted scoring factors</p>
+                      <p className="font-medium">Fatores ponderados do score</p>
                       <div className="mt-3 space-y-3">
                         {hybridMarketIntelligence.opportunityScoring.factors.map((factor) => (
                           <div key={factor.name} className="rounded-xl border bg-muted/30 p-3">
                             <div className="flex items-center justify-between gap-3">
                               <p className="font-medium">{factor.name}</p>
-                              <p className="text-sm text-muted-foreground">{factor.score}/100 · weight {factor.weight}</p>
+                              <p className="text-sm text-muted-foreground">{factor.score}/100 · peso {factor.weight}</p>
                             </div>
                             <p className="mt-2 text-muted-foreground">{factor.justification}</p>
                           </div>
@@ -1110,7 +1110,7 @@ export function ProjectDetailClient({
                       </div>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Trend detection</p>
+                      <p className="font-medium">Detecção de tendências</p>
                       <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection.marketShiftExplanation}</p>
                       <div className="mt-3 space-y-3">
                         {hybridMarketIntelligence.trendDetection.emergingTags.slice(0, 4).map((trend) => (
@@ -1131,7 +1131,7 @@ export function ProjectDetailClient({
 
                   <div className="grid gap-4 xl:grid-cols-3">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Market leaders</p>
+                      <p className="font-medium">Líderes de mercado</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
                         {hybridMarketIntelligence.competitiveIntelligence.marketLeaders.slice(0, 5).map((game) => (
                           <li key={game.appId}>{game.name} · {formatCurrency(game.medianRevenueCents)} · {formatNumber(game.reviewScore)}</li>
@@ -1139,46 +1139,46 @@ export function ProjectDetailClient({
                       </ul>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Recently successful launches</p>
+                      <p className="font-medium">Lançamentos recentes bem-sucedidos</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
                         {hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.length
                           ? hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.slice(0, 5).map((game) => (
                               <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
                             ))
-                          : <li>No high-confidence recent successful launch in this comp set.</li>}
+                          : <li>Nenhum lançamento recente de alta confiança neste conjunto comparável.</li>}
                       </ul>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Weak/failed similar launches</p>
+                      <p className="font-medium">Lançamentos similares fracos ou malsucedidos</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
                         {hybridMarketIntelligence.competitiveIntelligence.failedLaunches.length
                           ? hybridMarketIntelligence.competitiveIntelligence.failedLaunches.slice(0, 5).map((game) => (
                               <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
                             ))
-                          : <li>No obvious weak recent launch in this comp set.</li>}
+                          : <li>Nenhum lançamento recente claramente fraco neste conjunto comparável.</li>}
                       </ul>
                     </div>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Evidence trail</p>
+                      <p className="font-medium">Trilha de evidências</p>
                       <div className="mt-3 space-y-3">
                         {hybridMarketIntelligence.evidenceTrail.map((item) => (
                           <div key={item.claim} className="rounded-xl border bg-muted/30 p-3">
                             <p className="font-medium">{item.claim}</p>
                             <p className="mt-1 text-muted-foreground">{item.support}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">Sources: {item.sources.join(", ")}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Fontes: {item.sources.join(", ")}</p>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Data quality</p>
+                      <p className="font-medium">Qualidade dos dados</p>
                       <p className="mt-2 text-muted-foreground">
-                        {hybridMarketIntelligence.dataQuality.label} confidence ({hybridMarketIntelligence.dataQuality.score}/100). AI dependency: {hybridMarketIntelligence.aiDependency.replaceAll("_", " ")}.
+                        Confiança {hybridMarketIntelligence.dataQuality.label} ({hybridMarketIntelligence.dataQuality.score}/100). Dependência de IA: {hybridMarketIntelligence.aiDependency.replaceAll("_", " ")}.
                       </p>
-                      <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Sources used</p>
+                      <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Fontes usadas</p>
                       <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.sourcesUsed.join(", ")}</p>
                       {hybridMarketIntelligence.dataQuality.limitations.length ? (
                         <ul className="mt-3 space-y-2 text-muted-foreground">
@@ -1195,76 +1195,76 @@ export function ProjectDetailClient({
             <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Market depth</CardTitle>
+                  <CardTitle>Profundidade de mercado</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Market size</p>
+                    <p className="font-medium">Tamanho de mercado</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.marketSizeLabel} · ${formatCurrency(marketDepth.marketSizeCents)}` : "Pending analysis."}
+                      {marketDepth ? `${marketDepth.marketSizeLabel} · ${formatCurrency(marketDepth.marketSizeCents)}` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Review velocity</p>
+                    <p className="font-medium">Velocidade de reviews</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${formatNumber(marketDepth.reviewVelocity90)} vs ${formatNumber(marketDepth.previousReviewVelocity90)} previous 90d` : "Pending analysis."}
+                      {marketDepth ? `${formatNumber(marketDepth.reviewVelocity90)} vs ${formatNumber(marketDepth.previousReviewVelocity90)} nos 90 dias anteriores` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Player momentum</p>
+                    <p className="font-medium">Momento de jogadores</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${formatNumber(marketDepth.playerMomentum30)} avg vs ${formatNumber(marketDepth.previousPlayerMomentum30)}` : "Pending analysis."}
+                      {marketDepth ? `${formatNumber(marketDepth.playerMomentum30)} média vs ${formatNumber(marketDepth.previousPlayerMomentum30)}` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Launch cohorts</p>
+                    <p className="font-medium">Coortes de lançamento</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.launchCohorts.last90Days} / 90d · ${marketDepth.launchCohorts.last180Days} / 180d · ${marketDepth.launchCohorts.last365Days} / 365d` : "Pending analysis."}
+                      {marketDepth ? `${marketDepth.launchCohorts.last90Days} / 90d · ${marketDepth.launchCohorts.last180Days} / 180d · ${marketDepth.launchCohorts.last365Days} / 365d` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
-                    <p className="font-medium">Price distribution</p>
+                    <p className="font-medium">Distribuição de preço</p>
                     <p className="mt-2 text-foreground">
                       {marketDepth
                         ? `<$10: ${marketDepth.priceBandDistribution.under10} · $10-20: ${marketDepth.priceBandDistribution.between10And20} · $20-30: ${marketDepth.priceBandDistribution.between20And30} · $30+: ${marketDepth.priceBandDistribution.over30}`
-                        : "Pending analysis."}
+                        : "Análise pendente."}
                     </p>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Competition layer</CardTitle>
+                  <CardTitle>Camada competitiva</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Direct vs adjacent</p>
+                    <p className="font-medium">Diretos vs adjacentes</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.directComparableCount} direct · ${competitionLayer.adjacentComparableCount} adjacent` : "Pending analysis."}
+                      {competitionLayer ? `${competitionLayer.directComparableCount} diretos · ${competitionLayer.adjacentComparableCount} adjacentes` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Crowdedness</p>
+                    <p className="font-medium">Saturação</p>
                     <p className="mt-2 text-foreground">
                       {formatNumber(competitionLayer?.crowdednessScore ?? null)}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Revenue concentration</p>
+                    <p className="font-medium">Concentração de receita</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.winnerConcentrationScore}% in top winners` : "Pending analysis."}
+                      {competitionLayer ? `${competitionLayer.winnerConcentrationScore}% nos vencedores principais` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Quality bar</p>
+                    <p className="font-medium">Barra de qualidade</p>
                     <p className="mt-2 text-foreground">
                       {formatNumber(competitionLayer?.qualityBarScore ?? null)}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
-                    <p className="font-medium">Monetization mix</p>
+                    <p className="font-medium">Mix de monetização</p>
                     <p className="mt-2 text-foreground">
-                      {competitionLayer ? `${competitionLayer.dominantMonetization} dominant · ${competitionLayer.premiumSharePercent}% premium share` : "Pending analysis."}
+                      {competitionLayer ? `${competitionLayer.dominantMonetization} dominante · ${competitionLayer.premiumSharePercent}% premium` : "Análise pendente."}
                     </p>
                   </div>
                 </CardContent>
@@ -1273,15 +1273,15 @@ export function ProjectDetailClient({
             <div className="grid gap-4 xl:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Opportunity layer</CardTitle>
+                  <CardTitle>Camada de oportunidade</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Underserved score</p>
+                    <p className="font-medium">Score de nicho mal atendido</p>
                     <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.underservedScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Revenue potential</p>
+                    <p className="font-medium">Potencial de receita</p>
                     <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.revenuePotentialScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
@@ -1289,44 +1289,44 @@ export function ProjectDetailClient({
                     <p className="mt-2 text-foreground">{formatNumber(opportunityLayer?.executionBarScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Confidence</p>
+                    <p className="font-medium">Confiança</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.confidenceLabel} (${marketDepth.confidenceScore})` : "Pending analysis."}
+                      {marketDepth ? `${marketDepth.confidenceLabel} (${marketDepth.confidenceScore})` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
-                    <p className="font-medium">Practical recommendations</p>
+                    <p className="font-medium">Recomendações práticas</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
                       {opportunityLayer?.practicalRecommendations?.length ? opportunityLayer.practicalRecommendations.map((item) => (
                         <li key={item}>- {item}</li>
-                      )) : <li>Pending analysis.</li>}
+                      )) : <li>Análise pendente.</li>}
                     </ul>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Project fit layer</CardTitle>
+                  <CardTitle>Camada de fit do projeto</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm md:grid-cols-2">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Genre/tag fit</p>
+                    <p className="font-medium">Fit de gênero/tag</p>
                     <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.genreTagCoverageScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Price fit</p>
+                    <p className="font-medium">Fit de preço</p>
                     <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.priceFitScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Monetization fit</p>
+                    <p className="font-medium">Fit de monetização</p>
                     <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.monetizationFitScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Positioning clarity</p>
+                    <p className="font-medium">Clareza de posicionamento</p>
                     <p className="mt-2 text-foreground">{formatNumber(projectFitLayer?.positioningClarityScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
-                    <p className="font-medium">Key mismatches</p>
+                    <p className="font-medium">Principais desalinhamentos</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
                       {opportunityLayer?.keyMismatches?.length ? opportunityLayer.keyMismatches.map((item) => (
                         <li key={item}>- {item}</li>
@@ -1338,7 +1338,7 @@ export function ProjectDetailClient({
             </div>
             <Card>
               <CardHeader>
-                <CardTitle>Comparable Steam games</CardTitle>
+                <CardTitle>Jogos comparáveis da Steam</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               {project.competitorGames.length > 0 ? project.competitorGames.map((item) => (
@@ -1347,7 +1347,7 @@ export function ProjectDetailClient({
                     <div>
                       <p className="font-medium">{item.steamGame.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        Reviews: {formatNumber(item.steamGame.reviewCount)} · Score: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
+                        Reviews: {formatNumber(item.steamGame.reviewCount)} · Nota: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
                       </p>
                     </div>
                     <p className="text-sm font-medium">
@@ -1378,37 +1378,37 @@ export function ProjectDetailClient({
             <>
               <Card className="overflow-hidden border-cyan-300/15 bg-gradient-to-br from-background via-background to-cyan-950/15">
                 <CardHeader>
-                  <CardTitle>Uploaded art assets</CardTitle>
+                  <CardTitle>Assets de arte enviados</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="grid gap-3 rounded-2xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4 lg:grid-cols-[180px_minmax(0,1fr)_220px]">
                     <div className="space-y-2">
-                      <Label>Asset type</Label>
+                      <Label>Tipo de asset</Label>
                       <Select value={artAssetForm.kind} onValueChange={(value) => setArtAssetForm((current) => ({ ...current, kind: value }))}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="capsule">Steam capsule</SelectItem>
+                          <SelectItem value="capsule">Cápsula Steam</SelectItem>
                           <SelectItem value="header">Header/key art</SelectItem>
                           <SelectItem value="screenshot">Screenshot</SelectItem>
-                          <SelectItem value="character">Character</SelectItem>
-                          <SelectItem value="environment">Environment</SelectItem>
-                          <SelectItem value="reference">Reference</SelectItem>
+                          <SelectItem value="character">Personagem</SelectItem>
+                          <SelectItem value="environment">Ambiente</SelectItem>
+                          <SelectItem value="reference">Referência</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="art-asset-notes">Notes</Label>
+                      <Label htmlFor="art-asset-notes">Observações</Label>
                       <Input
                         id="art-asset-notes"
                         value={artAssetForm.notes}
                         onChange={(event) => setArtAssetForm((current) => ({ ...current, notes: event.target.value }))}
-                        placeholder="What should the analysis look for?"
+                        placeholder="O que a análise deve observar?"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="art-asset-file">Image</Label>
+                      <Label htmlFor="art-asset-file">Imagem</Label>
                       <Input
                         id="art-asset-file"
                         type="file"
@@ -1425,7 +1425,7 @@ export function ProjectDetailClient({
                           {asset.signedUrl ? (
                             <img src={asset.signedUrl} alt={asset.originalName} className="h-52 w-full object-cover" />
                           ) : (
-                            <div className="flex h-52 items-center justify-center bg-muted text-sm text-muted-foreground">Preview unavailable</div>
+                            <div className="flex h-52 items-center justify-center bg-muted text-sm text-muted-foreground">Prévia indisponível</div>
                           )}
                           <div className="space-y-2 p-4 text-sm">
                             <div className="flex items-start justify-between gap-3">
@@ -1434,24 +1434,24 @@ export function ProjectDetailClient({
                                 <p className="text-muted-foreground">{asset.originalName}</p>
                               </div>
                               <Button size="sm" variant="ghost" onClick={() => deleteArtAsset(asset.id)}>
-                                Delete
+                                Excluir
                               </Button>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensions unavailable"} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                              {asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensões indisponíveis"} · {(asset.sizeBytes / 1024 / 1024).toFixed(2)} MB
                             </p>
                             {asset.visualMetrics ? (
                               <div className="grid gap-2 rounded-xl border bg-background/60 p-3 text-xs">
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Readability</span>
-                                  <span className="font-medium">{asset.visualMetrics.readabilityScore}/100 · {asset.visualMetrics.legibilityRisk} risk</span>
+                                  <span className="text-muted-foreground">Legibilidade</span>
+                                  <span className="font-medium">{asset.visualMetrics.readabilityScore}/100 · risco {asset.visualMetrics.legibilityRisk}</span>
                                 </div>
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Contrast / saturation</span>
+                                  <span className="text-muted-foreground">Contraste / saturação</span>
                                   <span className="font-medium">{asset.visualMetrics.contrast} / {asset.visualMetrics.saturation}</span>
                                 </div>
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">Dominant color</span>
+                                  <span className="text-muted-foreground">Cor dominante</span>
                                   <span className="inline-flex items-center gap-2 font-medium">
                                     <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: asset.visualMetrics.dominantColor }} />
                                     {asset.visualMetrics.dominantColor}
@@ -1459,7 +1459,7 @@ export function ProjectDetailClient({
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-xs text-muted-foreground">Pixel metrics unavailable for this file. Re-upload to analyze visual readability.</p>
+                              <p className="text-xs text-muted-foreground">Métricas de pixel indisponíveis para este arquivo. Reenvie para analisar a legibilidade visual.</p>
                             )}
                             {asset.notes ? <p className="text-xs text-muted-foreground">{asset.notes}</p> : null}
                           </div>
@@ -1468,7 +1468,7 @@ export function ProjectDetailClient({
                     </div>
                   ) : (
                     <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                      Upload capsule art, headers, screenshots, characters, environments, or references before running art analysis. Without uploads, the system can only estimate from project text and market comps.
+                      Envie cápsulas, headers, screenshots, personagens, ambientes ou referências antes de rodar a análise de arte. Sem uploads, o sistema só consegue estimar a partir do texto do projeto e dos comparáveis de mercado.
                     </div>
                   )}
                 </CardContent>
@@ -1476,7 +1476,7 @@ export function ProjectDetailClient({
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Distinctiveness</CardTitle>
+                    <CardTitle className="text-base">Distinção</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(project.artAnalysis?.distinctivenessScore ?? null)}
@@ -1484,7 +1484,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Production complexity</CardTitle>
+                    <CardTitle className="text-base">Complexidade de produção</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(project.artAnalysis?.productionComplexityScore ?? null)}
@@ -1492,7 +1492,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Market fit</CardTitle>
+                    <CardTitle className="text-base">Fit de mercado</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(project.artAnalysis?.marketFitScore ?? null)}
@@ -1500,7 +1500,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Visual trend</CardTitle>
+                    <CardTitle className="text-base">Tendência visual</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(project.artAnalysis?.visualTrendScore ?? null)}
@@ -1509,31 +1509,31 @@ export function ProjectDetailClient({
               </div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Asset evidence</CardTitle>
+                  <CardTitle>Evidências dos assets</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Uploaded assets</p>
+                    <p className="font-medium">Assets enviados</p>
                     <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.total ?? project.artAssets.length}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Store-ratio images</p>
+                    <p className="font-medium">Imagens na proporção da loja</p>
                     <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.capsuleRatio ?? 0}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Evidence score</p>
+                    <p className="font-medium">Score de evidência</p>
                     <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.evidenceScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Pixel-analyzed</p>
+                    <p className="font-medium">Analisados por pixel</p>
                     <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset) => asset.visualMetrics).length}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">Avg readability</p>
+                    <p className="font-medium">Legibilidade média</p>
                     <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
-                    <p className="font-medium">High-risk assets</p>
+                    <p className="font-medium">Assets de alto risco</p>
                     <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
                   </div>
                 </CardContent>
@@ -1541,19 +1541,19 @@ export function ProjectDetailClient({
               {artMetadata?.uploadedArtAssets?.dominantColors?.length ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Visual signal read</CardTitle>
+                    <CardTitle>Leitura do sinal visual</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-4 text-sm md:grid-cols-3">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Average contrast</p>
+                      <p className="font-medium">Contraste médio</p>
                       <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageContrast ?? 0}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Average saturation</p>
+                      <p className="font-medium">Saturação média</p>
                       <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageSaturation ?? 0}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Dominant colors</p>
+                      <p className="font-medium">Cores dominantes</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {artMetadata.uploadedArtAssets.dominantColors.map((color) => (
                           <span key={color} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
@@ -1568,7 +1568,7 @@ export function ProjectDetailClient({
               ) : null}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Integrated art direction analysis</CardTitle>
+                  <CardTitle>Análise integrada de direção de arte</CardTitle>
                   <Button disabled={isAnalyzingArt} onClick={runArtAnalysis}>
                     {isAnalyzingArt ? t("projectDetail.analyzingArt") : project.artAnalysis ? t("projectDetail.refreshArtAnalysis") : t("projectDetail.runArtAnalysis")}
                   </Button>
@@ -1576,25 +1576,25 @@ export function ProjectDetailClient({
                 <CardContent className="grid gap-4 text-sm">
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Style position</p>
+                      <p className="font-medium">Posicionamento de estilo</p>
                       <p className="mt-2 text-muted-foreground">
                         {project.artAnalysis?.styleSummary ?? t("projectDetail.artStyleFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Market fit</p>
+                      <p className="font-medium">Fit de mercado</p>
                       <p className="mt-2 text-muted-foreground">
                         {project.artAnalysis?.fitSummary ?? t("projectDetail.artFitFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Production risk</p>
+                      <p className="font-medium">Risco de produção</p>
                       <p className="mt-2 text-muted-foreground">
                         {project.artAnalysis?.productionSummary ?? t("projectDetail.artProductionFallback")}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Recommendation</p>
+                      <p className="font-medium">Recomendação</p>
                       <p className="mt-2 text-muted-foreground">
                         {project.artAnalysis?.recommendationSummary ?? t("projectDetail.artRecommendationFallback")}
                       </p>
@@ -1602,33 +1602,33 @@ export function ProjectDetailClient({
                   </div>
                   <div className="grid gap-4 lg:grid-cols-2">
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Palette keywords</p>
+                      <p className="font-medium">Palavras-chave de paleta</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.paletteKeywords?.join(", ") || "Pending analysis."}
+                        {project.artAnalysis?.paletteKeywords?.join(", ") || "Análise pendente."}
                       </p>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Mood keywords</p>
+                      <p className="font-medium">Palavras-chave de clima</p>
                       <p className="mt-2 text-muted-foreground">
-                        {project.artAnalysis?.moodKeywords?.join(", ") || "Pending analysis."}
+                        {project.artAnalysis?.moodKeywords?.join(", ") || "Análise pendente."}
                       </p>
                     </div>
                   </div>
                   {isProArtAnalysis ? (
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Capsule readiness</p>
+                        <p className="font-medium">Prontidão de cápsula</p>
                         <p className="mt-2 text-2xl font-semibold">
                           {formatNumber(artMetadata?.proArtBrief?.capsuleReadinessScore ?? null)}
                         </p>
                         <p className="mt-2 text-sm text-muted-foreground">
-                          {artMetadata?.proArtBrief?.shelfGapSummary ?? "Run the Pro art layer to score store-readiness and shelf gap."}
+                          {artMetadata?.proArtBrief?.shelfGapSummary ?? "Rode a camada Pro de arte para pontuar prontidão de loja e lacuna de prateleira."}
                         </p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Production levers</p>
+                        <p className="font-medium">Alavancas de produção</p>
                         <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                          {(artMetadata?.proArtBrief?.productionLevers ?? ["Run the Pro art layer to receive execution levers for scope and store-facing polish."]).map((item) => (
+                          {(artMetadata?.proArtBrief?.productionLevers ?? ["Rode a camada Pro de arte para receber alavancas de execução para escopo e polimento de loja."]).map((item) => (
                             <p key={item}>• {item}</p>
                           ))}
                         </div>
@@ -1640,35 +1640,35 @@ export function ProjectDetailClient({
               {artMetadata?.aiArtLayer ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>AI visual critique</CardTitle>
+                    <CardTitle>Crítica visual da IA</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-4 text-sm">
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Visual critique</p>
+                        <p className="font-medium">Crítica visual</p>
                         <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.visualCritique}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">First-read assessment</p>
+                        <p className="font-medium">Avaliação de primeira leitura</p>
                         <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.firstReadAssessment}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Capsule advice</p>
+                        <p className="font-medium">Conselho para cápsula</p>
                         <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.capsuleAdvice}</p>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Production advice</p>
+                        <p className="font-medium">Conselho de produção</p>
                         <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.productionAdvice}</p>
                       </div>
                     </div>
                     <div className="rounded-2xl border p-4">
-                      <p className="font-medium">Market positioning</p>
+                      <p className="font-medium">Posicionamento de mercado</p>
                       <p className="mt-2 text-muted-foreground">{artMetadata.aiArtLayer.marketPositioningAdvice}</p>
                       <p className="mt-3 text-xs text-muted-foreground">{artMetadata.aiArtLayer.confidenceNarrative}</p>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-3">
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Priority fixes</p>
+                        <p className="font-medium">Correções prioritárias</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
                           {artMetadata.aiArtLayer.priorityFixes.map((item) => (
                             <p key={item}>- {item}</p>
@@ -1676,7 +1676,7 @@ export function ProjectDetailClient({
                         </div>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Strengths</p>
+                        <p className="font-medium">Pontos fortes</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
                           {artMetadata.aiArtLayer.strengths.map((item) => (
                             <p key={item}>- {item}</p>
@@ -1684,7 +1684,7 @@ export function ProjectDetailClient({
                         </div>
                       </div>
                       <div className="rounded-2xl border p-4">
-                        <p className="font-medium">Risks</p>
+                        <p className="font-medium">Riscos</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
                           {artMetadata.aiArtLayer.risks.map((item) => (
                             <p key={item}>- {item}</p>
@@ -1697,11 +1697,11 @@ export function ProjectDetailClient({
               ) : project.artAssets.length > 0 ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>AI visual critique</CardTitle>
+                    <CardTitle>Crítica visual da IA</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      AI critique is optional. When AI is enabled, running art analysis will review the uploaded images together with the measured visual signals.
+                      A crítica com IA é opcional. Quando a IA estiver habilitada, a análise de arte vai revisar as imagens enviadas junto com os sinais visuais medidos.
                     </p>
                   </CardContent>
                 </Card>
@@ -1709,7 +1709,7 @@ export function ProjectDetailClient({
               {isProArtAnalysis ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Pro shelf benchmark</CardTitle>
+                    <CardTitle>Benchmark Pro de prateleira</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-3">
                     {artMetadata?.proArtBrief?.referenceShelf?.length ? artMetadata.proArtBrief.referenceShelf.map((item) => (
@@ -1717,7 +1717,7 @@ export function ProjectDetailClient({
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            Review bar {formatPercent(item.reviewScore, 1)} · Price {formatCurrency(item.priceCents)}
+                            Barra de reviews {formatPercent(item.reviewScore, 1)} · Preço {formatCurrency(item.priceCents)}
                           </p>
                         </div>
                       </div>
@@ -1729,7 +1729,7 @@ export function ProjectDetailClient({
               ) : null}
               <Card>
                 <CardHeader>
-                  <CardTitle>Art reference set</CardTitle>
+                  <CardTitle>Conjunto de referências de arte</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3">
                   {project.competitorGames.length > 0 ? project.competitorGames.slice(0, 6).map((item) => (
@@ -1744,12 +1744,12 @@ export function ProjectDetailClient({
                           </p>
                         </div>
                         <p className="text-sm font-medium">
-                          Review bar: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
+                          Barra de reviews: {formatPercent(item.steamGame.reviewScore ?? null, 1)}
                         </p>
                       </div>
                     </div>
                   )) : (
-                    <p className="text-sm text-muted-foreground">Run market analysis first to build the initial reference set.</p>
+                    <p className="text-sm text-muted-foreground">Rode a análise de mercado primeiro para montar o conjunto inicial de referências.</p>
                   )}
                 </CardContent>
               </Card>
@@ -1812,7 +1812,7 @@ export function ProjectDetailClient({
               <div className="grid gap-4 md:grid-cols-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Milestones</CardTitle>
+                    <CardTitle>Marcos</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(project.milestones.length)}
@@ -1820,7 +1820,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Budgeted cost</CardTitle>
+                    <CardTitle>Custo orçado</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatCurrency(milestoneBudgetTotal)}
@@ -1828,7 +1828,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Expected revenue</CardTitle>
+                    <CardTitle>Receita esperada</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatCurrency(milestoneRevenueTotal)}
@@ -1836,7 +1836,7 @@ export function ProjectDetailClient({
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Pending approvals</CardTitle>
+                    <CardTitle>Aprovações pendentes</CardTitle>
                   </CardHeader>
                   <CardContent className="text-2xl font-semibold">
                     {formatNumber(pendingApprovalsCount)}
@@ -1846,7 +1846,7 @@ export function ProjectDetailClient({
               <Card className="overflow-hidden">
                 <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader>
-                  <CardTitle>Create milestone</CardTitle>
+                  <CardTitle>Criar milestone</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
@@ -1862,16 +1862,16 @@ export function ProjectDetailClient({
                     </SelectContent>
                   </Select>
                   <Input type="date" value={newMilestone.dueAt} onChange={(event) => setNewMilestone((current) => ({ ...current, dueAt: event.target.value }))} />
-                  <Input type="number" value={newMilestone.budgetedCostCents} onChange={(event) => setNewMilestone((current) => ({ ...current, budgetedCostCents: event.target.value }))} placeholder="Budgeted cost cents" />
-                  <Input type="number" value={newMilestone.expectedRevenueCents} onChange={(event) => setNewMilestone((current) => ({ ...current, expectedRevenueCents: event.target.value }))} placeholder="Expected revenue cents" />
-                  <Textarea className="md:col-span-2" value={newMilestone.description} onChange={(event) => setNewMilestone((current) => ({ ...current, description: event.target.value }))} placeholder="Milestone scope, acceptance criteria, delivery notes..." />
-                  <Button className="md:col-span-2" onClick={createMilestone}>Create milestone</Button>
+                  <Input type="number" value={newMilestone.budgetedCostCents} onChange={(event) => setNewMilestone((current) => ({ ...current, budgetedCostCents: event.target.value }))} placeholder="Custo orçado em centavos" />
+                  <Input type="number" value={newMilestone.expectedRevenueCents} onChange={(event) => setNewMilestone((current) => ({ ...current, expectedRevenueCents: event.target.value }))} placeholder="Receita esperada em centavos" />
+                  <Textarea className="md:col-span-2" value={newMilestone.description} onChange={(event) => setNewMilestone((current) => ({ ...current, description: event.target.value }))} placeholder="Escopo do marco, critérios de aceite, notas de entrega..." />
+                  <Button className="md:col-span-2" onClick={createMilestone}>Criar marco</Button>
                 </CardContent>
               </Card>
               <Card className="overflow-hidden">
                 <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
                 <CardHeader>
-                  <CardTitle>Project milestones and finance bridge</CardTitle>
+                  <CardTitle>Marcos do projeto e ponte financeira</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {project.milestones.length === 0 ? (
@@ -2001,7 +2001,7 @@ export function ProjectDetailClient({
                         </div>
                         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                           <div className="text-sm text-muted-foreground">
-                            Budget {formatCurrency(milestone.budgetedCostCents)} · Revenue {formatCurrency(milestone.expectedRevenueCents)}
+                            Orçamento {formatCurrency(milestone.budgetedCostCents)} · Receita {formatCurrency(milestone.expectedRevenueCents)}
                           </div>
                           <Button type="button" onClick={() => saveMilestone(milestone.id)}>{t("projectDetail.saveMilestone")}</Button>
                         </div>
@@ -2010,14 +2010,14 @@ export function ProjectDetailClient({
                   )}
                   {project.budgets.length > 0 ? (
                     <div className="rounded-[1.5rem] border border-white/10 bg-white/45 p-4 backdrop-blur dark:bg-white/[0.03]">
-                      <p className="font-medium">Project budget snapshot</p>
+                      <p className="font-medium">Snapshot do orçamento do projeto</p>
                       <div className="mt-3 grid gap-3 md:grid-cols-3">
                         {project.budgets.map((budget) => (
                           <div key={budget.id} className="rounded-xl border border-white/10 bg-background/75 p-3 text-sm">
                             <p className="font-medium">{budget.name}</p>
                             <p className="text-muted-foreground">{budget.status}</p>
-                            <p className="mt-2">Planned {formatCurrency(budget.totalPlannedCents)}</p>
-                            <p>Actual {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}</p>
+                            <p className="mt-2">Planejado {formatCurrency(budget.totalPlannedCents)}</p>
+                            <p>Realizado {formatCurrency(budget.lines.reduce((sum, line) => sum + line.actualCents, 0))}</p>
                           </div>
                         ))}
                       </div>
@@ -2032,23 +2032,23 @@ export function ProjectDetailClient({
           <Card className="overflow-hidden">
             <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Automated GDD</CardTitle>
+              <CardTitle>GDD automatizado</CardTitle>
               <Button disabled={isGeneratingGdd} onClick={generateGdd}>
-                {isGeneratingGdd ? "Generating..." : latestGdd ? "Regenerate" : "Generate GDD"}
+                {isGeneratingGdd ? "Gerando..." : latestGdd ? "Gerar novamente" : "Gerar GDD"}
               </Button>
             </CardHeader>
             <CardContent>
               {latestGdd ? (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    {latestGdd.title} · Updated {new Date(latestGdd.updatedAt).toLocaleString()}
+                    {latestGdd.title} · Atualizado em {new Date(latestGdd.updatedAt).toLocaleString()}
                   </p>
                   <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border bg-muted/30 p-4 text-sm">
                     {latestGdd.content}
                   </pre>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Generate the first GDD from the current project and market analysis.</p>
+                <p className="text-sm text-muted-foreground">Gere o primeiro GDD a partir do projeto atual e da análise de mercado.</p>
               )}
             </CardContent>
           </Card>

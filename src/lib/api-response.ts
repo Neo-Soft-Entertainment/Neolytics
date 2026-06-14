@@ -14,22 +14,22 @@ export function badRequest(message: string, extra?: Record<string, unknown>) {
   return NextResponse.json({ message, ...extra }, { status: 400 });
 }
 
-export function unauthorized(message = "Unauthorized") {
+export function unauthorized(message = "Não autorizado") {
   return NextResponse.json({ message }, { status: 401 });
 }
 
-export function forbidden(message = "Forbidden") {
+export function forbidden(message = "Proibido") {
   return NextResponse.json({ message }, { status: 403 });
 }
 
-export function tooManyRequests(message = "Too many requests") {
+export function tooManyRequests(message = "Muitas solicitações") {
   return NextResponse.json({ message }, { status: 429 });
 }
 
-export function notFound(message = "Not found") {
+export function notFound(message = "Não encontrado") {
   return NextResponse.json({ message }, { status: 404 });
 }
 
-export function serverError(message = "Internal server error") {
+export function serverError(message = "Erro interno do servidor") {
   return NextResponse.json({ message }, { status: 500 });
 }

@@ -38,7 +38,7 @@ export async function GET(
   const project = await getProjectById(projectId, context.workspace.id);
 
   if (!project) {
-    return notFound("Project not found.");
+    return notFound("Projeto não encontrado.");
   }
 
   return ok(project);
@@ -55,7 +55,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit projects.");
+    return forbidden("Visualizadores não podem editar projetos.");
   }
 
   try {
@@ -73,6 +73,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid project update payload.");
     }
 
-    return serverError("Unable to update project.");
+    return serverError("Não foi possível atualizar o projeto.");
   }
 }

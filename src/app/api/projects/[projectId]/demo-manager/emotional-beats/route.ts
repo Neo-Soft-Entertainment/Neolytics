@@ -18,7 +18,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create emotional beats.");
+    return forbidden("Visualizadores não podem criar beats emocionais.");
   }
 
   try {
@@ -27,7 +27,7 @@ export async function POST(
     const beat = await createEmotionalBeat(context.workspace.id, projectId, body);
 
     if (!beat) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(beat, { status: 201 });
@@ -36,6 +36,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid emotional beat payload.");
     }
 
-    return serverError("Unable to create emotional beat.");
+    return serverError("Não foi possível criar o beat emocional.");
   }
 }

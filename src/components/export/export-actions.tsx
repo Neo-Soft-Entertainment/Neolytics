@@ -17,7 +17,7 @@ export function ExportActions({
   xlsxHref,
   pdfHref,
   googleSheetsEndpoint,
-  label = "Export"
+  label = "Exportar"
 }: {
   csvHref: string;
   xlsxHref: string;
@@ -46,13 +46,13 @@ export function ExportActions({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setMessage(payload?.message ?? "Unable to publish to Google Sheets.");
+      setMessage(payload?.message ?? "Não foi possível publicar no Google Sheets.");
       return;
     }
 
     const payload = (await response.json()) as { url: string };
     window.open(payload.url, "_blank", "noopener,noreferrer");
-    setMessage("Google Sheets report created.");
+    setMessage("Relatório do Google Sheets criado.");
   }
 
   return (
@@ -68,13 +68,13 @@ export function ExportActions({
           <DropdownMenuItem asChild>
             <a href={xlsxHref}>
               <FileSpreadsheet className="mr-2 h-4 w-4" />
-              Download Excel
+              Baixar Excel
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <a href={csvHref}>
               <FileText className="mr-2 h-4 w-4" />
-              Download CSV
+              Baixar CSV
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -88,12 +88,12 @@ export function ExportActions({
           >
             <a href={canExportPdf ? resolvedPdfHref : undefined} className="flex items-center">
               <FileText className="mr-2 h-4 w-4" />
-              Download PDF
+              Baixar PDF
             </a>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={publishGoogleSheet}>
             <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Send to Google Sheets
+            Enviar para Google Sheets
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

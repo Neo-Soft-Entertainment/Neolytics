@@ -44,33 +44,33 @@ export function CreateWorkspaceForm() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to create workspace.");
+      setError(payload?.message ?? "Não foi possível criar a área de trabalho.");
       return;
     }
 
     form.reset();
-    setMessage(`Workspace "${values.name}" created and set as active.`);
+    setMessage(`Área de trabalho "${values.name}" criada e definida como ativa.`);
     router.refresh();
   }
 
   return (
     <form className="grid gap-4" onSubmit={form.handleSubmit(onSubmit)}>
       <div className="space-y-2">
-        <Label htmlFor="workspace-name">Workspace name</Label>
-        <Input id="workspace-name" placeholder="Publishing Radar" {...form.register("name")} />
+        <Label htmlFor="workspace-name">Nome da área de trabalho</Label>
+        <Input id="workspace-name" placeholder="Radar de publicação" {...form.register("name")} />
         {form.formState.errors.name ? (
           <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
         ) : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="workspace-description">Description</Label>
-        <Textarea id="workspace-description" placeholder="Optional workspace focus or mandate." {...form.register("description")} />
+        <Label htmlFor="workspace-description">Descrição</Label>
+        <Textarea id="workspace-description" placeholder="Foco ou mandato opcional da área de trabalho." {...form.register("description")} />
       </div>
       {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div>
         <Button disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting ? "Creating..." : "Create workspace"}
+          {form.formState.isSubmitting ? "Criando..." : "Criar área de trabalho"}
         </Button>
       </div>
     </form>

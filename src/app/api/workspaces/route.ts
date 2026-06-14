@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   if (!canManageWorkspaces(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create workspaces.");
+    return forbidden("Visualizadores não podem criar áreas de trabalho.");
   }
 
   try {
@@ -39,14 +39,14 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid workspace payload.");
+      return badRequest(error.issues[0]?.message ?? "Dados da área de trabalho inválidos.");
     }
 
     if (error instanceof SubscriptionLimitError) {
       return badRequest(error.message);
     }
 
-    return serverError("Unable to create workspace.");
+    return serverError("Não foi possível criar a área de trabalho.");
   }
 }
 
@@ -58,7 +58,7 @@ export async function DELETE(request: Request) {
   }
 
   if (!canManageWorkspaces(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete workspaces.");
+    return forbidden("Visualizadores não podem excluir áreas de trabalho.");
   }
 
   try {
@@ -93,9 +93,9 @@ export async function DELETE(request: Request) {
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid workspace delete payload.");
+      return badRequest(error.issues[0]?.message ?? "Dados de exclusão da área de trabalho inválidos.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to delete workspace.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível excluir a área de trabalho.");
   }
 }

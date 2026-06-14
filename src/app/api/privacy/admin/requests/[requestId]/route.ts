@@ -23,7 +23,7 @@ export async function PATCH(
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "review_privacy_requests")) {
-    return forbidden("This role cannot review privacy requests.");
+    return forbidden("Este cargo não pode revisar solicitações de privacidade.");
   }
 
   try {
@@ -45,6 +45,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid review payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to review request.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível revisar a solicitação.");
   }
 }

@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     if (body.inviteToken) {
       if (!invitation || invitation.revokedAt || invitation.acceptedAt || invitation.expiresAt <= new Date()) {
-        return badRequest("This invitation is no longer valid.");
+        return badRequest("Este convite não é mais válido.");
       }
 
       if (invitation.email !== email) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     if (!body.inviteToken && (!body.organizationName || !body.workspaceName)) {
-      return badRequest("Organization name and workspace name are required.");
+      return badRequest("O nome da organização e o nome da área de trabalho são obrigatórios.");
     }
 
     if (body.inviteToken && body.plan && body.plan !== SubscriptionPlan.FREE) {
@@ -137,6 +137,6 @@ export async function POST(request: Request) {
       return badRequest(error.message);
     }
 
-    return serverError("Unable to create account.");
+    return serverError("Não foi possível criar a conta.");
   }
 }

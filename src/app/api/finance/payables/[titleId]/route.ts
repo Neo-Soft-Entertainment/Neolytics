@@ -77,6 +77,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid payable title payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update payable title.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o título a pagar.");
   }
 }

@@ -15,7 +15,7 @@ export async function GET(
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_privacy_incidents")) {
-    return forbidden("This role cannot export incident reports.");
+    return forbidden("Este cargo não pode exportar relatórios de incidente.");
   }
 
   try {
@@ -42,6 +42,6 @@ export async function GET(
       status: incident.status
     }));
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Unable to generate incident report.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível gerar o relatório de incidente.");
   }
 }

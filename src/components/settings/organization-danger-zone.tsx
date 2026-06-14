@@ -22,7 +22,7 @@ export function OrganizationDangerZone({
     }
 
     const confirmed = window.confirm(
-      "Delete this organization permanently? This removes workspaces, projects, reports, invites, and member access."
+      "Excluir esta organização permanentemente? Isso remove áreas de trabalho, projetos, relatórios, convites e acesso dos membros."
     );
 
     if (!confirmed) {
@@ -42,7 +42,7 @@ export function OrganizationDangerZone({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to delete organization.");
+      setError(payload?.message ?? "Não foi possível excluir a organização.");
       return;
     }
 
@@ -53,12 +53,12 @@ export function OrganizationDangerZone({
   return (
     <Card className="border-destructive/30">
       <CardHeader>
-        <CardTitle>Danger zone</CardTitle>
+        <CardTitle>Zona de risco</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Deleting the current organization permanently removes its workspaces, projects, reports, invitations,
-          competitor sets, saved games, and team access.
+          Excluir a organização atual remove permanentemente suas áreas de trabalho, projetos, relatórios, convites,
+          conjuntos de concorrentes, jogos salvos e acesso da equipe.
         </p>
         <Button
           disabled={!canDelete || isDeleting}
@@ -66,10 +66,10 @@ export function OrganizationDangerZone({
           type="button"
           variant="destructive"
         >
-          {isDeleting ? "Deleting..." : "Delete organization"}
+          {isDeleting ? "Excluindo..." : "Excluir organização"}
         </Button>
         {!canDelete ? (
-          <p className="text-sm text-muted-foreground">Only organization owners can delete the organization.</p>
+          <p className="text-sm text-muted-foreground">Apenas proprietários da organização podem excluir a organização.</p>
         ) : null}
         {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}

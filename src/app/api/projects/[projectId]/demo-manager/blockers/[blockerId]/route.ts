@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit blockers.");
+    return forbidden("Visualizadores não podem editar bloqueios.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid blocker payload.");
     }
 
-    return serverError("Unable to update blocker.");
+    return serverError("Não foi possível atualizar o bloqueio.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete blockers.");
+    return forbidden("Visualizadores não podem excluir bloqueios.");
   }
 
   const { projectId, blockerId } = await params;

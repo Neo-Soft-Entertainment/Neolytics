@@ -20,7 +20,7 @@ async function fetchWithRetry<T>(url: string, init?: RequestInit, attempt = 1): 
   }
 
   if (attempt >= 4) {
-    throw new Error(`Request failed with ${response.status} for ${url}`);
+    throw new Error(`A requisição falhou with ${response.status} for ${url}`);
   }
 
   const delay = env.STEAM_REQUEST_DELAY_MS * attempt * 2;

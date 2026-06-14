@@ -185,7 +185,7 @@ export async function deleteWorkspaceFromOrganization(params: {
   });
 
   if (!workspace) {
-    throw new Error("Workspace not found.");
+    throw new Error("Área de trabalho não encontrada.");
   }
 
   await createAuditEvent(db, {

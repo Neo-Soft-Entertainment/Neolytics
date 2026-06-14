@@ -158,7 +158,7 @@ export function PrivacyPanel({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to grant consent.");
+      setError(payload?.message ?? "Não foi possível conceder o consentimento.");
       return;
     }
 
@@ -178,11 +178,11 @@ export function PrivacyPanel({
           : item
       )
     );
-    setFeedback("Consent granted.");
+    setFeedback("Consentimento concedido.");
   }
 
   async function revokeConsentForPurpose(purposeId: string) {
-    const confirmed = window.confirm("Revoke this consent now?");
+    const confirmed = window.confirm("Revogar este consentimento agora?");
 
     if (!confirmed) {
       return;
@@ -199,7 +199,7 @@ export function PrivacyPanel({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to revoke consent.");
+      setError(payload?.message ?? "Não foi possível revogar o consentimento.");
       return;
     }
 
@@ -217,11 +217,11 @@ export function PrivacyPanel({
           : item
       )
     );
-    setFeedback("Consent revoked.");
+    setFeedback("Consentimento revogado.");
   }
 
   async function createRequest(requestType: DataSubjectRequestType) {
-    const reason = window.prompt("Add a short reason for this privacy request.", "")?.trim() ?? "";
+    const reason = window.prompt("Adicione um motivo curto para esta solicitação de privacidade.", "")?.trim() ?? "";
 
     setFeedback(null);
     setError(null);
@@ -241,7 +241,7 @@ export function PrivacyPanel({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create privacy request.");
+      setError(payload?.message ?? "Não foi possível criar a solicitação de privacidade.");
       return;
     }
 
@@ -254,7 +254,7 @@ export function PrivacyPanel({
       },
       ...current
     ]);
-    setFeedback("Privacy request submitted.");
+    setFeedback("Solicitação de privacidade enviada.");
   }
 
   async function downloadJsonFile(url: string, fileName: string) {
@@ -264,7 +264,7 @@ export function PrivacyPanel({
     const payload = await response.json().catch(() => null);
 
     if (!response.ok) {
-      setError((payload as { message?: string } | null)?.message ?? "Unable to download data.");
+      setError((payload as { message?: string } | null)?.message ?? "Não foi possível baixar os dados.");
       return;
     }
 
@@ -275,11 +275,11 @@ export function PrivacyPanel({
     link.download = fileName;
     link.click();
     URL.revokeObjectURL(objectUrl);
-    setFeedback("Download started.");
+    setFeedback("Download iniciado.");
   }
 
   async function reviewRequest(requestId: string, status: DataSubjectRequestStatus) {
-    const confirmed = window.confirm(`Mark this request as ${status.toLowerCase()}?`);
+    const confirmed = window.confirm(`Marcar esta solicitação como ${status.toLowerCase()}?`);
 
     if (!confirmed) {
       return;
@@ -292,17 +292,17 @@ export function PrivacyPanel({
       },
       body: JSON.stringify({
         status,
-        resolution: status === DataSubjectRequestStatus.COMPLETED ? "Reviewed by privacy admin." : "Rejected by privacy admin."
+        resolution: status === DataSubjectRequestStatus.COMPLETED ? "Revisada pelo administrador de privacidade." : "Rejeitada pelo administrador de privacidade."
       })
     });
     const payload = await readJson(response);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to review request.");
+      setError(payload?.message ?? "Não foi possível revisar a solicitação.");
       return;
     }
 
-    setFeedback("Privacy request updated.");
+    setFeedback("Solicitação de privacidade atualizada.");
   }
 
   async function createIncident() {
@@ -326,12 +326,12 @@ export function PrivacyPanel({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create incident.");
+      setError(payload?.message ?? "Não foi possível criar o incidente.");
       return;
     }
 
     setIncidentRootCause("");
-    setFeedback("Incident recorded.");
+    setFeedback("Incidente registrado.");
   }
 
   async function createProduct() {
@@ -347,7 +347,7 @@ export function PrivacyPanel({
       body: JSON.stringify({
         productName,
         productType,
-        description: `${productType} data product`,
+        description: `Produto de dados ${productType}`,
         sourceTables: sourceTables.split(",").map((item) => item.trim()).filter(Boolean),
         outputFields: outputFields.split(",").map((item) => item.trim()).filter(Boolean),
         minimumCohortSize: 100,
@@ -358,12 +358,12 @@ export function PrivacyPanel({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create data product.");
+      setError(payload?.message ?? "Não foi possível criar o produto de dados.");
       return;
     }
 
     setProductName("");
-    setFeedback("Data product created.");
+    setFeedback("Produto de dados criado.");
   }
 
   async function approveProduct(productId: string, approvalStatus: ApprovalStatus) {
@@ -381,11 +381,11 @@ export function PrivacyPanel({
     const payload = await readJson(response);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to update product approval.");
+      setError(payload?.message ?? "Não foi possível atualizar a aprovação do produto.");
       return;
     }
 
-    setFeedback("Data product approval updated.");
+    setFeedback("Aprovação do produto de dados atualizada.");
   }
 
   const activeConsents = consents.filter((item) => item.consent?.status === ConsentStatus.GRANTED).length;
@@ -394,58 +394,58 @@ export function PrivacyPanel({
   return (
     <Tabs defaultValue="overview" className="space-y-4">
       <TabsList className={`grid h-auto w-full grid-cols-1 gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur ${canAdmin ? "md:grid-cols-4" : "md:grid-cols-3"} dark:bg-white/[0.04]`}>
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="consents">Consents</TabsTrigger>
-        <TabsTrigger value="requests">Requests</TabsTrigger>
-        {canAdmin ? <TabsTrigger value="admin">Admin</TabsTrigger> : null}
+        <TabsTrigger value="overview">Visão geral</TabsTrigger>
+        <TabsTrigger value="consents">Consentimentos</TabsTrigger>
+        <TabsTrigger value="requests">Solicitações</TabsTrigger>
+        {canAdmin ? <TabsTrigger value="admin">Administração</TabsTrigger> : null}
       </TabsList>
       <p className="text-sm text-muted-foreground">
-        Review privacy posture, consent records, data requests, and admin controls in one place.
+        Revise postura de privacidade, registros de consentimento, solicitações de dados e controles administrativos em um só lugar.
       </p>
 
       <TabsContent value="overview" className="space-y-4">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Active consents</CardTitle>
+              <CardTitle className="text-base">Consentimentos ativos</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">{activeConsents}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Optional purposes currently enabled.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Finalidades opcionais ativas no momento.</p>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Privacy requests</CardTitle>
+              <CardTitle className="text-base">Solicitações de privacidade</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">{openRequests}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Open or in review.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Abertas ou em revisão.</p>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Processing purposes</CardTitle>
+              <CardTitle className="text-base">Finalidades de processamento</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">{purposes.length}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Registered legal purposes.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Finalidades legais registradas.</p>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Privacy support</CardTitle>
+              <CardTitle className="text-base">Suporte de privacidade</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm font-medium">{supportEmail ?? "Contact your workspace admin"}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Use this channel for LGPD support and follow-up.</p>
+              <p className="text-sm font-medium">{supportEmail ?? "Contate o administrador da área de trabalho"}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Use este canal para suporte e acompanhamento de LGPD.</p>
             </CardContent>
           </Card>
         </div>
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Data map and legal purposes</CardTitle>
+            <CardTitle>Mapa de dados e finalidades legais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {purposes.map((purpose) => (
@@ -455,9 +455,9 @@ export function PrivacyPanel({
                 </summary>
                 <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
                   <p>{purpose.description}</p>
-                  <p>Legal basis: {purpose.legalBasis}</p>
-                  <p>Retention: {purpose.retentionPeriodDays} days</p>
-                  <p>Risk: {purpose.riskLevel}</p>
+                  <p>Base legal: {purpose.legalBasis}</p>
+                  <p>Retenção: {purpose.retentionPeriodDays} dias</p>
+                  <p>Risco: {purpose.riskLevel}</p>
                 </div>
               </details>
             ))}
@@ -468,7 +468,7 @@ export function PrivacyPanel({
       <TabsContent value="consents" className="space-y-4">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Optional consents</CardTitle>
+            <CardTitle>Consentimentos opcionais</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {consents.map((item) => (
@@ -483,16 +483,16 @@ export function PrivacyPanel({
                     </div>
                     <p className="text-sm text-muted-foreground">{item.purpose.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      Version: {item.consent?.consentTextVersion ?? "v1"} · Last change: {formatDate(item.consent?.revokedAt ?? item.consent?.grantedAt ?? null)}
+                      Versão: {item.consent?.consentTextVersion ?? "v1"} · Última alteração: {formatDate(item.consent?.revokedAt ?? item.consent?.grantedAt ?? null)}
                     </p>
                   </div>
                   {item.consent?.status === ConsentStatus.GRANTED ? (
                     <Button disabled={isSubmitting} variant="outline" onClick={() => revokeConsentForPurpose(item.purpose.purposeId)}>
-                      Revoke
+                      Revogar
                     </Button>
                   ) : (
                     <Button disabled={isSubmitting} onClick={() => grantConsentForPurpose(item.purpose.purposeId)}>
-                      Grant
+                      Conceder
                     </Button>
                   )}
                 </div>
@@ -505,30 +505,30 @@ export function PrivacyPanel({
       <TabsContent value="requests" className="space-y-4">
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Privacy actions</CardTitle>
+            <CardTitle>Ações de privacidade</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button disabled={isSubmitting} size="sm" onClick={() => createRequest(DataSubjectRequestType.ACCESS_PERSONAL_DATA)}>Request access</Button>
-            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.EXPORT_PORTABILITY)}>Request export</Button>
-            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.DELETE_PERSONAL_DATA)}>Request deletion</Button>
-            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.ANONYMIZE_OR_BLOCK_DATA)}>Anonymize or block</Button>
-            <Button size="sm" variant="outline" onClick={() => downloadJsonFile("/api/privacy/export-package", "privacy-export-package.json")}>Download my data</Button>
-            <Button size="sm" variant="outline" onClick={() => downloadJsonFile("/api/privacy/consents/history", "consent-history.json")}>Consent history</Button>
+            <Button disabled={isSubmitting} size="sm" onClick={() => createRequest(DataSubjectRequestType.ACCESS_PERSONAL_DATA)}>Solicitar acesso</Button>
+            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.EXPORT_PORTABILITY)}>Solicitar exportação</Button>
+            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.DELETE_PERSONAL_DATA)}>Solicitar exclusão</Button>
+            <Button disabled={isSubmitting} size="sm" variant="outline" onClick={() => createRequest(DataSubjectRequestType.ANONYMIZE_OR_BLOCK_DATA)}>Anonimizar ou bloquear</Button>
+            <Button size="sm" variant="outline" onClick={() => downloadJsonFile("/api/privacy/export-package", "privacy-export-package.json")}>Baixar meus dados</Button>
+            <Button size="sm" variant="outline" onClick={() => downloadJsonFile("/api/privacy/consents/history", "consent-history.json")}>Histórico de consentimento</Button>
           </CardContent>
         </Card>
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Request history</CardTitle>
+            <CardTitle>Histórico de solicitações</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Due</TableHead>
+                  <TableHead>Criado</TableHead>
+                  <TableHead>Prazo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -551,20 +551,20 @@ export function PrivacyPanel({
       {canAdmin && adminSnapshot ? (
         <TabsContent value="admin" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Consents</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.consents}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Requests</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.requests}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Incidents</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.incidents}</p></CardContent></Card>
-            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Retention holds</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.legalHolds}</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Consentimentos</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.consents}</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Solicitações</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.requests}</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Incidentes</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.incidents}</p></CardContent></Card>
+            <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Retenções legais</p><p className="mt-2 text-2xl font-semibold">{adminSnapshot.stats.legalHolds}</p></CardContent></Card>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>Record incident</CardTitle>
+                <CardTitle>Registrar incidente</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
                 <div className="space-y-2">
-                  <Label>Severity</Label>
+                  <Label>Severidade</Label>
                   <Select value={incidentSeverity} onValueChange={(value) => setIncidentSeverity(value as PrivacyIncidentSeverity)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -575,28 +575,28 @@ export function PrivacyPanel({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Affected categories</Label>
+                  <Label>Categorias afetadas</Label>
                   <Input value={incidentCategories} onChange={(event) => setIncidentCategories(event.target.value)} placeholder="PERSONAL, SENSITIVE_PERSONAL" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Root cause</Label>
-                  <Textarea value={incidentRootCause} onChange={(event) => setIncidentRootCause(event.target.value)} placeholder="Short incident summary" />
+                  <Label>Causa raiz</Label>
+                  <Textarea value={incidentRootCause} onChange={(event) => setIncidentRootCause(event.target.value)} placeholder="Resumo curto do incidente" />
                 </div>
-                <Button disabled={isSubmitting || incidentRootCause.trim().length < 2} onClick={createIncident}>Create incident</Button>
+                <Button disabled={isSubmitting || incidentRootCause.trim().length < 2} onClick={createIncident}>Criar incidente</Button>
               </CardContent>
             </Card>
 
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>Create data product</CardTitle>
+                <CardTitle>Criar produto de dados</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-3">
                 <div className="space-y-2">
-                  <Label>Name</Label>
-                  <Input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="Weekly market pulse" />
+                  <Label>Nome</Label>
+                  <Input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="Pulso semanal de mercado" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Type</Label>
+                  <Label>Tipo</Label>
                   <Select value={productType} onValueChange={(value) => setProductType(value as DataProductType)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -612,30 +612,30 @@ export function PrivacyPanel({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Source tables</Label>
+                  <Label>Tabelas de origem</Label>
                   <Input value={sourceTables} onChange={(event) => setSourceTables(event.target.value)} placeholder="usage_metrics, cohort_rollups" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Output fields</Label>
+                  <Label>Campos de saída</Label>
                   <Input value={outputFields} onChange={(event) => setOutputFields(event.target.value)} placeholder="weekly_region_segment_metrics, revenue" />
                 </div>
-                <Button disabled={isSubmitting || productName.trim().length < 2} onClick={createProduct}>Create product</Button>
+                <Button disabled={isSubmitting || productName.trim().length < 2} onClick={createProduct}>Criar produto</Button>
               </CardContent>
             </Card>
           </div>
 
           <Card className="overflow-hidden">
             <CardHeader>
-              <CardTitle>Data subject requests</CardTitle>
+              <CardTitle>Solicitações de titulares de dados</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Action</TableHead>
+                    <TableHead>Ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -645,8 +645,8 @@ export function PrivacyPanel({
                       <TableCell>{item.requestType}</TableCell>
                       <TableCell><Badge variant={getBadgeVariant(item.status)}>{item.status}</Badge></TableCell>
                       <TableCell className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => reviewRequest(item.id, DataSubjectRequestStatus.COMPLETED)}>Complete</Button>
-                        <Button size="sm" variant="outline" onClick={() => reviewRequest(item.id, DataSubjectRequestStatus.REJECTED)}>Reject</Button>
+                        <Button size="sm" variant="outline" onClick={() => reviewRequest(item.id, DataSubjectRequestStatus.COMPLETED)}>Concluir</Button>
+                        <Button size="sm" variant="outline" onClick={() => reviewRequest(item.id, DataSubjectRequestStatus.REJECTED)}>Rejeitar</Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -658,16 +658,16 @@ export function PrivacyPanel({
           <div className="grid gap-4 xl:grid-cols-2">
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>Data products</CardTitle>
+                <CardTitle>Produtos de dados</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
+                      <TableHead>Produto</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Risk</TableHead>
-                      <TableHead>Action</TableHead>
+                      <TableHead>Risco</TableHead>
+                      <TableHead>Ação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -677,7 +677,7 @@ export function PrivacyPanel({
                         <TableCell><Badge variant={getBadgeVariant(item.approvalStatus)}>{item.approvalStatus}</Badge></TableCell>
                         <TableCell>{item.privacyRiskScore}</TableCell>
                         <TableCell>
-                          <Button size="sm" variant="outline" onClick={() => approveProduct(item.id, ApprovalStatus.APPROVED)}>Approve</Button>
+                          <Button size="sm" variant="outline" onClick={() => approveProduct(item.id, ApprovalStatus.APPROVED)}>Aprovar</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -688,7 +688,7 @@ export function PrivacyPanel({
 
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>Incidents and audit</CardTitle>
+                <CardTitle>Incidentes e auditoria</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">

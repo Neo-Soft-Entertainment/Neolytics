@@ -238,13 +238,13 @@ export function ProjectKanbanBoard({
   }
 
   function updateColumnFromMenu(column: KanbanColumn, sortOrder: number) {
-    const name = window.prompt("Column name", column.name);
+    const name = window.prompt("Nome da coluna", column.name);
 
     if (name === null) {
       return;
     }
 
-    const color = window.prompt("Column color", column.color ?? "");
+    const color = window.prompt("Cor da coluna", column.color ?? "");
 
     if (color === null) {
       return;
@@ -256,7 +256,7 @@ export function ProjectKanbanBoard({
   if (!board) {
     return (
       <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
-        No Kanban board is available for this project yet.
+        Nenhum quadro Kanban está disponível para este projeto ainda.
       </div>
     );
   }
@@ -266,8 +266,8 @@ export function ProjectKanbanBoard({
       <div className="border-b border-slate-800 bg-[#171b20] px-5 py-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-xs text-slate-400">Projects / {projectName}</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-100">Board</h2>
+            <p className="text-xs text-slate-400">Projetos / {projectName}</p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-100">Quadro</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex -space-x-2">
@@ -284,7 +284,7 @@ export function ProjectKanbanBoard({
             </div>
             <Button className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={() => setDrawer({ mode: "create", columnId: columns[0]?.id ?? "" })}>
               <Plus className="mr-2 h-4 w-4" />
-              Create
+              Criar
             </Button>
           </div>
         </div>
@@ -295,15 +295,15 @@ export function ProjectKanbanBoard({
               className="border-slate-700 bg-[#11161c] pl-9 text-slate-100 placeholder:text-slate-500"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search board"
+              placeholder="Pesquisar no quadro"
             />
           </div>
           <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
             <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Owner" />
+              <SelectValue placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All owners</SelectItem>
+              <SelectItem value="all">Todos os responsáveis</SelectItem>
               {assignees.map((assignee) => (
                 <SelectItem key={assignee} value={assignee}>{assignee}</SelectItem>
               ))}
@@ -311,17 +311,17 @@ export function ProjectKanbanBoard({
           </Select>
           <Select value={labelFilter} onValueChange={setLabelFilter}>
             <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Label" />
+              <SelectValue placeholder="Etiqueta" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All labels</SelectItem>
+              <SelectItem value="all">Todas as etiquetas</SelectItem>
               {labels.map((label) => (
                 <SelectItem key={label} value={label}>{label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <div className="flex items-center justify-end text-xs text-slate-400">
-            {formatNumber(visibleCards)} of {formatNumber(totalCards)} cards
+            {formatNumber(visibleCards)} de {formatNumber(totalCards)} cartões
           </div>
         </div>
       </div>
@@ -332,7 +332,7 @@ export function ProjectKanbanBoard({
             className="border-slate-700 bg-[#11161c] text-slate-100 placeholder:text-slate-500"
             value={newColumn.name}
             onChange={(event) => setNewColumn((current) => ({ ...current, name: event.target.value }))}
-            placeholder="New status name"
+            placeholder="Nome do novo status"
           />
           <Input
             className="border-slate-700 bg-[#11161c] text-slate-100 placeholder:text-slate-500"
@@ -341,7 +341,7 @@ export function ProjectKanbanBoard({
             placeholder="#38bdf8"
           />
           <Button variant="outline" className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800" onClick={createColumn}>
-            Add status
+            Adicionar status
           </Button>
         </div>
       </div>
@@ -445,20 +445,20 @@ function KanbanColumnView({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEditColumn}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit status
+              Editar status
             </DropdownMenuItem>
             <DropdownMenuItem disabled={!canMoveLeft} onClick={() => void onMoveColumn(column.id, "left")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Move left
+              Mover para esquerda
             </DropdownMenuItem>
             <DropdownMenuItem disabled={!canMoveRight} onClick={() => void onMoveColumn(column.id, "right")}>
               <ArrowRight className="mr-2 h-4 w-4" />
-              Move right
+              Mover para direita
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void onDeleteColumn(column.id)}>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete status
+              Excluir status
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -481,7 +481,7 @@ function KanbanColumnView({
         </SortableContext>
         <Button variant="ghost" className="w-full justify-start text-slate-400 hover:bg-slate-800 hover:text-slate-100" onClick={onCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          Create
+          Criar
         </Button>
       </div>
     </section>
@@ -540,7 +540,7 @@ function KanbanCardView({
         <button
           className="mt-0.5 cursor-grab text-slate-500 active:cursor-grabbing"
           type="button"
-          aria-label="Drag card"
+          aria-label="Arrastar card"
           {...attributes}
           {...listeners}
         >
@@ -556,17 +556,17 @@ function KanbanCardView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onOpen}>Open</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void onMoveCardInColumn(card.id, "up")}>Move up</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void onMoveCardInColumn(card.id, "down")}>Move down</DropdownMenuItem>
+            <DropdownMenuItem onClick={onOpen}>Abrir</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void onMoveCardInColumn(card.id, "up")}>Mover para cima</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void onMoveCardInColumn(card.id, "down")}>Mover para baixo</DropdownMenuItem>
             <DropdownMenuSeparator />
             {columnOptions.map((column) => (
               <DropdownMenuItem key={column.id} disabled={column.id === columnId} onClick={() => void onMoveCard(card.id, column.id)}>
-                Move to {column.name}
+                Mover para {column.name}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void onDeleteCard(card.id)}>Delete</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void onDeleteCard(card.id)}>Excluir</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -694,8 +694,8 @@ function KanbanCardDrawer({
     <Dialog open={isOpen} onOpenChange={(open) => !open && setDrawer(null)}>
       <DialogContent className="left-auto right-0 top-0 h-screen max-w-xl translate-x-0 translate-y-0 overflow-y-auto rounded-none border-y-0 border-r-0 bg-card p-0 sm:max-w-xl">
         <DialogHeader className="border-b p-5">
-          <DialogTitle>{isEdit ? "Edit card" : "Create card"}</DialogTitle>
-          <DialogDescription>{isEdit ? "Update execution details without leaving the board." : "Add a work item to the selected status."}</DialogDescription>
+          <DialogTitle>{isEdit ? "Editar card" : "Criar card"}</DialogTitle>
+          <DialogDescription>{isEdit ? "Atualize os detalhes de execução sem sair do quadro." : "Adicione um item de trabalho ao status selecionado."}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 p-5">
           <div className="space-y-2">
@@ -722,33 +722,33 @@ function KanbanCardDrawer({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Title</Label>
+            <Label>Título</Label>
             <Input
               value={isEdit ? editState?.title ?? activeCard?.title ?? "" : createState.title}
               onChange={(event) => isEdit ? updateEdit("title", event.target.value) : updateCreate("title", event.target.value)}
-              placeholder="Card title"
+              placeholder="Título do card"
             />
           </div>
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label>Descrição</Label>
             <Textarea
               className="min-h-32"
               value={isEdit ? editState?.description ?? activeCard?.description ?? "" : createState.description}
               onChange={(event) => isEdit ? updateEdit("description", event.target.value) : updateCreate("description", event.target.value)}
-              placeholder="Describe the work, risk, or decision."
+              placeholder="Descreva o trabalho, risco ou decisão."
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Owner</Label>
+              <Label>Responsável</Label>
               <Input
                 value={isEdit ? editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "" : createState.assigneeLabel}
                 onChange={(event) => isEdit ? updateEdit("assigneeLabel", event.target.value) : updateCreate("assigneeLabel", event.target.value)}
-                placeholder="Owner"
+                placeholder="Responsável"
               />
             </div>
             <div className="space-y-2">
-              <Label>Due date</Label>
+              <Label>Vencimento</Label>
               <Input
                 type="date"
                 value={isEdit ? editState?.dueDate ?? (activeCard?.dueDate ? new Date(activeCard.dueDate).toISOString().slice(0, 10) : "") : createState.dueDate}
@@ -757,7 +757,7 @@ function KanbanCardDrawer({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Labels</Label>
+            <Label>Etiquetas</Label>
             <Input
               value={isEdit ? editState?.labels ?? getKanbanCardLabels(activeCard?.labels).join(", ") : createState.labels}
               onChange={(event) => isEdit ? updateEdit("labels", event.target.value) : updateCreate("labels", event.target.value)}
@@ -766,8 +766,8 @@ function KanbanCardDrawer({
           </div>
         </div>
         <DialogFooter className="border-t p-5">
-          <Button variant="outline" onClick={() => setDrawer(null)}>Cancel</Button>
-          <Button onClick={submit}>{isEdit ? "Save card" : "Create card"}</Button>
+          <Button variant="outline" onClick={() => setDrawer(null)}>Cancelar</Button>
+          <Button onClick={submit}>{isEdit ? "Salvar card" : "Criar card"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

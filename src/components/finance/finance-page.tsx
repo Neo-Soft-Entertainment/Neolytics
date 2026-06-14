@@ -150,7 +150,7 @@ export function FinancePage({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to save finance data.");
+      setError(payload?.message ?? "Não foi possível salvar os dados financeiros.");
       return;
     }
 
@@ -173,7 +173,7 @@ export function FinancePage({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to update finance data.");
+      setError(payload?.message ?? "Não foi possível atualizar os dados financeiros.");
       return;
     }
 
@@ -198,11 +198,11 @@ export function FinancePage({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to update approval.");
+      setError(payload?.message ?? "Não foi possível atualizar a aprovação.");
       return;
     }
 
-    setMessage(`Approval ${status.toLowerCase()}.`);
+    setMessage(`Aprovação ${status.toLowerCase()}.`);
     void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
     router.refresh();
   }

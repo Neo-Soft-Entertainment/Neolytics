@@ -58,6 +58,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid legal entity payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to update legal entity.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível atualizar a entidade legal.");
   }
 }

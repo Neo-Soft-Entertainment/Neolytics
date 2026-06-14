@@ -24,7 +24,7 @@ export async function POST() {
   } catch (error) {
     return new Response(
       JSON.stringify({
-        message: error instanceof Error ? error.message : "Unable to open Stripe billing portal."
+        message: error instanceof Error ? error.message : "Não foi possível abrir o portal de cobrança da Stripe."
       }),
       {
         status: 400,

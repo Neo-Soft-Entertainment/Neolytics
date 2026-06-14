@@ -29,7 +29,7 @@ export async function GET() {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
-    return forbidden("This role cannot access data products.");
+    return forbidden("Este cargo não pode acessar produtos de dados.");
   }
 
   return ok({
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
-    return forbidden("This role cannot create data products.");
+    return forbidden("Este cargo não pode criar produtos de dados.");
   }
 
   try {
@@ -73,6 +73,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid data product payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create data product.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o produto de dados.");
   }
 }

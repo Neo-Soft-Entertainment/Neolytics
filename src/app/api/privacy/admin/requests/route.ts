@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "review_privacy_requests")) {
-    return forbidden("This role cannot review privacy requests.");
+    return forbidden("Este cargo não pode revisar solicitações de privacidade.");
   }
 
   return ok({

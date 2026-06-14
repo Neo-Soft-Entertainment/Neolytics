@@ -44,6 +44,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid branch payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to create branch.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar a filial.");
   }
 }

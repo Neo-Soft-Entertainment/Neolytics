@@ -297,7 +297,7 @@ export async function createCommerceOrder(params: {
     });
 
     if (!channel) {
-      throw new Error("Commerce channel not found.");
+      throw new Error("Canal comercial não encontrado.");
     }
   }
 
@@ -313,7 +313,7 @@ export async function createCommerceOrder(params: {
     });
 
     if (!project) {
-      throw new Error("Project not found.");
+      throw new Error("Projeto não encontrado.");
     }
   }
 
@@ -389,7 +389,7 @@ export async function createMarketingCampaign(params: {
     });
 
     if (!project) {
-      throw new Error("Project not found.");
+      throw new Error("Projeto não encontrado.");
     }
   }
 

@@ -44,7 +44,7 @@ export function OrganizationSwitcher({
 
   const currentOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
   const activeOrganizationName = currentOrganization?.name ?? fallbackOrganizationName ?? t("shell.organization");
-  const activeRoleLabel = currentOrganization ? `${currentOrganization.role} access` : t("shell.activeOrganization");
+  const activeRoleLabel = currentOrganization ? `Acesso ${currentOrganization.role}` : t("shell.activeOrganization");
 
   async function onOrganizationSelect(organizationId: string) {
     if (organizationId === selectedOrganizationId) {

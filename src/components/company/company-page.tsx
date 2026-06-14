@@ -50,19 +50,19 @@ export function CompanyPage({
     return (
       <div className="space-y-6">
         <PageHero
-          title="Company"
-          description="Manage legal entities, compliance, and core company records."
+          title="Empresa"
+          description="Gerencie entidades legais, conformidade e registros principais da empresa."
           actions={(
             <>
-              <Badge variant="secondary">Company backbone</Badge>
-              <Badge variant="secondary">Plan: {planLabel}</Badge>
+              <Badge variant="secondary">Estrutura da empresa</Badge>
+              <Badge variant="secondary">Plano: {planLabel}</Badge>
             </>
           )}
           summary={(
             <div className="rounded-[1rem] border border-amber-400/25 bg-amber-500/10 p-4 text-sm">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">Upgrade required</p>
-              <p className="mt-2 font-medium text-foreground">Company Hub starts on Plus.</p>
-              <p className="mt-2 text-muted-foreground">Upgrade to unlock entities, documents, and compliance tracking.</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-amber-300">Upgrade necessário</p>
+              <p className="mt-2 font-medium text-foreground">Hub da empresa começa no Plus.</p>
+              <p className="mt-2 text-muted-foreground">Faça upgrade para liberar entidades, documentos e acompanhamento de conformidade.</p>
             </div>
           )}
         />
@@ -73,28 +73,28 @@ export function CompanyPage({
   return (
     <div className="space-y-6">
       <PageHero
-        title="Company"
-        description={`Manage legal entities, records, documents, and compliance for ${organizationName}.`}
+        title="Empresa"
+        description={`Gerencie entidades legais, registros, documentos e conformidade para ${organizationName}.`}
         actions={(
           <>
             <Badge variant="secondary">Compliance</Badge>
-            {canAccessDocumentVault ? <Badge variant="secondary">Documents</Badge> : null}
-            {canAccessApprovalsAudit ? <Badge variant="secondary">Audit</Badge> : null}
+            {canAccessDocumentVault ? <Badge variant="secondary">Documentos</Badge> : null}
+            {canAccessApprovalsAudit ? <Badge variant="secondary">Auditoria</Badge> : null}
           </>
         )}
         summary={(
           <div className="grid gap-2.5 rounded-[1rem] border border-white/10 bg-background/70 p-3 text-sm backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Language</span>
+              <span className="text-muted-foreground">Idioma</span>
               <span className="font-medium">{getLanguageLabel(organizationDefaultLanguage)}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Country</span>
+              <span className="text-muted-foreground">País</span>
               <span className="font-medium">{getCountryLabel(organizationCountryCode)}</span>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Control surface</p>
-              <p className="mt-2 font-medium">Legal and documentary backbone for the ERP.</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Superfície de controle</p>
+              <p className="mt-2 font-medium">Base legal e documental do ERP.</p>
             </div>
           </div>
         )}
@@ -102,13 +102,13 @@ export function CompanyPage({
 
       <Tabs defaultValue="profile">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur dark:bg-white/[0.04]">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
-          {canAccessDocumentVault ? <TabsTrigger value="documents">Documents</TabsTrigger> : null}
-          {canAccessApprovalsAudit ? <TabsTrigger value="audit">Audit</TabsTrigger> : null}
+          {canAccessDocumentVault ? <TabsTrigger value="documents">Documentos</TabsTrigger> : null}
+          {canAccessApprovalsAudit ? <TabsTrigger value="audit">Auditoria</TabsTrigger> : null}
         </TabsList>
         <p className="mt-2 text-sm text-muted-foreground">
-          Manage the legal profile, compliance work, documents, and audit trail for the studio organization.
+          Gerencie o perfil legal, conformidade, documentos e trilha de auditoria da organização do estúdio.
         </p>
         <TabsContent className="space-y-4" value="profile">
           <CompanyProfilePanel

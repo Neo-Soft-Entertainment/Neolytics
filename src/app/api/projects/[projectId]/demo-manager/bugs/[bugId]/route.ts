@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit bugs.");
+    return forbidden("Visualizadores não podem editar bugs.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid bug payload.");
     }
 
-    return serverError("Unable to update bug.");
+    return serverError("Não foi possível atualizar o bug.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete bugs.");
+    return forbidden("Visualizadores não podem excluir bugs.");
   }
 
   const { projectId, bugId } = await params;

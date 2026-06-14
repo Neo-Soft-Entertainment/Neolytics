@@ -57,6 +57,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid receivable payment payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create receivable payment.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível registrar o recebimento.");
   }
 }

@@ -30,7 +30,7 @@ export async function GET() {
     const data = await getCompanyModuleData(context.organizationId);
     return ok({ documents: data.documents });
   } catch {
-    return serverError("Unable to load documents.");
+    return serverError("Não foi possível carregar os documentos.");
   }
 }
 
@@ -91,6 +91,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid document payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to create document.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o documento.");
   }
 }

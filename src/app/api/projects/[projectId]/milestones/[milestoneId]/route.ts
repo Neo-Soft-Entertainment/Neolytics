@@ -57,9 +57,9 @@ export async function PATCH(
     return ok(project);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid milestone payload.");
+      return badRequest(error.issues[0]?.message ?? "Dados do marco inválidos.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update milestone.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o marco.");
   }
 }

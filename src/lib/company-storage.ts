@@ -132,7 +132,7 @@ export async function createCompanyDocumentSignedUrl(storagePath: string) {
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(storagePath, 60 * 30);
 
   if (error || !data?.signedUrl) {
-    throw new Error(error?.message || "Unable to create signed URL.");
+    throw new Error(error?.message || "Não foi possível criar a URL assinada.");
   }
 
   return data.signedUrl;

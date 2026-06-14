@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid Discord webhook payload.");
     }
 
-    return serverError("Unable to update Discord webhook settings.");
+    return serverError("Não foi possível atualizar as configurações do webhook do Discord.");
   }
 }
 
@@ -130,6 +130,6 @@ export async function POST() {
 
     return ok({ success: true });
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Unable to send Discord test webhook.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o webhook de teste do Discord.");
   }
 }

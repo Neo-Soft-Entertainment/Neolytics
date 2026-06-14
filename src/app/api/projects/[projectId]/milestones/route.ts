@@ -56,9 +56,9 @@ export async function POST(
     return ok(project);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid milestone payload.");
+      return badRequest(error.issues[0]?.message ?? "Dados do marco inválidos.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create milestone.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o marco.");
   }
 }

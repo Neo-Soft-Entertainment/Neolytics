@@ -26,6 +26,6 @@ export async function GET() {
     });
     return ok(payload);
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Unable to build privacy export package.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível montar o pacote de exportação de privacidade.");
   }
 }

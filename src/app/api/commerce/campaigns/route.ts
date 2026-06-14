@@ -68,6 +68,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid campaign payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create marketing campaign.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar a campanha de marketing.");
   }
 }

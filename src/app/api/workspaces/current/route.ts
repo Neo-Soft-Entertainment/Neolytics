@@ -27,7 +27,7 @@ export async function PATCH(request: Request) {
     });
 
     if (!workspace) {
-      return badRequest("Workspace not found in the current organization.");
+      return badRequest("Área de trabalho não encontrada na organização atual.");
     }
 
     const response = ok({ success: true, workspaceId: workspace.id });
@@ -35,9 +35,9 @@ export async function PATCH(request: Request) {
     return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid workspace selection.");
+      return badRequest(error.issues[0]?.message ?? "Seleção de área de trabalho inválida.");
     }
 
-    return badRequest("Unable to switch workspace.");
+    return badRequest("Não foi possível trocar a área de trabalho.");
   }
 }

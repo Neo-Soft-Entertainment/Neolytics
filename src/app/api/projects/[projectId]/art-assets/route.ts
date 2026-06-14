@@ -15,7 +15,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot upload art assets.");
+    return forbidden("Visualizadores não podem enviar assets de arte.");
   }
 
   try {
@@ -42,6 +42,6 @@ export async function POST(
       return entitlementErrorResponse(error);
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to upload art asset.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o asset de arte.");
   }
 }

@@ -31,33 +31,33 @@ export default async function InvitationPage({
         {invitation.revokedAt || invitation.acceptedAt || isExpired ? (
           <Card className="w-full">
             <CardHeader>
-              <CardTitle>Invitation unavailable</CardTitle>
+              <CardTitle>Convite indisponível</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <p>This invitation is no longer available.</p>
+              <p>Este convite não está mais disponível.</p>
               <Button asChild variant="outline">
-                <Link href="/">Back to home</Link>
+                <Link href="/">Voltar para o início</Link>
               </Button>
             </CardContent>
           </Card>
         ) : !session?.user ? (
           <Card className="w-full">
             <CardHeader>
-              <CardTitle>Invitation to {invitation.organization.name}</CardTitle>
+              <CardTitle>Convite para {invitation.organization.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>
-                {invitation.invitedBy.name || invitation.invitedBy.email} invited {invitation.email} to join as {invitation.role}.
+                {invitation.invitedBy.name || invitation.invitedBy.email} convidou {invitation.email} para entrar como {invitation.role}.
               </p>
               <p>
-                Permissions: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Role defaults only"}.
+                Permissões: {invitation.permissions.length > 0 ? invitation.permissions.map(getOrganizationPermissionLabel).join(", ") : "Apenas permissões padrão do cargo"}.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link href={`/login?inviteToken=${token}`}>Sign in</Link>
+                  <Link href={`/login?inviteToken=${token}`}>Entrar</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link href={`/signup?inviteToken=${token}`}>Create account</Link>
+                  <Link href={`/signup?inviteToken=${token}`}>Criar conta</Link>
                 </Button>
               </div>
             </CardContent>

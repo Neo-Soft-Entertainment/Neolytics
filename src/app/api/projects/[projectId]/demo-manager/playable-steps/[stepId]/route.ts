@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit playable steps.");
+    return forbidden("Visualizadores não podem editar passos jogáveis.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid playable step payload.");
     }
 
-    return serverError("Unable to update playable step.");
+    return serverError("Não foi possível atualizar o passo jogável.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete playable steps.");
+    return forbidden("Visualizadores não podem excluir passos jogáveis.");
   }
 
   const { projectId, stepId } = await params;

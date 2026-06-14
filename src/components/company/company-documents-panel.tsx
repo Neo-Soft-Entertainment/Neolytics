@@ -89,7 +89,7 @@ export function CompanyDocumentsPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to create document.");
+      setError(payload?.message ?? "Não foi possível criar o documento.");
       return;
     }
 
@@ -102,15 +102,15 @@ export function CompanyDocumentsPanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Document registry</CardTitle>
+          <CardTitle>Registro de documentos</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 text-sm md:grid-cols-4">
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Documents</p>
+            <p className="text-muted-foreground">Documentos</p>
             <p className="mt-1 text-2xl font-semibold">{documents.length}</p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Expiring soon</p>
+            <p className="text-muted-foreground">Vencendo em breve</p>
             <p className="mt-1 text-2xl font-semibold">
               {
                 documents.filter((document) => {
@@ -127,11 +127,11 @@ export function CompanyDocumentsPanel({
             </p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Project-linked</p>
+            <p className="text-muted-foreground">Vinculados a projeto</p>
             <p className="mt-1 text-2xl font-semibold">{documents.filter((document) => document.project).length}</p>
           </div>
           <div className="rounded-xl border p-3">
-            <p className="text-muted-foreground">Versioned docs</p>
+            <p className="text-muted-foreground">Documentos versionados</p>
             <p className="mt-1 text-2xl font-semibold">{documents.filter((document) => document.versions.length > 1).length}</p>
           </div>
         </CardContent>
@@ -139,7 +139,7 @@ export function CompanyDocumentsPanel({
 
       <Card>
         <CardHeader>
-          <CardTitle>Create document</CardTitle>
+          <CardTitle>Criar documento</CardTitle>
         </CardHeader>
         <CardContent>
           <form
@@ -151,11 +151,11 @@ export function CompanyDocumentsPanel({
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="document-title">Title</Label>
-              <Input disabled={!canManage || isCreating} id="document-title" name="title" placeholder="Business registration certificate" />
+              <Label htmlFor="document-title">Título</Label>
+              <Input disabled={!canManage || isCreating} id="document-title" name="title" placeholder="Certificado de registro empresarial" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-type">Type</Label>
+              <Label htmlFor="document-type">Tipo</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
@@ -170,14 +170,14 @@ export function CompanyDocumentsPanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-entity">Legal entity</Label>
+              <Label htmlFor="document-entity">Entidade legal</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="document-entity"
                 name="legalEntityId"
               >
-                <option value="">None</option>
+                <option value="">Nenhuma</option>
                 {legalEntities.map((entity) => (
                   <option key={entity.id} value={entity.id}>
                     {entity.name}
@@ -186,14 +186,14 @@ export function CompanyDocumentsPanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-project">Project</Label>
+              <Label htmlFor="document-project">Projeto</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 disabled={!canManage || isCreating}
                 id="document-project"
                 name="projectId"
               >
-                <option value="">None</option>
+                <option value="">Nenhum</option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -202,24 +202,24 @@ export function CompanyDocumentsPanel({
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-issuer">Issuer</Label>
-              <Input disabled={!canManage || isCreating} id="document-issuer" name="issuer" placeholder="Government registry or issuing authority" />
+              <Label htmlFor="document-issuer">Emissor</Label>
+              <Input disabled={!canManage || isCreating} id="document-issuer" name="issuer" placeholder="Registro governamental ou autoridade emissora" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-number">Document number</Label>
-              <Input disabled={!canManage || isCreating} id="document-number" name="documentNumber" placeholder="Optional reference" />
+              <Label htmlFor="document-number">Número do documento</Label>
+              <Input disabled={!canManage || isCreating} id="document-number" name="documentNumber" placeholder="Referência opcional" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-expiration">Expires at</Label>
+              <Label htmlFor="document-expiration">Expira em</Label>
               <Input disabled={!canManage || isCreating} id="document-expiration" name="expiresAt" type="date" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-file">File</Label>
+              <Label htmlFor="document-file">Arquivo</Label>
               <Input disabled={!canManage || isCreating} id="document-file" name="file" type="file" />
             </div>
             <div className="flex items-end">
               <Button disabled={!canManage || isCreating} type="submit">
-                {isCreating ? "Creating..." : "Create document"}
+                {isCreating ? "Criando..." : "Criar documento"}
               </Button>
             </div>
           </form>
@@ -230,27 +230,27 @@ export function CompanyDocumentsPanel({
       <div className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Search and filter</CardTitle>
+            <CardTitle>Pesquisar e filtrar</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="document-query">Search</Label>
+              <Label htmlFor="document-query">Pesquisar</Label>
               <Input
                 id="document-query"
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search by title, issuer, project, company, or filename"
+                placeholder="Pesquisar por título, emissor, projeto, empresa ou nome de arquivo"
                 value={query}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="document-type-filter">Type</Label>
+              <Label htmlFor="document-type-filter">Tipo</Label>
               <select
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 id="document-type-filter"
                 onChange={(event) => setTypeFilter(event.target.value)}
                 value={typeFilter}
               >
-                <option value="ALL">All</option>
+                <option value="ALL">Todos</option>
                 {documentTypes.map((documentType) => (
                   <option key={documentType} value={documentType}>
                     {getDocumentTypeLabel(documentType)}
@@ -267,7 +267,7 @@ export function CompanyDocumentsPanel({
         {filteredDocuments.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-sm text-muted-foreground">
-              No company documents matched the current filters.
+              Nenhum documento da empresa corresponde aos filtros atuais.
             </CardContent>
           </Card>
         ) : null}
@@ -306,11 +306,11 @@ function DocumentCard({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setMessage(payload?.message ?? "Unable to add document version.");
+      setMessage(payload?.message ?? "Não foi possível adicionar a versão do documento.");
       return;
     }
 
-    setMessage("Document version added.");
+    setMessage("Versão do documento adicionada.");
     router.refresh();
   }
 
@@ -327,7 +327,7 @@ function DocumentCard({
     const payload = (await response.json().catch(() => null)) as { message?: string; url?: string } | null;
 
     if (!response.ok || !payload?.url) {
-      setMessage(payload?.message ?? "Unable to open document.");
+      setMessage(payload?.message ?? "Não foi possível abrir o documento.");
       return;
     }
 
@@ -342,7 +342,7 @@ function DocumentCard({
         <div>
           <CardTitle>{document.title}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
-            {document.legalEntity?.name || "No company link"} · {document.project?.name || "No project link"}
+            {document.legalEntity?.name || "Sem vínculo com empresa"} · {document.project?.name || "Sem vínculo com projeto"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -353,19 +353,19 @@ function DocumentCard({
       <CardContent className="space-y-4">
         <div className="grid gap-3 text-sm md:grid-cols-4">
           <div>
-            <p className="text-muted-foreground">Issuer</p>
+            <p className="text-muted-foreground">Emissor</p>
             <p>{document.issuer || "—"}</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Document number</p>
+            <p className="text-muted-foreground">Número do documento</p>
             <p>{document.documentNumber || "—"}</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Expires</p>
+            <p className="text-muted-foreground">Expira</p>
             <p>{document.expiresAt ? new Date(document.expiresAt).toLocaleDateString() : "—"}</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Latest version</p>
+            <p className="text-muted-foreground">Última versão</p>
             <p>v{latestVersion?.version ?? 1}</p>
           </div>
         </div>
@@ -373,12 +373,12 @@ function DocumentCard({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Version</TableHead>
-              <TableHead>File</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Path</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Open</TableHead>
+              <TableHead>Versão</TableHead>
+              <TableHead>Arquivo</TableHead>
+              <TableHead>Tamanho</TableHead>
+              <TableHead>Caminho</TableHead>
+              <TableHead>Criado</TableHead>
+              <TableHead>Abrir</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -391,7 +391,7 @@ function DocumentCard({
                 <TableCell>{new Date(version.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Button onClick={() => void openLatestVersion(version.id)} size="sm" type="button" variant="outline">
-                    Open
+                    Abrir
                   </Button>
                 </TableCell>
               </TableRow>
@@ -407,15 +407,15 @@ function DocumentCard({
           }}
         >
           <div className="space-y-2">
-            <Label>New file version</Label>
+            <Label>Nova versão do arquivo</Label>
             <Input disabled={!canManage || isSavingVersion} name="file" type="file" />
           </div>
           <div className="flex items-end gap-2 md:col-span-2">
             <Button disabled={!canManage || isSavingVersion} size="sm" type="submit">
-              {isSavingVersion ? "Saving..." : "Add new version"}
+              {isSavingVersion ? "Salvando..." : "Adicionar nova versão"}
             </Button>
             <Button disabled={isOpening} onClick={() => void openLatestVersion()} size="sm" type="button" variant="outline">
-              {isOpening ? "Opening..." : "Open latest"}
+              {isOpening ? "Abrindo..." : "Abrir última"}
             </Button>
           </div>
         </form>

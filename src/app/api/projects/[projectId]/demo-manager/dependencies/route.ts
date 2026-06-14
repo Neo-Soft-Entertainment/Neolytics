@@ -18,7 +18,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create dependencies.");
+    return forbidden("Visualizadores não podem criar dependências.");
   }
 
   try {
@@ -27,7 +27,7 @@ export async function POST(
     const dependency = await createDependency(context.workspace.id, projectId, body);
 
     if (!dependency) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(dependency, { status: 201 });
@@ -36,6 +36,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid dependency payload.");
     }
 
-    return serverError("Unable to create dependency.");
+    return serverError("Não foi possível criar a dependência.");
   }
 }

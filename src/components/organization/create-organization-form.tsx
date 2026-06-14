@@ -28,7 +28,7 @@ export function CreateOrganizationForm({
     resolver: zodResolver(schema),
     defaultValues: {
       organizationName: "",
-      workspaceName: "Default Workspace"
+      workspaceName: "Área de trabalho padrão"
     }
   });
 
@@ -45,7 +45,7 @@ export function CreateOrganizationForm({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to create organization.");
+      setError(payload?.message ?? "Não foi possível criar a organização.");
       return;
     }
 
@@ -56,26 +56,26 @@ export function CreateOrganizationForm({
   return (
     <form className={compact ? "grid gap-3" : "grid gap-4 md:grid-cols-2"} onSubmit={form.handleSubmit(onSubmit)}>
       <div className="space-y-2">
-        <Label htmlFor="organizationName">Organization name</Label>
+        <Label htmlFor="organizationName">Nome da organização</Label>
         <Input id="organizationName" placeholder="Northstar Studio" {...form.register("organizationName")} />
         {form.formState.errors.organizationName ? (
           <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
         ) : null}
       </div>
       <div className="space-y-2">
-        <Label htmlFor="workspaceName">Workspace name</Label>
-        <Input id="workspaceName" placeholder="Core Portfolio" {...form.register("workspaceName")} />
+        <Label htmlFor="workspaceName">Nome da área de trabalho</Label>
+        <Input id="workspaceName" placeholder="Portfólio principal" {...form.register("workspaceName")} />
         {form.formState.errors.workspaceName ? (
           <p className="text-sm text-destructive">{form.formState.errors.workspaceName.message}</p>
         ) : null}
       </div>
       {error ? <p className="text-sm text-destructive md:col-span-2">{error}</p> : null}
       <p className="text-xs text-muted-foreground md:col-span-2">
-        New organizations start on the Free plan. Language and country defaults can be adjusted later in Company.
+        Novas organizações começam no plano Free. Idioma e país padrão podem ser ajustados depois em Empresa.
       </p>
       <div className="md:col-span-2">
         <Button disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting ? "Creating..." : "Create organization"}
+          {form.formState.isSubmitting ? "Criando..." : "Criar organização"}
         </Button>
       </div>
     </form>

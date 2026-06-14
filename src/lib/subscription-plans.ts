@@ -66,68 +66,68 @@ export const subscriptionFeatureRows: Array<{
   label: string;
 }> = [
   { key: "steamRadar", label: "Steam Radar" },
-  { key: "marketResearch", label: "Market Research" },
-  { key: "revenueCalculator", label: "Revenue Calculator" },
-  { key: "communityFeed", label: "Community Feed" },
+  { key: "marketResearch", label: "Pesquisa de mercado" },
+  { key: "revenueCalculator", label: "Calculadora de receita" },
+  { key: "communityFeed", label: "Feed da comunidade" },
   { key: "steamXray", label: "Steam X-Ray" },
-  { key: "viabilityAnalyses", label: "Viability Analyses" },
-  { key: "artAnalyses", label: "Art Analyses" },
-  { key: "gameBoardProjects", label: "Game Board Projects" },
+  { key: "viabilityAnalyses", label: "Análises de viabilidade" },
+  { key: "artAnalyses", label: "Análises de arte" },
+  { key: "gameBoardProjects", label: "Projetos no quadro de jogos" },
   { key: "gdds", label: "GDDs" },
-  { key: "communityRanking", label: "Community Ranking" },
-  { key: "pdfExport", label: "PDF Export" },
-  { key: "commerceOps", label: "Commerce Operations" },
-  { key: "financeWorkspace", label: "Finance Workspace" },
-  { key: "companyHub", label: "Company Hub" },
-  { key: "documentVault", label: "Document Vault" },
-  { key: "contractsRoyalties", label: "Contracts & Royalties" },
-  { key: "invoiceOps", label: "Invoices & Payables" },
-  { key: "approvalsAudit", label: "Approvals & Audit" },
-  { key: "earlyAccess", label: "Early Access to New Features" }
+  { key: "communityRanking", label: "Ranking da comunidade" },
+  { key: "pdfExport", label: "Exportação PDF" },
+  { key: "commerceOps", label: "Operações comerciais" },
+  { key: "financeWorkspace", label: "Workspace financeiro" },
+  { key: "companyHub", label: "Hub da empresa" },
+  { key: "documentVault", label: "Cofre de documentos" },
+  { key: "contractsRoyalties", label: "Contratos e royalties" },
+  { key: "invoiceOps", label: "Faturas e contas a pagar" },
+  { key: "approvalsAudit", label: "Aprovações e auditoria" },
+  { key: "earlyAccess", label: "Acesso antecipado a novos recursos" }
 ];
 
 export const subscriptionTruthNotes = [
-  "Steam Radar, Market Research, Revenue Calculator, Community, and Steam X-Ray are live across all plans today.",
-  "PDF Export, Art Analyses, Viability Analysis volume, GDD volume, Game Board project limits, and ERP access layers are enforced in the product now.",
-  "Commerce Operations, Finance Workspace, Company Hub, Document Vault, Contracts & Royalties, Invoices & Payables, and Approvals & Audit now map to real product access by plan.",
-  "Paid plans start with a 7-day free Stripe trial.",
-  "Early Access currently unlocks the raw Steam snapshot stream beta on Pro."
+  "Steam Radar, Pesquisa de mercado, Calculadora de receita, Comunidade e Steam X-Ray estão ativos em todos os planos hoje.",
+  "Exportação PDF, Análises de arte, volume de Análise de viabilidade, volume de GDD, limites de projetos no quadro e camadas de acesso ao ERP já são aplicados no produto.",
+  "Operações comerciais, Workspace financeiro, Hub da empresa, Cofre de documentos, Contratos e royalties, Faturas e contas a pagar, e Aprovações e auditoria agora seguem acesso real por plano.",
+  "Planos pagos começam com 7 dias de teste gratuito pela Stripe.",
+  "Acesso antecipado libera atualmente o stream beta de snapshots brutos da Steam no Pro."
 ];
 
 export const subscriptionPlans = {
   [SubscriptionPlan.FREE]: {
     label: "Free",
     priceLabel: "$0",
-    description: "For solo exploration and early validation.",
+    description: "Para exploração solo e validação inicial.",
     highlights: [
-      "Steam Radar, market research, and revenue calculator",
-      "Community feed and ranking",
-      "Steam X-Ray included",
-      "1 seat and 1 workspace",
-      "3 active Game Board projects",
-      "10 viability analyses per month",
-      "10 GDDs per month"
+      "Steam Radar, pesquisa de mercado e calculadora de receita",
+      "Feed e ranking da comunidade",
+      "Steam X-Ray incluído",
+      "1 assento e 1 workspace",
+      "3 projetos ativos no quadro de jogos",
+      "10 análises de viabilidade por mês",
+      "10 GDDs por mês"
     ],
     featureAccess: {
-      steamRadar: "Included",
-      marketResearch: "Included",
-      revenueCalculator: "Included",
-      communityFeed: "Included",
-      steamXray: "Included",
-      viabilityAnalyses: "10 / month",
-      artAnalyses: "Not included",
-      gameBoardProjects: "3 active",
-      gdds: "10 / month",
-      communityRanking: "Included",
-      pdfExport: "Not included",
-      commerceOps: "Not included",
-      financeWorkspace: "Not included",
-      companyHub: "Not included",
-      documentVault: "Not included",
-      contractsRoyalties: "Not included",
-      invoiceOps: "Not included",
-      approvalsAudit: "Not included",
-      earlyAccess: "Not included"
+      steamRadar: "Incluído",
+      marketResearch: "Incluído",
+      revenueCalculator: "Incluído",
+      communityFeed: "Incluído",
+      steamXray: "Incluído",
+      viabilityAnalyses: "10 / mês",
+      artAnalyses: "Não incluído",
+      gameBoardProjects: "3 ativos",
+      gdds: "10 / mês",
+      communityRanking: "Incluído",
+      pdfExport: "Não incluído",
+      commerceOps: "Não incluído",
+      financeWorkspace: "Não incluído",
+      companyHub: "Não incluído",
+      documentVault: "Não incluído",
+      contractsRoyalties: "Não incluído",
+      invoiceOps: "Não incluído",
+      approvalsAudit: "Não incluído",
+      earlyAccess: "Não incluído"
     },
     limits: {
       seats: 1,
@@ -145,37 +145,37 @@ export const subscriptionPlans = {
   [SubscriptionPlan.PLUS]: {
     label: "Plus",
     priceLabel: "$20",
-    description: "For serious studios building a steady research workflow. Includes a 7-day free trial.",
+    description: "Para estúdios sérios construindo um fluxo constante de pesquisa. Inclui 7 dias de teste gratuito.",
     highlights: [
-      "7-day free trial",
-      "Community, ranking, and PDF export",
-      "Steam X-Ray included",
-      "Finance workspace, company hub, and document vault",
-      "5 seats and 5 workspaces",
-      "20 active Game Board projects",
-      "100 viability analyses per month",
-      "100 GDDs per month"
+      "7 dias de teste gratuito",
+      "Comunidade, ranking e exportação PDF",
+      "Steam X-Ray incluído",
+      "Workspace financeiro, hub da empresa e cofre de documentos",
+      "5 assentos e 5 workspaces",
+      "20 projetos ativos no quadro de jogos",
+      "100 análises de viabilidade por mês",
+      "100 GDDs por mês"
     ],
     featureAccess: {
-      steamRadar: "Included",
-      marketResearch: "Included",
-      revenueCalculator: "Included",
-      communityFeed: "Included",
-      steamXray: "Included",
-      viabilityAnalyses: "100 / month",
-      artAnalyses: "25 / month",
-      gameBoardProjects: "20 active",
-      gdds: "100 / month",
-      communityRanking: "Included",
-      pdfExport: "Included",
-      commerceOps: "Included",
-      financeWorkspace: "Included",
-      companyHub: "Included",
-      documentVault: "Included",
-      contractsRoyalties: "Not included",
-      invoiceOps: "Not included",
-      approvalsAudit: "Not included",
-      earlyAccess: "Not included"
+      steamRadar: "Incluído",
+      marketResearch: "Incluído",
+      revenueCalculator: "Incluído",
+      communityFeed: "Incluído",
+      steamXray: "Incluído",
+      viabilityAnalyses: "100 / mês",
+      artAnalyses: "25 / mês",
+      gameBoardProjects: "20 ativos",
+      gdds: "100 / mês",
+      communityRanking: "Incluído",
+      pdfExport: "Incluído",
+      commerceOps: "Incluído",
+      financeWorkspace: "Incluído",
+      companyHub: "Incluído",
+      documentVault: "Incluído",
+      contractsRoyalties: "Não incluído",
+      invoiceOps: "Não incluído",
+      approvalsAudit: "Não incluído",
+      earlyAccess: "Não incluído"
     },
     limits: {
       seats: 5,
@@ -193,37 +193,37 @@ export const subscriptionPlans = {
   [SubscriptionPlan.PRO]: {
     label: "Pro",
     priceLabel: "$200",
-    description: "For power users who want essentially unrestricted research velocity. Includes a 7-day free trial.",
+    description: "Para usuários avançados que querem velocidade de pesquisa praticamente irrestrita. Inclui 7 dias de teste gratuito.",
     highlights: [
-      "7-day free trial",
-      "Steam X-Ray included",
-      "Unlimited viability analyses",
-      "Unlimited Game Board projects",
-      "Finance, company, contracts, invoices, and approvals",
-      "Unlimited GDDs",
-      "PDF export and priority beta access",
-      "Unlimited seats and workspaces"
+      "7 dias de teste gratuito",
+      "Steam X-Ray incluído",
+      "Análises de viabilidade ilimitadas",
+      "Projetos ilimitados no quadro de jogos",
+      "Financeiro, empresa, contratos, faturas e aprovações",
+      "GDDs ilimitados",
+      "Exportação PDF e acesso beta prioritário",
+      "Assentos e workspaces ilimitados"
     ],
     featureAccess: {
-      steamRadar: "Included",
-      marketResearch: "Included",
-      revenueCalculator: "Included",
-      communityFeed: "Included",
-      steamXray: "Included",
-      viabilityAnalyses: "Unlimited",
-      artAnalyses: "Unlimited",
-      gameBoardProjects: "Unlimited",
-      gdds: "Unlimited",
-      communityRanking: "Included",
-      pdfExport: "Included",
-      commerceOps: "Included",
-      financeWorkspace: "Included",
-      companyHub: "Included",
-      documentVault: "Included",
-      contractsRoyalties: "Included",
-      invoiceOps: "Included",
-      approvalsAudit: "Included",
-      earlyAccess: "Priority beta access"
+      steamRadar: "Incluído",
+      marketResearch: "Incluído",
+      revenueCalculator: "Incluído",
+      communityFeed: "Incluído",
+      steamXray: "Incluído",
+      viabilityAnalyses: "Ilimitado",
+      artAnalyses: "Ilimitado",
+      gameBoardProjects: "Ilimitado",
+      gdds: "Ilimitado",
+      communityRanking: "Incluído",
+      pdfExport: "Incluído",
+      commerceOps: "Incluído",
+      financeWorkspace: "Incluído",
+      companyHub: "Incluído",
+      documentVault: "Incluído",
+      contractsRoyalties: "Incluído",
+      invoiceOps: "Incluído",
+      approvalsAudit: "Incluído",
+      earlyAccess: "Acesso beta prioritário"
     },
     limits: {
       seats: null,
@@ -250,7 +250,7 @@ export function getSubscriptionPlanLabel(plan: SubscriptionPlan) {
 
 export function formatSubscriptionLimit(limit: number | null) {
   if (limit === null) {
-    return "Unlimited";
+    return "Ilimitado";
   }
 
   return limit.toLocaleString("en-US");
@@ -258,7 +258,7 @@ export function formatSubscriptionLimit(limit: number | null) {
 
 export function hasSubscriptionCapability(plan: SubscriptionPlan, capability: SubscriptionCapability) {
   const value = subscriptionPlans[plan].featureAccess[capability];
-  return value !== "Not included";
+  return value !== "Não incluído";
 }
 
 export function getSteamXrayHistoryLimit(plan: SubscriptionPlan) {
@@ -293,11 +293,11 @@ const featureCapabilityMap: Record<FeatureKey, SubscriptionCapability> = {
 };
 
 export const limitLabels: Record<LimitKey, string> = {
-  steamXrayPerMonth: "Steam X-Ray monthly usage",
-  viabilityAnalysesPerMonth: "viability analysis monthly usage",
-  artAnalysesPerMonth: "art analysis monthly usage",
-  gameBoardProjects: "Game Board project usage",
-  gdds: "GDD usage"
+  steamXrayPerMonth: "uso mensal do Steam X-Ray",
+  viabilityAnalysesPerMonth: "uso mensal de análise de viabilidade",
+  artAnalysesPerMonth: "uso mensal de análise de arte",
+  gameBoardProjects: "uso de projetos no quadro de jogos",
+  gdds: "uso de GDD"
 };
 
 export function getEntitlementPolicyForPlan(plan: SubscriptionPlan): EntitlementPolicy {

@@ -18,7 +18,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create Demo Manager items.");
+    return forbidden("Visualizadores não podem criar itens do Demo Manager.");
   }
 
   try {
@@ -27,7 +27,7 @@ export async function POST(
     const element = await createDemoElement(context.workspace.id, projectId, body);
 
     if (!element) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(element, { status: 201 });
@@ -36,6 +36,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid Demo Manager item payload.");
     }
 
-    return serverError("Unable to create Demo Manager item.");
+    return serverError("Não foi possível criar o item do Demo Manager.");
   }
 }

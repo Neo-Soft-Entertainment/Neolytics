@@ -56,6 +56,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid budget payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create budget.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o orçamento.");
   }
 }

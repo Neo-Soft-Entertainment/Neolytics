@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create projects.");
+    return forbidden("Visualizadores não podem criar projetos.");
   }
 
   try {
@@ -70,6 +70,6 @@ export async function POST(request: Request) {
       return entitlementErrorResponse(error);
     }
 
-    return serverError("Unable to create project.");
+    return serverError("Não foi possível criar o projeto.");
   }
 }

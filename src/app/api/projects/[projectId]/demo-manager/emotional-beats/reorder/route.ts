@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot reorder emotional beats.");
+    return forbidden("Visualizadores não podem reordenar beats emocionais.");
   }
 
   try {
@@ -36,6 +36,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid reorder payload.");
     }
 
-    return serverError("Unable to reorder emotional beats.");
+    return serverError("Não foi possível reordenar os beats emocionais.");
   }
 }

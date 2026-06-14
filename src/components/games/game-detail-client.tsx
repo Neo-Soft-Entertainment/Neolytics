@@ -21,11 +21,11 @@ export function GameDetailClient({ appId }: { appId: number }) {
   const snapshotsQuery = useGameSnapshots(appId, historyLoad.shouldLoad && Boolean(detailsQuery.data?.steamXrayAccess.rawSnapshotsBetaAvailable));
 
   if (detailsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading game details...</p>;
+    return <p className="text-sm text-muted-foreground">Carregando detalhes do jogo...</p>;
   }
 
   if (detailsQuery.isError || !detailsQuery.data) {
-    return <ErrorState title="Game unavailable" description="We could not load this Steam game." />;
+    return <ErrorState title="Jogo indisponível" description="Não foi possível carregar este jogo da Steam." />;
   }
 
   const game: any = detailsQuery.data;
@@ -46,17 +46,17 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </div>
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">{game.name}</h1>
-            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{game.shortDescription ?? "No description available."}</p>
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{game.shortDescription ?? "Nenhuma descrição disponível."}</p>
           </div>
         </div>
         <Card className="w-full max-w-sm">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div className="space-y-2">
-              <CardTitle>Current snapshot</CardTitle>
+              <CardTitle>Snapshot atual</CardTitle>
               <Badge variant="outline">{`Steam X-Ray · ${game.steamXrayAccess.label}`}</Badge>
             </div>
             <ExportActions
-              label="Export"
+              label="Exportar"
               xlsxHref={`/api/exports/games/${appId}?format=xlsx`}
               csvHref={`/api/exports/games/${appId}?format=csv`}
               googleSheetsEndpoint={`/api/exports/games/${appId}`}
@@ -65,23 +65,23 @@ export function GameDetailClient({ appId }: { appId: number }) {
           <CardContent className="space-y-2 text-sm">
             <p className="text-muted-foreground">
               {game.steamXrayAccess.playerHistoryAvailable
-                ? `${game.steamXrayAccess.historyLimit} days of history are available on this plan.`
-                : `This plan includes ${game.steamXrayAccess.historyLimit} days of price and review history.`}
+                ? `${game.steamXrayAccess.historyLimit} dias de histórico estão disponíveis neste plano.`
+                : `Este plano inclui ${game.steamXrayAccess.historyLimit} dias de histórico de preço e avaliações.`}
             </p>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Price</span>
+              <span className="text-muted-foreground">Preço</span>
               <span>{formatCurrency(game.priceCurrent?.finalPriceCents ?? null)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Reviews</span>
+              <span className="text-muted-foreground">Avaliações</span>
               <span>{formatNumber(game.reviewCount)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Review score</span>
+              <span className="text-muted-foreground">Nota das avaliações</span>
               <span>{game.reviewScore ? `${game.reviewScore.toFixed(1)}%` : "N/A"}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Current players</span>
+              <span className="text-muted-foreground">Jogadores atuais</span>
               <span>{formatNumber(game.currentPlayers)}</span>
             </div>
           </CardContent>
@@ -95,37 +95,37 @@ export function GameDetailClient({ appId }: { appId: number }) {
               <div>
                 <CardTitle>Neolytics Steam Database</CardTitle>
                 <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                  SteamDB-style intelligence generated from official Steam data, Neolytics snapshots, and deterministic scoring. No SteamDB API or scraping is used.
+                  Inteligência no estilo SteamDB gerada com dados oficiais da Steam, snapshots da Neolytics e pontuação determinística. Nenhuma API da SteamDB ou scraping é usada.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{databaseProfile.classification}</Badge>
-                <Badge variant="outline">{`${databaseProfile.confidenceLevel} confidence`}</Badge>
+                <Badge variant="outline">{`${databaseProfile.confidenceLevel} confiança`}</Badge>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
               <div className="rounded-2xl border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Opportunity</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Oportunidade</p>
                 <p className="mt-2 text-3xl font-semibold">{databaseProfile.opportunityScore}</p>
               </div>
               <div className="rounded-2xl border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Data quality</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Qualidade dos dados</p>
                 <p className="mt-2 text-3xl font-semibold">{databaseProfile.dataQuality.score}</p>
               </div>
               <div className="rounded-2xl border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Peer slice</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Recorte comparável</p>
                 <p className="mt-2 text-3xl font-semibold">{formatNumber(databaseProfile.dataQuality.peerDatasetSize)}</p>
               </div>
               <div className="rounded-2xl border bg-background/70 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Momentum</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Momento</p>
                 <p className="mt-2 text-3xl font-semibold">{databaseProfile.trendDetection.releaseMomentum}</p>
               </div>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold">Weighted score factors</h3>
+                <h3 className="text-sm font-semibold">Fatores ponderados da nota</h3>
                 {databaseProfile.weightedFactors.map((factor) => (
                   <div key={factor.name} className="rounded-2xl border bg-background/70 p-4">
                     <div className="flex items-center justify-between gap-3">
@@ -138,66 +138,66 @@ export function GameDetailClient({ appId }: { appId: number }) {
               </div>
               <div className="space-y-4">
                 <div className="rounded-2xl border bg-background/70 p-4">
-                  <h3 className="text-sm font-semibold">Observed history</h3>
+                  <h3 className="text-sm font-semibold">Histórico observado</h3>
                   <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
-                    <p>{`Lowest observed price: ${formatCurrency(databaseProfile.observedHistory.price.lowestObservedPriceCents)}`}</p>
-                    <p>{`Highest observed price: ${formatCurrency(databaseProfile.observedHistory.price.highestObservedPriceCents)}`}</p>
-                    <p>{`Discount snapshots: ${formatNumber(databaseProfile.observedHistory.price.discountSnapshotCount)}`}</p>
-                    <p>{`Peak observed players: ${formatNumber(databaseProfile.observedHistory.players.peakObservedPlayers)}`}</p>
-                    <p>{`Average observed players: ${formatNumber(databaseProfile.observedHistory.players.averageObservedPlayers)}`}</p>
+                    <p>{`Menor preço observado: ${formatCurrency(databaseProfile.observedHistory.price.lowestObservedPriceCents)}`}</p>
+                    <p>{`Maior preço observado: ${formatCurrency(databaseProfile.observedHistory.price.highestObservedPriceCents)}`}</p>
+                    <p>{`Snapshots com desconto: ${formatNumber(databaseProfile.observedHistory.price.discountSnapshotCount)}`}</p>
+                    <p>{`Pico de jogadores observado: ${formatNumber(databaseProfile.observedHistory.players.peakObservedPlayers)}`}</p>
+                    <p>{`Média de jogadores observada: ${formatNumber(databaseProfile.observedHistory.players.averageObservedPlayers)}`}</p>
                   </div>
                 </div>
                 <div className="rounded-2xl border bg-background/70 p-4">
-                  <h3 className="text-sm font-semibold">Trend detection</h3>
+                  <h3 className="text-sm font-semibold">Detecção de tendências</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{databaseProfile.trendDetection.explanation}</p>
                   {databaseProfile.trendDetection.emergingTags.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {databaseProfile.trendDetection.emergingTags.map((tag) => (
                         <Badge key={tag.name} variant="secondary">
-                          {`${tag.name} ${tag.recentSharePercent}% recent`}
+                          {`${tag.name} ${tag.recentSharePercent}% recente`}
                         </Badge>
                       ))}
                     </div>
                   ) : null}
                 </div>
                 <div className="rounded-2xl border bg-background/70 p-4">
-                  <h3 className="text-sm font-semibold">Sources used</h3>
+                  <h3 className="text-sm font-semibold">Fontes usadas</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{databaseProfile.sources.join(" · ")}</p>
                 </div>
               </div>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               <div className="rounded-2xl border bg-background/70 p-4">
-                <h3 className="text-sm font-semibold">Direct competitors</h3>
+                <h3 className="text-sm font-semibold">Concorrentes diretos</h3>
                 <div className="mt-3 space-y-2">
                   {databaseProfile.competitiveIntelligence.directCompetitors.length > 0 ? (
                     databaseProfile.competitiveIntelligence.directCompetitors.slice(0, 5).map((competitor) => (
                       <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
                         <span className="font-medium">{competitor.name}</span>
                         <span className="mt-1 block text-muted-foreground">
-                          {`${formatNumber(competitor.reviewCount)} reviews · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} score · ${formatCurrency(competitor.estimatedMedianNetRevenueCents)}`}
+                          {`${formatNumber(competitor.reviewCount)} avaliações · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} nota · ${formatCurrency(competitor.estimatedMedianNetRevenueCents)}`}
                         </span>
                       </Link>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No direct competitors identified in the current database slice.</p>
+                    <p className="text-sm text-muted-foreground">Nenhum concorrente direto identificado no recorte atual do banco de dados.</p>
                   )}
                 </div>
               </div>
               <div className="rounded-2xl border bg-background/70 p-4">
-                <h3 className="text-sm font-semibold">Recent launches to watch</h3>
+                <h3 className="text-sm font-semibold">Lançamentos recentes para observar</h3>
                 <div className="mt-3 space-y-2">
                   {databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.length > 0 ? (
                     databaseProfile.competitiveIntelligence.recentSuccessfulLaunches.slice(0, 5).map((competitor) => (
                       <Link key={competitor.appId} className="block rounded-xl border p-3 text-sm hover:bg-muted/50" href={`/games/${competitor.appId}`}>
                         <span className="font-medium">{competitor.name}</span>
                         <span className="mt-1 block text-muted-foreground">
-                          {`${formatNumber(competitor.reviewCount)} reviews · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} score`}
+                          {`${formatNumber(competitor.reviewCount)} avaliações · ${competitor.reviewScore ? `${competitor.reviewScore.toFixed(1)}%` : "N/A"} nota`}
                         </span>
                       </Link>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No recent breakout launch identified yet.</p>
+                    <p className="text-sm text-muted-foreground">Nenhum lançamento recente de destaque identificado ainda.</p>
                   )}
                 </div>
               </div>
@@ -211,10 +211,10 @@ export function GameDetailClient({ appId }: { appId: number }) {
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
             {databaseProfileQuery.isError
-              ? "Unable to load the database profile right now."
+              ? "Não foi possível carregar o perfil do banco de dados agora."
               : databaseProfileQuery.isFetching
-                ? "Loading database profile in background..."
-                : "Advanced database profile will load as you continue."}
+                ? "Carregando perfil do banco de dados em segundo plano..."
+                : "O perfil avançado do banco de dados será carregado conforme você continuar."}
           </CardContent>
         </Card>
       )}
@@ -222,31 +222,31 @@ export function GameDetailClient({ appId }: { appId: number }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Estimated sales</CardTitle>
+            <CardTitle>Vendas estimadas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Low: {formatNumber(game.salesEstimates[0]?.lowEstimate ?? null)}</p>
-            <p>Median: {formatNumber(game.salesEstimates[0]?.medianEstimate ?? null)}</p>
-            <p>High: {formatNumber(game.salesEstimates[0]?.highEstimate ?? null)}</p>
-            <p>Confidence: {game.salesEstimates[0]?.confidence ?? "N/A"}</p>
-            <p className="text-muted-foreground">{game.salesEstimates[0]?.explanation ?? "No estimate available yet."}</p>
+            <p>Baixa: {formatNumber(game.salesEstimates[0]?.lowEstimate ?? null)}</p>
+            <p>Mediana: {formatNumber(game.salesEstimates[0]?.medianEstimate ?? null)}</p>
+            <p>Alta: {formatNumber(game.salesEstimates[0]?.highEstimate ?? null)}</p>
+            <p>Confiança: {game.salesEstimates[0]?.confidence ?? "N/A"}</p>
+            <p className="text-muted-foreground">{game.salesEstimates[0]?.explanation ?? "Nenhuma estimativa disponível ainda."}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Estimated revenue</CardTitle>
+            <CardTitle>Receita estimada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p>Low net: {formatCurrency(game.revenueEstimates[0]?.lowNetRevenueCents ?? null)}</p>
-            <p>Median net: {formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null)}</p>
-            <p>High net: {formatCurrency(game.revenueEstimates[0]?.highNetRevenueCents ?? null)}</p>
-            <p>Confidence: {game.revenueEstimates[0]?.confidence ?? "N/A"}</p>
-            <p className="text-muted-foreground">{game.revenueEstimates[0]?.explanation ?? "No revenue estimate available yet."}</p>
+            <p>Líquida baixa: {formatCurrency(game.revenueEstimates[0]?.lowNetRevenueCents ?? null)}</p>
+            <p>Líquida mediana: {formatCurrency(game.revenueEstimates[0]?.medianNetRevenueCents ?? null)}</p>
+            <p>Líquida alta: {formatCurrency(game.revenueEstimates[0]?.highNetRevenueCents ?? null)}</p>
+            <p>Confiança: {game.revenueEstimates[0]?.confidence ?? "N/A"}</p>
+            <p className="text-muted-foreground">{game.revenueEstimates[0]?.explanation ?? "Nenhuma estimativa de receita disponível ainda."}</p>
           </CardContent>
         </Card>
       </div>
       <div ref={historyLoad.ref} className="grid gap-6 xl:grid-cols-3">
-        <ChartCard title="Price history">
+        <ChartCard title="Histórico de preço">
           {history?.priceHistory?.length ? (
             <HistoryLineChart
               data={history.priceHistory.map((item: any) => ({
@@ -257,10 +257,10 @@ export function GameDetailClient({ appId }: { appId: number }) {
               yKey="price"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">No price history yet.</p>
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de preço.</p>
           )}
         </ChartCard>
-        <ChartCard title="Review history">
+        <ChartCard title="Histórico de avaliações">
           {history?.reviewHistory?.length ? (
             <HistoryLineChart
               data={history.reviewHistory.map((item: any) => ({
@@ -271,10 +271,10 @@ export function GameDetailClient({ appId }: { appId: number }) {
               yKey="reviews"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">No review history yet.</p>
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de avaliações.</p>
           )}
         </ChartCard>
-        <ChartCard title="Player history">
+        <ChartCard title="Histórico de jogadores">
           {game.steamXrayAccess.playerHistoryAvailable && history?.playerHistory?.length ? (
             <HistoryLineChart
               data={history.playerHistory.map((item: any) => ({
@@ -285,27 +285,27 @@ export function GameDetailClient({ appId }: { appId: number }) {
               yKey="players"
             />
           ) : game.steamXrayAccess.playerHistoryAvailable ? (
-            <p className="text-sm text-muted-foreground">No player history yet.</p>
+            <p className="text-sm text-muted-foreground">Ainda não há histórico de jogadores.</p>
           ) : (
-            <p className="text-sm text-muted-foreground">Player concurrency history starts on Plus.</p>
+            <p className="text-sm text-muted-foreground">Histórico de jogadores simultâneos começa no Plus.</p>
           )}
         </ChartCard>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Steam X-Ray scope</CardTitle>
+          <CardTitle>Escopo do Steam X-Ray</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <p>{`Current tier: ${game.steamXrayAccess.label}.`}</p>
-          <p>{`History window: ${game.steamXrayAccess.historyLimit} days for chart data.`}</p>
-          <p>{game.steamXrayAccess.playerHistoryAvailable ? "Player history is available on this plan." : "Player history unlocks on Plus and Pro."}</p>
-          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Raw snapshot stream beta is enabled on this access level." : "Raw snapshot stream beta requires early access."}</p>
+          <p>{`Plano atual: ${game.steamXrayAccess.label}.`}</p>
+          <p>{`Janela de histórico: ${game.steamXrayAccess.historyLimit} dias para dados de gráfico.`}</p>
+          <p>{game.steamXrayAccess.playerHistoryAvailable ? "Histórico de jogadores está disponível neste plano." : "Histórico de jogadores libera no Plus e no Pro."}</p>
+          <p>{game.steamXrayAccess.rawSnapshotsBetaAvailable ? "Stream beta de snapshots brutos está ativo neste nível de acesso." : "Stream beta de snapshots brutos exige acesso antecipado."}</p>
         </CardContent>
       </Card>
       {game.steamXrayAccess.rawSnapshotsBetaAvailable ? (
         <Card>
           <CardHeader>
-            <CardTitle>Raw snapshot stream beta</CardTitle>
+            <CardTitle>Stream beta de snapshots brutos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {snapshots.length > 0 ? (
@@ -313,12 +313,12 @@ export function GameDetailClient({ appId }: { appId: number }) {
                 <div key={snapshot.snapshotDate} className="rounded-2xl border p-3">
                   <p className="font-medium">{new Date(snapshot.snapshotDate).toLocaleString()}</p>
                   <p className="text-muted-foreground">
-                    {`Players: ${formatNumber(snapshot.currentPlayers ?? null)} · Review score: ${snapshot.reviewScore ? `${snapshot.reviewScore.toFixed(1)}%` : "N/A"}`}
+                    {`Jogadores: ${formatNumber(snapshot.currentPlayers ?? null)} · Nota das avaliações: ${snapshot.reviewScore ? `${snapshot.reviewScore.toFixed(1)}%` : "N/A"}`}
                   </p>
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground">No raw snapshots available yet.</p>
+              <p className="text-muted-foreground">Ainda não há snapshots brutos disponíveis.</p>
             )}
           </CardContent>
         </Card>
@@ -326,7 +326,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Developers</CardTitle>
+            <CardTitle>Desenvolvedores</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -336,7 +336,7 @@ export function GameDetailClient({ appId }: { appId: number }) {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Publishers</CardTitle>
+            <CardTitle>Publicadoras</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">

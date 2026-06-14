@@ -44,6 +44,6 @@ export async function POST(request: Request) {
       return badRequest(error.message);
     }
 
-    return serverError("Unable to create invitation.");
+    return serverError("Não foi possível criar o convite.");
   }
 }

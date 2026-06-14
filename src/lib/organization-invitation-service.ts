@@ -55,7 +55,7 @@ export async function createOrganizationInvitation(params: {
   });
 
   if (existingMember) {
-    throw new OrganizationInvitationError("This user is already a member of the organization.");
+    throw new OrganizationInvitationError("Este usuário já é membro da organização.");
   }
 
   const existingInvitation = await db.organizationInvitation.findFirst({
@@ -75,7 +75,7 @@ export async function createOrganizationInvitation(params: {
 
   if (existingInvitation) {
     if (isHashedInvitationToken(existingInvitation.token)) {
-      throw new OrganizationInvitationError("This email already has a pending invite. Revoke it and create a new link.");
+      throw new OrganizationInvitationError("Este e-mail já tem um convite pendente. Revogue o convite e crie um novo link.");
     }
 
     return existingInvitation;
@@ -97,11 +97,11 @@ export async function createOrganizationInvitation(params: {
   });
 
   await notifyOrganizationDiscordWebhook(params.organizationId, {
-    content: `New Neolytics organization invite created for **${normalizedEmail}**.`,
+    content: `Novo convite de organização da Neolytics criado para **${normalizedEmail}**.`,
     embeds: [
       {
-        title: "Organization invitation created",
-        description: `${normalizedEmail} was invited as ${params.role} with ${permissions.length} custom permissions.`,
+        title: "Convite de organização criado",
+        description: `${normalizedEmail} foi convidado como ${params.role} com ${permissions.length} permissões personalizadas.`,
         color: 5814783,
         timestamp: new Date().toISOString()
       }
@@ -126,11 +126,11 @@ export async function revokeOrganizationInvitation(params: {
   });
 
   if (!invitation) {
-    throw new OrganizationInvitationError("Invitation not found.");
+    throw new OrganizationInvitationError("Convite não encontrado.");
   }
 
   if (invitation.acceptedAt) {
-    throw new OrganizationInvitationError("Accepted invitations cannot be revoked.");
+    throw new OrganizationInvitationError("Convites aceitos não podem ser revogados.");
   }
 
   if (invitation.revokedAt) {
@@ -147,11 +147,11 @@ export async function revokeOrganizationInvitation(params: {
   });
 
   await notifyOrganizationDiscordWebhook(params.organizationId, {
-    content: `An organization invite for **${invitation.email}** was revoked.`,
+    content: `Um convite de organização para **${invitation.email}** foi revogado.`,
     embeds: [
       {
-        title: "Organization invitation revoked",
-        description: `${invitation.email} is no longer able to join with the previous invite link.`,
+        title: "Convite de organização revogado",
+        description: `${invitation.email} não pode mais entrar com o link de convite anterior.`,
         color: 15158332,
         timestamp: new Date().toISOString()
       }
@@ -217,11 +217,11 @@ export async function acceptOrganizationInvitation(params: {
   });
 
   if (!invitation) {
-    throw new OrganizationInvitationError("Invitation not found.");
+    throw new OrganizationInvitationError("Convite não encontrado.");
   }
 
   if (invitation.revokedAt) {
-    throw new OrganizationInvitationError("This invitation was revoked.");
+    throw new OrganizationInvitationError("Este convite foi revogado.");
   }
 
   if (invitation.acceptedAt) {
@@ -229,11 +229,11 @@ export async function acceptOrganizationInvitation(params: {
   }
 
   if (invitation.expiresAt <= new Date()) {
-    throw new OrganizationInvitationError("This invitation has expired.");
+    throw new OrganizationInvitationError("Este convite expirou.");
   }
 
   if (invitation.email !== params.userEmail.trim().toLowerCase()) {
-    throw new OrganizationInvitationError("Sign in with the invited email address to accept this invitation.");
+    throw new OrganizationInvitationError("Entre com o e-mail convidado para aceitar este convite.");
   }
 
   const acceptedInvitation = await db.$transaction(async (tx) => {
@@ -268,11 +268,11 @@ export async function acceptOrganizationInvitation(params: {
   });
 
   await notifyOrganizationDiscordWebhook(invitation.organizationId, {
-    content: `**${params.userEmail.trim().toLowerCase()}** joined the organization from an invite.`,
+    content: `**${params.userEmail.trim().toLowerCase()}** entrou na organização por convite.`,
     embeds: [
       {
-        title: "Invitation accepted",
-        description: `${params.userEmail.trim().toLowerCase()} accepted a ${invitation.role} invite.`,
+        title: "Convite aceito",
+        description: `${params.userEmail.trim().toLowerCase()} aceitou um convite ${invitation.role}.`,
         color: 5763719,
         timestamp: new Date().toISOString()
       }

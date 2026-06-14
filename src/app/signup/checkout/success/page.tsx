@@ -30,19 +30,19 @@ export default async function StripeCheckoutSuccessPage({
         <NeolyticsBrand />
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Subscription confirmed</CardTitle>
+            <CardTitle>Assinatura confirmada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
             <p>
-              Your checkout finished successfully. Neolytics is syncing the organization plan now, and in most cases it
-              is already active by the time you land here.
+              Seu checkout foi concluído com sucesso. A Neolytics está sincronizando o plano da organização agora e,
+              na maioria dos casos, ele já está ativo quando você chega aqui.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/dashboard">Open dashboard</Link>
+                <Link href="/dashboard">Abrir dashboard</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/settings">Open settings</Link>
+                <Link href="/settings">Abrir configurações</Link>
               </Button>
             </div>
           </CardContent>

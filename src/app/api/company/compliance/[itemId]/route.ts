@@ -42,6 +42,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid compliance update payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to update compliance item.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível atualizar o item de conformidade.");
   }
 }

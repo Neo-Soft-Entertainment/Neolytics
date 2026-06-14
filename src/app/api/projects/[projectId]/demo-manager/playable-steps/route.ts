@@ -18,7 +18,7 @@ export async function POST(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot create playable steps.");
+    return forbidden("Visualizadores não podem criar passos jogáveis.");
   }
 
   try {
@@ -27,7 +27,7 @@ export async function POST(
     const step = await createPlayableStep(context.workspace.id, projectId, body);
 
     if (!step) {
-      return notFound("Project not found.");
+      return notFound("Projeto não encontrado.");
     }
 
     return ok(step, { status: 201 });
@@ -36,6 +36,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid playable step payload.");
     }
 
-    return serverError("Unable to create playable step.");
+    return serverError("Não foi possível criar o passo jogável.");
   }
 }

@@ -47,6 +47,6 @@ export async function POST(
 
     return ok(version, { status: 201 });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Unable to create document version.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar a versão do documento.");
   }
 }

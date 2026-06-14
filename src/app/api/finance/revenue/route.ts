@@ -52,6 +52,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid revenue payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create revenue entry.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o lançamento de receita.");
   }
 }

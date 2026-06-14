@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     });
 
     if (!workspace) {
-      return forbidden("Workspace does not belong to your organization.");
+      return forbidden("A área de trabalho não pertence à sua organização.");
     }
 
     return ok(
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid request.");
+      return badRequest(error.issues[0]?.message ?? "Requisição inválida.");
     }
 
     if (error instanceof SubscriptionLimitError) {

@@ -60,6 +60,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid budget line payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update budget line.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar a linha do orçamento.");
   }
 }

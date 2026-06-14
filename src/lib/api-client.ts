@@ -9,7 +9,7 @@ export async function apiClient<T>(input: RequestInfo | URL, init?: RequestInit)
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(payload?.message ?? "Request failed");
+    throw new Error(payload?.message ?? "A requisição falhou");
   }
 
   return response.json() as Promise<T>;

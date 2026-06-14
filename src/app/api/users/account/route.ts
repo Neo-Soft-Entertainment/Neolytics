@@ -89,6 +89,6 @@ export async function DELETE() {
     return ok({ success: true });
   } catch (error) {
     logger.error({ error }, "Account deletion failed");
-    return serverError("Unable to delete account.");
+    return serverError("Não foi possível excluir a conta.");
   }
 }

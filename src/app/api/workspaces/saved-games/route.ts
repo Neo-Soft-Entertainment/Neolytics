@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-      return forbidden("Viewers cannot save games to workspaces.");
+      return forbidden("Visualizadores não podem salvar jogos em áreas de trabalho.");
     }
 
     const body = await parseJsonBody(request, schema);
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     });
 
     if (!workspace) {
-      return forbidden("Workspace does not belong to your organization.");
+      return forbidden("A área de trabalho não pertence à sua organização.");
     }
 
     const game = await db.steamGame.findUniqueOrThrow({
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return badRequest(error.issues[0]?.message ?? "Invalid request.");
+      return badRequest(error.issues[0]?.message ?? "Requisição inválida.");
     }
 
     if (error instanceof SubscriptionLimitError) {

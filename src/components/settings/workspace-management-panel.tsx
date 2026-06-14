@@ -49,11 +49,11 @@ export function WorkspaceManagementPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to switch workspace.");
+      setError(payload?.message ?? "Não foi possível trocar a área de trabalho.");
       return;
     }
 
-    setMessage(`Workspace "${workspaceName}" is now active.`);
+    setMessage(`Área de trabalho "${workspaceName}" agora está ativa.`);
     router.refresh();
   }
 
@@ -63,7 +63,7 @@ export function WorkspaceManagementPanel({
     }
 
     const confirmed = window.confirm(
-      `Delete workspace "${workspaceName}" permanently? This removes its saved games, projects, competitor sets, and reports.`
+      `Excluir a área de trabalho "${workspaceName}" permanentemente? Isso remove jogos salvos, projetos, conjuntos de concorrentes e relatórios.`
     );
 
     if (!confirmed) {
@@ -83,18 +83,18 @@ export function WorkspaceManagementPanel({
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to delete workspace.");
+      setError(payload?.message ?? "Não foi possível excluir a área de trabalho.");
       return;
     }
 
-    setMessage(`Workspace "${workspaceName}" deleted.`);
+    setMessage(`Área de trabalho "${workspaceName}" excluída.`);
     router.refresh();
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Workspace list ({workspaces.length})</CardTitle>
+        <CardTitle>Lista de áreas de trabalho ({workspaces.length})</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {workspaces.map((workspace) => (
@@ -103,11 +103,11 @@ export function WorkspaceManagementPanel({
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium">{workspace.name}</p>
-                  {workspace.id === currentWorkspaceId ? <Badge>Current</Badge> : null}
+                  {workspace.id === currentWorkspaceId ? <Badge>Atual</Badge> : null}
                 </div>
                 <p className="mt-1 text-muted-foreground">Slug: {workspace.slug}</p>
                 <p className="mt-1 text-muted-foreground">
-                  {workspace.description || "No description yet."}
+                  {workspace.description || "Sem descrição ainda."}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -120,7 +120,7 @@ export function WorkspaceManagementPanel({
                   type="button"
                   variant={workspace.id === currentWorkspaceId ? "secondary" : "outline"}
                 >
-                  {workspace.id === currentWorkspaceId ? "Active" : switchingId === workspace.id ? "Switching..." : "Set active"}
+                  {workspace.id === currentWorkspaceId ? "Ativo" : switchingId === workspace.id ? "Trocando..." : "Definir ativo"}
                 </Button>
                 <Button
                   disabled={!canManage || workspaces.length <= 1 || deletingId === workspace.id}
@@ -129,17 +129,17 @@ export function WorkspaceManagementPanel({
                   type="button"
                   variant="destructive"
                 >
-                  {deletingId === workspace.id ? "Deleting..." : "Delete"}
+                  {deletingId === workspace.id ? "Excluindo..." : "Excluir"}
                 </Button>
               </div>
             </div>
           </div>
         ))}
         {!canManage ? (
-          <p className="text-muted-foreground">Only organization admins can manage workspaces.</p>
+          <p className="text-muted-foreground">Apenas administradores da organização podem gerenciar áreas de trabalho.</p>
         ) : null}
         {workspaces.length <= 1 ? (
-          <p className="text-muted-foreground">At least one workspace must remain in the organization.</p>
+          <p className="text-muted-foreground">Pelo menos uma área de trabalho deve permanecer na organização.</p>
         ) : null}
         {message ? <p className="text-emerald-600">{message}</p> : null}
         {error ? <p className="text-destructive">{error}</p> : null}

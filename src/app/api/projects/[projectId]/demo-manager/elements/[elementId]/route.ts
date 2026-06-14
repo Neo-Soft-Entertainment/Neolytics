@@ -18,7 +18,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit Demo Manager items.");
+    return forbidden("Visualizadores não podem editar itens do Demo Manager.");
   }
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid Demo Manager item payload.");
     }
 
-    return serverError("Unable to update Demo Manager item.");
+    return serverError("Não foi possível atualizar o item do Demo Manager.");
   }
 }
 
@@ -52,7 +52,7 @@ export async function DELETE(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot delete Demo Manager items.");
+    return forbidden("Visualizadores não podem excluir itens do Demo Manager.");
   }
 
   const { projectId, elementId } = await params;

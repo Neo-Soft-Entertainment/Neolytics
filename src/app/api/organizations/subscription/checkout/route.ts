@@ -49,6 +49,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid checkout payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to start Stripe checkout.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível iniciar o checkout da Stripe.");
   }
 }

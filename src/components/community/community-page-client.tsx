@@ -16,12 +16,12 @@ import { useCommunity } from "@/features/community/hooks";
 import { useProjects } from "@/features/projects/hooks";
 
 const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
-  { value: CommunityPostType.GENERAL, label: "General" },
-  { value: CommunityPostType.MARKET, label: "Market" },
-  { value: CommunityPostType.IDEA, label: "Idea" },
-  { value: CommunityPostType.ART, label: "Art" },
-  { value: CommunityPostType.SHOWCASE, label: "Showcase" },
-  { value: CommunityPostType.HELP, label: "Help" }
+  { value: CommunityPostType.GENERAL, label: "Geral" },
+  { value: CommunityPostType.MARKET, label: "Mercado" },
+  { value: CommunityPostType.IDEA, label: "Ideia" },
+  { value: CommunityPostType.ART, label: "Arte" },
+  { value: CommunityPostType.SHOWCASE, label: "Vitrine" },
+  { value: CommunityPostType.HELP, label: "Ajuda" }
 ];
 
 const scopeOptions: Array<{ value: CommunityPostScope; label: string }> = [
@@ -30,10 +30,10 @@ const scopeOptions: Array<{ value: CommunityPostScope; label: string }> = [
 ];
 
 const priorityOptions: Array<{ value: CommunityPostPriority; label: string }> = [
-  { value: CommunityPostPriority.LOW, label: "Low" },
+  { value: CommunityPostPriority.LOW, label: "Baixa" },
   { value: CommunityPostPriority.NORMAL, label: "Normal" },
-  { value: CommunityPostPriority.HIGH, label: "High" },
-  { value: CommunityPostPriority.URGENT, label: "Urgent" }
+  { value: CommunityPostPriority.HIGH, label: "Alta" },
+  { value: CommunityPostPriority.URGENT, label: "Urgente" }
 ];
 
 const scopeDescriptions = {
@@ -111,13 +111,13 @@ export function CommunityPageClient({
   const feed = query.data?.feed ?? [];
   const deferredSearch = useDeferredValue(search);
   const canPublishPost = form.content.trim().length > 0;
-  const planLabel = subscriptionPlan === SubscriptionPlan.PRO ? "Pro community" : "Community";
+  const planLabel = subscriptionPlan === SubscriptionPlan.PRO ? "Comunidade Pro" : "Comunidade";
 
   async function createPost() {
     setFeedback(null);
 
     if (!canPublishPost) {
-      setFeedback("Write something before publishing.");
+      setFeedback("Escreva algo antes de publicar.");
       return;
     }
 
@@ -143,7 +143,7 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to publish post.");
+      setFeedback(payload?.message ?? "Não foi possível publicar o post.");
       return;
     }
 
@@ -156,7 +156,7 @@ export function CommunityPageClient({
       tags: ""
     });
     setMediaFiles([]);
-    setFeedback("Post published.");
+    setFeedback("Post publicado.");
     await query.refetch();
   }
 
@@ -164,7 +164,7 @@ export function CommunityPageClient({
     const content = commentDrafts[postId]?.trim() ?? "";
 
     if (!content) {
-      setFeedback("Write a comment before sending.");
+      setFeedback("Escreva um comentário antes de enviar.");
       return;
     }
 
@@ -181,7 +181,7 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to publish comment.");
+      setFeedback(payload?.message ?? "Não foi possível publicar o comentário.");
       return;
     }
 
@@ -205,7 +205,7 @@ export function CommunityPageClient({
     const invalidFile = selected.find((file) => !file.type.startsWith("image/") || file.size > 8 * 1024 * 1024);
 
     if (invalidFile) {
-      setFeedback("Use only images up to 8 MB.");
+      setFeedback("Use apenas imagens de até 8 MB.");
       return;
     }
 
@@ -219,7 +219,7 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to update reaction.");
+      setFeedback(payload?.message ?? "Não foi possível atualizar a reação.");
       return;
     }
 
@@ -233,11 +233,11 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setFeedback(payload?.message ?? "Unable to delete post.");
+      setFeedback(payload?.message ?? "Não foi possível excluir o post.");
       return;
     }
 
-    setFeedback("Post deleted.");
+    setFeedback("Post excluído.");
     await query.refetch();
   }
 
@@ -280,12 +280,12 @@ export function CommunityPageClient({
     return (
       <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
         <CardHeader>
-          <CardTitle>Community is unavailable right now</CardTitle>
+          <CardTitle>A comunidade está indisponível agora</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
-            Community access is included in every plan. If this message appears, the organization subscription or
-            session needs to be refreshed.
+            O acesso à comunidade está incluído em todos os planos. Se esta mensagem aparecer, a assinatura da organização
+            ou a sessão precisa ser atualizada.
           </p>
         </CardContent>
       </Card>
@@ -293,20 +293,20 @@ export function CommunityPageClient({
   }
 
   if (query.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading community...</p>;
+    return <p className="text-sm text-muted-foreground">Carregando comunidade...</p>;
   }
 
   if (query.isError || !query.data) {
-    return <ErrorState title="Community unavailable" description="We could not load the community feed right now." />;
+    return <ErrorState title="Comunidade indisponível" description="Não foi possível carregar o feed da comunidade agora." />;
   }
 
   return (
     <div className="space-y-5 lg:flex lg:h-[calc(100vh-7rem)] lg:flex-col lg:overflow-hidden">
       <div className="flex flex-col gap-3 lg:flex-none lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Community</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Comunidade</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Share studio updates with your organization or the wider Neolytics community.
+            Compartilhe atualizações do estúdio com sua organização ou com a comunidade ampla da Neolytics.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -356,38 +356,38 @@ export function CommunityPageClient({
         <div className="contents">
           <Card className="order-2 overflow-hidden lg:col-start-2 lg:row-start-1 lg:self-start">
             <CardHeader>
-              <CardTitle>Find signals</CardTitle>
+              <CardTitle>Encontrar sinais</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px] xl:grid-cols-[minmax(0,1fr)_180px_180px]">
               <div className="space-y-2 md:col-span-2 xl:col-span-1">
-                <Label htmlFor="community-search">Search the feed</Label>
+                <Label htmlFor="community-search">Pesquisar no feed</Label>
                 <Input
                   id="community-search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search captions, tags, authors, or projects"
+                  placeholder="Pesquisar legendas, tags, autores ou projetos"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Sort by</Label>
+                <Label>Ordenar por</Label>
                 <Select value={sortMode} onValueChange={(value) => setSortMode(value as "recent" | "liked")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="recent">Most recent</SelectItem>
-                    <SelectItem value="liked">Most liked</SelectItem>
+                    <SelectItem value="recent">Mais recentes</SelectItem>
+                    <SelectItem value="liked">Mais curtidos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Category filter</Label>
+                <Label>Filtro de categoria</Label>
                 <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as CommunityPostType | "ALL")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All categories</SelectItem>
+                    <SelectItem value="ALL">Todas as categorias</SelectItem>
                     {postTypeOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -397,19 +397,19 @@ export function CommunityPageClient({
                 </Select>
               </div>
               <div className="rounded-lg border bg-muted/35 p-4 text-sm text-muted-foreground">
-                Showing <span className="font-medium text-foreground">{visibleFeed.length}</span> of{" "}
-                <span className="font-medium text-foreground">{query.data.feed.length}</span> community posts.
+                Mostrando <span className="font-medium text-foreground">{visibleFeed.length}</span> de{" "}
+                <span className="font-medium text-foreground">{query.data.feed.length}</span> posts da comunidade.
               </div>
             </CardContent>
           </Card>
           <Card className="order-1 max-h-[calc(100vh-6rem)] overflow-y-auto lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:max-h-full lg:self-start">
             <CardHeader>
-              <CardTitle>Create a post</CardTitle>
+              <CardTitle>Criar post</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               <div className="grid gap-3">
                 <div className="space-y-2">
-                  <Label>Audience</Label>
+                  <Label>Público</Label>
                   <Select
                     value={form.scope}
                     onValueChange={(value) => setForm((current) => ({
@@ -431,7 +431,7 @@ export function CommunityPageClient({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Category</Label>
+                  <Label>Categoria</Label>
                   <Select value={form.type} onValueChange={(value) => setForm((current) => ({ ...current, type: value as CommunityPostType }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -446,7 +446,7 @@ export function CommunityPageClient({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Priority</Label>
+                  <Label>Prioridade</Label>
                   <Select value={form.priority} onValueChange={(value) => setForm((current) => ({ ...current, priority: value as CommunityPostPriority }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -463,13 +463,13 @@ export function CommunityPageClient({
               </div>
               {form.scope === CommunityPostScope.ORGANIZATION ? (
                 <div className="space-y-2">
-                  <Label>Linked project</Label>
+                  <Label>Projeto vinculado</Label>
                   <Select value={form.projectId} onValueChange={(value) => setForm((current) => ({ ...current, projectId: value }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No linked project</SelectItem>
+                      <SelectItem value="none">Nenhum projeto vinculado</SelectItem>
                       {(projectsQuery.data ?? []).map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
@@ -480,16 +480,16 @@ export function CommunityPageClient({
                 </div>
               ) : null}
               <div className="space-y-2">
-                <Label htmlFor="community-content">Caption</Label>
+                <Label htmlFor="community-content">Legenda</Label>
                 <Textarea
                   id="community-content"
                   value={form.content}
                   onChange={(event) => setForm((current) => ({ ...current, content: event.target.value }))}
-                  placeholder="Write a caption..."
+                  placeholder="Escreva uma legenda..."
                 />
               </div>
               <div className="space-y-2 rounded-lg border border-dashed bg-muted/25 p-4">
-                <Label htmlFor="community-media">Photos</Label>
+                <Label htmlFor="community-media">Fotos</Label>
                 <Input
                   id="community-media"
                   type="file"
@@ -497,7 +497,7 @@ export function CommunityPageClient({
                   multiple
                   onChange={(event) => updateMediaFiles(event.target.files)}
                 />
-                <p className="text-xs text-muted-foreground">Add up to 4 images. Each image must be 8 MB or smaller.</p>
+                <p className="text-xs text-muted-foreground">Adicione até 4 imagens. Cada imagem deve ter 8 MB ou menos.</p>
                 {mediaFiles.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {mediaFiles.map((file) => (
@@ -519,7 +519,7 @@ export function CommunityPageClient({
               </div>
               {feedback ? <p className="text-sm text-muted-foreground">{feedback}</p> : null}
               <Button disabled={isSubmitting || !canPublishPost} onClick={createPost}>
-                {isSubmitting ? "Publishing..." : "Publish update"}
+                {isSubmitting ? "Publicando..." : "Publicar atualização"}
               </Button>
             </CardContent>
           </Card>
@@ -539,7 +539,7 @@ export function CommunityPageClient({
                     <div className="min-w-0">
                       <p className="font-medium leading-none">{post.author.name || post.author.email}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
+                        {postTypeOptions.find((option) => option.value === post.type)?.label ?? post.type.replaceAll("_", " ")} · {new Date(post.createdAt).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -552,7 +552,7 @@ export function CommunityPageClient({
                     </span>
                     {post.canDelete === true ? (
                       <Button size="sm" variant="ghost" onClick={() => deletePost(post.id)}>
-                        Delete
+                        Excluir
                       </Button>
                     ) : null}
                   </div>
@@ -577,7 +577,7 @@ export function CommunityPageClient({
                 </p>
                 {post.project ? (
                   <div className="rounded-lg border bg-muted/35 p-3 text-muted-foreground">
-                    Linked project: <span className="font-medium text-foreground">{post.project.name}</span>
+                    Projeto vinculado: <span className="font-medium text-foreground">{post.project.name}</span>
                   </div>
                 ) : null}
                 {post.tags && post.tags.length > 0 ? (
@@ -591,14 +591,14 @@ export function CommunityPageClient({
                 ) : null}
                 <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                   <Button size="sm" variant={post.viewerHasLiked ? "default" : "outline"} onClick={() => toggleLike(post.id)}>
-                    {post.viewerHasLiked ? "Liked" : "Like"} · {post.likeCount}
+                    {post.viewerHasLiked ? "Curtido" : "Curtir"} · {post.likeCount}
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => setSearch(post.author.name || post.author.email)}>
-                    More from author
+                    Mais do autor
                   </Button>
                 </div>
                 <div className="space-y-3 border-t pt-3">
-                  <p className="text-sm font-medium">Comments</p>
+                  <p className="text-sm font-medium">Comentários</p>
                   {post.comments.length > 0 ? (
                     <div className="space-y-2">
                       {post.comments.map((comment) => (
@@ -612,16 +612,16 @@ export function CommunityPageClient({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No comments yet.</p>
+                    <p className="text-sm text-muted-foreground">Ainda não há comentários.</p>
                   )}
                   <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                     <Input
                       value={commentDrafts[post.id] ?? ""}
                       onChange={(event) => setCommentDrafts((current) => ({ ...current, [post.id]: event.target.value }))}
-                      placeholder="Add a comment"
+                      placeholder="Adicionar comentário"
                     />
                     <Button disabled={submittingCommentId === post.id} onClick={() => createComment(post.id)}>
-                      {submittingCommentId === post.id ? "Sending..." : "Comment"}
+                      {submittingCommentId === post.id ? "Enviando..." : "Comentar"}
                     </Button>
                   </div>
                 </div>
@@ -630,10 +630,10 @@ export function CommunityPageClient({
           )) : (
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardTitle>No posts yet</CardTitle>
+                <CardTitle>Ainda não há posts</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                Publish the first market note, art checkpoint, or project update to start the feed.
+                Publique a primeira nota de mercado, checkpoint de arte ou atualização de projeto para iniciar o feed.
               </CardContent>
             </Card>
           )}

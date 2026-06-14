@@ -44,6 +44,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid officer payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Unable to create officer.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o administrador.");
   }
 }

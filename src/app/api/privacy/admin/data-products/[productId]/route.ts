@@ -25,7 +25,7 @@ export async function PATCH(
   }
 
   if (!hasPrivacyPermission(context.organizationRole, context.organizationPermissions, "manage_data_products")) {
-    return forbidden("This role cannot approve data products.");
+    return forbidden("Este cargo não pode aprovar produtos de dados.");
   }
 
   try {
@@ -67,6 +67,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid data product approval payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to update data product.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o produto de dados.");
   }
 }

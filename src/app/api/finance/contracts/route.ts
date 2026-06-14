@@ -66,6 +66,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid contract payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create contract.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o contrato.");
   }
 }

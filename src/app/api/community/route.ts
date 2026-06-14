@@ -11,7 +11,7 @@ import { SubscriptionLimitError } from "@/lib/subscription-service";
 
 const schema = z.object({
   title: z.string().trim().optional(),
-  content: z.string().trim().min(1, "Write something before publishing."),
+  content: z.string().trim().min(1, "Escreva algo antes de publicar."),
   scope: z.nativeEnum(CommunityPostScope).optional(),
   priority: z.nativeEnum(CommunityPostPriority).optional(),
   type: z.nativeEnum(CommunityPostType).optional(),
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
       return entitlementErrorResponse(error);
     }
 
-    return serverError("Unable to load community.");
+    return serverError("Não foi possível carregar a comunidade.");
   }
 }
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
   try {
     if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-      return forbidden("Viewers cannot create community posts.");
+      return forbidden("Visualizadores não podem criar postagens na comunidade.");
     }
 
     await assertCanUseFeature({
@@ -143,6 +143,6 @@ export async function POST(request: Request) {
       return entitlementErrorResponse(error);
     }
 
-    return serverError("Unable to create community post.");
+    return serverError("Não foi possível criar a postagem na comunidade.");
   }
 }

@@ -46,7 +46,7 @@ export function MobileNav({
           <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Neolytics</p>
           <p className="mt-2 text-sm font-medium">{currentOrganizationName}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {currentOrganizationRole ? `${currentOrganizationRole} access` : t("shell.activeOrganization")} · {getSubscriptionPlanLabel(subscriptionPlan)}
+            {currentOrganizationRole ? `Acesso ${currentOrganizationRole}` : t("shell.activeOrganization")} · {getSubscriptionPlanLabel(subscriptionPlan)}
           </p>
           <p className="mt-2 truncate text-xs text-muted-foreground">
             {currentItem ? t(currentItem.labelKey) : t("shell.workspace")} · {currentWorkspaceName}

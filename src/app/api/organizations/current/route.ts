@@ -55,6 +55,6 @@ export async function PATCH(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid organization selection.");
     }
 
-    return badRequest("Unable to switch organization.");
+    return badRequest("Não foi possível trocar a organização.");
   }
 }

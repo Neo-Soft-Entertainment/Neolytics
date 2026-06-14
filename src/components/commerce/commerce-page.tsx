@@ -31,6 +31,36 @@ const paymentStatuses = Object.values(CommercePaymentStatus);
 const campaignChannels = Object.values(MarketingCampaignChannel);
 const campaignObjectives = Object.values(MarketingCampaignObjective);
 const campaignStatuses = Object.values(MarketingCampaignStatus);
+const commerceLabels: Record<string, string> = {
+  ACTIVE: "Ativa",
+  AFFILIATE: "Afiliado",
+  AWARENESS: "Reconhecimento",
+  CANCELLED: "Cancelado",
+  CONFIRMED: "Confirmado",
+  CONTENT_CREATOR: "Criador de conteúdo",
+  CONVERSIONS: "Conversões",
+  DELIVERED: "Entregue",
+  DIRECT: "Direto",
+  DISCORD: "Discord",
+  DRAFT: "Rascunho",
+  EPIC_STORE: "Epic Store",
+  FAILED: "Falhou",
+  MARKETPLACE: "Marketplace",
+  NEWSLETTER: "Newsletter",
+  ORGANIC_SOCIAL: "Social orgânico",
+  PAID: "Pago",
+  PAID_SOCIAL: "Social pago",
+  PARTNER: "Parceiro",
+  PAUSED: "Pausada",
+  PENDING: "Pendente",
+  PLANNED: "Planejada",
+  PRESS: "Imprensa",
+  REFUNDED: "Reembolsado",
+  SHIPPED: "Enviado",
+  STEAM_EVENT: "Evento Steam",
+  STEAM_STORE: "Loja Steam",
+  WISHLISTS: "Wishlists"
+};
 
 type CommerceData = {
   channels: Array<{
@@ -177,6 +207,10 @@ function getSelectClassName() {
   return "h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
 }
 
+function labelFor(value: string) {
+  return commerceLabels[value] ?? value.replaceAll("_", " ");
+}
+
 export function CommercePage({
   canAccessCommerceOps,
   canManage,
@@ -220,12 +254,12 @@ export function CommercePage({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create sales channel.");
+      setError(payload?.message ?? "Não foi possível criar o canal de vendas.");
       return;
     }
 
     form.reset();
-    setMessage("Sales channel created.");
+    setMessage("Canal de vendas criado.");
     router.refresh();
   }
 
@@ -265,12 +299,12 @@ export function CommercePage({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create order.");
+      setError(payload?.message ?? "Não foi possível criar o pedido.");
       return;
     }
 
     form.reset();
-    setMessage("Order created.");
+    setMessage("Pedido criado.");
     router.refresh();
   }
 
@@ -314,12 +348,12 @@ export function CommercePage({
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Unable to create marketing campaign.");
+      setError(payload?.message ?? "Não foi possível criar a campanha de marketing.");
       return;
     }
 
     form.reset();
-    setMessage("Marketing campaign created.");
+    setMessage("Campanha de marketing criada.");
     router.refresh();
   }
 
@@ -327,22 +361,22 @@ export function CommercePage({
     return (
       <div className="space-y-6">
         <PageHero
-          title="Commercial Operations"
-          description="Run go-to-market, marketing analysis, sales channels, and commercial handoff for the studio."
+          title="Operações comerciais"
+          description="Gerencie go-to-market, análise de marketing, canais de venda e repasse comercial do estúdio."
           actions={(
             <>
-              <Badge variant="secondary">Game Studio ERP</Badge>
-              <Badge variant="secondary">Marketing analysis</Badge>
-              <Badge variant="secondary">Plan: {planLabel}</Badge>
+              <Badge variant="secondary">ERP de estúdio de jogos</Badge>
+              <Badge variant="secondary">Análise de marketing</Badge>
+              <Badge variant="secondary">Plano: {planLabel}</Badge>
             </>
           )}
         />
         <Card>
           <CardContent className="p-5 text-sm">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-amber-500">Upgrade required</p>
-            <p className="mt-2 font-medium">Commercial Operations starts on Plus.</p>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-amber-500">Upgrade necessário</p>
+            <p className="mt-2 font-medium">Operações comerciais começam no plano Plus.</p>
             <p className="mt-2 text-muted-foreground">
-              Upgrade to run campaigns, launch readiness, channel analysis, sales, and fulfillment.
+              Faça upgrade para rodar campanhas, prontidão de lançamento, análise de canais, vendas e entrega.
             </p>
           </CardContent>
         </Card>
@@ -357,22 +391,22 @@ export function CommercePage({
   return (
     <div className="space-y-6">
       <PageHero
-        title="Commercial Operations"
-        description={`Run launch campaigns, marketing analysis, sales channels, and revenue handoff for ${organizationName}.`}
+        title="Operações comerciais"
+        description={`Gerencie campanhas de lançamento, análise de marketing, canais de venda e repasse de receita para ${organizationName}.`}
         actions={(
           <>
-            <Badge variant="secondary">Marketing ROI</Badge>
-            <Badge variant="secondary">Launch readiness</Badge>
-            <Badge variant="secondary">Sales ops</Badge>
+            <Badge variant="secondary">ROI de marketing</Badge>
+            <Badge variant="secondary">Prontidão de lançamento</Badge>
+            <Badge variant="secondary">Operação de vendas</Badge>
           </>
         )}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Commercial revenue" value={formatCurrency(data.summary.commercialRevenueCents)} hint="Paid orders + campaign attribution" />
-        <KpiCard label="Marketing ROAS" value={formatRatio(data.summary.roas)} hint={`${formatCurrency(data.summary.marketingSpendCents)} spent`} />
-        <KpiCard label="Wishlists" value={formatNumber(data.summary.wishlists)} hint={data.summary.costPerWishlistCents ? `${formatCurrency(data.summary.costPerWishlistCents)} CPW` : "Wishlist capture"} />
-        <KpiCard label="Active campaigns" value={formatNumber(data.summary.activeCampaigns)} hint={`${formatNumber(data.summary.demoDownloads)} demo downloads`} />
+        <KpiCard label="Receita comercial" value={formatCurrency(data.summary.commercialRevenueCents)} hint="Pedidos pagos + atribuição de campanha" />
+        <KpiCard label="ROAS de marketing" value={formatRatio(data.summary.roas)} hint={`${formatCurrency(data.summary.marketingSpendCents)} investidos`} />
+        <KpiCard label="Wishlists" value={formatNumber(data.summary.wishlists)} hint={data.summary.costPerWishlistCents ? `${formatCurrency(data.summary.costPerWishlistCents)} CPW` : "Captação de wishlist"} />
+        <KpiCard label="Campanhas ativas" value={formatNumber(data.summary.activeCampaigns)} hint={`${formatNumber(data.summary.demoDownloads)} downloads de demo`} />
       </div>
 
       {(message || error) ? (
@@ -384,35 +418,35 @@ export function CommercePage({
 
       <Tabs defaultValue="command">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1rem] border border-white/10 bg-white/55 p-1.5 backdrop-blur dark:bg-white/[0.04]">
-          <TabsTrigger value="command">Command center</TabsTrigger>
-          <TabsTrigger value="marketing">Marketing analysis</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="new-campaign">New campaign</TabsTrigger>
-          <TabsTrigger value="new-order">New order</TabsTrigger>
-          <TabsTrigger value="new-channel">New channel</TabsTrigger>
+          <TabsTrigger value="command">Central de comando</TabsTrigger>
+          <TabsTrigger value="marketing">Análise de marketing</TabsTrigger>
+          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+          <TabsTrigger value="orders">Pedidos</TabsTrigger>
+          <TabsTrigger value="channels">Canais</TabsTrigger>
+          <TabsTrigger value="new-campaign">Nova campanha</TabsTrigger>
+          <TabsTrigger value="new-order">Novo pedido</TabsTrigger>
+          <TabsTrigger value="new-channel">Novo canal</TabsTrigger>
         </TabsList>
         <p className="mt-2 text-sm text-muted-foreground">
-          Move between launch intelligence, campaign execution, orders, and sales channels for the studio pipeline.
+          Navegue entre inteligência de lançamento, execução de campanhas, pedidos e canais de venda do pipeline do estúdio.
         </p>
 
         <TabsContent value="command">
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
             <Card>
               <CardHeader>
-                <CardTitle>Launch operating board</CardTitle>
+                <CardTitle>Quadro operacional de lançamento</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Readiness</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead>Prontidão</TableHead>
                       <TableHead className="text-right">Wishlists</TableHead>
                       <TableHead className="text-right">Demos</TableHead>
                       <TableHead className="text-right">Marketing</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Receita</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -433,7 +467,7 @@ export function CommercePage({
                     )) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-muted-foreground">
-                          No project marketing signals yet.
+                          Ainda não há sinais de marketing por projeto.
                         </TableCell>
                       </TableRow>
                     )}
@@ -445,23 +479,23 @@ export function CommercePage({
             <div className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Marketing funnel</CardTitle>
+                  <CardTitle>Funil de marketing</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <span className="text-muted-foreground">Spend</span>
+                    <span className="text-muted-foreground">Investimento</span>
                     <span className="font-medium">{formatCurrency(data.summary.marketingSpendCents)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <span className="text-muted-foreground">Attributed revenue</span>
+                    <span className="text-muted-foreground">Receita atribuída</span>
                     <span className="font-medium">{formatCurrency(data.summary.attributedRevenueCents)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <span className="text-muted-foreground">Conversion rate</span>
+                    <span className="text-muted-foreground">Taxa de conversão</span>
                     <span className="font-medium">{formatPercent(data.summary.conversionRate)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                    <span className="text-muted-foreground">Open orders</span>
+                    <span className="text-muted-foreground">Pedidos abertos</span>
                     <span className="font-medium">{formatNumber(data.summary.openOrders)}</span>
                   </div>
                 </CardContent>
@@ -469,12 +503,12 @@ export function CommercePage({
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Next actions</CardTitle>
+                  <CardTitle>Próximas ações</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>Track every campaign against a project before launch.</p>
-                  <p>Use wishlists and demo downloads as early demand signals.</p>
-                  <p>Move publisher, licensing, and direct deals into orders when commercial terms are real.</p>
+                  <p>Vincule cada campanha a um projeto antes do lançamento.</p>
+                  <p>Use wishlists e downloads de demo como sinais iniciais de demanda.</p>
+                  <p>Mova publishers, licenciamento e acordos diretos para pedidos quando os termos comerciais forem reais.</p>
                 </CardContent>
               </Card>
             </div>
@@ -485,14 +519,14 @@ export function CommercePage({
           <div className="grid gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Channel performance</CardTitle>
+                <CardTitle>Performance por canal</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Channel</TableHead>
-                      <TableHead className="text-right">Spend</TableHead>
+                      <TableHead>Canal</TableHead>
+                      <TableHead className="text-right">Investimento</TableHead>
                       <TableHead className="text-right">ROAS</TableHead>
                       <TableHead className="text-right">CTR</TableHead>
                       <TableHead className="text-right">Wishlists</TableHead>
@@ -503,8 +537,8 @@ export function CommercePage({
                     {data.channelPerformance.length > 0 ? data.channelPerformance.map((channel) => (
                       <TableRow key={channel.channel}>
                         <TableCell>
-                          <p className="font-medium">{channel.channel.replaceAll("_", " ")}</p>
-                          <p className="text-xs text-muted-foreground">{channel.campaignsCount} campaigns</p>
+                          <p className="font-medium">{labelFor(channel.channel)}</p>
+                          <p className="text-xs text-muted-foreground">{channel.campaignsCount} campanhas</p>
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(channel.spendCents)}</TableCell>
                         <TableCell className="text-right">{formatRatio(channel.roas)}</TableCell>
@@ -515,7 +549,7 @@ export function CommercePage({
                     )) : (
                       <TableRow>
                         <TableCell colSpan={6} className="text-muted-foreground">
-                          No marketing channel data yet.
+                          Ainda não há dados de canais de marketing.
                         </TableCell>
                       </TableRow>
                     )}
@@ -526,17 +560,17 @@ export function CommercePage({
 
             <Card>
               <CardHeader>
-                <CardTitle>Project marketing analysis</CardTitle>
+                <CardTitle>Análise de marketing por projeto</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead className="text-right">Active</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead className="text-right">Ativas</TableHead>
                       <TableHead className="text-right">ROAS</TableHead>
                       <TableHead className="text-right">Wishlists</TableHead>
-                      <TableHead className="text-right">Attributed</TableHead>
+                      <TableHead className="text-right">Atribuída</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -551,7 +585,7 @@ export function CommercePage({
                     )) : (
                       <TableRow>
                         <TableCell colSpan={5} className="text-muted-foreground">
-                          No project-level marketing data yet.
+                          Ainda não há dados de marketing por projeto.
                         </TableCell>
                       </TableRow>
                     )}
@@ -565,19 +599,19 @@ export function CommercePage({
         <TabsContent value="campaigns">
           <Card>
             <CardHeader>
-              <CardTitle>Marketing campaigns</CardTitle>
+              <CardTitle>Campanhas de marketing</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Campaign</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Objective</TableHead>
+                    <TableHead>Campanha</TableHead>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Objetivo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Spend</TableHead>
+                    <TableHead className="text-right">Investimento</TableHead>
                     <TableHead className="text-right">Wishlists</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
+                    <TableHead className="text-right">Receita</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -585,12 +619,12 @@ export function CommercePage({
                     <TableRow key={campaign.id}>
                       <TableCell>
                         <p className="font-medium">{campaign.name}</p>
-                        <p className="text-xs text-muted-foreground">{campaign.channel.replaceAll("_", " ")}</p>
+                        <p className="text-xs text-muted-foreground">{labelFor(campaign.channel)}</p>
                       </TableCell>
-                      <TableCell>{campaign.project?.name ?? "No project"}</TableCell>
-                      <TableCell>{campaign.objective.replaceAll("_", " ")}</TableCell>
+                      <TableCell>{campaign.project?.name ?? "Sem projeto"}</TableCell>
+                      <TableCell>{labelFor(campaign.objective)}</TableCell>
                       <TableCell>
-                        <Badge variant={campaign.status === "ACTIVE" ? "default" : "secondary"}>{campaign.status}</Badge>
+                        <Badge variant={campaign.status === "ACTIVE" ? "default" : "secondary"}>{labelFor(campaign.status)}</Badge>
                       </TableCell>
                       <TableCell className="text-right">{formatCurrency(campaign.spendCents, campaign.currencyCode)}</TableCell>
                       <TableCell className="text-right">{formatNumber(campaign.wishlists)}</TableCell>
@@ -599,7 +633,7 @@ export function CommercePage({
                   )) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-muted-foreground">
-                        No marketing campaigns yet.
+                        Ainda não há campanhas de marketing.
                       </TableCell>
                     </TableRow>
                   )}
@@ -612,19 +646,19 @@ export function CommercePage({
         <TabsContent value="orders">
           <Card>
             <CardHeader>
-              <CardTitle>Order operations</CardTitle>
+              <CardTitle>Operações de pedidos</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Channel</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Fulfillment</TableHead>
-                    <TableHead className="text-right">Net</TableHead>
-                    <TableHead>Ship by</TableHead>
+                    <TableHead>Pedido</TableHead>
+                    <TableHead>Canal</TableHead>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Pagamento</TableHead>
+                    <TableHead>Entrega</TableHead>
+                    <TableHead className="text-right">Líquido</TableHead>
+                    <TableHead>Enviar até</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -634,13 +668,13 @@ export function CommercePage({
                         <p className="font-medium">{order.orderNumber}</p>
                         <p className="text-xs text-muted-foreground">{order.customerName}</p>
                       </TableCell>
-                      <TableCell>{order.channel?.name ?? "Direct"}</TableCell>
-                      <TableCell>{order.project?.name ?? "No project"}</TableCell>
+                      <TableCell>{order.channel?.name ?? "Direto"}</TableCell>
+                      <TableCell>{order.project?.name ?? "Sem projeto"}</TableCell>
                       <TableCell>
-                        <Badge variant={order.paymentStatus === "PAID" ? "default" : "secondary"}>{order.paymentStatus}</Badge>
+                        <Badge variant={order.paymentStatus === "PAID" ? "default" : "secondary"}>{labelFor(order.paymentStatus)}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={order.fulfillmentStatus === "BLOCKED" ? "destructive" : "secondary"}>{order.fulfillmentStatus}</Badge>
+                        <Badge variant={order.fulfillmentStatus === "BLOCKED" ? "destructive" : "secondary"}>{labelFor(order.fulfillmentStatus)}</Badge>
                       </TableCell>
                       <TableCell className="text-right">{formatCurrency(order.netCents, order.currencyCode)}</TableCell>
                       <TableCell>{formatDate(order.expectedShipAt)}</TableCell>
@@ -648,7 +682,7 @@ export function CommercePage({
                   )) : (
                     <TableRow>
                       <TableCell colSpan={7} className="text-muted-foreground">
-                        No commerce orders yet.
+                        Ainda não há pedidos comerciais.
                       </TableCell>
                     </TableRow>
                   )}
@@ -661,34 +695,34 @@ export function CommercePage({
         <TabsContent value="channels">
           <Card>
             <CardHeader>
-              <CardTitle>Sales channels</CardTitle>
+              <CardTitle>Canais de venda</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>External code</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Código externo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>Observações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.channels.length > 0 ? data.channels.map((channel) => (
                     <TableRow key={channel.id}>
                       <TableCell className="font-medium">{channel.name}</TableCell>
-                      <TableCell>{channel.type}</TableCell>
+                      <TableCell>{labelFor(channel.type)}</TableCell>
                       <TableCell>{channel.externalCode || "N/A"}</TableCell>
                       <TableCell>
-                        <Badge variant={channel.active ? "default" : "secondary"}>{channel.active ? "Active" : "Inactive"}</Badge>
+                        <Badge variant={channel.active ? "default" : "secondary"}>{channel.active ? "Ativo" : "Inativo"}</Badge>
                       </TableCell>
                       <TableCell className="max-w-[320px] truncate">{channel.notes || "N/A"}</TableCell>
                     </TableRow>
                   )) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-muted-foreground">
-                        No sales channels yet.
+                        Ainda não há canais de venda.
                       </TableCell>
                     </TableRow>
                   )}
@@ -701,18 +735,18 @@ export function CommercePage({
         <TabsContent value="new-campaign">
           <Card>
             <CardHeader>
-              <CardTitle>Create marketing campaign</CardTitle>
+              <CardTitle>Criar campanha de marketing</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4 lg:grid-cols-4" onSubmit={submitCampaign}>
                 <div className="space-y-2 lg:col-span-2">
-                  <Label htmlFor="campaignName">Campaign name</Label>
-                  <Input id="campaignName" name="name" placeholder="Steam Next Fest push, creator beat, demo launch..." disabled={!canManage} required />
+                  <Label htmlFor="campaignName">Nome da campanha</Label>
+                  <Input id="campaignName" name="name" placeholder="Steam Next Fest, ação com criadores, lançamento da demo..." disabled={!canManage} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignProjectId">Project</Label>
+                  <Label htmlFor="campaignProjectId">Projeto</Label>
                   <select id="campaignProjectId" name="projectId" className={getSelectClassName()} disabled={!canManage}>
-                    <option value="">No project</option>
+                    <option value="">Sem projeto</option>
                     {data.projects.map((project) => (
                       <option key={project.id} value={project.id}>{project.name}</option>
                     ))}
@@ -722,56 +756,56 @@ export function CommercePage({
                   <Label htmlFor="campaignStatus">Status</Label>
                   <select id="campaignStatus" name="status" className={getSelectClassName()} defaultValue={MarketingCampaignStatus.PLANNED} disabled={!canManage}>
                     {campaignStatuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>{labelFor(status)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignChannel">Channel</Label>
+                  <Label htmlFor="campaignChannel">Canal</Label>
                   <select id="campaignChannel" name="channel" className={getSelectClassName()} defaultValue={MarketingCampaignChannel.STEAM_STORE} disabled={!canManage}>
                     {campaignChannels.map((channel) => (
-                      <option key={channel} value={channel}>{channel.replaceAll("_", " ")}</option>
+                      <option key={channel} value={channel}>{labelFor(channel)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignObjective">Objective</Label>
+                  <Label htmlFor="campaignObjective">Objetivo</Label>
                   <select id="campaignObjective" name="objective" className={getSelectClassName()} defaultValue={MarketingCampaignObjective.WISHLISTS} disabled={!canManage}>
                     {campaignObjectives.map((objective) => (
-                      <option key={objective} value={objective}>{objective.replaceAll("_", " ")}</option>
+                      <option key={objective} value={objective}>{labelFor(objective)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignStartsAt">Starts</Label>
+                  <Label htmlFor="campaignStartsAt">Início</Label>
                   <Input id="campaignStartsAt" name="startsAt" type="date" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignEndsAt">Ends</Label>
+                  <Label htmlFor="campaignEndsAt">Fim</Label>
                   <Input id="campaignEndsAt" name="endsAt" type="date" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignCurrencyCode">Currency</Label>
+                  <Label htmlFor="campaignCurrencyCode">Moeda</Label>
                   <Input id="campaignCurrencyCode" name="currencyCode" defaultValue="USD" maxLength={3} disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignBudgetAmount">Budget</Label>
+                  <Label htmlFor="campaignBudgetAmount">Orçamento</Label>
                   <Input id="campaignBudgetAmount" name="budgetAmount" type="number" min="0" step="0.01" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignSpendAmount">Spend</Label>
+                  <Label htmlFor="campaignSpendAmount">Investimento</Label>
                   <Input id="campaignSpendAmount" name="spendAmount" type="number" min="0" step="0.01" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignRevenueAmount">Attributed revenue</Label>
+                  <Label htmlFor="campaignRevenueAmount">Receita atribuída</Label>
                   <Input id="campaignRevenueAmount" name="revenueAmount" type="number" min="0" step="0.01" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignImpressions">Impressions</Label>
+                  <Label htmlFor="campaignImpressions">Impressões</Label>
                   <Input id="campaignImpressions" name="impressions" type="number" min="0" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignClicks">Clicks</Label>
+                  <Label htmlFor="campaignClicks">Cliques</Label>
                   <Input id="campaignClicks" name="clicks" type="number" min="0" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
@@ -779,20 +813,20 @@ export function CommercePage({
                   <Input id="campaignWishlists" name="wishlists" type="number" min="0" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignDemoDownloads">Demo downloads</Label>
+                  <Label htmlFor="campaignDemoDownloads">Downloads da demo</Label>
                   <Input id="campaignDemoDownloads" name="demoDownloads" type="number" min="0" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="campaignConversions">Conversions</Label>
+                  <Label htmlFor="campaignConversions">Conversões</Label>
                   <Input id="campaignConversions" name="conversions" type="number" min="0" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2 lg:col-span-3">
-                  <Label htmlFor="campaignNotes">Analysis notes</Label>
-                  <Textarea id="campaignNotes" name="notes" placeholder="Audience, creative angle, benchmark, experiment hypothesis, or next action." disabled={!canManage} />
+                  <Label htmlFor="campaignNotes">Notas de análise</Label>
+                  <Textarea id="campaignNotes" name="notes" placeholder="Público, ângulo criativo, benchmark, hipótese do experimento ou próxima ação." disabled={!canManage} />
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Create campaign"}
+                    {isSubmitting ? "Salvando..." : "Criar campanha"}
                   </Button>
                 </div>
               </form>
@@ -803,91 +837,91 @@ export function CommercePage({
         <TabsContent value="new-order">
           <Card>
             <CardHeader>
-              <CardTitle>Register order</CardTitle>
+              <CardTitle>Registrar pedido</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4 lg:grid-cols-4" onSubmit={submitOrder}>
                 <div className="space-y-2">
-                  <Label htmlFor="orderNumber">Order number</Label>
+                  <Label htmlFor="orderNumber">Número do pedido</Label>
                   <Input id="orderNumber" name="orderNumber" placeholder="SO-1001" disabled={!canManage} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customerName">Customer</Label>
-                  <Input id="customerName" name="customerName" placeholder="Publisher, client, or buyer" disabled={!canManage} required />
+                  <Label htmlFor="customerName">Cliente</Label>
+                  <Input id="customerName" name="customerName" placeholder="Publisher, cliente ou comprador" disabled={!canManage} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customerEmail">Customer email</Label>
+                  <Label htmlFor="customerEmail">Email do cliente</Label>
                   <Input id="customerEmail" name="customerEmail" type="email" placeholder="buyer@example.com" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="channelId">Channel</Label>
+                  <Label htmlFor="channelId">Canal</Label>
                   <select id="channelId" name="channelId" className={getSelectClassName()} disabled={!canManage}>
-                    <option value="">Direct</option>
+                    <option value="">Direto</option>
                     {data.channels.map((channel) => (
                       <option key={channel.id} value={channel.id}>{channel.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="projectId">Project</Label>
+                  <Label htmlFor="projectId">Projeto</Label>
                   <select id="projectId" name="projectId" className={getSelectClassName()} disabled={!canManage}>
-                    <option value="">No project</option>
+                    <option value="">Sem projeto</option>
                     {data.projects.map((project) => (
                       <option key={project.id} value={project.id}>{project.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">Order status</Label>
+                  <Label htmlFor="status">Status do pedido</Label>
                   <select id="status" name="status" className={getSelectClassName()} defaultValue={CommerceOrderStatus.CONFIRMED} disabled={!canManage}>
                     {orderStatuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>{labelFor(status)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="paymentStatus">Payment</Label>
+                  <Label htmlFor="paymentStatus">Pagamento</Label>
                   <select id="paymentStatus" name="paymentStatus" className={getSelectClassName()} defaultValue={CommercePaymentStatus.PENDING} disabled={!canManage}>
                     {paymentStatuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>{labelFor(status)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fulfillmentStatus">Fulfillment</Label>
+                  <Label htmlFor="fulfillmentStatus">Entrega</Label>
                   <select id="fulfillmentStatus" name="fulfillmentStatus" className={getSelectClassName()} defaultValue={CommerceFulfillmentStatus.PENDING} disabled={!canManage}>
                     {fulfillmentStatuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
+                      <option key={status} value={status}>{labelFor(status)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="currencyCode">Currency</Label>
+                  <Label htmlFor="currencyCode">Moeda</Label>
                   <Input id="currencyCode" name="currencyCode" defaultValue="USD" maxLength={3} disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="grossAmount">Gross amount</Label>
+                  <Label htmlFor="grossAmount">Valor bruto</Label>
                   <Input id="grossAmount" name="grossAmount" type="number" min="0" step="0.01" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="netAmount">Net amount</Label>
+                  <Label htmlFor="netAmount">Valor líquido</Label>
                   <Input id="netAmount" name="netAmount" type="number" min="0" step="0.01" defaultValue="0" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
+                  <Label htmlFor="quantity">Quantidade</Label>
                   <Input id="quantity" name="quantity" type="number" min="1" defaultValue="1" disabled={!canManage} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expectedShipAt">Expected ship</Label>
+                  <Label htmlFor="expectedShipAt">Envio previsto</Label>
                   <Input id="expectedShipAt" name="expectedShipAt" type="date" disabled={!canManage} />
                 </div>
                 <div className="space-y-2 lg:col-span-3">
-                  <Label htmlFor="orderNotes">Notes</Label>
-                  <Textarea id="orderNotes" name="notes" placeholder="Commercial terms, fulfillment notes, or fiscal handoff." disabled={!canManage} />
+                  <Label htmlFor="orderNotes">Observações</Label>
+                  <Textarea id="orderNotes" name="notes" placeholder="Termos comerciais, notas de entrega ou repasse fiscal." disabled={!canManage} />
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Create order"}
+                    {isSubmitting ? "Salvando..." : "Criar pedido"}
                   </Button>
                 </div>
               </form>
@@ -898,34 +932,34 @@ export function CommercePage({
         <TabsContent value="new-channel">
           <Card>
             <CardHeader>
-              <CardTitle>Create sales channel</CardTitle>
+              <CardTitle>Criar canal de venda</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_220px_auto]" onSubmit={submitChannel}>
                 <div className="space-y-2">
-                  <Label htmlFor="channelName">Name</Label>
-                  <Input id="channelName" name="name" placeholder="Steam, Epic, retail, publisher..." disabled={!canManage} required />
+                  <Label htmlFor="channelName">Nome</Label>
+                  <Input id="channelName" name="name" placeholder="Steam, Epic, varejo, publisher..." disabled={!canManage} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="channelType">Type</Label>
+                  <Label htmlFor="channelType">Tipo</Label>
                   <select id="channelType" name="type" className={getSelectClassName()} defaultValue={CommerceChannelType.DIRECT} disabled={!canManage}>
                     {channelTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>{labelFor(type)}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="externalCode">External code</Label>
-                  <Input id="externalCode" name="externalCode" placeholder="Store id, marketplace id" disabled={!canManage} />
+                  <Label htmlFor="externalCode">Código externo</Label>
+                  <Input id="externalCode" name="externalCode" placeholder="ID da loja, ID do marketplace" disabled={!canManage} />
                 </div>
                 <div className="flex items-end">
                   <Button className="w-full" disabled={!canManage || isSubmitting}>
-                    {isSubmitting ? "Saving..." : "Create"}
+                    {isSubmitting ? "Salvando..." : "Criar"}
                   </Button>
                 </div>
                 <div className="space-y-2 lg:col-span-4">
-                  <Label htmlFor="channelNotes">Notes</Label>
-                  <Textarea id="channelNotes" name="notes" placeholder="Operational notes, owner, integration status, or fiscal behavior." disabled={!canManage} />
+                  <Label htmlFor="channelNotes">Observações</Label>
+                  <Textarea id="channelNotes" name="notes" placeholder="Notas operacionais, responsável, status de integração ou comportamento fiscal." disabled={!canManage} />
                 </div>
               </form>
             </CardContent>

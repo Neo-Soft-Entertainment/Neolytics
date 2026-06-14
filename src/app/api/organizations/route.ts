@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid organization payload.");
     }
 
-    return serverError("Unable to create organization.");
+    return serverError("Não foi possível criar a organização.");
   }
 }
 
@@ -55,6 +55,6 @@ export async function DELETE() {
 
     return ok({ success: true });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Unable to delete organization.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível excluir a organização.");
   }
 }

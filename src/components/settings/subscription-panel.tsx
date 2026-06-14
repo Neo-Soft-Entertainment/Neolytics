@@ -52,16 +52,16 @@ const usageRows: Array<{
   key: keyof SubscriptionSnapshot["usage"];
   label: string;
 }> = [
-  { key: "seats", label: "Seats" },
-  { key: "workspaces", label: "Workspaces" },
-  { key: "savedGames", label: "Saved games" },
-  { key: "competitorSets", label: "Competitor sets" },
-  { key: "projects", label: "Active projects" },
-  { key: "reportsGenerated", label: "Reports this month" },
-  { key: "exportsGenerated", label: "Exports this month" },
-  { key: "projectAnalysesRun", label: "Analyses this month" },
-  { key: "gddsGenerated", label: "GDDs this month" },
-  { key: "artAnalysesRun", label: "Art analyses this month" }
+  { key: "seats", label: "Assentos" },
+  { key: "workspaces", label: "Áreas de trabalho" },
+  { key: "savedGames", label: "Jogos salvos" },
+  { key: "competitorSets", label: "Conjuntos de concorrentes" },
+  { key: "projects", label: "Projetos ativos" },
+  { key: "reportsGenerated", label: "Relatórios neste mês" },
+  { key: "exportsGenerated", label: "Exportações neste mês" },
+  { key: "projectAnalysesRun", label: "Análises neste mês" },
+  { key: "gddsGenerated", label: "GDDs neste mês" },
+  { key: "artAnalysesRun", label: "Análises de arte neste mês" }
 ];
 
 export function SubscriptionPanel({
@@ -95,7 +95,7 @@ export function SubscriptionPanel({
       const payload = (await response.json().catch(() => null)) as { url?: string; message?: string } | null;
 
       if (!response.ok || !payload?.url) {
-        setMessage(payload?.message ?? "Unable to start Stripe checkout.");
+        setMessage(payload?.message ?? "Não foi possível iniciar o checkout da Stripe.");
         return;
       }
 
@@ -105,11 +105,11 @@ export function SubscriptionPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setMessage(payload?.message ?? "Unable to update subscription plan.");
+      setMessage(payload?.message ?? "Não foi possível atualizar o plano da assinatura.");
       return;
     }
 
-    setMessage(`Plan changed to ${subscriptionPlans[plan].label}.`);
+    setMessage(`Plano alterado para ${subscriptionPlans[plan].label}.`);
     router.refresh();
   }
 
@@ -124,7 +124,7 @@ export function SubscriptionPanel({
     setIsOpeningPortal(false);
 
     if (!response.ok || !payload?.url) {
-      setMessage(payload?.message ?? "Unable to open Stripe billing portal.");
+      setMessage(payload?.message ?? "Não foi possível abrir o portal de cobrança da Stripe.");
       return;
     }
 
@@ -135,26 +135,26 @@ export function SubscriptionPanel({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Subscription overview</CardTitle>
+          <CardTitle>Visão geral da assinatura</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2 text-sm md:grid-cols-2">
-            <p>Current plan: {snapshot.planLabel}</p>
+            <p>Plano atual: {snapshot.planLabel}</p>
             <p>Status: {snapshot.status}</p>
-            <p>Current period: {snapshot.periodKey}</p>
+            <p>Período atual: {snapshot.periodKey}</p>
             <p>
-              Renewal:
+              Renovação:
               {" "}
-              {snapshot.currentPeriodEnd ? new Date(snapshot.currentPeriodEnd).toLocaleDateString() : "Not set"}
+              {snapshot.currentPeriodEnd ? new Date(snapshot.currentPeriodEnd).toLocaleDateString() : "Não definido"}
             </p>
           </div>
           {canManage && snapshot.hasStripeSubscription ? (
             <div className="flex flex-wrap gap-3">
               <Button disabled={isOpeningPortal || isSubmitting !== null} type="button" onClick={openBillingPortal}>
-                {isOpeningPortal ? "Opening billing..." : "Manage billing in Stripe"}
+                {isOpeningPortal ? "Abrindo cobrança..." : "Gerenciar cobrança na Stripe"}
               </Button>
               <p className="text-sm text-muted-foreground">
-                Upgrade, downgrade, payment method changes, invoices, and cancellation now run through Stripe Billing Portal.
+                Upgrade, downgrade, troca de método de pagamento, faturas e cancelamento agora passam pelo Portal de Cobrança da Stripe.
               </p>
             </div>
           ) : null}
@@ -179,7 +179,7 @@ export function SubscriptionPanel({
                   </div>
                   <div className="text-right">
                     <p className="text-xl font-semibold">{plan.priceLabel}</p>
-                    <p className="text-xs text-muted-foreground">internal tier</p>
+                    <p className="text-xs text-muted-foreground">nível interno</p>
                   </div>
                 </div>
               </CardHeader>
@@ -197,21 +197,21 @@ export function SubscriptionPanel({
                     variant={isCurrent ? "secondary" : "default"}
                   >
                     {isCurrent
-                      ? "Current plan"
+                      ? "Plano atual"
                       : isSubmitting === planId
-                        ? "Loading..."
+                        ? "Carregando..."
                         : canCheckout
-                          ? `Start ${plan.label} trial`
+                          ? `Iniciar teste ${plan.label}`
                           : canManageInStripe
                             ? isOpeningPortal
-                              ? "Opening billing..."
-                              : "Manage in billing"
+                              ? "Abrindo cobrança..."
+                              : "Gerenciar na cobrança"
                           : canDowngrade
-                            ? "Move to Free"
-                            : "Coming soon"}
+                            ? "Mover para Free"
+                            : "Em breve"}
                   </Button>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Only organization admins can change plans.</p>
+                  <p className="text-xs text-muted-foreground">Apenas administradores da organização podem alterar planos.</p>
                 )}
               </CardContent>
             </Card>
@@ -219,18 +219,18 @@ export function SubscriptionPanel({
         })}
       </div>
       <p className="text-sm text-muted-foreground">
-        Free-to-paid upgrades start with a 7-day trial in Stripe Checkout. Once a paid subscription is active, billing changes are managed through Stripe Billing Portal.
+        Upgrades do Free para planos pagos começam com 7 dias de teste no Stripe Checkout. Quando uma assinatura paga está ativa, mudanças de cobrança são gerenciadas pelo Portal de Cobrança da Stripe.
       </p>
       <Card>
         <CardHeader>
-          <CardTitle>Plan feature matrix</CardTitle>
+          <CardTitle>Matriz de recursos dos planos</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="hidden overflow-x-auto lg:block">
             <table className="w-full text-left text-sm">
               <thead className="border-b text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="py-3 pr-4 font-medium">Feature</th>
+                  <th className="py-3 pr-4 font-medium">Recurso</th>
                   {Object.entries(subscriptionPlans).map(([planKey, plan]) => (
                     <th key={planKey} className="py-3 pr-4 font-medium">
                       {plan.label}
@@ -268,7 +268,7 @@ export function SubscriptionPanel({
             ))}
           </div>
           <div className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">Official live scope</p>
+            <p className="font-medium text-foreground">Escopo oficial ativo</p>
             <div className="mt-3 space-y-2">
               {subscriptionTruthNotes.map((note) => (
                 <p key={note}>{note}</p>
@@ -279,7 +279,7 @@ export function SubscriptionPanel({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Usage and limits</CardTitle>
+          <CardTitle>Uso e limites</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
           {usageRows.map((row) => (

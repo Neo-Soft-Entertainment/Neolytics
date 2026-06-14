@@ -57,6 +57,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid receivable title payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Unable to create receivable title.");
+    return serverError(error instanceof Error ? error.message : "Não foi possível criar o título a receber.");
   }
 }

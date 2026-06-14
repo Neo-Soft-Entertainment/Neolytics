@@ -49,7 +49,7 @@ export function OrganizationMembershipsPanel({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-      setError(payload?.message ?? "Unable to switch organization.");
+      setError(payload?.message ?? "Não foi possível trocar a organização.");
       return;
     }
 
@@ -60,7 +60,7 @@ export function OrganizationMembershipsPanel({
     <Card className="overflow-hidden">
       <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
       <CardHeader>
-        <CardTitle>Your organizations</CardTitle>
+        <CardTitle>Suas organizações</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="grid gap-3 lg:grid-cols-2">
@@ -73,12 +73,12 @@ export function OrganizationMembershipsPanel({
                   <div>
                     <p className="font-medium">{membership.organization.name}</p>
                     <p className="mt-1 text-muted-foreground">
-                      {membership.organization.workspaces.length} workspace(s)
+                      {membership.organization.workspaces.length} área(s) de trabalho
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <Badge variant={isCurrent ? "default" : "secondary"}>
-                      {isCurrent ? "Current" : membership.role}
+                      {isCurrent ? "Atual" : membership.role}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {getSubscriptionPlanLabel(membership.organization.subscriptionPlan)}
@@ -87,7 +87,7 @@ export function OrganizationMembershipsPanel({
                 </div>
                 <div className="mt-4 flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">
-                    {membership.role} access
+                    Acesso {membership.role}
                   </p>
                   <Button
                     disabled={isCurrent || switchingId === membership.organizationId}
@@ -98,7 +98,7 @@ export function OrganizationMembershipsPanel({
                       void switchOrganization(membership.organizationId);
                     }}
                   >
-                    {isCurrent ? "Active" : switchingId === membership.organizationId ? "Switching..." : "Switch"}
+                    {isCurrent ? "Ativa" : switchingId === membership.organizationId ? "Trocando..." : "Trocar"}
                   </Button>
                 </div>
               </div>

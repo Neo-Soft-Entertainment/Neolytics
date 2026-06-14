@@ -86,7 +86,7 @@ export async function PATCH(
   }
 
   if (!canWriteOrganization(context.organizationRole, context.organizationPermissions)) {
-    return forbidden("Viewers cannot edit the kanban board.");
+    return forbidden("Visualizadores não podem editar o quadro kanban.");
   }
 
   try {
@@ -187,6 +187,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid kanban payload.");
     }
 
-    return serverError("Unable to update kanban.");
+    return serverError("Não foi possível atualizar o kanban.");
   }
 }

@@ -54,6 +54,6 @@ export async function PATCH(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid user preferences payload.");
     }
 
-    return serverError("Unable to update user language.");
+    return serverError("Não foi possível atualizar o idioma do usuário.");
   }
 }

@@ -54,6 +54,6 @@ export async function GET(
       url: signedUrl
     });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Unable to open document.");
+    return badRequest(error instanceof Error ? error.message : "Não foi possível abrir o documento.");
   }
 }
