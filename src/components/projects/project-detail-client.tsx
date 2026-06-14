@@ -1,7 +1,7 @@
 "use client";
 
 import { SubscriptionPlan } from "@prisma/client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
@@ -27,6 +27,68 @@ const stageOptions = [
   "LIVE",
   "ARCHIVED"
 ] as const;
+
+function ProjectDescriptionEditor({
+  value,
+  onChange
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(textarea.scrollHeight, 560)}px`;
+  }, [value]);
+
+  function insertText(before: string, after = "", fallback = "") {
+    const textarea = textareaRef.current;
+
+    if (!textarea) {
+      onChange(`${value}${before}${fallback}${after}`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = value.slice(start, end) || fallback;
+    const nextValue = `${value.slice(0, start)}${before}${selected}${after}${value.slice(end)}`;
+    const cursor = start + before.length + selected.length + after.length;
+
+    onChange(nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border bg-background">
+      <div className="flex flex-wrap items-center gap-2 border-b bg-muted/30 px-3 py-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => insertText("# ", "", "Título")}>
+          Título
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => insertText("**", "**", "texto em negrito")}>
+          Negrito
+        </Button>
+      </div>
+      <Textarea
+        ref={textareaRef}
+        className="min-h-[560px] resize-none rounded-none border-0 bg-transparent px-5 py-5 text-base leading-7 shadow-none focus-visible:ring-0"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={"# Visão do negócio\n\nEscreva livremente. Use **negrito** para decisões importantes, riscos e critérios."}
+      />
+    </div>
+  );
+}
 
 export function ProjectDetailClient({
   projectId,
@@ -810,18 +872,25 @@ export function ProjectDetailClient({
             <CardHeader>
               <CardTitle>Definição do projeto</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
+            <CardContent className="grid gap-5 md:grid-cols-2">
+              <div className="space-y-2">
                 <Label htmlFor="detail-name">Nome do projeto</Label>
                 <Input id="detail-name" value={projectForm.name} onChange={(event) => setProjectForm((current) => ({ ...current, name: event.target.value }))} />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-pitch">Pitch curto</Label>
-                <Textarea id="detail-pitch" value={projectForm.elevatorPitch} onChange={(event) => setProjectForm((current) => ({ ...current, elevatorPitch: event.target.value }))} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="detail-description">{t("common.description")}</Label>
-                <Textarea id="detail-description" value={projectForm.description} onChange={(event) => setProjectForm((current) => ({ ...current, description: event.target.value }))} />
+              <div className="space-y-2">
+                <Label>Estágio</Label>
+                <Select value={projectForm.stage} onValueChange={(value) => setProjectForm((current) => ({ ...current, stage: value }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stageOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option.replaceAll("_", " ")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="detail-genres">Gêneros</Label>
@@ -830,6 +899,22 @@ export function ProjectDetailClient({
               <div className="space-y-2">
                 <Label htmlFor="detail-tags">Tags</Label>
                 <Input id="detail-tags" value={projectForm.tagInput} onChange={(event) => setProjectForm((current) => ({ ...current, tagInput: event.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="detail-monetization">Monetização</Label>
+                <Input id="detail-monetization" value={projectForm.monetizationModel} onChange={(event) => setProjectForm((current) => ({ ...current, monetizationModel: event.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="detail-price">Preço alvo (centavos)</Label>
+                <Input id="detail-price" value={projectForm.pricePointCents} onChange={(event) => setProjectForm((current) => ({ ...current, pricePointCents: event.target.value }))} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="detail-pitch">Pitch curto</Label>
+                <Textarea id="detail-pitch" className="min-h-24" value={projectForm.elevatorPitch} onChange={(event) => setProjectForm((current) => ({ ...current, elevatorPitch: event.target.value }))} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Descrição do negócio</Label>
+                <ProjectDescriptionEditor value={projectForm.description} onChange={(description) => setProjectForm((current) => ({ ...current, description }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="detail-audience">Público-alvo</Label>
@@ -848,31 +933,8 @@ export function ProjectDetailClient({
                 <Textarea id="detail-fantasy" value={projectForm.playerFantasy} onChange={(event) => setProjectForm((current) => ({ ...current, playerFantasy: event.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="detail-monetization">Monetização</Label>
-                <Input id="detail-monetization" value={projectForm.monetizationModel} onChange={(event) => setProjectForm((current) => ({ ...current, monetizationModel: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="detail-art">Direção de arte</Label>
                 <Input id="detail-art" value={projectForm.artDirection} onChange={(event) => setProjectForm((current) => ({ ...current, artDirection: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="detail-price">Preço alvo (centavos)</Label>
-                <Input id="detail-price" value={projectForm.pricePointCents} onChange={(event) => setProjectForm((current) => ({ ...current, pricePointCents: event.target.value }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Estágio</Label>
-                <Select value={projectForm.stage} onValueChange={(value) => setProjectForm((current) => ({ ...current, stage: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stageOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option.replaceAll("_", " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="md:col-span-2">
                 <Button disabled={isSaving} onClick={saveProject}>
@@ -1801,6 +1863,7 @@ export function ProjectDetailClient({
               moveCardInColumn={moveCardInColumn}
               deleteCard={deleteCard}
               reorderCard={reorderCard}
+              assigneeOptions={project.assigneeOptions}
             />
           ) : (
             <>
@@ -1850,7 +1913,17 @@ export function ProjectDetailClient({
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <Input value={newMilestone.title} onChange={(event) => setNewMilestone((current) => ({ ...current, title: event.target.value }))} placeholder="Vertical slice" />
-                  <Input value={newMilestone.ownerLabel} onChange={(event) => setNewMilestone((current) => ({ ...current, ownerLabel: event.target.value }))} placeholder={t("common.owner")} />
+                  <Select value={newMilestone.ownerLabel || "none"} onValueChange={(value) => setNewMilestone((current) => ({ ...current, ownerLabel: value === "none" ? "" : value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Responsável" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem responsável</SelectItem>
+                      {project.assigneeOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.label}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Select value={newMilestone.status} onValueChange={(value) => setNewMilestone((current) => ({ ...current, status: value }))}>
                     <SelectTrigger>
                       <SelectValue />
@@ -1895,21 +1968,31 @@ export function ProjectDetailClient({
                               }
                             }))}
                           />
-                          <Input
-                            value={milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? ""}
-                            onChange={(event) => setMilestoneEdits((current) => ({
+                          <Select
+                            value={(milestoneEdits[milestone.id]?.ownerLabel ?? milestone.ownerLabel ?? "") || "none"}
+                            onValueChange={(value) => setMilestoneEdits((current) => ({
                               ...current,
                               [milestone.id]: {
                                 title: current[milestone.id]?.title ?? milestone.title,
                                 description: current[milestone.id]?.description ?? milestone.description ?? "",
-                                ownerLabel: event.target.value,
+                                ownerLabel: value === "none" ? "" : value,
                                 status: current[milestone.id]?.status ?? milestone.status,
                                 dueAt: current[milestone.id]?.dueAt ?? (milestone.dueAt ? new Date(milestone.dueAt).toISOString().slice(0, 10) : ""),
                                 budgetedCostCents: current[milestone.id]?.budgetedCostCents ?? String(milestone.budgetedCostCents ?? 0),
                                 expectedRevenueCents: current[milestone.id]?.expectedRevenueCents ?? String(milestone.expectedRevenueCents ?? 0)
                               }
                             }))}
-                          />
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Responsável" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sem responsável</SelectItem>
+                              {project.assigneeOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.label}>{option.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Select
                             value={milestoneEdits[milestone.id]?.status ?? milestone.status}
                             onValueChange={(value) => setMilestoneEdits((current) => ({

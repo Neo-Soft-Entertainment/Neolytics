@@ -57,6 +57,7 @@ import { cn, formatNumber } from "@/lib/utils";
 type KanbanBoard = ProjectDetailResponse["kanbanBoards"][number];
 type KanbanColumn = KanbanBoard["columns"][number];
 type KanbanCard = KanbanColumn["cards"][number];
+type AssigneeOption = ProjectDetailResponse["assigneeOptions"][number];
 
 type CardDraft = {
   title: string;
@@ -99,7 +100,8 @@ export function ProjectKanbanBoard({
   moveCard,
   moveCardInColumn,
   deleteCard,
-  reorderCard
+  reorderCard,
+  assigneeOptions
 }: {
   projectName: string;
   board: KanbanBoard | null;
@@ -125,6 +127,7 @@ export function ProjectKanbanBoard({
   moveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
   reorderCard: (cardId: string, columnId: string, targetIndex: number) => Promise<void>;
+  assigneeOptions: AssigneeOption[];
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const columns = board?.columns ?? [];
@@ -136,19 +139,7 @@ export function ProjectKanbanBoard({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const assignees = useMemo(() => {
-    const names = new Set<string>();
-
-    for (const column of columns) {
-      for (const card of column.cards) {
-        if (card.assigneeLabel) {
-          names.add(card.assigneeLabel);
-        }
-      }
-    }
-
-    return Array.from(names).sort();
-  }, [columns]);
+  const assignees = useMemo(() => assigneeOptions.map((option) => option.label).sort(), [assigneeOptions]);
 
   const labels = useMemo(() => {
     const names = new Set<string>();
@@ -377,6 +368,7 @@ export function ProjectKanbanBoard({
         columns={columns}
         activeCard={activeCard?.card ?? null}
         activeCardColumnId={activeCard?.column.id ?? ""}
+        assigneeOptions={assigneeOptions}
         createColumnId={createColumnId}
         newCards={newCards}
         setNewCards={setNewCards}
@@ -608,6 +600,7 @@ function KanbanCardDrawer({
   columns,
   activeCard,
   activeCardColumnId,
+  assigneeOptions,
   createColumnId,
   newCards,
   setNewCards,
@@ -621,6 +614,7 @@ function KanbanCardDrawer({
   columns: KanbanColumn[];
   activeCard: KanbanCard | null;
   activeCardColumnId: string;
+  assigneeOptions: AssigneeOption[];
   createColumnId: string;
   newCards: Record<string, CardDraft>;
   setNewCards: Dispatch<SetStateAction<Record<string, CardDraft>>>;
@@ -639,6 +633,8 @@ function KanbanCardDrawer({
     dueDate: "",
     labels: ""
   };
+  const selectedAssigneeLabel = isEdit ? editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "" : createState.assigneeLabel;
+  const hasLegacyAssignee = selectedAssigneeLabel && assigneeOptions.every((option) => option.label !== selectedAssigneeLabel);
 
   async function submit() {
     if (drawer?.mode === "create") {
@@ -741,11 +737,27 @@ function KanbanCardDrawer({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Responsável</Label>
-              <Input
-                value={isEdit ? editState?.assigneeLabel ?? activeCard?.assigneeLabel ?? "" : createState.assigneeLabel}
-                onChange={(event) => isEdit ? updateEdit("assigneeLabel", event.target.value) : updateCreate("assigneeLabel", event.target.value)}
-                placeholder="Responsável"
-              />
+              <Select
+                value={selectedAssigneeLabel || "none"}
+                onValueChange={(value) => isEdit ? updateEdit("assigneeLabel", value === "none" ? "" : value) : updateCreate("assigneeLabel", value === "none" ? "" : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem responsável</SelectItem>
+                  {assigneeOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.label}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  {hasLegacyAssignee ? (
+                    <SelectItem value={selectedAssigneeLabel}>
+                      {selectedAssigneeLabel} (legado)
+                    </SelectItem>
+                  ) : null}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Vencimento</Label>

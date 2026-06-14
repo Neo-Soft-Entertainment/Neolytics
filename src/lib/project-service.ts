@@ -990,7 +990,38 @@ export async function getProjectById(projectId: string, workspaceId: string) {
     include: projectInclude
   });
 
-  return project ? hydrateProjectArtAssets(decryptProject(project)) : null;
+  if (!project) {
+    return null;
+  }
+
+  const members = await db.organizationMember.findMany({
+    where: {
+      organizationId: project.organizationId
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      }
+    },
+    orderBy: {
+      joinedAt: "asc"
+    }
+  });
+
+  return {
+    ...hydrateProjectArtAssets(decryptProject(project)),
+    assigneeOptions: members.map((member) => ({
+      id: member.user.id,
+      label: member.user.name?.trim() ? `${member.user.name.trim()} - ${member.user.email}` : member.user.email,
+      email: member.user.email,
+      image: member.user.image
+    }))
+  };
 }
 
 export async function updateProject(params: {

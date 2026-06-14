@@ -33,6 +33,12 @@ export interface ProjectDetailResponse extends ProjectListItem {
   artDirection: string | null;
   playerFantasy: string | null;
   pricePointCents: number | null;
+  assigneeOptions: Array<{
+    id: string;
+    label: string;
+    email: string;
+    image: string | null;
+  }>;
   analysis: {
     analyzedAt: string;
     matchingGamesCount: number;
