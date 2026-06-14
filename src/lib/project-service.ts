@@ -1017,12 +1017,21 @@ export async function getProjectById(projectId: string, workspaceId: string) {
 
   return {
     ...hydratedProject,
-    assigneeOptions: members.map((member) => ({
-      id: member.user.id,
-      label: member.user.name?.trim() ? `${member.user.name.trim()} - ${member.user.email}` : member.user.email,
-      email: member.user.email,
-      image: member.user.image
-    }))
+    assigneeOptions: members.map((member) => {
+      const userName = member.user.name?.trim();
+      let label = member.user.email;
+
+      if (userName) {
+        label = `${userName} - ${member.user.email}`;
+      }
+
+      return {
+        id: member.user.id,
+        label,
+        email: member.user.email,
+        image: member.user.image
+      };
+    })
   };
 }
 
