@@ -3,6 +3,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { EntitlementError, entitlementErrorResponse } from "@/lib/entitlements";
 import { uploadProjectArtAsset } from "@/lib/project-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function POST(
   request: Request,
@@ -42,6 +43,6 @@ export async function POST(
       return entitlementErrorResponse(error);
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o asset de arte.");
+    return serverError(getErrorMessage(error, "Não foi possível enviar o asset de arte."));
   }
 }

@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { createBudgetLine } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const optionalDate = z.preprocess((value) => {
   if (!value) {
@@ -60,6 +61,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid budget line payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar a linha do orçamento.");
+    return serverError(getErrorMessage(error, "Não foi possível criar a linha do orçamento."));
   }
 }

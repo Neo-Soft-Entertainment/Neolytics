@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { createCostCenter } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   code: z.string().min(1).max(12),
@@ -37,6 +38,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid cost center payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o centro de custo.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o centro de custo."));
   }
 }

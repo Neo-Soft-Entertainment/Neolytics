@@ -3,6 +3,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { buildIncidentNotificationReport } from "@/lib/privacy/incident-service";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function GET(
   _: Request,
@@ -42,6 +43,6 @@ export async function GET(
       status: incident.status
     }));
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Não foi possível gerar o relatório de incidente.");
+    return serverError(getErrorMessage(error, "Não foi possível gerar o relatório de incidente."));
   }
 }

@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCommerce } from "@/lib/authorization";
 import { createCommerceOrder } from "@/lib/commerce-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   channelId: z.string().optional(),
@@ -62,6 +63,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid order payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o pedido.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o pedido."));
   }
 }

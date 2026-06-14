@@ -9,6 +9,7 @@ import { env } from "@/env";
 import { DataClassification, PrivacyRiskLevel } from "@/lib/privacy/constants";
 import { filterBlockedExportFields, getExportableFields, getFieldClassifications } from "@/lib/privacy/field-classification";
 import { assertPurposeAllowsOperation, getProcessingPurpose } from "@/lib/privacy/processing-purposes";
+import { getErrorMessage } from "@/lib/error-message";
 
 const blockedProductTypes = new Set<DataProductType>([
   DataProductType.RAW_EVENTS,
@@ -107,7 +108,7 @@ export function evaluatePrivacyRules(input: PrivacyRulesInput): PrivacyRulesEval
   } catch (error) {
     return {
       decision: PrivacyDecision.BLOCK,
-      reason: error instanceof Error ? error.message : "Purpose validation failed.",
+      reason: getErrorMessage(error, "Purpose validation failed."),
       blockedFields: input.fieldNames,
       exportableFields: [],
       transformations: []

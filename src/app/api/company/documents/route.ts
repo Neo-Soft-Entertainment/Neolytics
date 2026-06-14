@@ -7,6 +7,7 @@ import { canManageCompany } from "@/lib/authorization";
 import { createCompanyDocument, getCompanyModuleData } from "@/lib/company-service";
 import { uploadCompanyDocumentFile } from "@/lib/company-storage";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   title: z.string().min(2),
@@ -91,6 +92,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid document payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o documento.");
+    return badRequest(getErrorMessage(error, "Não foi possível criar o documento."));
   }
 }

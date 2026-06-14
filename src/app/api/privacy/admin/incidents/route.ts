@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   severity: z.nativeEnum(PrivacyIncidentSeverity),
@@ -94,6 +95,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid incident payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o incidente.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o incidente."));
   }
 }

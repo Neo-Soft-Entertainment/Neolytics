@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 import { buildPersonalDataAccessPackage } from "@/lib/privacy/data-subject-request-service";
 import { PrivacyDecision } from "@prisma/client";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function GET() {
   const context = await getApiContext();
@@ -26,6 +27,6 @@ export async function GET() {
     });
     return ok(payload);
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Não foi possível montar o pacote de exportação de privacidade.");
+    return serverError(getErrorMessage(error, "Não foi possível montar o pacote de exportação de privacidade."));
   }
 }

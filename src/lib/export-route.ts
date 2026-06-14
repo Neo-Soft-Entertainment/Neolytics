@@ -20,6 +20,7 @@ import {
   assertCanUseFeature,
   entitlementErrorResponse
 } from "@/lib/entitlements";
+import { getErrorMessage } from "@/lib/error-message";
 
 export function getExportFormat(url: URL) {
   const format = url.searchParams.get("format") ?? "xlsx";
@@ -85,7 +86,7 @@ export async function createWorkbookDownloadResponse(
       return entitlementErrorResponse(error);
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível exportar a planilha.");
+    return serverError(getErrorMessage(error, "Não foi possível exportar a planilha."));
   }
 }
 
@@ -128,6 +129,6 @@ export async function createGoogleSheetsPublishResponse(
       return badRequest(error.message);
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível publicar a exportação no Google Sheets.");
+    return serverError(getErrorMessage(error, "Não foi possível publicar a exportação no Google Sheets."));
   }
 }

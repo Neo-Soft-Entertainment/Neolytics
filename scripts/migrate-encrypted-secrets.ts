@@ -119,8 +119,13 @@ try {
     );
   }
 
+  let mode = "dry-run";
+  if (apply) {
+    mode = "apply";
+  }
+
   console.log(JSON.stringify({
-    mode: apply ? "apply" : "dry-run",
+    mode,
     accountRowsNeedingMigration: accountsMigrated,
     organizationRowsNeedingMigration: organizationsMigrated,
     backupRecords: backup.length

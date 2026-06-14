@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { createPrivacyAuditLog } from "@/lib/privacy/audit";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   approvalStatus: z.nativeEnum(ApprovalStatus),
@@ -67,6 +68,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid data product approval payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o produto de dados.");
+    return serverError(getErrorMessage(error, "Não foi possível atualizar o produto de dados."));
   }
 }

@@ -6,6 +6,7 @@ import { setActiveWorkspaceCookie } from "@/lib/active-workspace";
 import { getApiContext, requireApiUser } from "@/lib/auth-helpers";
 import { createOrganizationForUser, deleteOrganizationForUser } from "@/lib/organization-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   organizationName: z.string().min(2),
@@ -55,6 +56,6 @@ export async function DELETE() {
 
     return ok({ success: true });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Não foi possível excluir a organização.");
+    return badRequest(getErrorMessage(error, "Não foi possível excluir a organização."));
   }
 }

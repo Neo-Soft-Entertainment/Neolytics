@@ -13,5 +13,6 @@
 
 ## Code Style
 
-- Do not use ternary expressions in new or touched code.
+- Do not use ternary expressions anywhere in project source.
 - Prefer local variables, early returns, and simple `if` blocks.
+- Use `npm run style:ternary-report` to inspect current violations and `npm run style:no-ternary` as the strict gate.

@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { updateContract } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const optionalDate = z.preprocess((value) => {
   if (!value) {
@@ -71,6 +72,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid contract payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o contrato.");
+    return serverError(getErrorMessage(error, "Não foi possível atualizar o contrato."));
   }
 }

@@ -121,6 +121,57 @@ async function getCurrentMetricCount(client: DbClient, organizationId: string, m
   return 0;
 }
 
+function getUsageMetricCount(
+  usage: {
+    reportsGenerated: number;
+    exportsGenerated: number;
+    projectAnalysesRun: number;
+    gddsGenerated: number;
+    artAnalysesRun: number;
+  },
+  metric: Extract<SubscriptionMetric, "reportsGenerated" | "exportsGenerated" | "projectAnalysesRun" | "gddsGenerated" | "artAnalysesRun">
+) {
+  if (metric === "reportsGenerated") {
+    return usage.reportsGenerated;
+  }
+
+  if (metric === "exportsGenerated") {
+    return usage.exportsGenerated;
+  }
+
+  if (metric === "projectAnalysesRun") {
+    return usage.projectAnalysesRun;
+  }
+
+  if (metric === "gddsGenerated") {
+    return usage.gddsGenerated;
+  }
+
+  return usage.artAnalysesRun;
+}
+
+function getUsageMetricUpdateData(
+  metric: Extract<SubscriptionMetric, "reportsGenerated" | "exportsGenerated" | "projectAnalysesRun" | "gddsGenerated" | "artAnalysesRun">
+): Prisma.OrganizationSubscriptionUsageUpdateInput {
+  if (metric === "reportsGenerated") {
+    return { reportsGenerated: { increment: 1 } };
+  }
+
+  if (metric === "exportsGenerated") {
+    return { exportsGenerated: { increment: 1 } };
+  }
+
+  if (metric === "projectAnalysesRun") {
+    return { projectAnalysesRun: { increment: 1 } };
+  }
+
+  if (metric === "gddsGenerated") {
+    return { gddsGenerated: { increment: 1 } };
+  }
+
+  return { artAnalysesRun: { increment: 1 } };
+}
+
 export async function enforceSubscriptionCapacity(
   organizationId: string,
   metric: Extract<SubscriptionMetric, "seats" | "workspaces" | "savedGames" | "competitorSets" | "projects">,
@@ -168,31 +219,13 @@ export async function consumeSubscriptionUsage(
       periodKey
     }
   });
-  const current =
-    metric === "reportsGenerated"
-      ? usage.reportsGenerated
-      : metric === "exportsGenerated"
-        ? usage.exportsGenerated
-        : metric === "projectAnalysesRun"
-          ? usage.projectAnalysesRun
-          : metric === "gddsGenerated"
-            ? usage.gddsGenerated
-            : usage.artAnalysesRun;
+  const current = getUsageMetricCount(usage, metric);
 
   if (current >= limit) {
     throw new SubscriptionLimitError(`Seu ${metricLabels[metric]} foi atingido no plano ${plan.toLowerCase()}.`);
   }
 
-  const data: Prisma.OrganizationSubscriptionUsageUpdateInput =
-    metric === "reportsGenerated"
-      ? { reportsGenerated: { increment: 1 } }
-      : metric === "exportsGenerated"
-        ? { exportsGenerated: { increment: 1 } }
-        : metric === "projectAnalysesRun"
-          ? { projectAnalysesRun: { increment: 1 } }
-          : metric === "gddsGenerated"
-            ? { gddsGenerated: { increment: 1 } }
-            : { artAnalysesRun: { increment: 1 } };
+  const data = getUsageMetricUpdateData(metric);
 
   await client.organizationSubscriptionUsage.update({
     where: {
@@ -221,16 +254,7 @@ export async function recordSubscriptionUsage(
       periodKey
     }
   });
-  const data: Prisma.OrganizationSubscriptionUsageUpdateInput =
-    metric === "reportsGenerated"
-      ? { reportsGenerated: { increment: 1 } }
-      : metric === "exportsGenerated"
-        ? { exportsGenerated: { increment: 1 } }
-        : metric === "projectAnalysesRun"
-          ? { projectAnalysesRun: { increment: 1 } }
-          : metric === "gddsGenerated"
-            ? { gddsGenerated: { increment: 1 } }
-            : { artAnalysesRun: { increment: 1 } };
+  const data = getUsageMetricUpdateData(metric);
 
   await client.organizationSubscriptionUsage.update({
     where: {
@@ -374,13 +398,19 @@ export async function syncOrganizationSubscriptionFromStripe(params: {
   currentPeriodEnd: Date | null;
   canceledAt: Date | null;
 }) {
+  let subscriptionStatus: SubscriptionStatus = SubscriptionStatus.ACTIVE;
+
+  if (params.isCanceled) {
+    subscriptionStatus = SubscriptionStatus.CANCELED;
+  }
+
   const organization = await db.organization.update({
     where: {
       id: params.organizationId
     },
     data: {
       subscriptionPlan: params.plan,
-      subscriptionStatus: params.isCanceled ? SubscriptionStatus.CANCELED : SubscriptionStatus.ACTIVE,
+      subscriptionStatus,
       stripeCustomerId: params.customerId,
       stripeSubscriptionId: params.subscriptionId,
       stripePriceId: params.priceId,

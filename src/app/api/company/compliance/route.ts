@@ -7,6 +7,7 @@ import { canManageCompany } from "@/lib/authorization";
 import { createComplianceItem, getCompanyModuleData } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   title: z.string().min(2),
@@ -68,6 +69,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid compliance payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível criar o item de conformidade.");
+    return badRequest(getErrorMessage(error, "Não foi possível criar o item de conformidade."));
   }
 }

@@ -2,6 +2,7 @@ import { forbidden, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { canWriteOrganization } from "@/lib/authorization";
 import { deleteProjectArtAsset } from "@/lib/project-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function DELETE(
   request: Request,
@@ -28,6 +29,6 @@ export async function DELETE(
 
     return ok(result);
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Não foi possível excluir o asset de arte.");
+    return serverError(getErrorMessage(error, "Não foi possível excluir o asset de arte."));
   }
 }

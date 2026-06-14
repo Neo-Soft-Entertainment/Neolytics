@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { createDataProduct, listDataProducts } from "@/lib/privacy/data-product-service";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   productName: z.string().trim().min(2).max(120),
@@ -73,6 +74,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid data product payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o produto de dados.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o produto de dados."));
   }
 }

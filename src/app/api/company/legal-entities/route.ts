@@ -7,6 +7,7 @@ import { canManageCompany } from "@/lib/authorization";
 import { createLegalEntity, getCompanyModuleData } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -76,6 +77,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid legal entity payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível criar a entidade legal.");
+    return badRequest(getErrorMessage(error, "Não foi possível criar a entidade legal."));
   }
 }

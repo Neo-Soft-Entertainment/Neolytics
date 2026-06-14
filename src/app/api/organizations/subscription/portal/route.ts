@@ -3,6 +3,7 @@ import { OrganizationRole } from "@prisma/client";
 import { forbidden, ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { createStripeBillingPortalSession } from "@/lib/stripe";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function POST() {
   const context = await getApiContext();
@@ -24,7 +25,7 @@ export async function POST() {
   } catch (error) {
     return new Response(
       JSON.stringify({
-        message: error instanceof Error ? error.message : "Não foi possível abrir o portal de cobrança da Stripe."
+        message: getErrorMessage(error, "Não foi possível abrir o portal de cobrança da Stripe.")
       }),
       {
         status: 400,

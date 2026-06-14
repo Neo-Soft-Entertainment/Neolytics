@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { createProjectMilestone } from "@/lib/finance-service";
 import { getProjectById } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const optionalDate = z.preprocess((value) => {
   if (!value) {
@@ -59,6 +60,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Dados do marco inválidos.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o marco.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o marco."));
   }
 }

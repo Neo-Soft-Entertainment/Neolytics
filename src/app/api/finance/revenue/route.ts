@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { createRevenueEntry } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   projectId: z.string().optional(),
@@ -52,6 +53,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid revenue payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o lançamento de receita.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o lançamento de receita."));
   }
 }

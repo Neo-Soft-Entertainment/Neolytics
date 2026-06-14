@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCompany } from "@/lib/authorization";
 import { updateLegalEntity } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -58,6 +59,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid legal entity payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível atualizar a entidade legal.");
+    return badRequest(getErrorMessage(error, "Não foi possível atualizar a entidade legal."));
   }
 }

@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { isAllowedDiscordWebhookUrl, sendDiscordWebhook } from "@/lib/discord";
 import { parseJsonBody } from "@/lib/request";
 import { decryptNullableString, encryptNullableString } from "@/lib/security/encryption";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   webhookUrl: z.union([z.string().url(), z.literal("")]).optional().transform((value) => value?.trim() ?? ""),
@@ -130,6 +131,6 @@ export async function POST() {
 
     return ok({ success: true });
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o webhook de teste do Discord.");
+    return serverError(getErrorMessage(error, "Não foi possível enviar o webhook de teste do Discord."));
   }
 }

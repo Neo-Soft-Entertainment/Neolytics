@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCompany } from "@/lib/authorization";
 import { updateComplianceItem } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   status: z.nativeEnum(ComplianceStatus),
@@ -42,6 +43,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid compliance update payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível atualizar o item de conformidade.");
+    return badRequest(getErrorMessage(error, "Não foi possível atualizar o item de conformidade."));
   }
 }

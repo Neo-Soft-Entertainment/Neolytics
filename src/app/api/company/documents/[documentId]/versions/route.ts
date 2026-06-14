@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCompany } from "@/lib/authorization";
 import { addCompanyDocumentVersion } from "@/lib/company-service";
 import { uploadCompanyDocumentFile } from "@/lib/company-storage";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function POST(
   request: Request,
@@ -47,6 +48,6 @@ export async function POST(
 
     return ok(version, { status: 201 });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Não foi possível criar a versão do documento.");
+    return badRequest(getErrorMessage(error, "Não foi possível criar a versão do documento."));
   }
 }

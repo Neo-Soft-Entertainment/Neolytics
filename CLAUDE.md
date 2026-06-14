@@ -17,6 +17,8 @@ Neolytics is a **Steam-first market intelligence SaaS platform** for indie game 
 npm run dev               # Next.js dev server
 npm run build             # Production build
 npm run lint              # ESLint
+npm run style:ternary-report # Report ternary expressions by source file
+npm run style:no-ternary  # Strict no-ternary gate
 
 # Database
 npm run db:generate       # Prisma generate (after schema changes)
@@ -34,6 +36,14 @@ docker-compose up -d      # Local Postgres + Redis
 cp .env.example .env.local
 npm run db:generate && npm run db:migrate -- --name init && npm run db:seed
 ```
+
+---
+
+## Code Style Rules
+
+- Do not use ternary expressions anywhere in project source.
+- Prefer local variables, early returns, and simple `if` blocks.
+- When choosing between two values, initialize a local variable and update it inside an `if` block.
 
 ---
 

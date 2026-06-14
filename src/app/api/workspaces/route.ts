@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { createWorkspaceForOrganization, deleteWorkspaceFromOrganization } from "@/lib/organization-service";
 import { parseJsonBody, parseSearchParams } from "@/lib/request";
 import { SubscriptionLimitError } from "@/lib/subscription-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -96,6 +97,6 @@ export async function DELETE(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Dados de exclusão da área de trabalho inválidos.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível excluir a área de trabalho.");
+    return badRequest(getErrorMessage(error, "Não foi possível excluir a área de trabalho."));
   }
 }

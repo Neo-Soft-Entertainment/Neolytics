@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCompany } from "@/lib/authorization";
 import { createLegalEntityBranch } from "@/lib/company-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   name: z.string().min(2),
@@ -44,6 +45,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid branch payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível criar a filial.");
+    return badRequest(getErrorMessage(error, "Não foi possível criar a filial."));
   }
 }

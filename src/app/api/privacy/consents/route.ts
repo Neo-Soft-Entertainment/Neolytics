@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { assertPublicApiRateLimit, getPublicApiRateLimitKey } from "@/lib/auth-rate-limit";
 import { grantConsent, listUserConsentState } from "@/lib/privacy/consent-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   purposeId: z.string().min(2),
@@ -56,6 +57,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid consent payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível conceder o consentimento.");
+    return serverError(getErrorMessage(error, "Não foi possível conceder o consentimento."));
   }
 }

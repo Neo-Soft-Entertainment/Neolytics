@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { createPayablePayment } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   paymentType: z.nativeEnum(PayablePaymentType),
@@ -57,6 +58,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid payable payment payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível registrar o pagamento a pagar.");
+    return serverError(getErrorMessage(error, "Não foi possível registrar o pagamento a pagar."));
   }
 }

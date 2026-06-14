@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { buildDataProductExport } from "@/lib/privacy/data-product-service";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const rowSchema = z.record(z.string(), z.unknown());
 const schema = z.object({
@@ -71,6 +72,6 @@ export async function POST(
       return badRequest(error.issues[0]?.message ?? "Invalid export payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível exportar o produto de dados.");
+    return serverError(getErrorMessage(error, "Não foi possível exportar o produto de dados."));
   }
 }

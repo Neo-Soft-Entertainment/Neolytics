@@ -5,6 +5,7 @@ import { badRequest, forbidden, ok, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { parseJsonBody } from "@/lib/request";
 import { createStripeCheckoutSession } from "@/lib/stripe";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   plan: z.nativeEnum(SubscriptionPlan)
@@ -49,6 +50,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid checkout payload.");
     }
 
-    return badRequest(error instanceof Error ? error.message : "Não foi possível iniciar o checkout da Stripe.");
+    return badRequest(getErrorMessage(error, "Não foi possível iniciar o checkout da Stripe."));
   }
 }

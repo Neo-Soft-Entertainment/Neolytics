@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { updateRevenueEntry } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   projectId: z.string().optional(),
@@ -57,6 +58,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid revenue payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar o lançamento de receita.");
+    return serverError(getErrorMessage(error, "Não foi possível atualizar o lançamento de receita."));
   }
 }

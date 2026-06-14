@@ -3,6 +3,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { createCompanyDocumentSignedUrl } from "@/lib/company-storage";
 import { enforceSubscriptionCapability } from "@/lib/subscription-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function GET(
   request: Request,
@@ -54,6 +55,6 @@ export async function GET(
       url: signedUrl
     });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Não foi possível abrir o documento.");
+    return badRequest(getErrorMessage(error, "Não foi possível abrir o documento."));
   }
 }

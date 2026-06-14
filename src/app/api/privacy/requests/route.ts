@@ -9,6 +9,7 @@ import {
   listUserDataSubjectRequests
 } from "@/lib/privacy/data-subject-request-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   requestType: z.nativeEnum(DataSubjectRequestType),
@@ -52,6 +53,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid privacy request payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar a solicitação de privacidade.");
+    return serverError(getErrorMessage(error, "Não foi possível criar a solicitação de privacidade."));
   }
 }

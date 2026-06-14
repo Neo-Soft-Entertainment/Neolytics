@@ -13,6 +13,7 @@ import {
 } from "@/lib/steam/client";
 import { extractStoreTags, normalizeSteamApp } from "@/lib/steam/normalize";
 import { sleep } from "@/lib/sleep";
+import { getErrorMessage } from "@/lib/error-message";
 
 type SteamSyncResult = "SUCCESS" | "SKIPPED";
 
@@ -397,7 +398,7 @@ export async function syncSteamApp(appId: number): Promise<SteamSyncResult> {
         attempts: {
           increment: 1
         },
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: getErrorMessage(error, "Unknown error"),
         finishedAt: new Date()
       }
     });

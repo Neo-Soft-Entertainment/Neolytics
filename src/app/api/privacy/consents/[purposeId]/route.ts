@@ -2,6 +2,7 @@ import { badRequest, ok, serverError, unauthorized } from "@/lib/api-response";
 import { getApiContext } from "@/lib/auth-helpers";
 import { assertPublicApiRateLimit, getPublicApiRateLimitKey } from "@/lib/auth-rate-limit";
 import { revokeConsent } from "@/lib/privacy/consent-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 export async function PATCH(
   request: Request,
@@ -27,6 +28,6 @@ export async function PATCH(
 
     return ok(consent);
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "Não foi possível revogar o consentimento.");
+    return badRequest(getErrorMessage(error, "Não foi possível revogar o consentimento."));
   }
 }

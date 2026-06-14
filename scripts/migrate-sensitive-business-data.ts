@@ -384,7 +384,12 @@ await migrateCompanyData();
 await migrateFinanceData();
 await db.$disconnect();
 
-console.log(`${apply ? "Applied" : "Dry run"} sensitive business data migration.`);
+let migrationMode = "Dry run";
+if (apply) {
+  migrationMode = "Applied";
+}
+
+console.log(`${migrationMode} sensitive business data migration.`);
 console.log(`Fields checked: ${checked}`);
 console.log(`Fields requiring encryption: ${updated}`);
 

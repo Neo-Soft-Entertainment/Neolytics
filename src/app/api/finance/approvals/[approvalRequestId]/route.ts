@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { updateApprovalRequest } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   status: z.nativeEnum(ApprovalStatus),
@@ -43,6 +44,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid approval payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível atualizar a aprovação.");
+    return serverError(getErrorMessage(error, "Não foi possível atualizar a aprovação."));
   }
 }

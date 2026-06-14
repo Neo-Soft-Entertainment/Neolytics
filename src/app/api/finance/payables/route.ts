@@ -5,6 +5,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageFinance } from "@/lib/authorization";
 import { createPayableTitle } from "@/lib/finance-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const allocationSchema = z.object({
   costCenterId: z.string().min(1),
@@ -69,6 +70,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid payable title payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar o título a pagar.");
+    return serverError(getErrorMessage(error, "Não foi possível criar o título a pagar."));
   }
 }

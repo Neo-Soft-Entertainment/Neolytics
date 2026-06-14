@@ -5,6 +5,7 @@ import { createAuditEvent } from "@/lib/audit-service";
 import { getApiContext } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { env } from "@/env";
+import { getErrorMessage } from "@/lib/error-message";
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 const DEFAULT_BUCKET = "user-avatars";
@@ -111,6 +112,6 @@ export async function POST(request: Request) {
       image: user.image
     });
   } catch (error) {
-    return serverError(error instanceof Error ? error.message : "Não foi possível enviar o avatar.");
+    return serverError(getErrorMessage(error, "Não foi possível enviar o avatar."));
   }
 }

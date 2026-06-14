@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { canManageCommerce } from "@/lib/authorization";
 import { createMarketingCampaign } from "@/lib/commerce-service";
 import { parseJsonBody } from "@/lib/request";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   projectId: z.string().optional(),
@@ -68,6 +69,6 @@ export async function POST(request: Request) {
       return badRequest(error.issues[0]?.message ?? "Invalid campaign payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível criar a campanha de marketing.");
+    return serverError(getErrorMessage(error, "Não foi possível criar a campanha de marketing."));
   }
 }

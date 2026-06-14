@@ -6,6 +6,7 @@ import { getApiContext } from "@/lib/auth-helpers";
 import { hasPrivacyPermission } from "@/lib/privacy/permissions";
 import { parseJsonBody } from "@/lib/request";
 import { reviewDataSubjectRequest } from "@/lib/privacy/data-subject-request-service";
+import { getErrorMessage } from "@/lib/error-message";
 
 const schema = z.object({
   status: z.nativeEnum(DataSubjectRequestStatus),
@@ -45,6 +46,6 @@ export async function PATCH(
       return badRequest(error.issues[0]?.message ?? "Invalid review payload.");
     }
 
-    return serverError(error instanceof Error ? error.message : "Não foi possível revisar a solicitação.");
+    return serverError(getErrorMessage(error, "Não foi possível revisar a solicitação."));
   }
 }
