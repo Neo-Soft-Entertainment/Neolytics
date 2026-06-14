@@ -95,6 +95,12 @@ export function middleware(request: NextRequest) {
   const forwardedProto = request.headers.get("x-forwarded-proto");
   const pathname = request.nextUrl.pathname;
 
+  if (pathname === "/favicon.ico") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/neolytics-icon.png";
+    return applyTransportSecurityHeaders(NextResponse.rewrite(url), pathname);
+  }
+
   if (process.env.NODE_ENV === "production" && forwardedProto === "http") {
     const url = request.nextUrl.clone();
     url.protocol = "https";
@@ -147,5 +153,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|icon.jpg|apple-icon.jpg).*)"]
+  matcher: ["/api/:path*", "/((?!_next/static|_next/image|icon.jpg|apple-icon.jpg).*)"]
 };
