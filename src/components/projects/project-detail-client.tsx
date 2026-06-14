@@ -984,51 +984,39 @@ nextMilestoneEdits[milestone.id] = {
   }
 
   async function moveCard(cardId: string, columnId: string) {
-    const previousData = getProjectSnapshot();
-
-    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, Number.MAX_SAFE_INTEGER));
-
     const result = await moveProjectKanbanCard(projectId, cardId, columnId);
 
     if (!result.ok) {
-      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
-      return;
+      return false;
     }
 
-    refreshProjectCache();
+    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, Number.MAX_SAFE_INTEGER));
+    return true;
   }
 
   async function moveCardInColumn(cardId: string, direction: "up" | "down") {
-    const previousData = getProjectSnapshot();
-
-    updateProjectCache((current: any) => moveCardOneSlotInProject(current, cardId, direction));
-
     const result = await moveProjectKanbanCardInColumn(projectId, cardId, direction);
 
     if (!result.ok) {
-      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
-      return;
+      return false;
     }
 
-    refreshProjectCache();
+    updateProjectCache((current: any) => moveCardOneSlotInProject(current, cardId, direction));
+    return true;
   }
 
   async function reorderCard(cardId: string, columnId: string, targetIndex: number) {
-    const previousData = getProjectSnapshot();
-
-    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, targetIndex));
-
     const result = await reorderProjectKanbanCard(projectId, cardId, columnId, targetIndex);
 
     if (!result.ok) {
-      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
-      return;
+      return false;
     }
 
-    refreshProjectCache();
+    updateProjectCache((current: any) => reorderCardInProject(current, cardId, columnId, targetIndex));
+    return true;
   }
 
   async function deleteCard(cardId: string) {

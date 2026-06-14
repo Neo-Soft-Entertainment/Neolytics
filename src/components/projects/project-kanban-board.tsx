@@ -31,7 +31,7 @@ import {
   Trash2,
   User2
 } from "lucide-react";
-import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +80,107 @@ type DrawerState =
   | { mode: "edit"; cardId: string }
   | null;
 
+function normalizeKanbanCards(cards: KanbanCard[]) {
+  return cards.map((card, index) => ({
+    ...card,
+    sortOrder: index
+  }));
+}
+
+function moveCardInBoard(board: KanbanBoard, cardId: string, targetColumnId: string, targetIndex: number) {
+  let movingCard: KanbanCard | null = null;
+
+  const columnsWithoutCard = board.columns.map((column) => {
+    const cards: KanbanCard[] = [];
+
+    for (const card of column.cards) {
+      if (card.id === cardId) {
+        movingCard = card;
+        continue;
+      }
+
+      cards.push(card);
+    }
+
+    return {
+      ...column,
+      cards: normalizeKanbanCards(cards)
+    };
+  });
+
+  if (!movingCard) {
+    return board;
+  }
+
+  const cardToMove = movingCard;
+  let foundTargetColumn = false;
+  const columns = columnsWithoutCard.map((column) => {
+    if (column.id !== targetColumnId) {
+      return column;
+    }
+
+    foundTargetColumn = true;
+    const cards = [...column.cards];
+    let nextIndex = targetIndex;
+
+    if (nextIndex < 0) {
+      nextIndex = 0;
+    }
+
+    if (nextIndex > cards.length) {
+      nextIndex = cards.length;
+    }
+
+    cards.splice(nextIndex, 0, cardToMove);
+
+    return {
+      ...column,
+      cards: normalizeKanbanCards(cards)
+    };
+  });
+
+  if (!foundTargetColumn) {
+    return board;
+  }
+
+  return {
+    ...board,
+    columns
+  };
+}
+
+function moveCardOneSlotInBoard(board: KanbanBoard, cardId: string, direction: "up" | "down") {
+  for (const column of board.columns) {
+    const currentIndex = column.cards.findIndex((card) => card.id === cardId);
+
+    if (currentIndex < 0) {
+      continue;
+    }
+
+    let targetIndex = currentIndex + 1;
+
+    if (direction === "up") {
+      targetIndex = currentIndex - 1;
+    }
+
+    return moveCardInBoard(board, cardId, column.id, targetIndex);
+  }
+
+  return board;
+}
+
+function getBoardSignature(board: KanbanBoard | null) {
+  if (!board) {
+    return "";
+  }
+
+  return board.columns.map((column) => {
+    const cardIds = column.cards.map((card) => card.id).join(",");
+
+    return `${column.id}:${cardIds}`;
+  }).join("|");
+}
+
 export function ProjectKanbanBoard({
   projectName,
   board,
@@ -127,24 +228,36 @@ export function ProjectKanbanBoard({
   setCardEdits: Dispatch<SetStateAction<Record<string, CardEdit>>>;
   createCard: (columnId: string) => Promise<void>;
   saveCard: (cardId: string) => Promise<void>;
-  moveCard: (cardId: string, columnId: string) => Promise<void>;
-  moveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<void>;
+  moveCard: (cardId: string, columnId: string) => Promise<boolean>;
+  moveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<boolean>;
   deleteCard: (cardId: string) => Promise<void>;
-  reorderCard: (cardId: string, columnId: string, targetIndex: number) => Promise<void>;
+  reorderCard: (cardId: string, columnId: string, targetIndex: number) => Promise<boolean>;
   assigneeOptions?: ProjectAssigneeOption[];
 }) {
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null);
-  const columns = board?.columns ?? [];
+  const [localBoard, setLocalBoard] = useState<KanbanBoard | null>(board);
+  let activeBoard = localBoard;
+
+  if (!activeBoard) {
+    activeBoard = board;
+  }
+
+  const columns = activeBoard?.columns ?? [];
   const columnOptions = columns.map((column) => ({ id: column.id, name: column.name }));
   const cardsById = new Map(columns.flatMap((column) => column.cards.map((card) => [card.id, { card, column }])));
   const normalizedSearch = search.trim().toLowerCase();
+  const boardSignature = useMemo(() => getBoardSignature(board), [board]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const assignees = useMemo(() => assigneeOptions.map((option) => option.label).sort(), [assigneeOptions]);
+
+  useEffect(() => {
+    setLocalBoard(board);
+  }, [boardSignature]);
 
   const labels = useMemo(() => {
     const names = new Set<string>();
@@ -255,11 +368,74 @@ const createColumnId = resolvedValue2;
       targetIndex = overIndex;
     }
 
-    void reorderCard(activeCardId, targetColumnId, targetIndex);
+    void reorderCardWithPrediction(activeCardId, targetColumnId, targetIndex);
   }
 
   function onDragCancel() {
     setActiveDragCardId(null);
+  }
+
+  async function moveCardWithPrediction(cardId: string, columnId: string) {
+    const previousBoard = activeBoard;
+
+    setLocalBoard((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return moveCardInBoard(current, cardId, columnId, Number.MAX_SAFE_INTEGER);
+    });
+
+    const ok = await moveCard(cardId, columnId);
+
+    if (ok) {
+      return true;
+    }
+
+    setLocalBoard(previousBoard);
+    return false;
+  }
+
+  async function moveCardInColumnWithPrediction(cardId: string, direction: "up" | "down") {
+    const previousBoard = activeBoard;
+
+    setLocalBoard((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return moveCardOneSlotInBoard(current, cardId, direction);
+    });
+
+    const ok = await moveCardInColumn(cardId, direction);
+
+    if (ok) {
+      return true;
+    }
+
+    setLocalBoard(previousBoard);
+    return false;
+  }
+
+  async function reorderCardWithPrediction(cardId: string, columnId: string, targetIndex: number) {
+    const previousBoard = activeBoard;
+
+    setLocalBoard((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return moveCardInBoard(current, cardId, columnId, targetIndex);
+    });
+
+    const ok = await reorderCard(cardId, columnId, targetIndex);
+
+    if (ok) {
+      return true;
+    }
+
+    setLocalBoard(previousBoard);
+    return false;
   }
 
   function openEditDrawer(card: KanbanCard, columnId: string) {
@@ -301,7 +477,7 @@ const createColumnId = resolvedValue2;
     void updateColumn(column.id, name, color, sortOrder);
   }
 
-  if (!board) {
+  if (!activeBoard) {
     return (
       <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
         Nenhum quadro Kanban está disponível para este projeto ainda.
@@ -430,8 +606,8 @@ return (
                 onMoveColumn={moveColumn}
                 onDeleteColumn={deleteColumn}
                 onOpenCard={openEditDrawer}
-                onMoveCard={moveCard}
-                onMoveCardInColumn={moveCardInColumn}
+                onMoveCard={moveCardWithPrediction}
+                onMoveCardInColumn={moveCardInColumnWithPrediction}
                 onDeleteCard={deleteCard}
                 columnOptions={columnOptions}
               />
@@ -486,8 +662,8 @@ function KanbanColumnView({
   onMoveColumn: (columnId: string, direction: "left" | "right") => Promise<void>;
   onDeleteColumn: (columnId: string) => Promise<void>;
   onOpenCard: (card: KanbanCard, columnId: string) => void;
-  onMoveCard: (cardId: string, columnId: string) => Promise<void>;
-  onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<void>;
+  onMoveCard: (cardId: string, columnId: string) => Promise<boolean>;
+  onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<boolean>;
   onDeleteCard: (cardId: string) => Promise<void>;
   columnOptions: Array<{ id: string; name: string }>;
 }) {
@@ -575,8 +751,8 @@ function KanbanCardView({
   columnId: string;
   columnIndex: number;
   onOpen: () => void;
-  onMoveCard: (cardId: string, columnId: string) => Promise<void>;
-  onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<void>;
+  onMoveCard: (cardId: string, columnId: string) => Promise<boolean>;
+  onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<boolean>;
   onDeleteCard: (cardId: string) => Promise<void>;
   columnOptions: Array<{ id: string; name: string }>;
 }) {

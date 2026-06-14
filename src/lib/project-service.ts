@@ -3735,12 +3735,13 @@ export async function reorderKanbanCard(params: {
     throw new Error("Kanban column not found.");
   }
 
-  const sourceCards = sourceColumn.cards.filter((item: any) => item.id !== card.id);
-  let targetCards = targetColumn.cards.filter((item: any) => item.id !== card.id);
+  const sourceIndex = sourceColumn.cards.findIndex((item: any) => item.id === card.id);
 
-  if (sourceColumn.id === targetColumn.id) {
-    targetCards = sourceCards;
+  if (sourceIndex < 0) {
+    throw new Error("Kanban card not found.");
   }
+
+  const targetCards = targetColumn.cards.filter((item: any) => item.id !== card.id);
 
   let nextIndex = params.targetIndex;
 
@@ -3748,46 +3749,102 @@ export async function reorderKanbanCard(params: {
     nextIndex = targetCards.length;
   }
 
-  targetCards.splice(nextIndex, 0, card);
+  if (nextIndex < 0) {
+    nextIndex = 0;
+  }
+
+  if (sourceColumn.id === targetColumn.id && nextIndex === sourceIndex) {
+    return;
+  }
 
   const updates: Prisma.PrismaPromise<unknown>[] = [];
 
-  for (const [index, item] of targetCards.entries()) {
-    if (item.columnId === targetColumn.id && item.sortOrder === index) {
-      continue;
+  if (sourceColumn.id === targetColumn.id) {
+    if (nextIndex > sourceIndex) {
+      updates.push(db.kanbanCard.updateMany({
+        where: {
+          columnId: sourceColumn.id,
+          sortOrder: {
+            gt: sourceIndex,
+            lte: nextIndex
+          }
+        },
+        data: {
+          sortOrder: {
+            decrement: 1
+          }
+        }
+      }));
+    }
+
+    if (nextIndex < sourceIndex) {
+      updates.push(db.kanbanCard.updateMany({
+        where: {
+          columnId: sourceColumn.id,
+          sortOrder: {
+            gte: nextIndex,
+            lt: sourceIndex
+          }
+        },
+        data: {
+          sortOrder: {
+            increment: 1
+          }
+        }
+      }));
     }
 
     updates.push(db.kanbanCard.update({
       where: {
-        id: item.id
+        id: card.id
       },
       data: {
         columnId: targetColumn.id,
-        sortOrder: index
+        sortOrder: nextIndex
       }
     }));
-  }
 
-  if (sourceColumn.id !== targetColumn.id) {
-    for (const [index, item] of sourceCards.entries()) {
-      if (item.sortOrder === index) {
-        continue;
-      }
-
-      updates.push(db.kanbanCard.update({
-        where: {
-          id: item.id
-        },
-        data: {
-          sortOrder: index
-        }
-      }));
-    }
-  }
-
-  if (updates.length > 0) {
     await db.$transaction(updates);
+    return;
   }
+
+  updates.push(db.kanbanCard.updateMany({
+    where: {
+      columnId: sourceColumn.id,
+      sortOrder: {
+        gt: sourceIndex
+      }
+    },
+    data: {
+      sortOrder: {
+        decrement: 1
+      }
+    }
+  }));
+  updates.push(db.kanbanCard.updateMany({
+    where: {
+      columnId: targetColumn.id,
+      sortOrder: {
+        gte: nextIndex
+      }
+    },
+    data: {
+      sortOrder: {
+        increment: 1
+      }
+    }
+  }));
+  updates.push(db.kanbanCard.update({
+    where: {
+      id: card.id
+    },
+    data: {
+      columnId: targetColumn.id,
+      sortOrder: nextIndex
+    }
+  }));
+
+  await db.$transaction(updates);
 }
 
 export async function deleteKanbanCard(params: {
