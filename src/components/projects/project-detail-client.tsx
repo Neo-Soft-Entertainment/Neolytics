@@ -528,7 +528,7 @@ export function ProjectDetailClient({
     expenseEntries: query.data.expenseEntries ?? [],
     approvalRequests: query.data.approvalRequests ?? [],
     artAssets: query.data.artAssets ?? [],
-    competitorGames: (query.data.competitorGames ?? []).map((item) => ({
+    competitorGames: (query.data.competitorGames ?? []).filter((item) => item?.steamGame).map((item) => ({
       ...item,
       steamGame: {
         ...item.steamGame,
@@ -554,6 +554,22 @@ export function ProjectDetailClient({
   const projectFitLayer = project.analysis?.metadata?.projectFitLayer ?? null;
   const hybridMarketIntelligence = project.analysis?.metadata?.hybridMarketIntelligence ?? null;
   const aiLayer = project.analysis?.metadata?.aiLayer ?? null;
+  const opportunityRecommendations = Array.isArray(opportunityLayer?.practicalRecommendations) ? opportunityLayer.practicalRecommendations : [];
+  const opportunityMismatches = Array.isArray(opportunityLayer?.keyMismatches) ? opportunityLayer.keyMismatches : [];
+  const aiCreativeAngles = Array.isArray(aiLayer?.creativeAngles) ? aiLayer.creativeAngles : [];
+  const aiAcquisitionChannels = Array.isArray(aiLayer?.acquisitionChannels) ? aiLayer.acquisitionChannels : [];
+  const aiWishlistDrivers = Array.isArray(aiLayer?.wishlistDrivers) ? aiLayer.wishlistDrivers : [];
+  const aiRedFlags = Array.isArray(aiLayer?.redFlags) ? aiLayer.redFlags : [];
+  const hybridProbabilities = hybridMarketIntelligence?.probabilisticAssessment?.probabilities ?? {};
+  const hybridFactors = Array.isArray(hybridMarketIntelligence?.opportunityScoring?.factors) ? hybridMarketIntelligence.opportunityScoring.factors : [];
+  const hybridEmergingTags = Array.isArray(hybridMarketIntelligence?.trendDetection?.emergingTags) ? hybridMarketIntelligence.trendDetection.emergingTags : [];
+  const hybridDecliningSignals = Array.isArray(hybridMarketIntelligence?.trendDetection?.decliningSignals) ? hybridMarketIntelligence.trendDetection.decliningSignals : [];
+  const hybridMarketLeaders = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.marketLeaders) ? hybridMarketIntelligence.competitiveIntelligence.marketLeaders : [];
+  const hybridSuccessfulLaunches = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.recentlySuccessfulLaunches) ? hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches : [];
+  const hybridFailedLaunches = Array.isArray(hybridMarketIntelligence?.competitiveIntelligence?.failedLaunches) ? hybridMarketIntelligence.competitiveIntelligence.failedLaunches : [];
+  const hybridEvidenceTrail = Array.isArray(hybridMarketIntelligence?.evidenceTrail) ? hybridMarketIntelligence.evidenceTrail : [];
+  const hybridSourcesUsed = Array.isArray(hybridMarketIntelligence?.sourcesUsed) ? hybridMarketIntelligence.sourcesUsed : [];
+  const hybridLimitations = Array.isArray(hybridMarketIntelligence?.dataQuality?.limitations) ? hybridMarketIntelligence.dataQuality.limitations : [];
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
   const pendingApprovalsCount = project.approvalRequests.filter((item) => item.status === "PENDING").length;
@@ -595,6 +611,15 @@ export function ProjectDetailClient({
       risks: string[];
     } | null;
   } | null;
+  const uploadedArtAssets = artMetadata?.uploadedArtAssets ?? null;
+  const uploadedDominantColors = Array.isArray(uploadedArtAssets?.dominantColors) ? uploadedArtAssets.dominantColors : [];
+  const proProductionLevers = Array.isArray(artMetadata?.proArtBrief?.productionLevers)
+    ? artMetadata.proArtBrief.productionLevers
+    : ["Rode a camada Pro de arte para receber alavancas de execução para escopo e polimento de loja."];
+  const proReferenceShelf = Array.isArray(artMetadata?.proArtBrief?.referenceShelf) ? artMetadata.proArtBrief.referenceShelf : [];
+  const aiArtPriorityFixes = Array.isArray(artMetadata?.aiArtLayer?.priorityFixes) ? artMetadata.aiArtLayer.priorityFixes : [];
+  const aiArtStrengths = Array.isArray(artMetadata?.aiArtLayer?.strengths) ? artMetadata.aiArtLayer.strengths : [];
+  const aiArtRisks = Array.isArray(artMetadata?.aiArtLayer?.risks) ? artMetadata.aiArtLayer.risks : [];
 
   return (
     <div className="space-y-6">
@@ -804,7 +829,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Ângulos criativos</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiLayer.creativeAngles.map((item) => (
+                          {aiCreativeAngles.map((item) => (
                             <li key={item}>- {item}</li>
                           ))}
                         </ul>
@@ -812,7 +837,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Canais de aquisição</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiLayer.acquisitionChannels.map((item) => (
+                          {aiAcquisitionChannels.map((item) => (
                             <li key={item}>- {item}</li>
                           ))}
                         </ul>
@@ -822,7 +847,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Gatilhos de wishlist</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiLayer.wishlistDrivers.map((item) => (
+                          {aiWishlistDrivers.map((item) => (
                             <li key={item}>- {item}</li>
                           ))}
                         </ul>
@@ -830,7 +855,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Alertas da IA</p>
                         <ul className="mt-2 space-y-2 text-muted-foreground">
-                          {aiLayer.redFlags.map((item) => (
+                          {aiRedFlags.map((item) => (
                             <li key={item}>- {item}</li>
                           ))}
                         </ul>
@@ -849,36 +874,36 @@ export function ProjectDetailClient({
                   <div className="grid gap-4 lg:grid-cols-4">
                     <div className="rounded-2xl border p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Score de oportunidade</p>
-                      <p className="mt-2 text-3xl font-semibold">{hybridMarketIntelligence.opportunityScoring.score}</p>
-                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring.label}</p>
+                      <p className="mt-2 text-3xl font-semibold">{formatNumber(hybridMarketIntelligence.opportunityScoring?.score ?? null)}</p>
+                      <p className="mt-1 text-muted-foreground">{hybridMarketIntelligence.opportunityScoring?.label ?? "Análise pendente."}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Classificação</p>
-                      <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment.classification}</p>
-                      <p className="mt-1 text-muted-foreground">Confiança {hybridMarketIntelligence.probabilisticAssessment.confidenceLevel}</p>
+                      <p className="mt-2 font-medium">{hybridMarketIntelligence.probabilisticAssessment?.classification ?? "Análise pendente."}</p>
+                      <p className="mt-1 text-muted-foreground">Confiança {hybridMarketIntelligence.probabilisticAssessment?.confidenceLevel ?? "N/A"}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Demanda</p>
-                      <p className="mt-2 text-2xl font-semibold">{hybridMarketIntelligence.demandModel.demandScore}</p>
-                      <p className="mt-1 text-muted-foreground">Proxy de wishlist {hybridMarketIntelligence.demandModel.wishlistProxy.score}</p>
+                      <p className="mt-2 text-2xl font-semibold">{formatNumber(hybridMarketIntelligence.demandModel?.demandScore ?? null)}</p>
+                      <p className="mt-1 text-muted-foreground">Proxy de wishlist {formatNumber(hybridMarketIntelligence.demandModel?.wishlistProxy?.score ?? null)}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Faixa de receita</p>
                       <p className="mt-2 font-medium">
-                        {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.lowCents)} - {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.highCents)}
+                        {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.lowCents ?? null)} - {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.highCents ?? null)}
                       </p>
-                      <p className="mt-1 text-muted-foreground">Mediana {formatCurrency(hybridMarketIntelligence.demandModel.revenuePotentialRange.medianCents)}</p>
+                      <p className="mt-1 text-muted-foreground">Mediana {formatCurrency(hybridMarketIntelligence.demandModel?.revenuePotentialRange?.medianCents ?? null)}</p>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Conclusão probabilística</p>
-                    <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment.conclusion}</p>
+                    <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.probabilisticAssessment?.conclusion ?? "Análise pendente."}</p>
                     <div className="mt-4 grid gap-3 md:grid-cols-3">
-                      {Object.entries(hybridMarketIntelligence.probabilisticAssessment.probabilities).map(([key, value]) => (
+                      {Object.entries(hybridProbabilities).map(([key, value]) => (
                         <div key={key} className="rounded-xl border bg-muted/30 p-3">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">{key.replace(/([A-Z])/g, " $1")}</p>
-                          <p className="mt-1 text-lg font-semibold">{value}</p>
+                          <p className="mt-1 text-lg font-semibold">{typeof value === "number" || typeof value === "string" ? value : "N/A"}</p>
                         </div>
                       ))}
                     </div>
@@ -888,7 +913,7 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Fatores ponderados do score</p>
                       <div className="mt-3 space-y-3">
-                        {hybridMarketIntelligence.opportunityScoring.factors.map((factor) => (
+                        {hybridFactors.map((factor) => (
                           <div key={factor.name} className="rounded-xl border bg-muted/30 p-3">
                             <div className="flex items-center justify-between gap-3">
                               <p className="font-medium">{factor.name}</p>
@@ -901,15 +926,15 @@ export function ProjectDetailClient({
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Detecção de tendências</p>
-                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection.marketShiftExplanation}</p>
+                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.trendDetection?.marketShiftExplanation ?? "Análise pendente."}</p>
                       <div className="mt-3 space-y-3">
-                        {hybridMarketIntelligence.trendDetection.emergingTags.slice(0, 4).map((trend) => (
+                        {hybridEmergingTags.slice(0, 4).map((trend) => (
                           <div key={trend.tag} className="rounded-xl border bg-muted/30 p-3">
                             <p className="font-medium">{trend.tag} · {trend.strengthScore}</p>
                             <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
                           </div>
                         ))}
-                        {hybridMarketIntelligence.trendDetection.decliningSignals.slice(0, 3).map((trend) => (
+                        {hybridDecliningSignals.slice(0, 3).map((trend) => (
                           <div key={trend.signal} className="rounded-xl border bg-muted/30 p-3">
                             <p className="font-medium">{trend.signal} · {trend.score}</p>
                             <p className="mt-1 text-muted-foreground">{trend.explanation}</p>
@@ -923,7 +948,7 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Líderes de mercado</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridMarketIntelligence.competitiveIntelligence.marketLeaders.slice(0, 5).map((game) => (
+                        {hybridMarketLeaders.slice(0, 5).map((game) => (
                           <li key={game.appId}>{game.name} · {formatCurrency(game.medianRevenueCents)} · {formatNumber(game.reviewScore)}</li>
                         ))}
                       </ul>
@@ -931,8 +956,8 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Lançamentos recentes bem-sucedidos</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.length
-                          ? hybridMarketIntelligence.competitiveIntelligence.recentlySuccessfulLaunches.slice(0, 5).map((game) => (
+                        {hybridSuccessfulLaunches.length
+                          ? hybridSuccessfulLaunches.slice(0, 5).map((game) => (
                               <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
                             ))
                           : <li>Nenhum lançamento recente de alta confiança neste conjunto comparável.</li>}
@@ -941,8 +966,8 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Lançamentos similares fracos ou malsucedidos</p>
                       <ul className="mt-3 space-y-2 text-muted-foreground">
-                        {hybridMarketIntelligence.competitiveIntelligence.failedLaunches.length
-                          ? hybridMarketIntelligence.competitiveIntelligence.failedLaunches.slice(0, 5).map((game) => (
+                        {hybridFailedLaunches.length
+                          ? hybridFailedLaunches.slice(0, 5).map((game) => (
                               <li key={game.appId}>{game.name} · {formatNumber(game.reviewScore)}% · {formatNumber(game.reviewCount)} reviews</li>
                             ))
                           : <li>Nenhum lançamento recente claramente fraco neste conjunto comparável.</li>}
@@ -954,7 +979,7 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Trilha de evidências</p>
                       <div className="mt-3 space-y-3">
-                        {hybridMarketIntelligence.evidenceTrail.map((item) => (
+                        {hybridEvidenceTrail.map((item) => (
                           <div key={item.claim} className="rounded-xl border bg-muted/30 p-3">
                             <p className="font-medium">{item.claim}</p>
                             <p className="mt-1 text-muted-foreground">{item.support}</p>
@@ -966,13 +991,13 @@ export function ProjectDetailClient({
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Qualidade dos dados</p>
                       <p className="mt-2 text-muted-foreground">
-                        Confiança {hybridMarketIntelligence.dataQuality.label} ({hybridMarketIntelligence.dataQuality.score}/100). Dependência de IA: {hybridMarketIntelligence.aiDependency.replaceAll("_", " ")}.
+                        Confiança {hybridMarketIntelligence.dataQuality?.label ?? "N/A"} ({formatNumber(hybridMarketIntelligence.dataQuality?.score ?? null)}/100). Dependência de IA: {hybridMarketIntelligence.aiDependency?.replaceAll("_", " ") ?? "N/A"}.
                       </p>
                       <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Fontes usadas</p>
-                      <p className="mt-2 text-muted-foreground">{hybridMarketIntelligence.sourcesUsed.join(", ")}</p>
-                      {hybridMarketIntelligence.dataQuality.limitations.length ? (
+                      <p className="mt-2 text-muted-foreground">{hybridSourcesUsed.join(", ") || "Fontes indisponíveis."}</p>
+                      {hybridLimitations.length ? (
                         <ul className="mt-3 space-y-2 text-muted-foreground">
-                          {hybridMarketIntelligence.dataQuality.limitations.map((item) => (
+                          {hybridLimitations.map((item) => (
                             <li key={item}>- {item}</li>
                           ))}
                         </ul>
@@ -1009,14 +1034,14 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Coortes de lançamento</p>
                     <p className="mt-2 text-foreground">
-                      {marketDepth ? `${marketDepth.launchCohorts.last90Days} / 90d · ${marketDepth.launchCohorts.last180Days} / 180d · ${marketDepth.launchCohorts.last365Days} / 365d` : "Análise pendente."}
+                      {marketDepth ? `${marketDepth.launchCohorts?.last90Days ?? 0} / 90d · ${marketDepth.launchCohorts?.last180Days ?? 0} / 180d · ${marketDepth.launchCohorts?.last365Days ?? 0} / 365d` : "Análise pendente."}
                     </p>
                   </div>
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Distribuição de preço</p>
                     <p className="mt-2 text-foreground">
                       {marketDepth
-                        ? `<$10: ${marketDepth.priceBandDistribution.under10} · $10-20: ${marketDepth.priceBandDistribution.between10And20} · $20-30: ${marketDepth.priceBandDistribution.between20And30} · $30+: ${marketDepth.priceBandDistribution.over30}`
+                        ? `<$10: ${marketDepth.priceBandDistribution?.under10 ?? 0} · $10-20: ${marketDepth.priceBandDistribution?.between10And20 ?? 0} · $20-30: ${marketDepth.priceBandDistribution?.between20And30 ?? 0} · $30+: ${marketDepth.priceBandDistribution?.over30 ?? 0}`
                         : "Análise pendente."}
                     </p>
                   </div>
@@ -1087,7 +1112,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Recomendações práticas</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
-                      {opportunityLayer?.practicalRecommendations?.length ? opportunityLayer.practicalRecommendations.map((item) => (
+                      {opportunityRecommendations.length ? opportunityRecommendations.map((item) => (
                         <li key={item}>- {item}</li>
                       )) : <li>Análise pendente.</li>}
                     </ul>
@@ -1118,7 +1143,7 @@ export function ProjectDetailClient({
                   <div className="rounded-2xl border p-4 md:col-span-2">
                     <p className="font-medium">Principais desalinhamentos</p>
                     <ul className="mt-2 space-y-2 text-muted-foreground">
-                      {opportunityLayer?.keyMismatches?.length ? opportunityLayer.keyMismatches.map((item) => (
+                      {opportunityMismatches.length ? opportunityMismatches.map((item) => (
                         <li key={item}>- {item}</li>
                       )) : <li>{t("projectDetail.noMismatches")}</li>}
                     </ul>
@@ -1304,31 +1329,31 @@ export function ProjectDetailClient({
                 <CardContent className="grid gap-4 text-sm md:grid-cols-3 xl:grid-cols-6">
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Assets enviados</p>
-                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.total ?? project.artAssets.length}</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.total ?? project.artAssets.length}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Imagens na proporção da loja</p>
-                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.capsuleRatio ?? 0}</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.capsuleRatio ?? 0}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Score de evidência</p>
-                    <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.evidenceScore ?? null)}</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.evidenceScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Analisados por pixel</p>
-                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset) => asset.visualMetrics).length}</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.pixelAnalyzed ?? project.artAssets.filter((asset) => asset.visualMetrics).length}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Legibilidade média</p>
-                    <p className="mt-2 text-2xl font-semibold">{formatNumber(artMetadata?.uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
+                    <p className="mt-2 text-2xl font-semibold">{formatNumber(uploadedArtAssets?.averageReadabilityScore ?? null)}</p>
                   </div>
                   <div className="rounded-2xl border p-4">
                     <p className="font-medium">Assets de alto risco</p>
-                    <p className="mt-2 text-2xl font-semibold">{artMetadata?.uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
+                    <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.highLegibilityRisk ?? 0}</p>
                   </div>
                 </CardContent>
               </Card>
-              {artMetadata?.uploadedArtAssets?.dominantColors?.length ? (
+              {uploadedDominantColors.length ? (
                 <Card>
                   <CardHeader>
                     <CardTitle>Leitura do sinal visual</CardTitle>
@@ -1336,16 +1361,16 @@ export function ProjectDetailClient({
                   <CardContent className="grid gap-4 text-sm md:grid-cols-3">
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Contraste médio</p>
-                      <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageContrast ?? 0}</p>
+                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageContrast ?? 0}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Saturação média</p>
-                      <p className="mt-2 text-2xl font-semibold">{artMetadata.uploadedArtAssets.averageSaturation ?? 0}</p>
+                      <p className="mt-2 text-2xl font-semibold">{uploadedArtAssets?.averageSaturation ?? 0}</p>
                     </div>
                     <div className="rounded-2xl border p-4">
                       <p className="font-medium">Cores dominantes</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {artMetadata.uploadedArtAssets.dominantColors.map((color) => (
+                        {uploadedDominantColors.map((color) => (
                           <span key={color} className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
                             <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: color }} />
                             {color}
@@ -1418,7 +1443,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Alavancas de produção</p>
                         <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                          {(artMetadata?.proArtBrief?.productionLevers ?? ["Rode a camada Pro de arte para receber alavancas de execução para escopo e polimento de loja."]).map((item) => (
+                          {proProductionLevers.map((item) => (
                             <p key={item}>• {item}</p>
                           ))}
                         </div>
@@ -1460,7 +1485,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Correções prioritárias</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
-                          {artMetadata.aiArtLayer.priorityFixes.map((item) => (
+                          {aiArtPriorityFixes.map((item) => (
                             <p key={item}>- {item}</p>
                           ))}
                         </div>
@@ -1468,7 +1493,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Pontos fortes</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
-                          {artMetadata.aiArtLayer.strengths.map((item) => (
+                          {aiArtStrengths.map((item) => (
                             <p key={item}>- {item}</p>
                           ))}
                         </div>
@@ -1476,7 +1501,7 @@ export function ProjectDetailClient({
                       <div className="rounded-2xl border p-4">
                         <p className="font-medium">Riscos</p>
                         <div className="mt-2 space-y-2 text-muted-foreground">
-                          {artMetadata.aiArtLayer.risks.map((item) => (
+                          {aiArtRisks.map((item) => (
                             <p key={item}>- {item}</p>
                           ))}
                         </div>
@@ -1502,7 +1527,7 @@ export function ProjectDetailClient({
                     <CardTitle>Benchmark Pro de prateleira</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-3">
-                    {artMetadata?.proArtBrief?.referenceShelf?.length ? artMetadata.proArtBrief.referenceShelf.map((item) => (
+                    {proReferenceShelf.length ? proReferenceShelf.map((item) => (
                       <div key={item.name} className="rounded-2xl border p-4">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                           <p className="font-medium">{item.name}</p>
@@ -1528,9 +1553,9 @@ export function ProjectDetailClient({
                         <div>
                           <p className="font-medium">{item.steamGame.name}</p>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {(item.steamGame.genres.map((genre) => genre.steamGenre.name).slice(0, 2).join(", ")) || t("projectDetail.noGenreCoverage")}
+                            {(item.steamGame.genres.map((genre) => genre.steamGenre?.name).filter(Boolean).slice(0, 2).join(", ")) || t("projectDetail.noGenreCoverage")}
                             {" · "}
-                            {(item.steamGame.tags.map((tag) => tag.steamTag.name).slice(0, 3).join(", ")) || t("projectDetail.noTagCoverage")}
+                            {(item.steamGame.tags.map((tag) => tag.steamTag?.name).filter(Boolean).slice(0, 3).join(", ")) || t("projectDetail.noTagCoverage")}
                           </p>
                         </div>
                         <p className="text-sm font-medium">

@@ -261,7 +261,49 @@ export function DemoManagerPageClient({
     }
   });
 
-  const data = dataQuery.data;
+  const rawData = dataQuery.data as Partial<DemoManagerData> | undefined;
+  const data: DemoManagerData | null = rawData ? {
+    plan: {
+      id: rawData.plan?.id ?? "",
+      demoGoal: rawData.plan?.demoGoal ?? null,
+      demoScope: rawData.plan?.demoScope ?? null,
+      targetPlatform: rawData.plan?.targetPlatform ?? null,
+      targetBuildDate: rawData.plan?.targetBuildDate ?? null,
+      currentStage: rawData.plan?.currentStage ?? "IDEATION",
+      progressEstimate: rawData.plan?.progressEstimate ?? 0,
+      notes: rawData.plan?.notes ?? null,
+      stageExitCriteria: rawData.plan?.stageExitCriteria ?? null,
+      activeProblems: rawData.plan?.activeProblems ?? null
+    },
+    elements: Array.isArray(rawData.elements) ? rawData.elements.filter((item): item is DemoElement => Boolean(item)).map((item) => ({ ...item, tags: Array.isArray(item.tags) ? item.tags : [] })) : [],
+    playableSteps: Array.isArray(rawData.playableSteps) ? rawData.playableSteps.filter((item): item is PlayableStep => Boolean(item)).map((item) => ({
+      ...item,
+      relatedCharacterIds: Array.isArray(item.relatedCharacterIds) ? item.relatedCharacterIds : [],
+      relatedItemIds: Array.isArray(item.relatedItemIds) ? item.relatedItemIds : [],
+      relatedMechanicIds: Array.isArray(item.relatedMechanicIds) ? item.relatedMechanicIds : [],
+      relatedQuestIds: Array.isArray(item.relatedQuestIds) ? item.relatedQuestIds : [],
+      relatedDialogueIds: Array.isArray(item.relatedDialogueIds) ? item.relatedDialogueIds : []
+    })) : [],
+    emotionalBeats: Array.isArray(rawData.emotionalBeats) ? rawData.emotionalBeats.filter((item): item is EmotionalBeat => Boolean(item)).map((item) => ({
+      ...item,
+      triggerElements: Array.isArray(item.triggerElements) ? item.triggerElements : []
+    })) : [],
+    dependencies: Array.isArray(rawData.dependencies) ? rawData.dependencies.filter((item): item is DemoDependency => Boolean(item)) : [],
+    bugs: Array.isArray(rawData.bugs) ? rawData.bugs.filter((item): item is DemoBug => Boolean(item)) : [],
+    blockers: Array.isArray(rawData.blockers) ? rawData.blockers.filter((item): item is DemoBlocker => Boolean(item)) : [],
+    diagnostic: {
+      playable: Boolean(rawData.diagnostic?.playable),
+      hasPlayableLine: Boolean(rawData.diagnostic?.hasPlayableLine),
+      essentialStepsReady: Boolean(rawData.diagnostic?.essentialStepsReady),
+      unresolvedCriticalDependencies: rawData.diagnostic?.unresolvedCriticalDependencies ?? 0,
+      criticalBugs: rawData.diagnostic?.criticalBugs ?? 0,
+      activeBlockers: rawData.diagnostic?.activeBlockers ?? 0,
+      criticalDependencies: rawData.diagnostic?.criticalDependencies ?? 0,
+      weakDependencyAlerts: rawData.diagnostic?.weakDependencyAlerts ?? 0,
+      blockedStepIds: Array.isArray(rawData.diagnostic?.blockedStepIds) ? rawData.diagnostic.blockedStepIds : [],
+      nextRecommendedStep: rawData.diagnostic?.nextRecommendedStep ?? "Defina o objetivo da demo e os primeiros itens essenciais."
+    }
+  } : null;
 
   if (!fixedProjectId && projects.isLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Carregando projetos...</div>;
