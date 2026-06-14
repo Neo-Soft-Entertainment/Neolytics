@@ -1013,8 +1013,10 @@ export async function getProjectById(projectId: string, workspaceId: string) {
     }
   });
 
+  const hydratedProject = await hydrateProjectArtAssets(decryptProject(project));
+
   return {
-    ...hydrateProjectArtAssets(decryptProject(project)),
+    ...hydratedProject,
     assigneeOptions: members.map((member) => ({
       id: member.user.id,
       label: member.user.name?.trim() ? `${member.user.name.trim()} - ${member.user.email}` : member.user.email,
