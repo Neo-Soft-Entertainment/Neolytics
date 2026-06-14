@@ -1,6 +1,7 @@
 "use client";
 
 import { CommunityPostPriority, CommunityPostScope, CommunityPostType, SubscriptionPlan } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { ErrorState } from "@/components/error-state";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useCommunity } from "@/features/community/hooks";
+import { type CommunityPostItem, type CommunityResponse, useCommunity } from "@/features/community/hooks";
 import { useProjects } from "@/features/projects/hooks";
 
 const postTypeOptions: Array<{ value: CommunityPostType; label: string }> = [
@@ -40,6 +41,46 @@ const scopeDescriptions = {
   [CommunityPostScope.ORGANIZATION]: "Posts internos da organização, com comentários e vínculos de projeto.",
   [CommunityPostScope.GLOBAL]: "Feed global entre estúdios no Neolytics, sem vínculos internos."
 };
+
+function getCommunityQueryKey(scope: CommunityPostScope) {
+  return ["community", scope] as const;
+}
+
+function parsePostTags(value: string) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getPostTitle(content: string) {
+  const firstLine = content.split("\n")[0]?.slice(0, 80) ?? "";
+
+  if (firstLine.trim()) {
+    return firstLine;
+  }
+
+  return "Community post";
+}
+
+function getOptimisticAuthor() {
+  return {
+    id: "optimistic-user",
+    name: "Você",
+    email: "Você",
+    image: null
+  };
+}
+
+function revokeOptimisticMediaUrls(media: CommunityPostItem["media"]) {
+  for (const item of media) {
+    if (!item.signedUrl?.startsWith("blob:")) {
+      continue;
+    }
+
+    URL.revokeObjectURL(item.signedUrl);
+  }
+}
 
 function getPriorityBadgeClass(priority: CommunityPostPriority) {
   if (priority === CommunityPostPriority.URGENT) {
@@ -82,6 +123,7 @@ export function CommunityPageClient({
   canAccessRanking: boolean;
   subscriptionPlan: SubscriptionPlan;
 }) {
+  const queryClient = useQueryClient();
   const [scopeFilter, setScopeFilter] = useState<CommunityPostScope>(CommunityPostScope.ORGANIZATION);
   const query = useCommunity(canAccessFeed, scopeFilter);
   const projectsQuery = useProjects();
@@ -113,6 +155,71 @@ export function CommunityPageClient({
   const canPublishPost = form.content.trim().length > 0;
   const planLabel = subscriptionPlan === SubscriptionPlan.PRO ? "Comunidade Pro" : "Comunidade";
 
+  function updateCommunityCache(scope: CommunityPostScope, update: (current: CommunityResponse) => CommunityResponse) {
+    queryClient.setQueryData<CommunityResponse>(getCommunityQueryKey(scope), (current) => {
+      if (!current) {
+        return current;
+      }
+
+      return update(current);
+    });
+  }
+
+  function restoreCommunityCache(scope: CommunityPostScope, previousData: CommunityResponse | undefined) {
+    if (!previousData) {
+      return;
+    }
+
+    queryClient.setQueryData(getCommunityQueryKey(scope), previousData);
+  }
+
+  function refreshCommunityCache(scope: CommunityPostScope) {
+    void queryClient.invalidateQueries({
+      queryKey: getCommunityQueryKey(scope),
+      exact: true
+    });
+  }
+
+  function buildOptimisticPost(postId: string, submittedForm: typeof form, submittedMedia: File[]) {
+    let project: CommunityPostItem["project"] = null;
+
+    if (submittedForm.scope === CommunityPostScope.ORGANIZATION && submittedForm.projectId !== "none") {
+      const selectedProject = projectsQuery.data?.find((item) => item.id === submittedForm.projectId);
+
+      if (selectedProject) {
+        project = {
+          id: selectedProject.id,
+          name: selectedProject.name,
+          stage: selectedProject.stage
+        };
+      }
+    }
+
+    return {
+      id: postId,
+      title: getPostTitle(submittedForm.content),
+      content: submittedForm.content.trim(),
+      scope: submittedForm.scope,
+      priority: submittedForm.priority,
+      type: submittedForm.type,
+      tags: parsePostTags(submittedForm.tags),
+      likeCount: 0,
+      viewerHasLiked: false,
+      canDelete: true,
+      createdAt: new Date().toISOString(),
+      media: submittedMedia.map((file, index) => ({
+        storagePath: `${postId}-${index}`,
+        originalName: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
+        signedUrl: URL.createObjectURL(file)
+      })),
+      comments: [],
+      author: getOptimisticAuthor(),
+      project
+    };
+  }
+
   async function createPost() {
     setFeedback(null);
 
@@ -121,16 +228,44 @@ export function CommunityPageClient({
       return;
     }
 
-    setIsSubmitting(true);
-    const payload = new FormData();
-    payload.append("content", form.content.trim());
-    payload.append("scope", form.scope);
-    payload.append("priority", form.priority);
-    payload.append("type", form.type);
-    payload.append("projectId", form.scope === CommunityPostScope.GLOBAL ? "none" : form.projectId);
-    payload.append("tags", form.tags);
+    const submittedForm = form;
+    const submittedMedia = mediaFiles;
+    const submittedScope = submittedForm.scope;
+    const queryKey = getCommunityQueryKey(submittedScope);
+    const previousData = queryClient.getQueryData<CommunityResponse>(queryKey);
+    const optimisticPost = buildOptimisticPost(`optimistic-post-${Date.now()}`, submittedForm, submittedMedia);
 
-    for (const file of mediaFiles) {
+    updateCommunityCache(submittedScope, (current) => ({
+      ...current,
+      feed: [optimisticPost, ...current.feed]
+    }));
+    setForm({
+      content: "",
+      scope: scopeFilter,
+      priority: CommunityPostPriority.NORMAL,
+      type: CommunityPostType.GENERAL,
+      projectId: "none",
+      tags: ""
+    });
+    setMediaFiles([]);
+    setFeedback("Publicando em background...");
+    setIsSubmitting(true);
+
+    const payload = new FormData();
+    payload.append("content", submittedForm.content.trim());
+    payload.append("scope", submittedForm.scope);
+    payload.append("priority", submittedForm.priority);
+    payload.append("type", submittedForm.type);
+
+    let projectId = submittedForm.projectId;
+    if (submittedForm.scope === CommunityPostScope.GLOBAL) {
+      projectId = "none";
+    }
+
+    payload.append("projectId", projectId);
+    payload.append("tags", submittedForm.tags);
+
+    for (const file of submittedMedia) {
       payload.append("media", file);
     }
 
@@ -143,21 +278,33 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      restoreCommunityCache(submittedScope, previousData);
+      revokeOptimisticMediaUrls(optimisticPost.media);
+      setForm(submittedForm);
+      setMediaFiles(submittedMedia);
       setFeedback(payload?.message ?? "Não foi possível publicar o post.");
       return;
     }
 
-    setForm({
-      content: "",
-      scope: scopeFilter,
-      priority: CommunityPostPriority.NORMAL,
-      type: CommunityPostType.GENERAL,
-      projectId: "none",
-      tags: ""
-    });
-    setMediaFiles([]);
+    const createdPost = (await response.json()) as CommunityPostItem;
+    const confirmedPost = {
+      ...createdPost,
+      canDelete: true
+    };
+
+    updateCommunityCache(submittedScope, (current) => ({
+      ...current,
+      feed: current.feed.map((post) => {
+        if (post.id === optimisticPost.id) {
+          return confirmedPost;
+        }
+
+        return post;
+      })
+    }));
+    revokeOptimisticMediaUrls(optimisticPost.media);
     setFeedback("Post publicado.");
-    await query.refetch();
+    refreshCommunityCache(submittedScope);
   }
 
   async function createComment(postId: string) {
@@ -170,6 +317,33 @@ export function CommunityPageClient({
 
     setFeedback(null);
     setSubmittingCommentId(postId);
+    const previousData = queryClient.getQueryData<CommunityResponse>(getCommunityQueryKey(scopeFilter));
+    const optimisticComment = {
+      id: `optimistic-comment-${Date.now()}`,
+      content,
+      createdAt: new Date().toISOString(),
+      author: getOptimisticAuthor()
+    };
+
+    updateCommunityCache(scopeFilter, (current) => ({
+      ...current,
+      feed: current.feed.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        return {
+          ...post,
+          comments: [...post.comments, optimisticComment]
+        };
+      })
+    }));
+    setCommentDrafts((current) => {
+      const next = { ...current };
+      delete next[postId];
+      return next;
+    });
+
     const response = await fetch(`/api/community/${postId}/comments`, {
       method: "POST",
       headers: {
@@ -181,16 +355,37 @@ export function CommunityPageClient({
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      restoreCommunityCache(scopeFilter, previousData);
+      setCommentDrafts((current) => ({
+        ...current,
+        [postId]: content
+      }));
       setFeedback(payload?.message ?? "Não foi possível publicar o comentário.");
       return;
     }
 
-    setCommentDrafts((current) => {
-      const next = { ...current };
-      delete next[postId];
-      return next;
-    });
-    await query.refetch();
+    const createdComment = await response.json() as CommunityPostItem["comments"][number];
+
+    updateCommunityCache(scopeFilter, (current) => ({
+      ...current,
+      feed: current.feed.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        return {
+          ...post,
+          comments: post.comments.map((comment) => {
+            if (comment.id === optimisticComment.id) {
+              return createdComment;
+            }
+
+            return comment;
+          })
+        };
+      })
+    }));
+    refreshCommunityCache(scopeFilter);
   }
 
   function updateMediaFiles(files: FileList | null) {
@@ -213,32 +408,63 @@ export function CommunityPageClient({
   }
 
   async function toggleLike(postId: string) {
+    const previousData = queryClient.getQueryData<CommunityResponse>(getCommunityQueryKey(scopeFilter));
+
+    updateCommunityCache(scopeFilter, (current) => ({
+      ...current,
+      feed: current.feed.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        let likeCount = post.likeCount + 1;
+        if (post.viewerHasLiked) {
+          likeCount = Math.max(0, post.likeCount - 1);
+        }
+
+        return {
+          ...post,
+          viewerHasLiked: !post.viewerHasLiked,
+          likeCount
+        };
+      })
+    }));
+
     const response = await fetch(`/api/community/${postId}/like`, {
       method: "POST"
     });
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      restoreCommunityCache(scopeFilter, previousData);
       setFeedback(payload?.message ?? "Não foi possível atualizar a reação.");
       return;
     }
 
-    await query.refetch();
+    refreshCommunityCache(scopeFilter);
   }
 
   async function deletePost(postId: string) {
+    const previousData = queryClient.getQueryData<CommunityResponse>(getCommunityQueryKey(scopeFilter));
+
+    updateCommunityCache(scopeFilter, (current) => ({
+      ...current,
+      feed: current.feed.filter((post) => post.id !== postId)
+    }));
+
     const response = await fetch(`/api/community/${postId}`, {
       method: "DELETE"
     });
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+      restoreCommunityCache(scopeFilter, previousData);
       setFeedback(payload?.message ?? "Não foi possível excluir o post.");
       return;
     }
 
     setFeedback("Post excluído.");
-    await query.refetch();
+    refreshCommunityCache(scopeFilter);
   }
 
   const visibleFeed = useMemo(() => {

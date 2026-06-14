@@ -15,7 +15,6 @@ import {
 } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
@@ -114,7 +113,6 @@ export function FinancePage({
   canManage: boolean;
   summary: FinanceSummary | null;
 }) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const t = useI18n();
   const progressive = useProgressiveLoad<HTMLDivElement>();
@@ -156,7 +154,6 @@ export function FinancePage({
 
     setMessage(successMessage);
     void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
-    router.refresh();
   }
 
   async function patchJson(url: string, body: Record<string, unknown>, successMessage: string) {
@@ -179,7 +176,6 @@ export function FinancePage({
 
     setMessage(successMessage);
     void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
-    router.refresh();
   }
 
   async function patchApproval(approvalRequestId: string, status: ApprovalStatus) {
@@ -204,7 +200,6 @@ export function FinancePage({
 
     setMessage(`Aprovação ${status.toLowerCase()}.`);
     void queryClient.invalidateQueries({ queryKey: ["finance", "overview"] });
-    router.refresh();
   }
 
   return (

@@ -699,13 +699,33 @@ function KanbanCardDrawer({
 
   async function submit() {
     if (drawer?.mode === "create") {
-      await createCard(drawer.columnId);
+      if (!createState.title.trim()) {
+        await createCard(drawer.columnId);
+        return;
+      }
+
+      void createCard(drawer.columnId);
       setDrawer(null);
       return;
     }
 
     if (drawer?.mode === "edit") {
-      await saveCard(drawer.cardId);
+      let title = "";
+
+      if (activeCard) {
+        title = activeCard.title;
+      }
+
+      if (editState?.title !== undefined) {
+        title = editState.title;
+      }
+
+      if (!title.trim()) {
+        await saveCard(drawer.cardId);
+        return;
+      }
+
+      void saveCard(drawer.cardId);
       setDrawer(null);
     }
   }

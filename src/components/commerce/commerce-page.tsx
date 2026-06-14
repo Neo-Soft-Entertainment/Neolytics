@@ -9,7 +9,6 @@ import {
   MarketingCampaignObjective,
   MarketingCampaignStatus
 } from "@prisma/client";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { PageHero } from "@/components/app-shell/page-hero";
@@ -214,7 +213,7 @@ function labelFor(value: string) {
 export function CommercePage({
   canAccessCommerceOps,
   canManage,
-  data,
+  data: initialData,
   organizationName,
   planLabel
 }: {
@@ -224,7 +223,7 @@ export function CommercePage({
   organizationName: string;
   planLabel: string;
 }) {
-  const router = useRouter();
+  const [data, setData] = useState(initialData);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -237,30 +236,70 @@ export function CommercePage({
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const previousData = data;
+    const externalCode = getField(formData, "externalCode");
+    const notes = getField(formData, "notes");
+    const optimisticChannel = {
+      id: `optimistic-channel-${Date.now()}`,
+      name: getField(formData, "name"),
+      type: getField(formData, "type") as CommerceChannelType,
+      externalCode: externalCode || null,
+      active: true,
+      notes: notes || null,
+      createdAt: new Date().toISOString()
+    };
+
+    setData((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        channels: [optimisticChannel, ...current.channels]
+      };
+    });
+
     const response = await fetch("/api/commerce/channels", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        name: getField(formData, "name"),
-        type: getField(formData, "type"),
-        externalCode: getField(formData, "externalCode"),
-        notes: getField(formData, "notes")
+        name: optimisticChannel.name,
+        type: optimisticChannel.type,
+        externalCode,
+        notes
       })
     });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    const payload = await response.json().catch(() => null);
 
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível criar o canal de vendas.");
+      setData(previousData);
+      setError((payload as { message?: string } | null)?.message ?? "Não foi possível criar o canal de vendas.");
       return;
     }
 
+    setData((current) => {
+      if (!current || !payload) {
+        return current;
+      }
+
+      return {
+        ...current,
+        channels: current.channels.map((channel) => {
+          if (channel.id !== optimisticChannel.id) {
+            return channel;
+          }
+
+          return payload as CommerceData["channels"][number];
+        })
+      };
+    });
     form.reset();
     setMessage("Canal de vendas criado.");
-    router.refresh();
   }
 
   async function submitOrder(event: FormEvent<HTMLFormElement>) {
@@ -272,14 +311,58 @@ export function CommercePage({
     const form = event.currentTarget;
     const formData = new FormData(form);
     const expectedShipAt = getField(formData, "expectedShipAt");
+    const channelId = getField(formData, "channelId");
+    const projectId = getField(formData, "projectId");
+    const selectedChannel = data?.channels.find((channel) => channel.id === channelId) ?? null;
+    const selectedProject = data?.projects.find((project) => project.id === projectId) ?? null;
+    const previousData = data;
+    const optimisticOrder = {
+      id: `optimistic-order-${Date.now()}`,
+      channelId: channelId || null,
+      projectId: projectId || null,
+      orderNumber: getField(formData, "orderNumber"),
+      customerName: getField(formData, "customerName"),
+      customerEmail: getField(formData, "customerEmail") || null,
+      status: getField(formData, "status") as CommerceOrderStatus,
+      fulfillmentStatus: getField(formData, "fulfillmentStatus") as CommerceFulfillmentStatus,
+      paymentStatus: getField(formData, "paymentStatus") as CommercePaymentStatus,
+      currencyCode: getField(formData, "currencyCode") || "USD",
+      grossCents: getCents(formData, "grossAmount"),
+      netCents: getCents(formData, "netAmount"),
+      quantity: Number(getField(formData, "quantity") || "1"),
+      expectedShipAt: expectedShipAt || null,
+      fulfilledAt: null,
+      createdAt: new Date().toISOString(),
+      channel: selectedChannel,
+      project: selectedProject,
+      createdBy: { id: "optimistic-user", name: "Você", email: "Você" }
+    };
+
+    setData((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        orders: [optimisticOrder, ...current.orders],
+        summary: {
+          ...current.summary,
+          openOrders: current.summary.openOrders + 1,
+          netSalesCents: current.summary.netSalesCents + optimisticOrder.netCents,
+          commercialRevenueCents: current.summary.commercialRevenueCents + optimisticOrder.netCents
+        }
+      };
+    });
+
     const response = await fetch("/api/commerce/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        channelId: getField(formData, "channelId"),
-        projectId: getField(formData, "projectId"),
+        channelId,
+        projectId,
         orderNumber: getField(formData, "orderNumber"),
         customerName: getField(formData, "customerName"),
         customerEmail: getField(formData, "customerEmail"),
@@ -294,18 +377,34 @@ export function CommercePage({
         notes: getField(formData, "notes")
       })
     });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    const payload = await response.json().catch(() => null);
 
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível criar o pedido.");
+      setData(previousData);
+      setError((payload as { message?: string } | null)?.message ?? "Não foi possível criar o pedido.");
       return;
     }
 
+    setData((current) => {
+      if (!current || !payload) {
+        return current;
+      }
+
+      return {
+        ...current,
+        orders: current.orders.map((order) => {
+          if (order.id !== optimisticOrder.id) {
+            return order;
+          }
+
+          return payload as CommerceData["orders"][number];
+        })
+      };
+    });
     form.reset();
     setMessage("Pedido criado.");
-    router.refresh();
   }
 
   async function submitCampaign(event: FormEvent<HTMLFormElement>) {
@@ -318,43 +417,113 @@ export function CommercePage({
     const formData = new FormData(form);
     const startsAt = getField(formData, "startsAt");
     const endsAt = getField(formData, "endsAt");
+    const projectId = getField(formData, "projectId");
+    const selectedProject = data?.projects.find((project) => project.id === projectId) ?? null;
+    const previousData = data;
+    const optimisticCampaign = {
+      id: `optimistic-campaign-${Date.now()}`,
+      projectId: projectId || null,
+      name: getField(formData, "name"),
+      channel: getField(formData, "channel") as MarketingCampaignChannel,
+      objective: getField(formData, "objective") as MarketingCampaignObjective,
+      status: getField(formData, "status") as MarketingCampaignStatus,
+      currencyCode: getField(formData, "currencyCode") || "USD",
+      budgetCents: getCents(formData, "budgetAmount"),
+      spendCents: getCents(formData, "spendAmount"),
+      impressions: getInteger(formData, "impressions"),
+      clicks: getInteger(formData, "clicks"),
+      wishlists: getInteger(formData, "wishlists"),
+      demoDownloads: getInteger(formData, "demoDownloads"),
+      conversions: getInteger(formData, "conversions"),
+      revenueCents: getCents(formData, "revenueAmount"),
+      startsAt: startsAt || null,
+      endsAt: endsAt || null,
+      notes: getField(formData, "notes") || null,
+      createdAt: new Date().toISOString(),
+      project: selectedProject,
+      createdBy: { id: "optimistic-user", name: "Você", email: "Você" }
+    };
+
+    setData((current) => {
+      if (!current) {
+        return current;
+      }
+
+      let activeCampaigns = current.summary.activeCampaigns;
+
+      if (optimisticCampaign.status === MarketingCampaignStatus.ACTIVE) {
+        activeCampaigns += 1;
+      }
+
+      return {
+        ...current,
+        campaigns: [optimisticCampaign, ...current.campaigns],
+        summary: {
+          ...current.summary,
+          activeCampaigns,
+          marketingSpendCents: current.summary.marketingSpendCents + optimisticCampaign.spendCents,
+          marketingBudgetCents: current.summary.marketingBudgetCents + optimisticCampaign.budgetCents,
+          attributedRevenueCents: current.summary.attributedRevenueCents + optimisticCampaign.revenueCents,
+          wishlists: current.summary.wishlists + optimisticCampaign.wishlists,
+          demoDownloads: current.summary.demoDownloads + optimisticCampaign.demoDownloads,
+          campaignConversions: current.summary.campaignConversions + optimisticCampaign.conversions
+        }
+      };
+    });
+
     const response = await fetch("/api/commerce/campaigns", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        projectId: getField(formData, "projectId"),
-        name: getField(formData, "name"),
-        channel: getField(formData, "channel"),
-        objective: getField(formData, "objective"),
-        status: getField(formData, "status"),
-        currencyCode: getField(formData, "currencyCode") || "USD",
-        budgetCents: getCents(formData, "budgetAmount"),
-        spendCents: getCents(formData, "spendAmount"),
-        impressions: getInteger(formData, "impressions"),
-        clicks: getInteger(formData, "clicks"),
-        wishlists: getInteger(formData, "wishlists"),
-        demoDownloads: getInteger(formData, "demoDownloads"),
-        conversions: getInteger(formData, "conversions"),
-        revenueCents: getCents(formData, "revenueAmount"),
+        projectId,
+        name: optimisticCampaign.name,
+        channel: optimisticCampaign.channel,
+        objective: optimisticCampaign.objective,
+        status: optimisticCampaign.status,
+        currencyCode: optimisticCampaign.currencyCode,
+        budgetCents: optimisticCampaign.budgetCents,
+        spendCents: optimisticCampaign.spendCents,
+        impressions: optimisticCampaign.impressions,
+        clicks: optimisticCampaign.clicks,
+        wishlists: optimisticCampaign.wishlists,
+        demoDownloads: optimisticCampaign.demoDownloads,
+        conversions: optimisticCampaign.conversions,
+        revenueCents: optimisticCampaign.revenueCents,
         startsAt: startsAt || null,
         endsAt: endsAt || null,
-        notes: getField(formData, "notes")
+        notes: optimisticCampaign.notes
       })
     });
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    const payload = await response.json().catch(() => null);
 
     setIsSubmitting(false);
 
     if (!response.ok) {
-      setError(payload?.message ?? "Não foi possível criar a campanha de marketing.");
+      setData(previousData);
+      setError((payload as { message?: string } | null)?.message ?? "Não foi possível criar a campanha de marketing.");
       return;
     }
 
+    setData((current) => {
+      if (!current || !payload) {
+        return current;
+      }
+
+      return {
+        ...current,
+        campaigns: current.campaigns.map((campaign) => {
+          if (campaign.id !== optimisticCampaign.id) {
+            return campaign;
+          }
+
+          return payload as CommerceData["campaigns"][number];
+        })
+      };
+    });
     form.reset();
     setMessage("Campanha de marketing criada.");
-    router.refresh();
   }
 
   if (!canAccessCommerceOps) {

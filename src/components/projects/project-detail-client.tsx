@@ -1,6 +1,7 @@
 "use client";
 
 import { SubscriptionPlan } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
@@ -18,7 +19,7 @@ import { DemoManagerPageClient } from "@/features/demo-manager/demo-manager-page
 import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
 import { ProjectAssigneeSelect } from "@/features/projects/components/project-assignee-select";
 import { ProjectOverviewForm } from "@/features/projects/components/project-overview-form";
-import { useProject } from "@/features/projects/hooks";
+import { type ProjectDetailResponse, useProject } from "@/features/projects/hooks";
 import {
   createProjectKanbanCard,
   createProjectKanbanColumn,
@@ -39,9 +40,354 @@ import {
   saveProjectOverview,
   uploadProjectArtAsset
 } from "@/features/projects/services/project-detail-api";
+import type { ProjectKanbanCardDraft, ProjectMilestoneDraft } from "@/features/projects/services/project-detail-api";
 import type { ProjectOverviewFormState } from "@/features/projects/types";
 import { getLimitLabel } from "@/lib/subscription-plans";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+
+type ProjectMilestoneItem = ProjectDetailResponse["milestones"][number];
+type ProjectKanbanBoardItem = ProjectDetailResponse["kanbanBoards"][number];
+type ProjectKanbanColumnItem = ProjectKanbanBoardItem["columns"][number];
+type ProjectKanbanCardItem = ProjectKanbanColumnItem["cards"][number];
+
+function getProjectQueryKey(projectId: string) {
+  return ["projects", projectId] as const;
+}
+
+function parseDraftLabels(labels: string) {
+  return labels
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseCents(value: string) {
+  const parsed = Number(value || 0);
+
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+
+  return 0;
+}
+
+function toDraftIsoDate(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value).toISOString();
+}
+
+function toMilestoneStatus(status: string): ProjectMilestoneItem["status"] {
+  if (status === "IN_PROGRESS") {
+    return "IN_PROGRESS";
+  }
+
+  if (status === "BLOCKED") {
+    return "BLOCKED";
+  }
+
+  if (status === "COMPLETED") {
+    return "COMPLETED";
+  }
+
+  return "PLANNED";
+}
+
+function toProjectStage(stage: string): ProjectDetailResponse["stage"] {
+  if (stage === "PRE_PRODUCTION") {
+    return "PRE_PRODUCTION";
+  }
+
+  if (stage === "PRODUCTION") {
+    return "PRODUCTION";
+  }
+
+  if (stage === "LIVE") {
+    return "LIVE";
+  }
+
+  if (stage === "ARCHIVED") {
+    return "ARCHIVED";
+  }
+
+  return "DISCOVERY";
+}
+
+function normalizeCardOrders(cards: ProjectKanbanCardItem[]) {
+  return cards.map((card, index) => ({
+    ...card,
+    sortOrder: index
+  }));
+}
+
+function normalizeColumnOrders(columns: ProjectKanbanColumnItem[]) {
+  return columns.map((column, index) => ({
+    ...column,
+    sortOrder: index
+  }));
+}
+
+function reorderCardInProject(
+  project: ProjectDetailResponse,
+  cardId: string,
+  targetColumnId: string,
+  targetIndex: number,
+  replacementCard?: ProjectKanbanCardItem
+) {
+  let movingCard: ProjectKanbanCardItem | null = null;
+
+  const boardsWithoutCard = project.kanbanBoards.map((boardItem) => ({
+    ...boardItem,
+    columns: boardItem.columns.map((column) => {
+      const cards: ProjectKanbanCardItem[] = [];
+
+      for (const card of column.cards) {
+        if (card.id === cardId) {
+          movingCard = card;
+
+          if (replacementCard) {
+            movingCard = replacementCard;
+          }
+
+          continue;
+        }
+
+        cards.push(card);
+      }
+
+      return {
+        ...column,
+        cards: normalizeCardOrders(cards)
+      };
+    })
+  }));
+
+  if (!movingCard) {
+    return project;
+  }
+
+  const cardToInsert = movingCard;
+  let foundTargetColumn = false;
+
+  const kanbanBoards = boardsWithoutCard.map((boardItem) => ({
+    ...boardItem,
+    columns: boardItem.columns.map((column) => {
+      if (column.id !== targetColumnId) {
+        return column;
+      }
+
+      foundTargetColumn = true;
+      const cards = [...column.cards];
+      let nextIndex = targetIndex;
+
+      if (nextIndex < 0) {
+        nextIndex = 0;
+      }
+
+      if (nextIndex > cards.length) {
+        nextIndex = cards.length;
+      }
+
+      cards.splice(nextIndex, 0, cardToInsert);
+
+      return {
+        ...column,
+        cards: normalizeCardOrders(cards)
+      };
+    })
+  }));
+
+  if (!foundTargetColumn) {
+    return project;
+  }
+
+  return {
+    ...project,
+    kanbanBoards
+  };
+}
+
+function addCardToProject(project: ProjectDetailResponse, columnId: string, card: ProjectKanbanCardItem) {
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem) => ({
+      ...boardItem,
+      columns: boardItem.columns.map((column) => {
+        if (column.id !== columnId) {
+          return column;
+        }
+
+        return {
+          ...column,
+          cards: normalizeCardOrders([...column.cards, card])
+        };
+      })
+    }))
+  };
+}
+
+function removeCardFromProject(project: ProjectDetailResponse, cardId: string) {
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem) => ({
+      ...boardItem,
+      columns: boardItem.columns.map((column) => ({
+        ...column,
+        cards: normalizeCardOrders(column.cards.filter((card) => card.id !== cardId))
+      }))
+    }))
+  };
+}
+
+function updateColumnInProject(
+  project: ProjectDetailResponse,
+  columnId: string,
+  name: string,
+  color: string | null,
+  sortOrder: number
+) {
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem) => ({
+      ...boardItem,
+      columns: normalizeColumnOrders(boardItem.columns.map((column) => {
+        if (column.id !== columnId) {
+          return column;
+        }
+
+        return {
+          ...column,
+          name,
+          color,
+          sortOrder
+        };
+      }))
+    }))
+  };
+}
+
+function addColumnToProject(project: ProjectDetailResponse, column: ProjectKanbanColumnItem) {
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem, index) => {
+      if (index > 0) {
+        return boardItem;
+      }
+
+      return {
+        ...boardItem,
+        columns: normalizeColumnOrders([...boardItem.columns, column])
+      };
+    })
+  };
+}
+
+function removeColumnFromProject(project: ProjectDetailResponse, columnId: string) {
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem) => ({
+      ...boardItem,
+      columns: normalizeColumnOrders(boardItem.columns.filter((column) => column.id !== columnId))
+    }))
+  };
+}
+
+function moveColumnInProject(project: ProjectDetailResponse, columnId: string, direction: "left" | "right") {
+  let moved = false;
+
+  return {
+    ...project,
+    kanbanBoards: project.kanbanBoards.map((boardItem) => {
+      if (moved) {
+        return boardItem;
+      }
+
+      const columnIndex = boardItem.columns.findIndex((column) => column.id === columnId);
+
+      if (columnIndex < 0) {
+        return boardItem;
+      }
+
+      let targetIndex = columnIndex + 1;
+
+      if (direction === "left") {
+        targetIndex = columnIndex - 1;
+      }
+
+      if (targetIndex < 0 || targetIndex >= boardItem.columns.length) {
+        return boardItem;
+      }
+
+      const columns = [...boardItem.columns];
+      const currentColumn = columns[columnIndex];
+      const targetColumn = columns[targetIndex];
+
+      if (!currentColumn || !targetColumn) {
+        return boardItem;
+      }
+
+      columns[columnIndex] = targetColumn;
+      columns[targetIndex] = currentColumn;
+      moved = true;
+
+      return {
+        ...boardItem,
+        columns: normalizeColumnOrders(columns)
+      };
+    })
+  };
+}
+
+function moveCardOneSlotInProject(project: ProjectDetailResponse, cardId: string, direction: "up" | "down") {
+  for (const boardItem of project.kanbanBoards) {
+    for (const column of boardItem.columns) {
+      const currentIndex = column.cards.findIndex((card) => card.id === cardId);
+
+      if (currentIndex < 0) {
+        continue;
+      }
+
+      let targetIndex = currentIndex + 1;
+
+      if (direction === "up") {
+        targetIndex = currentIndex - 1;
+      }
+
+      return reorderCardInProject(project, cardId, column.id, targetIndex);
+    }
+  }
+
+  return project;
+}
+
+function toOptimisticMilestone(id: string, milestone: ProjectMilestoneDraft, sortOrder: number): ProjectMilestoneItem {
+  return {
+    id,
+    title: milestone.title.trim(),
+    description: milestone.description.trim() || null,
+    ownerLabel: milestone.ownerLabel.trim() || null,
+    status: toMilestoneStatus(milestone.status),
+    dueAt: toDraftIsoDate(milestone.dueAt),
+    completedAt: null,
+    budgetedCostCents: parseCents(milestone.budgetedCostCents),
+    expectedRevenueCents: parseCents(milestone.expectedRevenueCents),
+    sortOrder
+  };
+}
+
+function toOptimisticCard(id: string, cardState: ProjectKanbanCardDraft, sortOrder: number): ProjectKanbanCardItem {
+  return {
+    id,
+    title: cardState.title.trim(),
+    description: cardState.description.trim() || null,
+    assigneeLabel: cardState.assigneeLabel.trim() || null,
+    dueDate: toDraftIsoDate(cardState.dueDate),
+    labels: parseDraftLabels(cardState.labels),
+    sortOrder
+  };
+}
 
 export function ProjectDetailClient({
   projectId,
@@ -51,6 +397,7 @@ export function ProjectDetailClient({
   subscriptionPlan: SubscriptionPlan;
 }) {
   const t = useI18n();
+  const queryClient = useQueryClient();
   const query = useProject(projectId);
   const entitlements = useEntitlements();
   const usage = useUsage();
@@ -198,21 +545,74 @@ export function ProjectDetailClient({
   const artLimit = entitlements.getLimit("artAnalysesPerMonth");
   const gddLimit = entitlements.getLimit("gdds");
 
+  function getProjectSnapshot() {
+    return queryClient.getQueryData<ProjectDetailResponse>(getProjectQueryKey(projectId));
+  }
+
+  function updateProjectCache(update: (current: ProjectDetailResponse) => ProjectDetailResponse) {
+    queryClient.setQueryData<ProjectDetailResponse>(getProjectQueryKey(projectId), (current) => {
+      if (!current) {
+        return current;
+      }
+
+      return update(current);
+    });
+  }
+
+  function restoreProjectCache(previousData: ProjectDetailResponse | undefined) {
+    if (!previousData) {
+      return;
+    }
+
+    queryClient.setQueryData(getProjectQueryKey(projectId), previousData);
+  }
+
+  function refreshProjectCache() {
+    void queryClient.invalidateQueries({
+      queryKey: getProjectQueryKey(projectId),
+      exact: true
+    });
+  }
+
   async function saveProject() {
     setFeedback(null);
     setIsSaving(true);
+    const previousData = getProjectSnapshot();
+    let pricePointCents: number | null = null;
+
+    if (projectForm.pricePointCents) {
+      pricePointCents = Number(projectForm.pricePointCents);
+    }
+
+    updateProjectCache((current) => ({
+      ...current,
+      name: projectForm.name.trim(),
+      elevatorPitch: projectForm.elevatorPitch.trim() || null,
+      description: projectForm.description.trim() || null,
+      genreInput: projectForm.genreInput.trim() || null,
+      tagInput: projectForm.tagInput.trim() || null,
+      targetAudience: projectForm.targetAudience.trim() || null,
+      coreLoop: projectForm.coreLoop.trim() || null,
+      differentiator: projectForm.differentiator.trim() || null,
+      monetizationModel: projectForm.monetizationModel.trim() || null,
+      artDirection: projectForm.artDirection.trim() || null,
+      playerFantasy: projectForm.playerFantasy.trim() || null,
+      pricePointCents,
+      stage: toProjectStage(projectForm.stage)
+    }));
 
     const result = await saveProjectOverview(projectId, projectForm);
 
     setIsSaving(false);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.saveProjectError"));
       return;
     }
 
     setFeedback(t("projectDetail.projectSaved"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function runAnalysis() {
@@ -229,7 +629,7 @@ export function ProjectDetailClient({
     }
 
     setFeedback(t("projectDetail.marketAnalysisUpdated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function generateGdd() {
@@ -246,7 +646,7 @@ export function ProjectDetailClient({
     }
 
     setFeedback(t("projectDetail.gddGenerated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function runArtAnalysis() {
@@ -263,7 +663,7 @@ export function ProjectDetailClient({
     }
 
     setFeedback(t("projectDetail.artAnalysisUpdated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function uploadArtAsset(file: File | null) {
@@ -293,33 +693,52 @@ export function ProjectDetailClient({
       notes: ""
     });
     setFeedback("Asset de arte enviado.");
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function deleteArtAsset(assetId: string) {
     setFeedback(null);
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => ({
+      ...current,
+      artAssets: current.artAssets.filter((asset) => asset.id !== assetId)
+    }));
 
     const result = await deleteProjectArtAsset(projectId, assetId);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? "Não foi possível excluir o asset de arte.");
       return;
     }
 
     setFeedback("Asset de arte excluído.");
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function createMilestone() {
     setFeedback(null);
 
-    const result = await createProjectMilestone(projectId, newMilestone);
-
-    if (!result.ok) {
-      setFeedback(result.message ?? t("projectDetail.createMilestoneError"));
+    if (!newMilestone.title.trim()) {
+      setFeedback(t("projectDetail.milestoneTitleRequired"));
       return;
     }
 
+    const submittedMilestone = newMilestone;
+    const previousData = getProjectSnapshot();
+    let sortOrder = 0;
+
+    if (previousData) {
+      sortOrder = previousData.milestones.length;
+    }
+
+    const optimisticMilestone = toOptimisticMilestone(`optimistic-milestone-${Date.now()}`, submittedMilestone, sortOrder);
+
+    updateProjectCache((current) => ({
+      ...current,
+      milestones: [...current.milestones, optimisticMilestone]
+    }));
     setNewMilestone({
       title: "",
       description: "",
@@ -329,8 +748,18 @@ export function ProjectDetailClient({
       budgetedCostCents: "",
       expectedRevenueCents: ""
     });
+
+    const result = await createProjectMilestone(projectId, submittedMilestone);
+
+    if (!result.ok) {
+      restoreProjectCache(previousData);
+      setNewMilestone(submittedMilestone);
+      setFeedback(result.message ?? t("projectDetail.createMilestoneError"));
+      return;
+    }
+
     setFeedback(t("projectDetail.milestoneCreated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function saveMilestone(milestoneId: string) {
@@ -341,42 +770,96 @@ export function ProjectDetailClient({
       return;
     }
 
+    const previousData = getProjectSnapshot();
+    const optimisticMilestone = toOptimisticMilestone(milestoneId, milestone, 0);
+
+    updateProjectCache((current) => ({
+      ...current,
+      milestones: current.milestones.map((currentMilestone) => {
+        if (currentMilestone.id !== milestoneId) {
+          return currentMilestone;
+        }
+
+        return {
+          ...currentMilestone,
+          ...optimisticMilestone,
+          sortOrder: currentMilestone.sortOrder
+        };
+      })
+    }));
+
     const result = await saveProjectMilestone(projectId, milestoneId, milestone);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.saveMilestoneError"));
       return;
     }
 
     setFeedback(t("projectDetail.milestoneUpdated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function createColumn() {
     setFeedback(null);
 
-    const result = await createProjectKanbanColumn(projectId, newColumn.name, newColumn.color);
+    if (!newColumn.name.trim()) {
+      setFeedback(t("projectDetail.createColumnError"));
+      return;
+    }
+
+    const submittedColumn = newColumn;
+    const previousData = getProjectSnapshot();
+    let sortOrder = 0;
+
+    if (previousData?.kanbanBoards[0]) {
+      sortOrder = previousData.kanbanBoards[0].columns.length;
+    }
+
+    const optimisticColumn: ProjectKanbanColumnItem = {
+      id: `optimistic-column-${Date.now()}`,
+      name: submittedColumn.name.trim(),
+      color: submittedColumn.color.trim() || null,
+      sortOrder,
+      cards: []
+    };
+
+    updateProjectCache((current) => addColumnToProject(current, optimisticColumn));
+    setNewColumn({ name: "", color: "" });
+
+    const result = await createProjectKanbanColumn(projectId, submittedColumn.name, submittedColumn.color);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
+      setNewColumn(submittedColumn);
       setFeedback(result.message ?? t("projectDetail.createColumnError"));
       return;
     }
 
-    setNewColumn({ name: "", color: "" });
     setFeedback(t("projectDetail.columnCreated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function updateColumn(columnId: string, name: string, color: string | null, sortOrder: number) {
+    const previousData = getProjectSnapshot();
+    let nextColor = color;
+
+    if (nextColor !== null && !nextColor.trim()) {
+      nextColor = null;
+    }
+
+    updateProjectCache((current) => updateColumnInProject(current, columnId, name.trim(), nextColor, sortOrder));
+
     const result = await updateProjectKanbanColumn(projectId, columnId, name, color, sortOrder);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.updateColumnError"));
       return;
     }
 
     setFeedback(t("projectDetail.columnUpdated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function createCard(columnId: string) {
@@ -387,13 +870,23 @@ export function ProjectDetailClient({
       return;
     }
 
-    const result = await createProjectKanbanCard(projectId, columnId, cardState);
+    const previousData = getProjectSnapshot();
+    const previousNewCards = newCards;
+    let sortOrder = 0;
 
-    if (!result.ok) {
-      setFeedback(result.message ?? t("projectDetail.createCardError"));
-      return;
+    if (previousData) {
+      for (const boardItem of previousData.kanbanBoards) {
+        for (const column of boardItem.columns) {
+          if (column.id === columnId) {
+            sortOrder = column.cards.length;
+          }
+        }
+      }
     }
 
+    const optimisticCard = toOptimisticCard(`optimistic-card-${Date.now()}`, cardState, sortOrder);
+
+    updateProjectCache((current) => addCardToProject(current, columnId, optimisticCard));
     setNewCards((current) => ({
       ...current,
       [columnId]: {
@@ -404,8 +897,18 @@ export function ProjectDetailClient({
         labels: ""
       }
     }));
+
+    const result = await createProjectKanbanCard(projectId, columnId, cardState);
+
+    if (!result.ok) {
+      restoreProjectCache(previousData);
+      setNewCards(previousNewCards);
+      setFeedback(result.message ?? t("projectDetail.createCardError"));
+      return;
+    }
+
     setFeedback(t("projectDetail.cardCreated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function saveCard(cardId: string) {
@@ -416,48 +919,92 @@ export function ProjectDetailClient({
       return;
     }
 
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => {
+      let sourceCard: ProjectKanbanCardItem | null = null;
+      let sourceColumnId = cardState.columnId;
+
+      for (const boardItem of current.kanbanBoards) {
+        for (const column of boardItem.columns) {
+          for (const card of column.cards) {
+            if (card.id !== cardId) {
+              continue;
+            }
+
+            sourceCard = card;
+            sourceColumnId = column.id;
+          }
+        }
+      }
+
+      if (!sourceCard) {
+        return current;
+      }
+
+      const optimisticCard = toOptimisticCard(cardId, cardState, sourceCard.sortOrder);
+
+      return reorderCardInProject(current, cardId, cardState.columnId, sourceCard.sortOrder, optimisticCard);
+    });
+
     const result = await saveProjectKanbanCard(projectId, cardId, cardState);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.saveCardError"));
       return;
     }
 
     setFeedback(t("projectDetail.cardUpdated"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function moveCard(cardId: string, columnId: string) {
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => reorderCardInProject(current, cardId, columnId, Number.MAX_SAFE_INTEGER));
+
     const result = await moveProjectKanbanCard(projectId, cardId, columnId);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function moveCardInColumn(cardId: string, direction: "up" | "down") {
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => moveCardOneSlotInProject(current, cardId, direction));
+
     const result = await moveProjectKanbanCardInColumn(projectId, cardId, direction);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function reorderCard(cardId: string, columnId: string, targetIndex: number) {
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => reorderCardInProject(current, cardId, columnId, targetIndex));
+
     const result = await reorderProjectKanbanCard(projectId, cardId, columnId, targetIndex);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveCardError"));
       return;
     }
 
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function deleteCard(cardId: string) {
@@ -467,26 +1014,36 @@ export function ProjectDetailClient({
       return;
     }
 
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => removeCardFromProject(current, cardId));
+
     const result = await deleteProjectKanbanCard(projectId, cardId);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.deleteCardError"));
       return;
     }
 
     setFeedback(t("common.delete"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function moveColumn(columnId: string, direction: "left" | "right") {
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => moveColumnInProject(current, columnId, direction));
+
     const result = await moveProjectKanbanColumn(projectId, columnId, direction);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.moveColumnError"));
       return;
     }
 
-    await query.refetch();
+    refreshProjectCache();
   }
 
   async function deleteColumn(columnId: string) {
@@ -496,15 +1053,20 @@ export function ProjectDetailClient({
       return;
     }
 
+    const previousData = getProjectSnapshot();
+
+    updateProjectCache((current) => removeColumnFromProject(current, columnId));
+
     const result = await deleteProjectKanbanColumn(projectId, columnId);
 
     if (!result.ok) {
+      restoreProjectCache(previousData);
       setFeedback(result.message ?? t("projectDetail.deleteColumnError"));
       return;
     }
 
     setFeedback(t("common.delete"));
-    await query.refetch();
+    refreshProjectCache();
   }
 
   if (query.isLoading) {
