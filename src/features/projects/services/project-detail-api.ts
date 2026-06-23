@@ -23,6 +23,15 @@ export type ProjectKanbanCardDraft = {
   labels: string;
 };
 
+export type ProjectKanbanViewDraft = {
+  name: string;
+  layout: string;
+  groupBy: string;
+  sortBy: string;
+  sortDirection: string;
+  visibleProperties: string[];
+};
+
 async function toProjectActionResult(response: Response): Promise<ProjectActionResult> {
   if (response.ok) {
     return { ok: true };
@@ -143,6 +152,28 @@ export function createProjectKanbanColumn(projectId: string, name: string, color
     type: "createColumn",
     name,
     color
+  });
+}
+
+export function createProjectKanbanView(projectId: string, view: ProjectKanbanViewDraft) {
+  return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
+    type: "createView",
+    ...view
+  });
+}
+
+export function updateProjectKanbanView(projectId: string, viewId: string, view: ProjectKanbanViewDraft) {
+  return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
+    type: "updateView",
+    viewId,
+    ...view
+  });
+}
+
+export function deleteProjectKanbanView(projectId: string, viewId: string) {
+  return projectJsonRequest(`/api/projects/${projectId}/kanban`, "PATCH", {
+    type: "deleteView",
+    viewId
   });
 }
 

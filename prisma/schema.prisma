@@ -2212,8 +2212,26 @@ model KanbanBoard {
   updatedAt DateTime       @updatedAt
   project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   columns   KanbanColumn[]
+  views     KanbanView[]
 
   @@index([projectId, createdAt(sort: Desc)])
+}
+
+model KanbanView {
+  id                String       @id @default(cuid())
+  boardId           String
+  name              String
+  layout            String       @default("table")
+  groupBy           String       @default("status")
+  sortBy            String       @default("manual")
+  sortDirection     String       @default("asc")
+  visibleProperties Json?
+  filters           Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  board             KanbanBoard  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@index([boardId, createdAt])
 }
 
 model KanbanColumn {

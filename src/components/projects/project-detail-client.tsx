@@ -22,10 +22,12 @@ import { type ProjectDetailResponse, useProject } from "@/features/projects/hook
 import {
   createProjectKanbanCard,
   createProjectKanbanColumn,
+  createProjectKanbanView,
   createProjectMilestone,
   deleteProjectArtAsset,
   deleteProjectKanbanCard,
   deleteProjectKanbanColumn,
+  deleteProjectKanbanView,
   generateProjectGdd,
   moveProjectKanbanCard,
   moveProjectKanbanCardInColumn,
@@ -35,11 +37,12 @@ import {
   runProjectArtAnalysis,
   saveProjectKanbanCard,
   updateProjectKanbanColumn,
+  updateProjectKanbanView,
   saveProjectMilestone,
   saveProjectOverview,
   uploadProjectArtAsset
 } from "@/features/projects/services/project-detail-api";
-import type { ProjectKanbanCardDraft, ProjectMilestoneDraft } from "@/features/projects/services/project-detail-api";
+import type { ProjectKanbanCardDraft, ProjectKanbanViewDraft, ProjectMilestoneDraft } from "@/features/projects/services/project-detail-api";
 import type { ProjectOverviewFormState } from "@/features/projects/types";
 import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
@@ -1004,6 +1007,55 @@ nextMilestoneEdits[milestone.id] = {
 
     setFeedback(t("projectDetail.columnUpdated"));
     refreshProjectCache();
+  }
+
+  async function createView(view: ProjectKanbanViewDraft) {
+    setFeedback(null);
+
+    const result = await createProjectKanbanView(projectId, view);
+
+    if (!result.ok) {
+      setFeedback(result.message ?? "Não foi possível criar a view.");
+      return false;
+    }
+
+    setFeedback("View criada.");
+    refreshProjectCache();
+    return true;
+  }
+
+  async function updateView(viewId: string, view: ProjectKanbanViewDraft) {
+    setFeedback(null);
+
+    const result = await updateProjectKanbanView(projectId, viewId, view);
+
+    if (!result.ok) {
+      setFeedback(result.message ?? "Não foi possível salvar a view.");
+      return false;
+    }
+
+    setFeedback("View salva.");
+    refreshProjectCache();
+    return true;
+  }
+
+  async function deleteView(viewId: string) {
+    const confirmed = window.confirm("Excluir esta view?");
+
+    if (!confirmed) {
+      return false;
+    }
+
+    const result = await deleteProjectKanbanView(projectId, viewId);
+
+    if (!result.ok) {
+      setFeedback(result.message ?? "Não foi possível excluir a view.");
+      return false;
+    }
+
+    setFeedback("View excluída.");
+    refreshProjectCache();
+    return true;
   }
 
   async function createCard(columnId: string) {
@@ -2519,6 +2571,9 @@ resolvedValue46 = (
               setNewColumn={setNewColumn}
               createColumn={createColumn}
               updateColumn={updateColumn}
+              createView={createView}
+              updateView={updateView}
+              deleteView={deleteView}
               moveColumn={moveColumn}
               deleteColumn={deleteColumn}
               newCards={newCards}

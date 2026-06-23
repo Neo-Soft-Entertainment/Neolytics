@@ -6,13 +6,16 @@ import { canWriteOrganization } from "@/lib/authorization";
 import {
   createKanbanCard,
   createKanbanColumn,
+  createKanbanView,
   deleteKanbanCard,
   deleteKanbanColumn,
+  deleteKanbanView,
   moveKanbanCard,
   moveKanbanColumn,
   reorderKanbanCard,
   updateKanbanCard,
-  updateKanbanColumn
+  updateKanbanColumn,
+  updateKanbanView
 } from "@/lib/project-service";
 import { parseJsonBody } from "@/lib/request";
 import { invalidateServerCache } from "@/lib/server-memory-cache";
@@ -38,6 +41,29 @@ const schema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("deleteColumn"),
     columnId: z.string().min(1)
+  }),
+  z.object({
+    type: z.literal("createView"),
+    name: z.string().min(2),
+    layout: z.enum(["table", "board", "list"]),
+    groupBy: z.string().min(2),
+    sortBy: z.string().min(2),
+    sortDirection: z.enum(["asc", "desc"]),
+    visibleProperties: z.array(z.string()).optional()
+  }),
+  z.object({
+    type: z.literal("updateView"),
+    viewId: z.string().min(1),
+    name: z.string().min(2).optional(),
+    layout: z.enum(["table", "board", "list"]).optional(),
+    groupBy: z.string().min(2).optional(),
+    sortBy: z.string().min(2).optional(),
+    sortDirection: z.enum(["asc", "desc"]).optional(),
+    visibleProperties: z.array(z.string()).optional()
+  }),
+  z.object({
+    type: z.literal("deleteView"),
+    viewId: z.string().min(1)
   }),
   z.object({
     type: z.literal("createCard"),
@@ -164,6 +190,50 @@ export async function PATCH(
         projectId,
         workspaceId: context.workspace.id,
         columnId: body.columnId
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
+    }
+
+    if (body.type === "createView") {
+      const project = await createKanbanView({
+        projectId,
+        workspaceId: context.workspace.id,
+        name: body.name,
+        layout: body.layout,
+        groupBy: body.groupBy,
+        sortBy: body.sortBy,
+        sortDirection: body.sortDirection,
+        visibleProperties: body.visibleProperties
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
+    }
+
+    if (body.type === "updateView") {
+      const project = await updateKanbanView({
+        projectId,
+        workspaceId: context.workspace.id,
+        viewId: body.viewId,
+        name: body.name,
+        layout: body.layout,
+        groupBy: body.groupBy,
+        sortBy: body.sortBy,
+        sortDirection: body.sortDirection,
+        visibleProperties: body.visibleProperties
+      });
+
+      invalidateProjectReadCaches(context.workspace.id, projectId);
+      return ok(project);
+    }
+
+    if (body.type === "deleteView") {
+      const project = await deleteKanbanView({
+        projectId,
+        workspaceId: context.workspace.id,
+        viewId: body.viewId
       });
 
       invalidateProjectReadCaches(context.workspace.id, projectId);

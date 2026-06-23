@@ -81,9 +81,39 @@ type DrawerState =
   | null;
 
 type KanbanSortMode = "manual" | "dueDate" | "title" | "assignee";
+type KanbanViewLayout = "table" | "board" | "list";
+type KanbanGroupBy = "status" | "priority" | "area" | "type" | "assignee" | "dueDate" | "label";
 type KanbanDensity = "comfortable" | "compact";
-type KanbanCardPropertyKey = "description" | "labels" | "dueDate" | "assignee";
+type KanbanCardPropertyKey = "description" | "labels" | "dueDate" | "assignee" | "status" | "priority" | "area" | "type";
 type KanbanCardPropertyVisibility = Record<KanbanCardPropertyKey, boolean>;
+type KanbanViewDraft = {
+  name: string;
+  layout: string;
+  groupBy: string;
+  sortBy: string;
+  sortDirection: string;
+  visibleProperties: string[];
+};
+type KanbanView = KanbanBoard["views"][number] | {
+  id: string;
+  name: string;
+  layout: string;
+  groupBy: string;
+  sortBy: string;
+  sortDirection: string;
+  visibleProperties: unknown;
+  filters: unknown;
+};
+type KanbanCardRow = {
+  card: KanbanCard;
+  columnId: string;
+  columnIndex: number;
+  status: string;
+  priority: string;
+  area: string;
+  type: string;
+  firstLabel: string;
+};
 
 function normalizeKanbanCards(cards: KanbanCard[]) {
   return cards.map((card, index) => ({
@@ -179,11 +209,14 @@ function getBoardSignature(board: KanbanBoard | null) {
     return "";
   }
 
-  return board.columns.map((column) => {
+  const columnSignature = board.columns.map((column) => {
     const cardIds = column.cards.map((card) => card.id).join(",");
 
     return `${column.id}:${cardIds}`;
   }).join("|");
+  const viewSignature = (board.views ?? []).map((view) => `${view.id}:${view.name}:${view.layout}:${view.groupBy}:${view.sortBy}:${view.sortDirection}`).join("|");
+
+  return `${columnSignature}::${viewSignature}`;
 }
 
 function compareKanbanCards(left: KanbanCard, right: KanbanCard, sortMode: KanbanSortMode) {
@@ -213,6 +246,176 @@ function compareKanbanCards(left: KanbanCard, right: KanbanCard, sortMode: Kanba
   return left.sortOrder - right.sortOrder;
 }
 
+function getDefaultKanbanProperties() {
+  return ["status", "priority", "area", "type", "assignee", "dueDate", "labels", "description"];
+}
+
+function getKanbanViewProperties(value: unknown) {
+  if (!Array.isArray(value)) {
+    return getDefaultKanbanProperties();
+  }
+
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function getDefaultKanbanViews(): KanbanView[] {
+  return [
+    {
+      id: "default-table",
+      name: "All Tasks",
+      layout: "table",
+      groupBy: "status",
+      sortBy: "manual",
+      sortDirection: "asc",
+      visibleProperties: getDefaultKanbanProperties(),
+      filters: null
+    },
+    {
+      id: "default-board",
+      name: "Board by Status",
+      layout: "board",
+      groupBy: "status",
+      sortBy: "manual",
+      sortDirection: "asc",
+      visibleProperties: getDefaultKanbanProperties(),
+      filters: null
+    },
+    {
+      id: "default-list",
+      name: "This Week",
+      layout: "list",
+      groupBy: "dueDate",
+      sortBy: "dueDate",
+      sortDirection: "asc",
+      visibleProperties: getDefaultKanbanProperties(),
+      filters: null
+    }
+  ];
+}
+
+function normalizeKanbanLayout(value: string): KanbanViewLayout {
+  if (value === "board") {
+    return "board";
+  }
+
+  if (value === "list") {
+    return "list";
+  }
+
+  return "table";
+}
+
+function normalizeKanbanGroupBy(value: string): KanbanGroupBy {
+  if (value === "priority" || value === "area" || value === "type" || value === "assignee" || value === "dueDate" || value === "label") {
+    return value;
+  }
+
+  return "status";
+}
+
+function normalizeKanbanSortMode(value: string): KanbanSortMode {
+  if (value === "dueDate" || value === "title" || value === "assignee") {
+    return value;
+  }
+
+  return "manual";
+}
+
+function getLabelValue(labels: string[], candidates: string[], fallback: string) {
+  for (const label of labels) {
+    const normalized = label.toLowerCase();
+
+    for (const candidate of candidates) {
+      if (normalized.includes(candidate)) {
+        return label;
+      }
+    }
+  }
+
+  return fallback;
+}
+
+function getCardPriority(labels: string[]) {
+  for (const label of labels) {
+    const normalized = label.toLowerCase();
+
+    if (normalized.startsWith("p0") || normalized.includes("critical")) {
+      return label;
+    }
+
+    if (normalized.startsWith("p1") || normalized.includes("high")) {
+      return label;
+    }
+
+    if (normalized.startsWith("p2") || normalized.includes("medium")) {
+      return label;
+    }
+
+    if (normalized.startsWith("p3") || normalized.includes("low")) {
+      return label;
+    }
+  }
+
+  return "No priority";
+}
+
+function getCardType(labels: string[]) {
+  return getLabelValue(labels, ["feature", "bug", "polish", "task", "chore", "research"], "Task");
+}
+
+function getCardArea(labels: string[]) {
+  const ignored = ["feature", "bug", "polish", "task", "chore", "research", "critical", "high", "medium", "low"];
+
+  for (const label of labels) {
+    const normalized = label.toLowerCase();
+    let shouldIgnore = normalized.startsWith("p0") || normalized.startsWith("p1") || normalized.startsWith("p2") || normalized.startsWith("p3");
+
+    for (const item of ignored) {
+      if (normalized.includes(item)) {
+        shouldIgnore = true;
+      }
+    }
+
+    if (!shouldIgnore) {
+      return label;
+    }
+  }
+
+  return "General";
+}
+
+function getRowGroupValue(row: KanbanCardRow, groupBy: KanbanGroupBy) {
+  if (groupBy === "priority") {
+    return row.priority;
+  }
+
+  if (groupBy === "area") {
+    return row.area;
+  }
+
+  if (groupBy === "type") {
+    return row.type;
+  }
+
+  if (groupBy === "assignee") {
+    return row.card.assigneeLabel || "No owner";
+  }
+
+  if (groupBy === "dueDate") {
+    if (row.card.dueDate) {
+      return new Date(row.card.dueDate).toLocaleDateString();
+    }
+
+    return "No date";
+  }
+
+  if (groupBy === "label") {
+    return row.firstLabel || "No label";
+  }
+
+  return row.status;
+}
+
 export function ProjectKanbanBoard({
   projectName,
   board,
@@ -226,6 +429,9 @@ export function ProjectKanbanBoard({
   setNewColumn,
   createColumn,
   updateColumn,
+  createView,
+  updateView,
+  deleteView,
   moveColumn,
   deleteColumn,
   newCards,
@@ -252,6 +458,9 @@ export function ProjectKanbanBoard({
   setNewColumn: Dispatch<SetStateAction<{ name: string; color: string }>>;
   createColumn: () => Promise<void>;
   updateColumn: (columnId: string, name: string, color: string | null, sortOrder: number) => Promise<void>;
+  createView: (view: KanbanViewDraft) => Promise<boolean>;
+  updateView: (viewId: string, view: KanbanViewDraft) => Promise<boolean>;
+  deleteView: (viewId: string) => Promise<boolean>;
   moveColumn: (columnId: string, direction: "left" | "right") => Promise<void>;
   deleteColumn: (columnId: string) => Promise<void>;
   newCards: Record<string, CardDraft>;
@@ -269,13 +478,22 @@ export function ProjectKanbanBoard({
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null);
   const [localBoard, setLocalBoard] = useState<KanbanBoard | null>(board);
+  const [activeViewId, setActiveViewId] = useState("default-table");
+  const [viewName, setViewName] = useState("All Tasks");
+  const [viewLayout, setViewLayout] = useState<KanbanViewLayout>("table");
+  const [groupBy, setGroupBy] = useState<KanbanGroupBy>("status");
   const [sortMode, setSortMode] = useState<KanbanSortMode>("manual");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [density, setDensity] = useState<KanbanDensity>("comfortable");
   const [visibleProperties, setVisibleProperties] = useState<KanbanCardPropertyVisibility>({
     description: true,
     labels: true,
     dueDate: true,
-    assignee: true
+    assignee: true,
+    status: true,
+    priority: true,
+    area: true,
+    type: true
   });
   let activeBoard = localBoard;
 
@@ -284,6 +502,14 @@ export function ProjectKanbanBoard({
   }
 
   const columns = activeBoard?.columns ?? [];
+  const persistedViews = activeBoard?.views ?? [];
+  let views: KanbanView[] = persistedViews;
+
+  if (views.length === 0) {
+    views = getDefaultKanbanViews();
+  }
+
+  const activeView = views.find((view) => view.id === activeViewId) ?? views[0];
   const columnOptions = columns.map((column) => ({ id: column.id, name: column.name }));
   const cardsById = new Map(columns.flatMap((column) => column.cards.map((card) => [card.id, { card, column }])));
   const normalizedSearch = search.trim().toLowerCase();
@@ -298,6 +524,36 @@ export function ProjectKanbanBoard({
   useEffect(() => {
     setLocalBoard(board);
   }, [boardSignature]);
+
+  useEffect(() => {
+    if (!activeView) {
+      return;
+    }
+
+    setActiveViewId(activeView.id);
+    setViewName(activeView.name);
+    setViewLayout(normalizeKanbanLayout(activeView.layout));
+    setGroupBy(normalizeKanbanGroupBy(activeView.groupBy));
+    setSortMode(normalizeKanbanSortMode(activeView.sortBy));
+
+    if (activeView.sortDirection === "desc") {
+      setSortDirection("desc");
+    } else {
+      setSortDirection("asc");
+    }
+
+    const nextProperties = getKanbanViewProperties(activeView.visibleProperties);
+    setVisibleProperties({
+      description: nextProperties.includes("description"),
+      labels: nextProperties.includes("labels"),
+      dueDate: nextProperties.includes("dueDate"),
+      assignee: nextProperties.includes("assignee"),
+      status: nextProperties.includes("status"),
+      priority: nextProperties.includes("priority"),
+      area: nextProperties.includes("area"),
+      type: nextProperties.includes("type")
+    });
+  }, [activeViewId, boardSignature]);
 
   function toggleCardProperty(property: KanbanCardPropertyKey) {
     setVisibleProperties((current) => ({
@@ -320,6 +576,76 @@ export function ProjectKanbanBoard({
     return Array.from(names).sort();
   }, [columns]);
 
+  const allRows = useMemo(() => {
+    const rows: KanbanCardRow[] = [];
+
+    columns.forEach((column, columnIndex) => {
+      for (const card of column.cards) {
+        const cardLabels = getKanbanCardLabels(card.labels);
+        rows.push({
+          card,
+          columnId: column.id,
+          columnIndex,
+          status: column.name,
+          priority: getCardPriority(cardLabels),
+          area: getCardArea(cardLabels),
+          type: getCardType(cardLabels),
+          firstLabel: cardLabels[0] ?? ""
+        });
+      }
+    });
+
+    return rows;
+  }, [columns]);
+
+  const filteredRows = useMemo(() => {
+    const rows = allRows.filter((row) => {
+      const cardLabels = getKanbanCardLabels(row.card.labels);
+      const matchesSearch = !normalizedSearch || [
+        row.card.title,
+        row.card.description,
+        row.card.assigneeLabel,
+        row.status,
+        row.priority,
+        row.area,
+        row.type,
+        ...cardLabels
+      ].filter(Boolean).join(" ").toLowerCase().includes(normalizedSearch);
+      const matchesAssignee = assigneeFilter === "all" || row.card.assigneeLabel === assigneeFilter;
+      const matchesLabel = labelFilter === "all" || cardLabels.includes(labelFilter);
+
+      return matchesSearch && matchesAssignee && matchesLabel;
+    });
+
+    return [...rows].sort((left, right) => {
+      const result = compareKanbanCards(left.card, right.card, sortMode);
+
+      if (sortDirection === "desc") {
+        return result * -1;
+      }
+
+      return result;
+    });
+  }, [allRows, assigneeFilter, labelFilter, normalizedSearch, sortDirection, sortMode]);
+
+  const rowGroups = useMemo(() => {
+    const groups = new Map<string, KanbanCardRow[]>();
+
+    for (const row of filteredRows) {
+      const key = getRowGroupValue(row, groupBy);
+      const current = groups.get(key);
+
+      if (current) {
+        current.push(row);
+        continue;
+      }
+
+      groups.set(key, [row]);
+    }
+
+    return Array.from(groups.entries()).map(([name, rows]) => ({ name, rows }));
+  }, [filteredRows, groupBy]);
+
   const filteredColumns = useMemo(() => columns.map((column) => {
     const cards = column.cards.filter((card) => {
       const cardLabels = getKanbanCardLabels(card.labels);
@@ -335,13 +661,19 @@ export function ProjectKanbanBoard({
       return matchesSearch && matchesAssignee && matchesLabel;
     });
 
+    let sortedCards = [...cards].sort((left, right) => compareKanbanCards(left, right, sortMode));
+
+    if (sortDirection === "desc") {
+      sortedCards = sortedCards.reverse();
+    }
+
     return {
       ...column,
-      cards: [...cards].sort((left, right) => compareKanbanCards(left, right, sortMode))
+      cards: sortedCards
     };
-  }), [assigneeFilter, columns, labelFilter, normalizedSearch, sortMode]);
+  }), [assigneeFilter, columns, labelFilter, normalizedSearch, sortDirection, sortMode]);
 
-  const visibleCards = filteredColumns.reduce((sum, column) => sum + column.cards.length, 0);
+  const visibleCards = filteredRows.length;
   const totalCards = columns.reduce((sum, column) => sum + column.cards.length, 0);
     let resolvedValue0: any;
   if (drawer?.mode === "edit") {
@@ -364,6 +696,58 @@ const activeDragCard = resolvedValue1;
     resolvedValue2 = columns[0]?.id ?? "";
   }
 const createColumnId = resolvedValue2;
+
+  function getViewDraft(name: string): KanbanViewDraft {
+    const visiblePropertyNames = (Object.keys(visibleProperties) as KanbanCardPropertyKey[]).filter((property) => visibleProperties[property]);
+
+    return {
+      name,
+      layout: viewLayout,
+      groupBy,
+      sortBy: sortMode,
+      sortDirection,
+      visibleProperties: visiblePropertyNames
+    };
+  }
+
+  async function createDatabaseView() {
+    const name = window.prompt("Nome da nova view", "Nova view");
+
+    if (!name?.trim()) {
+      return;
+    }
+
+    const created = await createView(getViewDraft(name.trim()));
+
+    if (created) {
+      setViewName(name.trim());
+    }
+  }
+
+  async function saveDatabaseView() {
+    if (!viewName.trim()) {
+      return;
+    }
+
+    if (activeViewId.startsWith("default-")) {
+      await createView(getViewDraft(viewName.trim()));
+      return;
+    }
+
+    await updateView(activeViewId, getViewDraft(viewName.trim()));
+  }
+
+  async function deleteDatabaseView() {
+    if (activeViewId.startsWith("default-")) {
+      return;
+    }
+
+    const deleted = await deleteView(activeViewId);
+
+    if (deleted) {
+      setActiveViewId("default-table");
+    }
+  }
 
   function onDragStart(event: DragStartEvent) {
     setActiveDragCardId(String(event.active.id));
@@ -554,109 +938,10 @@ const createColumnId = resolvedValue2;
   } else {
     resolvedValue5 = null;
   }
-return (
-    <div className="overflow-hidden rounded-lg border bg-[#101418] text-slate-200 shadow-sm">
-      <div className="border-b border-slate-800 bg-[#171b20] px-5 py-4">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-xs text-slate-400">Projetos / {projectName}</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-100">Quadro</h2>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex -space-x-2">
-              {assignees.slice(0, 5).map((assignee) => (
-                <span key={assignee} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#171b20] bg-sky-500 text-xs font-semibold text-white">
-                  {assignee.slice(0, 1).toUpperCase()}
-                </span>
-              ))}
-              {resolvedValue4}
-            </div>
-            <Button className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={() => setDrawer({ mode: "create", columnId: columns[0]?.id ?? "" })}>
-              <Plus className="mr-2 h-4 w-4" />
-              Criar
-            </Button>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_180px_auto]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <Input
-              className="border-slate-700 bg-[#11161c] pl-9 text-slate-100 placeholder:text-slate-500"
-              value={search}
-              onChange={(event: any) => setSearch(event.target.value)}
-              placeholder="Pesquisar no quadro"
-            />
-          </div>
-          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Responsável" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os responsáveis</SelectItem>
-              {assignees.map((assignee) => (
-                <SelectItem key={assignee} value={assignee}>{assignee}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={labelFilter} onValueChange={setLabelFilter}>
-            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Etiqueta" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as etiquetas</SelectItem>
-              {labels.map((label) => (
-                <SelectItem key={label} value={label}>{label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center justify-end text-xs text-slate-400">
-            {formatNumber(visibleCards)} de {formatNumber(totalCards)} cartões
-          </div>
-        </div>
-        <div className="mt-3 grid gap-3 lg:grid-cols-[180px_180px_minmax(0,1fr)]">
-          <Select value={sortMode} onValueChange={(value: KanbanSortMode) => setSortMode(value)}>
-            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Ordenação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="manual">Ordem manual</SelectItem>
-              <SelectItem value="dueDate">Vencimento</SelectItem>
-              <SelectItem value="title">Título</SelectItem>
-              <SelectItem value="assignee">Responsável</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={density} onValueChange={(value: KanbanDensity) => setDensity(value)}>
-            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
-              <SelectValue placeholder="Densidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="comfortable">Confortável</SelectItem>
-              <SelectItem value="compact">Compacto</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex flex-wrap items-center gap-2">
-            {(["description", "labels", "dueDate", "assignee"] as KanbanCardPropertyKey[]).map((property) => (
-              <Button
-                key={property}
-                type="button"
-                size="sm"
-                variant="outline"
-                className={cn(
-                  "border-slate-700 bg-[#11161c] text-slate-300 hover:bg-slate-800 hover:text-slate-100",
-                  visibleProperties[property] && "border-sky-400/50 bg-sky-400/10 text-sky-100"
-                )}
-                onClick={() => toggleCardProperty(property)}
-              >
-                {property}
-              </Button>
-            ))}
-          </div>
-        </div>
-        <p className="mt-2 text-xs text-slate-500">
-          Ordenação muda a visualização. Arrastar cards continua salvando a ordem manual do board.
-        </p>
-      </div>
+  let statusColumnEditor = null;
 
+  if (viewLayout === "board" && groupBy === "status") {
+    statusColumnEditor = (
       <div className="border-b border-slate-800 bg-[#171b20] px-5 py-3">
         <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_120px_auto]">
           <Input
@@ -676,7 +961,13 @@ return (
           </Button>
         </div>
       </div>
+    );
+  }
 
+  let databaseBody = null;
+
+  if (viewLayout === "board" && groupBy === "status") {
+    databaseBody = (
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -713,6 +1004,216 @@ return (
           {resolvedValue5}
         </DragOverlay>
       </DndContext>
+    );
+  }
+
+  if (viewLayout === "board" && groupBy !== "status") {
+    databaseBody = (
+      <KanbanGroupedBoardView
+        groups={rowGroups}
+        visibleProperties={visibleProperties}
+        density={density}
+        onOpenCard={openEditDrawer}
+        onCreate={() => setDrawer({ mode: "create", columnId: columns[0]?.id ?? "" })}
+      />
+    );
+  }
+
+  if (viewLayout === "table") {
+    databaseBody = (
+      <KanbanTableView
+        projectName={projectName}
+        rows={filteredRows}
+        visibleProperties={visibleProperties}
+        onOpenCard={openEditDrawer}
+      />
+    );
+  }
+
+  if (viewLayout === "list") {
+    databaseBody = (
+      <KanbanListView
+        groups={rowGroups}
+        visibleProperties={visibleProperties}
+        density={density}
+        onOpenCard={openEditDrawer}
+      />
+    );
+  }
+return (
+    <div className="overflow-hidden rounded-lg border bg-[#101418] text-slate-200 shadow-sm">
+      <div className="border-b border-slate-800 bg-[#171b20] px-5 py-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <p className="text-xs text-slate-400">Neo Soft Entertainment / Development / {projectName}</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-100">Production</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex -space-x-2">
+              {assignees.slice(0, 5).map((assignee) => (
+                <span key={assignee} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#171b20] bg-sky-500 text-xs font-semibold text-white">
+                  {assignee.slice(0, 1).toUpperCase()}
+                </span>
+              ))}
+              {resolvedValue4}
+            </div>
+            <Button className="bg-sky-500 text-slate-950 hover:bg-sky-400" onClick={() => setDrawer({ mode: "create", columnId: columns[0]?.id ?? "" })}>
+              <Plus className="mr-2 h-4 w-4" />
+              New
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {views.map((view) => (
+            <Button
+              key={view.id}
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={cn(
+                "h-8 rounded-full px-3 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100",
+                activeViewId === view.id && "bg-slate-700 text-white"
+              )}
+              onClick={() => setActiveViewId(view.id)}
+            >
+              {view.name}
+            </Button>
+          ))}
+          <Button type="button" size="sm" variant="ghost" className="h-8 rounded-full px-3 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-100" onClick={createDatabaseView}>
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            New view
+          </Button>
+        </div>
+        <div className="mt-5 grid gap-3 xl:grid-cols-[minmax(220px,1fr)_150px_150px_150px_150px_150px_auto]">
+          <Input
+            className="border-slate-700 bg-[#11161c] text-slate-100 placeholder:text-slate-500"
+            value={viewName}
+            onChange={(event: any) => setViewName(event.target.value)}
+            placeholder="View name"
+          />
+          <Select value={viewLayout} onValueChange={(value: KanbanViewLayout) => setViewLayout(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Layout" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="table">Table</SelectItem>
+              <SelectItem value="board">Board</SelectItem>
+              <SelectItem value="list">List</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={groupBy} onValueChange={(value: KanbanGroupBy) => setGroupBy(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Group" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="status">Status</SelectItem>
+              <SelectItem value="priority">Priority</SelectItem>
+              <SelectItem value="area">Area</SelectItem>
+              <SelectItem value="type">Type</SelectItem>
+              <SelectItem value="assignee">Owner</SelectItem>
+              <SelectItem value="dueDate">Date</SelectItem>
+              <SelectItem value="label">Label</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortMode} onValueChange={(value: KanbanSortMode) => setSortMode(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manual">Manual</SelectItem>
+              <SelectItem value="dueDate">Due date</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+              <SelectItem value="assignee">Owner</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortDirection} onValueChange={(value: "asc" | "desc") => setSortDirection(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Direction" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="asc">Ascending</SelectItem>
+              <SelectItem value="desc">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={density} onValueChange={(value: KanbanDensity) => setDensity(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Density" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="comfortable">Comfortable</SelectItem>
+              <SelectItem value="compact">Compact</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center justify-end gap-2">
+            <Button type="button" variant="outline" className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800" onClick={saveDatabaseView}>
+              Save
+            </Button>
+            <Button type="button" variant="ghost" className="text-slate-400 hover:bg-slate-800 hover:text-slate-100" disabled={activeViewId.startsWith("default-")} onClick={deleteDatabaseView}>
+              Delete
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_180px_auto]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Input
+              className="border-slate-700 bg-[#11161c] pl-9 text-slate-100 placeholder:text-slate-500"
+              value={search}
+              onChange={(event: any) => setSearch(event.target.value)}
+              placeholder="Pesquisar no quadro"
+            />
+          </div>
+          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os responsáveis</SelectItem>
+              {assignees.map((assignee) => (
+                <SelectItem key={assignee} value={assignee}>{assignee}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={labelFilter} onValueChange={setLabelFilter}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Etiqueta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as etiquetas</SelectItem>
+              {labels.map((label) => (
+                <SelectItem key={label} value={label}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center justify-end text-xs text-slate-400">
+            {formatNumber(visibleCards)} de {formatNumber(totalCards)} cartões
+          </div>
+        </div>
+        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)]">
+          <div className="flex flex-wrap items-center gap-2">
+            {(["status", "priority", "area", "type", "assignee", "dueDate", "labels", "description"] as KanbanCardPropertyKey[]).map((property) => (
+              <Button
+                key={property}
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "border-slate-700 bg-[#11161c] text-slate-300 hover:bg-slate-800 hover:text-slate-100",
+                  visibleProperties[property] && "border-sky-400/50 bg-sky-400/10 text-sky-100"
+                )}
+                onClick={() => toggleCardProperty(property)}
+              >
+                {property}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Views salvas mudam layout, agrupamento, ordenação e propriedades. Drag-and-drop fica ativo no board agrupado por status.
+        </p>
+      </div>
+      {statusColumnEditor}
+      {databaseBody}
 
       <KanbanCardDrawer
         drawer={drawer}
@@ -730,6 +1231,331 @@ return (
         saveCard={saveCard}
       />
     </div>
+  );
+}
+
+function KanbanPropertyBadge({ value }: { value: string }) {
+  if (!value) {
+    return <span className="text-slate-600">Empty</span>;
+  }
+
+  return (
+    <span className={cn("inline-flex w-fit rounded px-1.5 py-0.5 text-[11px] font-semibold", getLabelClass(value))}>
+      {value}
+    </span>
+  );
+}
+
+function KanbanRowMeta({
+  row,
+  visibleProperties
+}: {
+  row: KanbanCardRow;
+  visibleProperties: KanbanCardPropertyVisibility;
+}) {
+  const labels = getKanbanCardLabels(row.card.labels);
+  const properties = [];
+
+  if (visibleProperties.status) {
+    properties.push(<KanbanPropertyBadge key="status" value={row.status} />);
+  }
+
+  if (visibleProperties.priority) {
+    properties.push(<KanbanPropertyBadge key="priority" value={row.priority} />);
+  }
+
+  if (visibleProperties.area) {
+    properties.push(<KanbanPropertyBadge key="area" value={row.area} />);
+  }
+
+  if (visibleProperties.type) {
+    properties.push(<KanbanPropertyBadge key="type" value={row.type} />);
+  }
+
+  if (visibleProperties.assignee && row.card.assigneeLabel) {
+    properties.push(<span key="assignee">{row.card.assigneeLabel}</span>);
+  }
+
+  if (visibleProperties.dueDate && row.card.dueDate) {
+    properties.push(<span key="dueDate">{new Date(row.card.dueDate).toLocaleDateString()}</span>);
+  }
+
+  if (visibleProperties.labels) {
+    for (const label of labels.slice(0, 4)) {
+      properties.push(<KanbanPropertyBadge key={label} value={label} />);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+      {properties}
+    </div>
+  );
+}
+
+function KanbanTableView({
+  projectName,
+  rows,
+  visibleProperties,
+  onOpenCard
+}: {
+  projectName: string;
+  rows: KanbanCardRow[];
+  visibleProperties: KanbanCardPropertyVisibility;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+}) {
+  const headers = [
+    <th key="task" className="w-[320px] px-3 py-2">Task</th>,
+    <th key="project" className="px-3 py-2">Project</th>
+  ];
+
+  if (visibleProperties.status) {
+    headers.push(<th key="status" className="px-3 py-2">Status</th>);
+  }
+
+  if (visibleProperties.priority) {
+    headers.push(<th key="priority" className="px-3 py-2">Priority</th>);
+  }
+
+  if (visibleProperties.area) {
+    headers.push(<th key="area" className="px-3 py-2">Area</th>);
+  }
+
+  if (visibleProperties.type) {
+    headers.push(<th key="type" className="px-3 py-2">Type</th>);
+  }
+
+  if (visibleProperties.assignee) {
+    headers.push(<th key="assignee" className="px-3 py-2">Owner</th>);
+  }
+
+  if (visibleProperties.dueDate) {
+    headers.push(<th key="dueDate" className="px-3 py-2">Milestone</th>);
+  }
+
+  return (
+    <div className="min-h-[520px] overflow-auto bg-[#0f1317] p-5">
+      <table className="w-full min-w-[1100px] border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-slate-800 text-left text-xs font-medium text-slate-400">
+            {headers}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <KanbanTableRow
+              key={row.card.id}
+              projectName={projectName}
+              row={row}
+              visibleProperties={visibleProperties}
+              onOpenCard={onOpenCard}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function KanbanTableRow({
+  projectName,
+  row,
+  visibleProperties,
+  onOpenCard
+}: {
+  projectName: string;
+  row: KanbanCardRow;
+  visibleProperties: KanbanCardPropertyVisibility;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+}) {
+  let descriptionLine = null;
+
+  if (visibleProperties.description && row.card.description) {
+    descriptionLine = <p className="mt-1 line-clamp-1 text-xs text-slate-500">{row.card.description}</p>;
+  }
+
+  const cells = [
+    <td key="task" className="px-3 py-2">
+      <button type="button" className="font-medium text-slate-100 hover:underline" onClick={() => onOpenCard(row.card, row.columnId)}>
+        {row.card.title}
+      </button>
+      {descriptionLine}
+    </td>,
+    <td key="project" className="px-3 py-2 text-slate-300">{projectName}</td>
+  ];
+
+  if (visibleProperties.status) {
+    cells.push(<td key="status" className="px-3 py-2"><KanbanPropertyBadge value={row.status} /></td>);
+  }
+
+  if (visibleProperties.priority) {
+    cells.push(<td key="priority" className="px-3 py-2"><KanbanPropertyBadge value={row.priority} /></td>);
+  }
+
+  if (visibleProperties.area) {
+    cells.push(<td key="area" className="px-3 py-2"><KanbanPropertyBadge value={row.area} /></td>);
+  }
+
+  if (visibleProperties.type) {
+    cells.push(<td key="type" className="px-3 py-2"><KanbanPropertyBadge value={row.type} /></td>);
+  }
+
+  if (visibleProperties.assignee) {
+    cells.push(<td key="assignee" className="px-3 py-2 text-slate-300">{row.card.assigneeLabel ?? "No owner"}</td>);
+  }
+
+  if (visibleProperties.dueDate) {
+    let dueDateLabel = "No date";
+
+    if (row.card.dueDate) {
+      dueDateLabel = new Date(row.card.dueDate).toLocaleDateString();
+    }
+
+    cells.push(<td key="dueDate" className="px-3 py-2 text-slate-300">{dueDateLabel}</td>);
+  }
+
+  return (
+    <tr className="border-b border-slate-800/80 hover:bg-slate-800/30">
+      {cells}
+    </tr>
+  );
+}
+
+function KanbanListView({
+  groups,
+  visibleProperties,
+  density,
+  onOpenCard
+}: {
+  groups: Array<{ name: string; rows: KanbanCardRow[] }>;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+}) {
+  return (
+    <div className="min-h-[520px] space-y-4 overflow-auto bg-[#0f1317] p-5">
+      {groups.map((group) => (
+        <section key={group.name} className="rounded-lg border border-slate-800 bg-[#151a1f]">
+          <header className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+            <p className="font-semibold text-slate-200">{group.name}</p>
+            <span className="text-xs text-slate-500">{formatNumber(group.rows.length)}</span>
+          </header>
+          <div className="divide-y divide-slate-800">
+            {group.rows.map((row) => (
+              <KanbanListRow
+                key={row.card.id}
+                row={row}
+                visibleProperties={visibleProperties}
+                density={density}
+                onOpenCard={onOpenCard}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function KanbanListRow({
+  row,
+  visibleProperties,
+  density,
+  onOpenCard
+}: {
+  row: KanbanCardRow;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+}) {
+  let descriptionLine = null;
+
+  if (visibleProperties.description && density === "comfortable" && row.card.description) {
+    descriptionLine = <p className="mt-1 line-clamp-2 text-sm text-slate-500">{row.card.description}</p>;
+  }
+
+  return (
+    <button type="button" className="block w-full px-4 py-3 text-left hover:bg-slate-800/40" onClick={() => onOpenCard(row.card, row.columnId)}>
+      <p className="font-medium text-slate-100">{row.card.title}</p>
+      {descriptionLine}
+      <div className="mt-2">
+        <KanbanRowMeta row={row} visibleProperties={visibleProperties} />
+      </div>
+    </button>
+  );
+}
+
+function KanbanGroupedBoardView({
+  groups,
+  visibleProperties,
+  density,
+  onOpenCard,
+  onCreate
+}: {
+  groups: Array<{ name: string; rows: KanbanCardRow[] }>;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+  onCreate: () => void;
+}) {
+  return (
+    <div className="h-[calc(100vh-22rem)] min-h-[520px] overflow-x-auto bg-[#0f1317] p-5">
+      <div className="flex h-full min-w-max gap-3">
+        {groups.map((group) => (
+          <section key={group.name} className="flex h-full w-[286px] shrink-0 flex-col rounded-md bg-[#151a1f] shadow-sm">
+            <header className="flex items-center justify-between gap-3 border-b border-slate-800 px-3 py-3">
+              <div className="flex items-center gap-2">
+                <KanbanPropertyBadge value={group.name} />
+                <span className="text-xs text-slate-500">{formatNumber(group.rows.length)}</span>
+              </div>
+            </header>
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+              {group.rows.map((row) => (
+                <KanbanGroupedBoardCard
+                  key={row.card.id}
+                  row={row}
+                  visibleProperties={visibleProperties}
+                  density={density}
+                  onOpenCard={onOpenCard}
+                />
+              ))}
+              <Button variant="ghost" className="w-full justify-start text-slate-400 hover:bg-slate-800 hover:text-slate-100" onClick={onCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                New page
+              </Button>
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function KanbanGroupedBoardCard({
+  row,
+  visibleProperties,
+  density,
+  onOpenCard
+}: {
+  row: KanbanCardRow;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
+  onOpenCard: (card: KanbanCard, columnId: string) => void;
+}) {
+  let descriptionLine = null;
+
+  if (visibleProperties.description && density === "comfortable" && row.card.description) {
+    descriptionLine = <p className="mt-2 line-clamp-2 text-xs text-slate-400">{row.card.description}</p>;
+  }
+
+  return (
+    <button type="button" className="w-full rounded-md border border-slate-700 bg-[#22272d] p-3 text-left text-sm shadow-sm hover:border-slate-600 hover:bg-[#282e35]" onClick={() => onOpenCard(row.card, row.columnId)}>
+      <p className="line-clamp-2 font-medium leading-5 text-slate-200">{row.card.title}</p>
+      {descriptionLine}
+      <div className="mt-2">
+        <KanbanRowMeta row={row} visibleProperties={visibleProperties} />
+      </div>
+    </button>
   );
 }
 

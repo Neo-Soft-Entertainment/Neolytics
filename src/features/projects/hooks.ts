@@ -322,6 +322,16 @@ export interface ProjectDetailResponse extends ProjectListItem {
   kanbanBoards: Array<{
     id: string;
     name: string;
+    views: Array<{
+      id: string;
+      name: string;
+      layout: string;
+      groupBy: string;
+      sortBy: string;
+      sortDirection: string;
+      visibleProperties: unknown;
+      filters: unknown;
+    }>;
     columns: Array<{
       id: string;
       name: string;

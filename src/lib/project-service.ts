@@ -888,6 +888,11 @@ const projectInclude = {
       createdAt: "asc"
     },
     include: {
+      views: {
+        orderBy: {
+          createdAt: "asc"
+        }
+      },
       columns: {
         orderBy: {
           sortOrder: "asc"
@@ -3306,6 +3311,142 @@ export async function createKanbanColumn(params: {
       name: params.name.trim(),
       color: params.color?.trim() || null,
       sortOrder: (board.columns[0]?.sortOrder ?? -1) + 1
+    }
+  });
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function createKanbanView(params: {
+  projectId: string;
+  workspaceId: string;
+  name: string;
+  layout: string;
+  groupBy: string;
+  sortBy: string;
+  sortDirection: string;
+  visibleProperties?: string[];
+}) {
+  const board = await db.kanbanBoard.findFirstOrThrow({
+    where: {
+      projectId: params.projectId,
+      project: {
+        workspaceId: params.workspaceId
+      }
+    }
+  });
+
+  await db.kanbanView.create({
+    data: {
+      boardId: board.id,
+      name: params.name.trim(),
+      layout: params.layout,
+      groupBy: params.groupBy,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection,
+      visibleProperties: params.visibleProperties ?? []
+    }
+  });
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function updateKanbanView(params: {
+  projectId: string;
+  workspaceId: string;
+  viewId: string;
+  name?: string;
+  layout?: string;
+  groupBy?: string;
+  sortBy?: string;
+  sortDirection?: string;
+  visibleProperties?: string[];
+}) {
+  const view = await db.kanbanView.findFirstOrThrow({
+    where: {
+      id: params.viewId,
+      board: {
+        projectId: params.projectId,
+        project: {
+          workspaceId: params.workspaceId
+        }
+      }
+    }
+  });
+
+  let nameData = {};
+
+  if (params.name !== undefined) {
+    nameData = { name: params.name.trim() };
+  }
+
+  let layoutData = {};
+
+  if (params.layout !== undefined) {
+    layoutData = { layout: params.layout };
+  }
+
+  let groupData = {};
+
+  if (params.groupBy !== undefined) {
+    groupData = { groupBy: params.groupBy };
+  }
+
+  let sortData = {};
+
+  if (params.sortBy !== undefined) {
+    sortData = { sortBy: params.sortBy };
+  }
+
+  let directionData = {};
+
+  if (params.sortDirection !== undefined) {
+    directionData = { sortDirection: params.sortDirection };
+  }
+
+  let propertiesData = {};
+
+  if (params.visibleProperties !== undefined) {
+    propertiesData = { visibleProperties: params.visibleProperties };
+  }
+
+  await db.kanbanView.update({
+    where: {
+      id: view.id
+    },
+    data: {
+      ...nameData,
+      ...layoutData,
+      ...groupData,
+      ...sortData,
+      ...directionData,
+      ...propertiesData
+    }
+  });
+
+  return getProjectById(params.projectId, params.workspaceId);
+}
+
+export async function deleteKanbanView(params: {
+  projectId: string;
+  workspaceId: string;
+  viewId: string;
+}) {
+  const view = await db.kanbanView.findFirstOrThrow({
+    where: {
+      id: params.viewId,
+      board: {
+        projectId: params.projectId,
+        project: {
+          workspaceId: params.workspaceId
+        }
+      }
+    }
+  });
+
+  await db.kanbanView.delete({
+    where: {
+      id: view.id
     }
   });
 
