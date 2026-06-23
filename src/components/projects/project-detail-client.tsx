@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "@/components/i18n-provider";
 import { ErrorState } from "@/components/error-state";
-import { ExportActions } from "@/components/export/export-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ProjectKanbanBoard } from "@/components/projects/project-kanban-board";
 import { DemoManagerPageClient } from "@/features/demo-manager/demo-manager-page-client";
-import { useEntitlements, useUsage } from "@/features/entitlements/hooks";
+import { useEntitlements } from "@/features/entitlements/hooks";
 import { ProjectAssigneeSelect } from "@/features/projects/components/project-assignee-select";
 import { ProjectOverviewForm } from "@/features/projects/components/project-overview-form";
 import { type ProjectDetailResponse, useProject } from "@/features/projects/hooks";
@@ -42,7 +41,6 @@ import {
 } from "@/features/projects/services/project-detail-api";
 import type { ProjectKanbanCardDraft, ProjectMilestoneDraft } from "@/features/projects/services/project-detail-api";
 import type { ProjectOverviewFormState } from "@/features/projects/types";
-import { getLimitLabel } from "@/lib/subscription-plans";
 import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProjectMilestoneItem = ProjectDetailResponse["milestones"][number];
@@ -458,7 +456,6 @@ export function ProjectDetailClient({
   const queryClient = useQueryClient();
   const query = useProject(projectId);
   const entitlements = useEntitlements();
-  const usage = useUsage();
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -622,13 +619,8 @@ nextMilestoneEdits[milestone.id] = {
     setMilestoneEdits(nextMilestoneEdits);
   }, [query.data]);
 
-  const canRunViabilityAnalysis = entitlements.canUse("viabilityAnalysis");
   const canRunArtAnalysis = entitlements.canUse("artAnalysis");
-  const canGenerateGdd = entitlements.canUse("gdd");
   const isProArtAnalysis = entitlements.canUse("earlyAccess");
-  const viabilityLimit = entitlements.getLimit("viabilityAnalysesPerMonth");
-  const artLimit = entitlements.getLimit("artAnalysesPerMonth");
-  const gddLimit = entitlements.getLimit("gdds");
 
   function getProjectSnapshot() {
     return queryClient.getQueryData<ProjectDetailResponse>(getProjectQueryKey(projectId));
@@ -1482,42 +1474,6 @@ const aiArtStrengths = resolvedValue23;
   }
 const aiArtRisks = resolvedValue24;
 
-    let resolvedValue25: any;
-  if (isAnalyzing) {
-    resolvedValue25 = t("projectDetail.analyzing");
-  } else {
-    resolvedValue25 = t("projectDetail.runMarketAnalysis");
-  }
-  let resolvedValue26: any;
-  if (isAnalyzingArt) {
-    resolvedValue26 = t("projectDetail.analyzingArt");
-  } else {
-    resolvedValue26 = t("projectDetail.runArtAnalysis");
-  }
-  let resolvedValue27: any;
-  if (isGeneratingGdd) {
-    resolvedValue27 = t("projectDetail.generating");
-  } else {
-    resolvedValue27 = t("projectDetail.generateGdd");
-  }
-  let resolvedValue28: any;
-  if (viabilityLimit) {
-    resolvedValue28 = getLimitLabel(viabilityLimit);
-  } else {
-    resolvedValue28 = "...";
-  }
-  let resolvedValue29: any;
-  if (artLimit) {
-    resolvedValue29 = getLimitLabel(artLimit);
-  } else {
-    resolvedValue29 = "...";
-  }
-  let resolvedValue30: any;
-  if (gddLimit) {
-    resolvedValue30 = getLimitLabel(gddLimit);
-  } else {
-    resolvedValue30 = "...";
-  }
   let resolvedValue31: any;
   if (feedback) {
     resolvedValue31 = <p className="text-sm text-muted-foreground">{feedback}</p>;
@@ -2738,58 +2694,6 @@ resolvedValue50 = resolvedValue65;
   }
 return (
     <div className="space-y-6">
-      <Card className="aurora-panel overflow-hidden border-white/10 shadow-[0_30px_80px_rgba(14,165,233,0.1)]">
-        <CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{project.name}</h1>
-              <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                {project.elevatorPitch || t("projectDetail.defaultPitch")}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button disabled={isAnalyzing || !canRunViabilityAnalysis} onClick={runAnalysis}>
-                {resolvedValue25}
-              </Button>
-              <Button disabled={isAnalyzingArt || !canRunArtAnalysis} variant="outline" onClick={runArtAnalysis}>
-                {resolvedValue26}
-              </Button>
-              <Button disabled={isGeneratingGdd || !canGenerateGdd} variant="outline" onClick={generateGdd}>
-                {resolvedValue27}
-              </Button>
-              <ExportActions
-                label={t("common.exportProject")}
-                xlsxHref={`/api/exports/projects/${projectId}?format=xlsx`}
-                csvHref={`/api/exports/projects/${projectId}?format=csv`}
-                googleSheetsEndpoint={`/api/exports/projects/${projectId}`}
-              />
-            </div>
-          </div>
-          <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-background/70 p-4 text-sm backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">{t("projectDetail.stageLabel")}</span>
-              <span className="font-medium">{(project.stage ?? "DISCOVERY").replaceAll("_", " ")}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">{t("projectDetail.milestonesLabel")}</span>
-              <span className="font-medium">{formatNumber(project.milestones.length)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">{t("projectDetail.pendingApprovalsLabel")}</span>
-              <span className="font-medium">{formatNumber(pendingApprovalsCount)}</span>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/35 p-3 dark:bg-white/[0.04]">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{t("projectDetail.operatingMode")}</p>
-              <p className="mt-2 font-medium">{t("projectDetail.executionLoopCopy")}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-3">
-        <p>Uso atual: {usage.usage?.viabilityAnalysesPerMonth ?? 0} de {resolvedValue28}</p>
-        <p>Uso atual: {usage.usage?.artAnalysesPerMonth ?? 0} de {resolvedValue29}</p>
-        <p>Uso atual: {usage.usage?.gdds ?? 0} de {resolvedValue30}</p>
-      </div>
       {resolvedValue31}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start gap-2 rounded-[1.5rem] border border-white/10 bg-white/55 p-2 backdrop-blur dark:bg-white/[0.04]">
