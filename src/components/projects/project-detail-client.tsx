@@ -41,7 +41,7 @@ import {
 } from "@/features/projects/services/project-detail-api";
 import type { ProjectKanbanCardDraft, ProjectMilestoneDraft } from "@/features/projects/services/project-detail-api";
 import type { ProjectOverviewFormState } from "@/features/projects/types";
-import { formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
+import { cn, formatCurrency, formatNumber, formatPercent } from "@/lib/utils";
 
 type ProjectMilestoneItem = ProjectDetailResponse["milestones"][number];
 type ProjectKanbanBoardItem = ProjectDetailResponse["kanbanBoards"][number];
@@ -49,6 +49,12 @@ type ProjectKanbanColumnItem = ProjectKanbanBoardItem["columns"][number];
 type ProjectKanbanCardItem = ProjectKanbanColumnItem["cards"][number];
 type ProductionPlannerView = "calendar" | "timeline" | "board";
 type ProductionPlannerRange = "week" | "month" | "year";
+type ProductionPlannerGroupBy = "type" | "status" | "owner" | "source";
+type ProductionPlannerSortBy = "date" | "title" | "status" | "owner";
+type ProductionPlannerSortDirection = "asc" | "desc";
+type ProductionPlannerTypeFilter = "all" | "meeting" | "milestone" | "deadline" | "task";
+type ProductionPlannerPropertyKey = "date" | "owner" | "status" | "source" | "description";
+type ProductionPlannerPropertyVisibility = Record<ProductionPlannerPropertyKey, boolean>;
 
 type ProductionPlannerItem = {
   id: string;
@@ -151,7 +157,12 @@ function getPlannerRange(referenceDate: Date, range: ProductionPlannerRange) {
 
   if (range === "week") {
     const day = start.getDay();
-    const offset = day === 0 ? -6 : 1 - day;
+    let offset = 1 - day;
+
+    if (day === 0) {
+      offset = -6;
+    }
+
     start.setDate(start.getDate() + offset);
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
@@ -169,6 +180,50 @@ function getPlannerRange(referenceDate: Date, range: ProductionPlannerRange) {
   const end = new Date(start);
   end.setMonth(start.getMonth() + 1);
   return { start, end };
+}
+
+function getPlannerGroupLabel(item: ProductionPlannerItem, groupBy: ProductionPlannerGroupBy) {
+  if (groupBy === "status") {
+    return item.status || "No status";
+  }
+
+  if (groupBy === "owner") {
+    return item.ownerLabel || "No owner";
+  }
+
+  if (groupBy === "source") {
+    return item.sourceLabel || "No source";
+  }
+
+  if (item.type === "meeting") {
+    return "Meetings";
+  }
+
+  if (item.type === "milestone") {
+    return "Milestones";
+  }
+
+  if (item.type === "deadline") {
+    return "Deadlines";
+  }
+
+  return "Tasks";
+}
+
+function comparePlannerItems(left: ProductionPlannerItem, right: ProductionPlannerItem, sortBy: ProductionPlannerSortBy) {
+  if (sortBy === "title") {
+    return left.title.localeCompare(right.title);
+  }
+
+  if (sortBy === "status") {
+    return left.status.localeCompare(right.status);
+  }
+
+  if (sortBy === "owner") {
+    return (left.ownerLabel ?? "").localeCompare(right.ownerLabel ?? "");
+  }
+
+  return left.dueAt.getTime() - right.dueAt.getTime();
 }
 
 function normalizeCardOrders(cards: ProjectKanbanCardItem[]) {
@@ -518,6 +573,18 @@ export function ProjectDetailClient({
   const [plannerView, setPlannerView] = useState<ProductionPlannerView>("calendar");
   const [plannerRange, setPlannerRange] = useState<ProductionPlannerRange>("week");
   const [plannerReferenceDate, setPlannerReferenceDate] = useState(getDateInputValue(new Date()));
+  const [plannerSearch, setPlannerSearch] = useState("");
+  const [plannerTypeFilter, setPlannerTypeFilter] = useState<ProductionPlannerTypeFilter>("all");
+  const [plannerGroupBy, setPlannerGroupBy] = useState<ProductionPlannerGroupBy>("type");
+  const [plannerSortBy, setPlannerSortBy] = useState<ProductionPlannerSortBy>("date");
+  const [plannerSortDirection, setPlannerSortDirection] = useState<ProductionPlannerSortDirection>("asc");
+  const [plannerVisibleProperties, setPlannerVisibleProperties] = useState<ProductionPlannerPropertyVisibility>({
+    date: true,
+    owner: true,
+    status: true,
+    source: true,
+    description: true
+  });
   const [artAssetForm, setArtAssetForm] = useState({
     kind: "capsule",
     notes: ""
@@ -1298,7 +1365,13 @@ const hybridLimitations = resolvedValue18;
   const pendingApprovalsCount = project.approvalRequests.filter((item: any) => item.status === "PENDING").length;
   const productionPlanner = useMemo(() => {
     const referenceDate = new Date(`${plannerReferenceDate}T00:00:00`);
-    const { start, end } = getPlannerRange(Number.isNaN(referenceDate.getTime()) ? new Date() : referenceDate, plannerRange);
+    let validReferenceDate = referenceDate;
+
+    if (Number.isNaN(referenceDate.getTime())) {
+      validReferenceDate = new Date();
+    }
+
+    const { start, end } = getPlannerRange(validReferenceDate, plannerRange);
     const items: ProductionPlannerItem[] = [];
 
     for (const milestone of project.milestones) {
@@ -1325,7 +1398,12 @@ const hybridLimitations = resolvedValue18;
           continue;
         }
 
-        const labels = Array.isArray(card.labels) ? card.labels : [];
+        let labels: string[] = [];
+
+        if (Array.isArray(card.labels)) {
+          labels = card.labels;
+        }
+
         items.push({
           id: `card:${card.id}`,
           title: card.title,
@@ -1340,9 +1418,33 @@ const hybridLimitations = resolvedValue18;
       }
     }
 
-    const visibleItems = items
-      .filter((item) => item.dueAt >= start && item.dueAt < end)
-      .sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime());
+    const normalizedPlannerSearch = plannerSearch.trim().toLowerCase();
+    let visibleItems = items.filter((item) => item.dueAt >= start && item.dueAt < end);
+
+    if (plannerTypeFilter !== "all") {
+      visibleItems = visibleItems.filter((item) => item.type === plannerTypeFilter);
+    }
+
+    if (normalizedPlannerSearch) {
+      visibleItems = visibleItems.filter((item) => [
+        item.title,
+        item.description,
+        item.ownerLabel,
+        item.status,
+        item.sourceLabel,
+        item.type
+      ].filter(Boolean).join(" ").toLowerCase().includes(normalizedPlannerSearch));
+    }
+
+    visibleItems = [...visibleItems].sort((left, right) => {
+      const result = comparePlannerItems(left, right, plannerSortBy);
+
+      if (plannerSortDirection === "desc") {
+        return result * -1;
+      }
+
+      return result;
+    });
 
     const buckets: Array<{ key: string; label: string; items: ProductionPlannerItem[] }> = [];
 
@@ -1369,9 +1471,12 @@ const hybridLimitations = resolvedValue18;
     }
 
     for (const item of visibleItems) {
-      const key = plannerRange === "year"
-        ? `${item.dueAt.getFullYear()}-${String(item.dueAt.getMonth() + 1).padStart(2, "0")}`
-        : getDateInputValue(item.dueAt);
+      let key = getDateInputValue(item.dueAt);
+
+      if (plannerRange === "year") {
+        key = `${item.dueAt.getFullYear()}-${String(item.dueAt.getMonth() + 1).padStart(2, "0")}`;
+      }
+
       const bucket = buckets.find((current) => current.key === key);
 
       if (bucket) {
@@ -1379,19 +1484,48 @@ const hybridLimitations = resolvedValue18;
       }
     }
 
+    const boardGroupMap = new Map<string, { key: string; label: string; items: ProductionPlannerItem[] }>();
+
+    for (const item of visibleItems) {
+      const label = getPlannerGroupLabel(item, plannerGroupBy);
+      const key = label.toLowerCase().replaceAll(" ", "-");
+      const current = boardGroupMap.get(key);
+
+      if (current) {
+        current.items.push(item);
+        continue;
+      }
+
+      boardGroupMap.set(key, {
+        key,
+        label,
+        items: [item]
+      });
+    }
+
+    const boardGroups = Array.from(boardGroupMap.values()).sort((left, right) => left.label.localeCompare(right.label));
+
     return {
       start,
       end,
       items: visibleItems,
       buckets,
-      boardGroups: [
-        { key: "meeting", label: "Meetings", items: visibleItems.filter((item) => item.type === "meeting") },
-        { key: "milestone", label: "Milestones", items: visibleItems.filter((item) => item.type === "milestone") },
-        { key: "deadline", label: "Deadlines", items: visibleItems.filter((item) => item.type === "deadline") },
-        { key: "task", label: "Tasks", items: visibleItems.filter((item) => item.type === "task") }
-      ]
+      boardGroups,
+      meetings: visibleItems.filter((item) => item.type === "meeting").length,
+      milestones: visibleItems.filter((item) => item.type === "milestone").length,
+      deadlines: visibleItems.filter((item) => item.type === "deadline").length
     };
-  }, [board, plannerRange, plannerReferenceDate, project.milestones]);
+  }, [
+    board,
+    plannerGroupBy,
+    plannerRange,
+    plannerReferenceDate,
+    plannerSearch,
+    plannerSortBy,
+    plannerSortDirection,
+    plannerTypeFilter,
+    project.milestones
+  ]);
   const artMetadata = (project.artAnalysis?.metadata ?? null) as {
     uploadedArtAssets?: {
       total: number;
@@ -2300,22 +2434,59 @@ resolvedValue46 = (
             </>
           );
   }
+  function togglePlannerProperty(property: ProductionPlannerPropertyKey) {
+    setPlannerVisibleProperties((current) => ({
+      ...current,
+      [property]: !current[property]
+    }));
+  }
+
   function renderProductionPlannerItem(item: ProductionPlannerItem) {
+    const metaParts: string[] = [];
+
+    if (plannerVisibleProperties.status) {
+      metaParts.push(item.status);
+    }
+
+    if (plannerVisibleProperties.source) {
+      metaParts.push(item.sourceLabel);
+    }
+
+    let dateBadge = null;
+
+    if (plannerVisibleProperties.date) {
+      dateBadge = (
+        <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-200">
+          {item.dueAt.toLocaleDateString()}
+        </span>
+      );
+    }
+
+    let ownerLine = null;
+
+    if (plannerVisibleProperties.owner && item.ownerLabel) {
+      ownerLine = <p className="mt-2 text-xs text-muted-foreground">Owner: {item.ownerLabel}</p>;
+    }
+
+    let descriptionLine = null;
+
+    if (plannerVisibleProperties.description && item.description) {
+      descriptionLine = <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>;
+    }
+
     return (
       <div key={item.id} className="rounded-2xl border border-white/10 bg-background/75 p-3 text-sm shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <p className="font-medium">{item.title}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {item.type.toUpperCase()} · {item.status} · {item.sourceLabel}
+              {[item.type.toUpperCase(), ...metaParts].join(" · ")}
             </p>
           </div>
-          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-200">
-            {item.dueAt.toLocaleDateString()}
-          </span>
+          {dateBadge}
         </div>
-        {item.ownerLabel ? <p className="mt-2 text-xs text-muted-foreground">Owner: {item.ownerLabel}</p> : null}
-        {item.description ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p> : null}
+        {ownerLine}
+        {descriptionLine}
       </div>
     );
   }
@@ -2692,6 +2863,89 @@ resolvedValue50 = resolvedValue65;
                 <p className="text-sm text-muted-foreground">Gere o primeiro GDD a partir do projeto atual e da análise de mercado.</p>
               );
   }
+  let plannerCalendarVariant: "default" | "outline" = "outline";
+  let plannerTimelineVariant: "default" | "outline" = "outline";
+  let plannerBoardVariant: "default" | "outline" = "outline";
+
+  if (plannerView === "calendar") {
+    plannerCalendarVariant = "default";
+  }
+
+  if (plannerView === "timeline") {
+    plannerTimelineVariant = "default";
+  }
+
+  if (plannerView === "board") {
+    plannerBoardVariant = "default";
+  }
+
+  let plannerEmptyState = null;
+
+  if (productionPlanner.items.length === 0) {
+    plannerEmptyState = (
+      <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
+        Nenhum item com data neste período. Adicione uma data em milestones ou cards do kanban. Para reuniões, use labels como meeting ou reunião.
+      </div>
+    );
+  }
+
+  let plannerCalendarView = null;
+
+  if (plannerView === "calendar") {
+    plannerCalendarView = (
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {productionPlanner.buckets.map((bucket) => (
+          <div key={bucket.key} className="min-h-32 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium">{bucket.label}</p>
+              <span className="text-xs text-muted-foreground">{formatNumber(bucket.items.length)}</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {bucket.items.map(renderProductionPlannerItem)}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  let plannerTimelineView = null;
+
+  if (plannerView === "timeline") {
+    plannerTimelineView = (
+      <div className="space-y-3">
+        {productionPlanner.items.map((item) => (
+          <div key={item.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03] md:grid-cols-[140px_minmax(0,1fr)]">
+            <div>
+              <p className="text-sm font-semibold">{item.dueAt.toLocaleDateString()}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.type}</p>
+            </div>
+            {renderProductionPlannerItem(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  let plannerBoardView = null;
+
+  if (plannerView === "board") {
+    plannerBoardView = (
+      <div className="grid gap-3 xl:grid-cols-4">
+        {productionPlanner.boardGroups.map((group) => (
+          <div key={group.key} className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium">{group.label}</p>
+              <span className="text-xs text-muted-foreground">{formatNumber(group.items.length)}</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {group.items.map(renderProductionPlannerItem)}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 return (
     <div className="space-y-6">
       {resolvedValue31}
@@ -2978,13 +3232,13 @@ return (
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" variant={plannerView === "calendar" ? "default" : "outline"} onClick={() => setPlannerView("calendar")}>
+                  <Button type="button" size="sm" variant={plannerCalendarVariant} onClick={() => setPlannerView("calendar")}>
                     Calendar
                   </Button>
-                  <Button type="button" size="sm" variant={plannerView === "timeline" ? "default" : "outline"} onClick={() => setPlannerView("timeline")}>
+                  <Button type="button" size="sm" variant={plannerTimelineVariant} onClick={() => setPlannerView("timeline")}>
                     Timeline
                   </Button>
-                  <Button type="button" size="sm" variant={plannerView === "board" ? "default" : "outline"} onClick={() => setPlannerView("board")}>
+                  <Button type="button" size="sm" variant={plannerBoardVariant} onClick={() => setPlannerView("board")}>
                     Board
                   </Button>
                 </div>
@@ -3014,68 +3268,99 @@ return (
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Meetings</p>
-                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[0].items.length)}</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.meetings)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Milestones</p>
-                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[1].items.length)}</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.milestones)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Deadlines</p>
-                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[2].items.length)}</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.deadlines)}</p>
                   </div>
+                </div>
+              </div>
+              <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03] lg:grid-cols-[minmax(180px,1fr)_160px_160px_160px_160px]">
+                <div className="space-y-2">
+                  <Label>Search</Label>
+                  <Input value={plannerSearch} onChange={(event) => setPlannerSearch(event.target.value)} placeholder="Search title, owner, status..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select value={plannerTypeFilter} onValueChange={(value: ProductionPlannerTypeFilter) => setPlannerTypeFilter(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All types</SelectItem>
+                      <SelectItem value="meeting">Meetings</SelectItem>
+                      <SelectItem value="milestone">Milestones</SelectItem>
+                      <SelectItem value="deadline">Deadlines</SelectItem>
+                      <SelectItem value="task">Tasks</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Group by</Label>
+                  <Select value={plannerGroupBy} onValueChange={(value: ProductionPlannerGroupBy) => setPlannerGroupBy(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="type">Type</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                      <SelectItem value="owner">Owner</SelectItem>
+                      <SelectItem value="source">Source</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Sort</Label>
+                  <Select value={plannerSortBy} onValueChange={(value: ProductionPlannerSortBy) => setPlannerSortBy(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date">Date</SelectItem>
+                      <SelectItem value="title">Title</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                      <SelectItem value="owner">Owner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Direction</Label>
+                  <Select value={plannerSortDirection} onValueChange={(value: ProductionPlannerSortDirection) => setPlannerSortDirection(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="asc">Ascending</SelectItem>
+                      <SelectItem value="desc">Descending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:col-span-5">
+                  {(["date", "owner", "status", "source", "description"] as ProductionPlannerPropertyKey[]).map((property) => (
+                    <Button
+                      key={property}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className={cn(plannerVisibleProperties[property] && "border-cyan-300/40 bg-cyan-300/10")}
+                      onClick={() => togglePlannerProperty(property)}
+                    >
+                      {property}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {productionPlanner.items.length === 0 ? (
-                <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
-                  Nenhum item com data neste período. Adicione uma data em milestones ou cards do kanban. Para reuniões, use labels como meeting ou reunião.
-                </div>
-              ) : null}
-              {plannerView === "calendar" ? (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {productionPlanner.buckets.map((bucket) => (
-                    <div key={bucket.key} className="min-h-32 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium">{bucket.label}</p>
-                        <span className="text-xs text-muted-foreground">{formatNumber(bucket.items.length)}</span>
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {bucket.items.map(renderProductionPlannerItem)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {plannerView === "timeline" ? (
-                <div className="space-y-3">
-                  {productionPlanner.items.map((item) => (
-                    <div key={item.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03] md:grid-cols-[140px_minmax(0,1fr)]">
-                      <div>
-                        <p className="text-sm font-semibold">{item.dueAt.toLocaleDateString()}</p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.type}</p>
-                      </div>
-                      {renderProductionPlannerItem(item)}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {plannerView === "board" ? (
-                <div className="grid gap-3 xl:grid-cols-4">
-                  {productionPlanner.boardGroups.map((group) => (
-                    <div key={group.key} className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium">{group.label}</p>
-                        <span className="text-xs text-muted-foreground">{formatNumber(group.items.length)}</span>
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {group.items.map(renderProductionPlannerItem)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              {plannerEmptyState}
+              {plannerCalendarView}
+              {plannerTimelineView}
+              {plannerBoardView}
             </CardContent>
           </Card>
           <div className="flex items-center gap-1 rounded-lg border bg-muted/25 p-1">

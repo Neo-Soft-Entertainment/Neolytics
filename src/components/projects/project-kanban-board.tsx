@@ -80,6 +80,11 @@ type DrawerState =
   | { mode: "edit"; cardId: string }
   | null;
 
+type KanbanSortMode = "manual" | "dueDate" | "title" | "assignee";
+type KanbanDensity = "comfortable" | "compact";
+type KanbanCardPropertyKey = "description" | "labels" | "dueDate" | "assignee";
+type KanbanCardPropertyVisibility = Record<KanbanCardPropertyKey, boolean>;
+
 function normalizeKanbanCards(cards: KanbanCard[]) {
   return cards.map((card, index) => ({
     ...card,
@@ -181,6 +186,33 @@ function getBoardSignature(board: KanbanBoard | null) {
   }).join("|");
 }
 
+function compareKanbanCards(left: KanbanCard, right: KanbanCard, sortMode: KanbanSortMode) {
+  if (sortMode === "title") {
+    return left.title.localeCompare(right.title);
+  }
+
+  if (sortMode === "assignee") {
+    return (left.assigneeLabel ?? "").localeCompare(right.assigneeLabel ?? "");
+  }
+
+  if (sortMode === "dueDate") {
+    let leftTime = Number.MAX_SAFE_INTEGER;
+    let rightTime = Number.MAX_SAFE_INTEGER;
+
+    if (left.dueDate) {
+      leftTime = new Date(left.dueDate).getTime();
+    }
+
+    if (right.dueDate) {
+      rightTime = new Date(right.dueDate).getTime();
+    }
+
+    return leftTime - rightTime;
+  }
+
+  return left.sortOrder - right.sortOrder;
+}
+
 export function ProjectKanbanBoard({
   projectName,
   board,
@@ -237,6 +269,14 @@ export function ProjectKanbanBoard({
   const [drawer, setDrawer] = useState<DrawerState>(null);
   const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null);
   const [localBoard, setLocalBoard] = useState<KanbanBoard | null>(board);
+  const [sortMode, setSortMode] = useState<KanbanSortMode>("manual");
+  const [density, setDensity] = useState<KanbanDensity>("comfortable");
+  const [visibleProperties, setVisibleProperties] = useState<KanbanCardPropertyVisibility>({
+    description: true,
+    labels: true,
+    dueDate: true,
+    assignee: true
+  });
   let activeBoard = localBoard;
 
   if (!activeBoard) {
@@ -259,6 +299,13 @@ export function ProjectKanbanBoard({
     setLocalBoard(board);
   }, [boardSignature]);
 
+  function toggleCardProperty(property: KanbanCardPropertyKey) {
+    setVisibleProperties((current) => ({
+      ...current,
+      [property]: !current[property]
+    }));
+  }
+
   const labels = useMemo(() => {
     const names = new Set<string>();
 
@@ -273,9 +320,8 @@ export function ProjectKanbanBoard({
     return Array.from(names).sort();
   }, [columns]);
 
-  const filteredColumns = useMemo(() => columns.map((column) => ({
-    ...column,
-    cards: column.cards.filter((card) => {
+  const filteredColumns = useMemo(() => columns.map((column) => {
+    const cards = column.cards.filter((card) => {
       const cardLabels = getKanbanCardLabels(card.labels);
       const matchesSearch = !normalizedSearch || [
         card.title,
@@ -287,8 +333,13 @@ export function ProjectKanbanBoard({
       const matchesLabel = labelFilter === "all" || cardLabels.includes(labelFilter);
 
       return matchesSearch && matchesAssignee && matchesLabel;
-    })
-  })), [assigneeFilter, columns, labelFilter, normalizedSearch]);
+    });
+
+    return {
+      ...column,
+      cards: [...cards].sort((left, right) => compareKanbanCards(left, right, sortMode))
+    };
+  }), [assigneeFilter, columns, labelFilter, normalizedSearch, sortMode]);
 
   const visibleCards = filteredColumns.reduce((sum, column) => sum + column.cards.length, 0);
   const totalCards = columns.reduce((sum, column) => sum + column.cards.length, 0);
@@ -562,6 +613,48 @@ return (
             {formatNumber(visibleCards)} de {formatNumber(totalCards)} cartões
           </div>
         </div>
+        <div className="mt-3 grid gap-3 lg:grid-cols-[180px_180px_minmax(0,1fr)]">
+          <Select value={sortMode} onValueChange={(value: KanbanSortMode) => setSortMode(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Ordenação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="manual">Ordem manual</SelectItem>
+              <SelectItem value="dueDate">Vencimento</SelectItem>
+              <SelectItem value="title">Título</SelectItem>
+              <SelectItem value="assignee">Responsável</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={density} onValueChange={(value: KanbanDensity) => setDensity(value)}>
+            <SelectTrigger className="border-slate-700 bg-[#11161c] text-slate-100">
+              <SelectValue placeholder="Densidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="comfortable">Confortável</SelectItem>
+              <SelectItem value="compact">Compacto</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            {(["description", "labels", "dueDate", "assignee"] as KanbanCardPropertyKey[]).map((property) => (
+              <Button
+                key={property}
+                type="button"
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "border-slate-700 bg-[#11161c] text-slate-300 hover:bg-slate-800 hover:text-slate-100",
+                  visibleProperties[property] && "border-sky-400/50 bg-sky-400/10 text-sky-100"
+                )}
+                onClick={() => toggleCardProperty(property)}
+              >
+                {property}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Ordenação muda a visualização. Arrastar cards continua salvando a ordem manual do board.
+        </p>
       </div>
 
       <div className="border-b border-slate-800 bg-[#171b20] px-5 py-3">
@@ -610,6 +703,8 @@ return (
                 onMoveCardInColumn={moveCardInColumnWithPrediction}
                 onDeleteCard={deleteCard}
                 columnOptions={columnOptions}
+                visibleProperties={visibleProperties}
+                density={density}
               />
             ))}
           </div>
@@ -651,7 +746,9 @@ function KanbanColumnView({
   onMoveCard,
   onMoveCardInColumn,
   onDeleteCard,
-  columnOptions
+  columnOptions,
+  visibleProperties,
+  density
 }: {
   column: KanbanColumn;
   index: number;
@@ -666,6 +763,8 @@ function KanbanColumnView({
   onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<boolean>;
   onDeleteCard: (cardId: string) => Promise<void>;
   columnOptions: Array<{ id: string; name: string }>;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -725,6 +824,8 @@ function KanbanColumnView({
               onMoveCardInColumn={onMoveCardInColumn}
               onDeleteCard={onDeleteCard}
               columnOptions={columnOptions}
+              visibleProperties={visibleProperties}
+              density={density}
             />
           ))}
         </SortableContext>
@@ -745,7 +846,9 @@ function KanbanCardView({
   onMoveCard,
   onMoveCardInColumn,
   onDeleteCard,
-  columnOptions
+  columnOptions,
+  visibleProperties,
+  density
 }: {
   card: KanbanCard;
   columnId: string;
@@ -755,6 +858,8 @@ function KanbanCardView({
   onMoveCardInColumn: (cardId: string, direction: "up" | "down") => Promise<boolean>;
   onDeleteCard: (cardId: string) => Promise<void>;
   columnOptions: Array<{ id: string; name: string }>;
+  visibleProperties: KanbanCardPropertyVisibility;
+  density: KanbanDensity;
 }) {
   const {
     attributes,
@@ -774,7 +879,7 @@ function KanbanCardView({
   const labels = getKanbanCardLabels(card.labels);
 
     let resolvedValue6: any;
-  if (labels.length > 0) {
+  if (visibleProperties.labels && labels.length > 0) {
         let resolvedValue27: any;
     if (labels.length > 3) {
       resolvedValue27 = <span className="text-[11px] text-slate-500">+{labels.length - 3}</span>;
@@ -795,7 +900,7 @@ resolvedValue6 = (
     resolvedValue6 = null;
   }
   let resolvedValue7: any;
-  if (card.dueDate) {
+  if (visibleProperties.dueDate && card.dueDate) {
     resolvedValue7 = (
             <span className="flex items-center gap-1">
               <CalendarDays className="h-3.5 w-3.5" />
@@ -806,16 +911,26 @@ resolvedValue6 = (
     resolvedValue7 = null;
   }
   let resolvedValue8: any;
-  if (card.assigneeLabel) {
+  if (visibleProperties.assignee && card.assigneeLabel) {
     resolvedValue8 = (
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-[10px] font-semibold text-white">
               {card.assigneeLabel.slice(0, 1).toUpperCase()}
             </span>
           );
-  } else {
+  } else if (visibleProperties.assignee) {
     resolvedValue8 = (
             <User2 className="h-4 w-4 text-slate-600" />
           );
+  } else {
+    resolvedValue8 = null;
+  }
+  let resolvedValue29: any;
+  if (visibleProperties.description && density === "comfortable" && card.description) {
+    resolvedValue29 = (
+      <p className="mt-2 line-clamp-2 text-xs text-slate-400">{card.description}</p>
+    );
+  } else {
+    resolvedValue29 = null;
   }
 return (
     <article
@@ -828,6 +943,7 @@ return (
       }}
       className={cn(
         "group cursor-grab rounded-md border border-slate-700 bg-[#22272d] p-3 text-sm shadow-sm transition hover:border-slate-600 hover:bg-[#282e35] active:cursor-grabbing",
+        density === "compact" && "p-2",
         isDragging && "opacity-60"
       )}
     >
@@ -865,6 +981,7 @@ return (
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {resolvedValue29}
       {resolvedValue6}
       <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-400">
         <span className="font-medium text-slate-500">NLY-{columnIndex + 1}{String(card.sortOrder + 1).padStart(2, "0")}</span>
