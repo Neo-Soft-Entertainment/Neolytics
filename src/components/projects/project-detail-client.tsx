@@ -49,6 +49,20 @@ type ProjectMilestoneItem = ProjectDetailResponse["milestones"][number];
 type ProjectKanbanBoardItem = ProjectDetailResponse["kanbanBoards"][number];
 type ProjectKanbanColumnItem = ProjectKanbanBoardItem["columns"][number];
 type ProjectKanbanCardItem = ProjectKanbanColumnItem["cards"][number];
+type ProductionPlannerView = "calendar" | "timeline" | "board";
+type ProductionPlannerRange = "week" | "month" | "year";
+
+type ProductionPlannerItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  dueAt: Date;
+  ownerLabel: string | null;
+  status: string;
+  type: "meeting" | "milestone" | "deadline" | "task";
+  source: "milestone" | "kanban";
+  sourceLabel: string;
+};
 
 function getProjectQueryKey(projectId: string) {
   return ["projects", projectId] as const;
@@ -113,6 +127,50 @@ function toProjectStage(stage: string): ProjectDetailResponse["stage"] {
   }
 
   return "DISCOVERY";
+}
+
+function getDateInputValue(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function getPlannerItemType(title: string, labels: string[]) {
+  const searchable = `${title} ${labels.join(" ")}`.toLowerCase();
+
+  if (searchable.includes("meeting") || searchable.includes("reuni")) {
+    return "meeting" as const;
+  }
+
+  if (searchable.includes("deadline") || searchable.includes("due") || searchable.includes("entrega")) {
+    return "deadline" as const;
+  }
+
+  return "task" as const;
+}
+
+function getPlannerRange(referenceDate: Date, range: ProductionPlannerRange) {
+  const start = new Date(referenceDate);
+  start.setHours(0, 0, 0, 0);
+
+  if (range === "week") {
+    const day = start.getDay();
+    const offset = day === 0 ? -6 : 1 - day;
+    start.setDate(start.getDate() + offset);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    return { start, end };
+  }
+
+  if (range === "year") {
+    start.setMonth(0, 1);
+    const end = new Date(start);
+    end.setFullYear(start.getFullYear() + 1);
+    return { start, end };
+  }
+
+  start.setDate(1);
+  const end = new Date(start);
+  end.setMonth(start.getMonth() + 1);
+  return { start, end };
 }
 
 function normalizeCardOrders(cards: ProjectKanbanCardItem[]) {
@@ -460,6 +518,9 @@ export function ProjectDetailClient({
   const [kanbanAssigneeFilter, setKanbanAssigneeFilter] = useState("all");
   const [kanbanLabelFilter, setKanbanLabelFilter] = useState("all");
   const [executionView, setExecutionView] = useState<"board" | "milestones">("board");
+  const [plannerView, setPlannerView] = useState<ProductionPlannerView>("calendar");
+  const [plannerRange, setPlannerRange] = useState<ProductionPlannerRange>("week");
+  const [plannerReferenceDate, setPlannerReferenceDate] = useState(getDateInputValue(new Date()));
   const [artAssetForm, setArtAssetForm] = useState({
     kind: "capsule",
     notes: ""
@@ -1243,6 +1304,102 @@ const hybridLimitations = resolvedValue18;
   const milestoneBudgetTotal = project.milestones.reduce((sum, item) => sum + item.budgetedCostCents, 0);
   const milestoneRevenueTotal = project.milestones.reduce((sum, item) => sum + item.expectedRevenueCents, 0);
   const pendingApprovalsCount = project.approvalRequests.filter((item: any) => item.status === "PENDING").length;
+  const productionPlanner = useMemo(() => {
+    const referenceDate = new Date(`${plannerReferenceDate}T00:00:00`);
+    const { start, end } = getPlannerRange(Number.isNaN(referenceDate.getTime()) ? new Date() : referenceDate, plannerRange);
+    const items: ProductionPlannerItem[] = [];
+
+    for (const milestone of project.milestones) {
+      if (!milestone.dueAt) {
+        continue;
+      }
+
+      items.push({
+        id: `milestone:${milestone.id}`,
+        title: milestone.title,
+        description: milestone.description,
+        dueAt: new Date(milestone.dueAt),
+        ownerLabel: milestone.ownerLabel,
+        status: milestone.status,
+        type: "milestone",
+        source: "milestone",
+        sourceLabel: "Milestone"
+      });
+    }
+
+    for (const column of board?.columns ?? []) {
+      for (const card of column.cards) {
+        if (!card.dueDate) {
+          continue;
+        }
+
+        const labels = Array.isArray(card.labels) ? card.labels : [];
+        items.push({
+          id: `card:${card.id}`,
+          title: card.title,
+          description: card.description,
+          dueAt: new Date(card.dueDate),
+          ownerLabel: card.assigneeLabel,
+          status: column.name,
+          type: getPlannerItemType(card.title, labels),
+          source: "kanban",
+          sourceLabel: column.name
+        });
+      }
+    }
+
+    const visibleItems = items
+      .filter((item) => item.dueAt >= start && item.dueAt < end)
+      .sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime());
+
+    const buckets: Array<{ key: string; label: string; items: ProductionPlannerItem[] }> = [];
+
+    if (plannerRange === "year") {
+      for (let month = 0; month < 12; month += 1) {
+        const date = new Date(start.getFullYear(), month, 1);
+        buckets.push({
+          key: `${start.getFullYear()}-${String(month + 1).padStart(2, "0")}`,
+          label: date.toLocaleString(undefined, { month: "short" }),
+          items: []
+        });
+      }
+    } else {
+      const cursor = new Date(start);
+
+      while (cursor < end) {
+        buckets.push({
+          key: getDateInputValue(cursor),
+          label: cursor.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
+          items: []
+        });
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    for (const item of visibleItems) {
+      const key = plannerRange === "year"
+        ? `${item.dueAt.getFullYear()}-${String(item.dueAt.getMonth() + 1).padStart(2, "0")}`
+        : getDateInputValue(item.dueAt);
+      const bucket = buckets.find((current) => current.key === key);
+
+      if (bucket) {
+        bucket.items.push(item);
+      }
+    }
+
+    return {
+      start,
+      end,
+      items: visibleItems,
+      buckets,
+      boardGroups: [
+        { key: "meeting", label: "Meetings", items: visibleItems.filter((item) => item.type === "meeting") },
+        { key: "milestone", label: "Milestones", items: visibleItems.filter((item) => item.type === "milestone") },
+        { key: "deadline", label: "Deadlines", items: visibleItems.filter((item) => item.type === "deadline") },
+        { key: "task", label: "Tasks", items: visibleItems.filter((item) => item.type === "task") }
+      ]
+    };
+  }, [board, plannerRange, plannerReferenceDate, project.milestones]);
   const artMetadata = (project.artAnalysis?.metadata ?? null) as {
     uploadedArtAssets?: {
       total: number;
@@ -2187,6 +2344,26 @@ resolvedValue46 = (
             </>
           );
   }
+  function renderProductionPlannerItem(item: ProductionPlannerItem) {
+    return (
+      <div key={item.id} className="rounded-2xl border border-white/10 bg-background/75 p-3 text-sm shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p className="font-medium">{item.title}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {item.type.toUpperCase()} · {item.status} · {item.sourceLabel}
+            </p>
+          </div>
+          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-200">
+            {item.dueAt.toLocaleDateString()}
+          </span>
+        </div>
+        {item.ownerLabel ? <p className="mt-2 text-xs text-muted-foreground">Owner: {item.ownerLabel}</p> : null}
+        {item.description ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p> : null}
+      </div>
+    );
+  }
+
   let resolvedValue47: any;
   if (executionView === "board") {
     resolvedValue47 = "default";
@@ -2886,6 +3063,117 @@ return (
           {resolvedValue46}
         </TabsContent>
         <TabsContent value="milestones" className="space-y-4">
+          <Card className="overflow-hidden">
+            <div className="pointer-events-none h-px w-full shimmer-divider opacity-60" />
+            <CardHeader className="space-y-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <CardTitle>Production planner</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Visualize o que precisa acontecer na semana, mês ou ano usando milestones e cards do kanban com data.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant={plannerView === "calendar" ? "default" : "outline"} onClick={() => setPlannerView("calendar")}>
+                    Calendar
+                  </Button>
+                  <Button type="button" size="sm" variant={plannerView === "timeline" ? "default" : "outline"} onClick={() => setPlannerView("timeline")}>
+                    Timeline
+                  </Button>
+                  <Button type="button" size="sm" variant={plannerView === "board" ? "default" : "outline"} onClick={() => setPlannerView("board")}>
+                    Board
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-[180px_180px_minmax(0,1fr)]">
+                <div className="space-y-2">
+                  <Label>Reference date</Label>
+                  <Input type="date" value={plannerReferenceDate} onChange={(event) => setPlannerReferenceDate(event.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Range</Label>
+                  <Select value={plannerRange} onValueChange={(value: ProductionPlannerRange) => setPlannerRange(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="month">Month</SelectItem>
+                      <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/45 p-3 text-sm dark:bg-white/[0.03] sm:grid-cols-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Total</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.items.length)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Meetings</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[0].items.length)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Milestones</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[1].items.length)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Deadlines</p>
+                    <p className="mt-1 font-semibold">{formatNumber(productionPlanner.boardGroups[2].items.length)}</p>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {productionPlanner.items.length === 0 ? (
+                <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
+                  Nenhum item com data neste período. Adicione uma data em milestones ou cards do kanban. Para reuniões, use labels como meeting ou reunião.
+                </div>
+              ) : null}
+              {plannerView === "calendar" ? (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {productionPlanner.buckets.map((bucket) => (
+                    <div key={bucket.key} className="min-h-32 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium">{bucket.label}</p>
+                        <span className="text-xs text-muted-foreground">{formatNumber(bucket.items.length)}</span>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {bucket.items.map(renderProductionPlannerItem)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {plannerView === "timeline" ? (
+                <div className="space-y-3">
+                  {productionPlanner.items.map((item) => (
+                    <div key={item.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03] md:grid-cols-[140px_minmax(0,1fr)]">
+                      <div>
+                        <p className="text-sm font-semibold">{item.dueAt.toLocaleDateString()}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.type}</p>
+                      </div>
+                      {renderProductionPlannerItem(item)}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {plannerView === "board" ? (
+                <div className="grid gap-3 xl:grid-cols-4">
+                  {productionPlanner.boardGroups.map((group) => (
+                    <div key={group.key} className="rounded-2xl border border-white/10 bg-white/45 p-3 dark:bg-white/[0.03]">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{group.label}</p>
+                        <span className="text-xs text-muted-foreground">{formatNumber(group.items.length)}</span>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {group.items.map(renderProductionPlannerItem)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
           <div className="flex items-center gap-1 rounded-lg border bg-muted/25 p-1">
             <Button
               type="button"
