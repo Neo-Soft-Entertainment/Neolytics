@@ -894,14 +894,18 @@ const projectInclude = {
         }
       },
       columns: {
-        orderBy: {
-          sortOrder: "asc"
-        },
+        orderBy: [
+          { sortOrder: "asc" },
+          { createdAt: "asc" },
+          { id: "asc" }
+        ],
         include: {
           cards: {
-            orderBy: {
-              sortOrder: "asc"
-            }
+            orderBy: [
+              { sortOrder: "asc" },
+              { createdAt: "asc" },
+              { id: "asc" }
+            ]
           }
         }
       }
@@ -3297,9 +3301,11 @@ export async function createKanbanColumn(params: {
     },
     include: {
       columns: {
-        orderBy: {
-          sortOrder: "desc"
-        },
+        orderBy: [
+          { sortOrder: "desc" },
+          { createdAt: "desc" },
+          { id: "desc" }
+        ],
         take: 1
       }
     }
@@ -3512,7 +3518,8 @@ async function reorderColumns(boardId: string) {
     },
     orderBy: [
       { sortOrder: "asc" },
-      { createdAt: "asc" }
+      { createdAt: "asc" },
+      { id: "asc" }
     ]
   });
 
@@ -3569,9 +3576,11 @@ export async function createKanbanCard(params: {
     },
     include: {
       cards: {
-        orderBy: {
-          sortOrder: "desc"
-        },
+        orderBy: [
+          { sortOrder: "desc" },
+          { createdAt: "desc" },
+          { id: "desc" }
+        ],
         take: 1
       }
     }
@@ -3724,10 +3733,13 @@ export async function moveKanbanColumn(params: {
   } else {
     resolvedValue132 = column.sortOrder + 1;
   }
-const target = await db.kanbanColumn.findFirst({
+  const target = await db.kanbanColumn.findFirst({
     where: {
       boardId: column.boardId,
       sortOrder: resolvedValue132
+    },
+    orderBy: {
+      id: "asc"
     }
   });
 
@@ -3802,10 +3814,13 @@ export async function moveKanbanCard(params: {
   } else {
     resolvedValue133 = card.sortOrder + 1;
   }
-const target = await db.kanbanCard.findFirst({
+  const target = await db.kanbanCard.findFirst({
     where: {
       columnId: card.columnId,
       sortOrder: resolvedValue133
+    },
+    orderBy: {
+      id: "asc"
     }
   });
 
@@ -3864,7 +3879,8 @@ export async function reorderKanbanCard(params: {
       cards: {
         orderBy: [
           { sortOrder: "asc" },
-          { createdAt: "asc" }
+          { createdAt: "asc" },
+          { id: "asc" }
         ]
       }
     }

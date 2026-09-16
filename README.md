@@ -1,6 +1,8 @@
-# Neolytics MVP
+# Neolytics
 
-Neolytics is a Steam-first market intelligence SaaS built with Next.js, Supabase Postgres, Prisma, Auth.js, Redis-backed background jobs, TanStack Query, and Recharts.
+Neolytics is an open-source Steam-first market intelligence and project planning app built with Next.js, Supabase Postgres, Prisma, Auth.js, Redis-backed background jobs, TanStack Query, and Recharts.
+
+The source code is hosted publicly at [github.com/Neo-Soft-Entertainment/Neolytics](https://github.com/Neo-Soft-Entertainment/Neolytics). Contributions, bug reports, and focused improvements are welcome.
 
 ## Stack
 
@@ -183,6 +185,15 @@ Security migration:
 ```bash
 npm install
 ```
+
+## Contributing
+
+1. Fork the repository and create a focused branch.
+2. Install dependencies with `npm install`.
+3. Copy `.env.example` to `.env` and configure the required services.
+4. Run the relevant checks before opening a pull request.
+
+Keep changes focused, avoid introducing ternary expressions, and follow the existing TypeScript and Conventional Commits conventions.
 
 ## Database setup
 
